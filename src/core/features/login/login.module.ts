@@ -37,52 +37,81 @@ export async function getLoginServices(): Promise<Type<unknown>[]> {
 }
 
 const appRoutes: Routes = [
-    {
-        path: 'login',
-        loadChildren: () => [
-            {
-                path: '',
-                pathMatch: 'full',
-                redirectTo: 'sites',
-            },
-            {
-                path: 'site',
-                loadComponent: () => import('@features/login/pages/site/site'),
-            },
-            {
-                path: 'credentials',
-                loadComponent: () => CoreLoginHelper.getCredentialsPage(),
-            },
-            {
-                path: 'sites',
-                loadComponent: () => import('@features/login/pages/sites/sites'),
-                canActivate: [hasSitesGuard],
-            },
-            {
-                path: 'forgottenpassword',
-                loadComponent: () => import('@features/login/pages/forgotten-password/forgotten-password'),
-            },
-            {
-                path: 'changepassword',
-                loadComponent: () => import('@features/login/pages/change-password/change-password'),
-            },
-            {
-                path: 'emailsignup',
-                loadComponent: () => import('@features/login/pages/email-signup/email-signup'),
-            },
-            {
-                path: 'reconnect',
-                loadComponent: () => CoreLoginHelper.getReconnectPage(),
-            },
-        ],
-        canActivate: [redirectGuard],
-    },
-    {
-        path: 'logout',
-        loadComponent: () => import('@features/login/pages/logout/logout'),
-    },
-];
+  {
+    path: '',
+    pathMatch: 'full',
+    redirectTo: 'login',
+  },
 
+  {
+    path: 'login',
+    canActivate: [redirectGuard],
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'ifrn',
+      },
+
+      {
+        path: 'ifrn',
+        loadComponent: () =>
+          import('@features/login/pages/ifrn-login/ifrn-login')
+            .then(m => m.IfrnLoginPage),
+      },
+
+      {
+        path: 'site',
+        loadComponent: () =>
+          import('@features/login/pages/site/site'),
+      },
+
+      {
+        path: 'credentials',
+        loadComponent: () =>
+          CoreLoginHelper.getCredentialsPage(),
+      },
+
+      {
+        path: 'sites',
+        loadComponent: () =>
+  import('@features/login/pages/sites/sites')
+    .then(m => m.default),
+        canActivate: [hasSitesGuard],
+      },
+
+      {
+        path: 'forgottenpassword',
+        loadComponent: () =>
+          import('@features/login/pages/forgotten-password/forgotten-password'),
+      },
+
+      {
+        path: 'changepassword',
+        loadComponent: () =>
+          import('@features/login/pages/change-password/change-password'),
+      },
+
+      {
+        path: 'emailsignup',
+        loadComponent: () =>
+          import('@features/login/pages/email-signup/email-signup'),
+      },
+
+      {
+        path: 'reconnect',
+        loadComponent: () =>
+          CoreLoginHelper.getReconnectPage(),
+      },
+    ],
+  },
+
+  {
+    path: 'logout',
+    loadComponent: () =>
+      import('@features/login/pages/logout/logout'),
+  },
+];
 @NgModule({
     imports: [
         AppRoutingModule.forChild(appRoutes),
