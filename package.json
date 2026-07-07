@@ -43,6 +43,7 @@
         "lang:detect-langpacks": "./scripts/update_langpacks.sh detect",
         "lang:create-langindex": "./scripts/create_langindex.sh",
         "patch:login-route": "node scripts/patch-login-route.js"
+        
     },
     "dependencies": {
         "@angular/animations": "20.3.18",
