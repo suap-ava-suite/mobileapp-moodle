@@ -1,3 +1,54 @@
+<!DOCTYPE html>
+<html lang="PT-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+
+</body>
+</html>
+
 <div class="ifrn-login">
-    Hello World
+
+    <h2>Entrar</h2>
+
+    <label for="login">IFRN-id</label>
+    <input
+        id="login"
+        type="text"
+        [(ngModel)]="username"
+        placeholder="Digite seu usuário">
+
+    <small>
+        IFRN-id é sua matrícula no IFRN caso local tenha, ou seu CPF caso possua acesso externo.
+    </small>
+
+    <label for="password">Senha</label>
+    <input
+        id="password"
+        type="password"
+        [(ngModel)]="password"
+        placeholder="Digite sua senha">
+
+    <button (click)="login()">
+        Entrar
+    </button>
+
+    <button
+        type="button"
+        class="secondary"
+        (click)="clear()">
+        Cancelar
+    </button>
+
+    <a href="#" (click)="forgotPassword($event)">
+        Esqueci minha senha
+    </a>
+
+    <a href="#" (click)="help($event)">
+        Ficou com dúvidas?
+    </a>
+
 </div>

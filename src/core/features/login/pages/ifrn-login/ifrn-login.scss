@@ -1,1 +1,32 @@
-.ifrn-login{background-color: red;}
+.ifrn-login {
+    max-width: 420px;
+    margin: auto;
+    padding: 24px;
+}
+
+.ifrn-login label {
+    display: block;
+    margin-top: 16px;
+    font-weight: 600;
+}
+
+.ifrn-login input {
+    width: 100%;
+    padding: 12px;
+    margin-top: 8px;
+}
+
+.ifrn-login button {
+    width: 100%;
+    margin-top: 16px;
+}
+
+.secondary {
+    background: white;
+}
+
+.ifrn-login a {
+    display: block;
+    text-align: center;
+    margin-top: 16px;
+}
