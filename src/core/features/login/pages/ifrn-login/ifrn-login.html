@@ -1,54 +1,66 @@
-<!DOCTYPE html>
-<html lang="PT-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-</head>
-<body>
+<ion-content fullscreen>
 
-</body>
-</html>
+    <div class="govbr-login">
 
-<div class="ifrn-login">
+        <div class="header">
+            <!-- Troque pelo logo do IFRN -->
+            <h2>logo ifrn</h2>
+        </div>
 
-    <h2>Entrar</h2>
+        <h2>Entrar no SUAP</h2>
 
-    <label for="login">IFRN-id</label>
-    <input
-        id="login"
-        type="text"
-        [(ngModel)]="username"
-        placeholder="Digite seu usuário">
+        <p class="subtitle">
+            Utilize sua conta institucional para acessar o ambiente virtual.
+        </p>
 
-    <small>
-        IFRN-id é sua matrícula no IFRN caso local tenha, ou seu CPF caso possua acesso externo.
-    </small>
+        <ion-item lines="full">
+            <ion-input label="IFRN-id" labelPlacement="stacked" [(ngModel)]="username" placeholder="Digite seu usuário">
+            </ion-input>
+        </ion-item>
 
-    <label for="password">Senha</label>
-    <input
-        id="password"
-        type="password"
-        [(ngModel)]="password"
-        placeholder="Digite sua senha">
+        <ion-note class="help-text">
+            IFRN-id é sua matrícula ou CPF para acesso externo.
+        </ion-note>
 
-    <button (click)="login()">
-        Entrar
-    </button>
+        <ion-item lines="full">
+            <ion-input type="password" label="Senha" labelPlacement="stacked" [(ngModel)]="password" placeholder="Digite sua senha">
+            </ion-input>
+        </ion-item>
 
-    <button
-        type="button"
-        class="secondary"
-        (click)="clear()">
-        Cancelar
-    </button>
+        <ion-button expand="block" class="login-button" (click)="login()">
+            Continuar
+        </ion-button>
 
-    <a href="#" (click)="forgotPassword($event)">
-        Esqueci minha senha
-    </a>
+        <ion-button expand="block" fill="outline" class="cancel-button" (click)="clear()">
+            Limpar
+        </ion-button>
 
-    <a href="#" (click)="help($event)">
-        Ficou com dúvidas?
-    </a>
+        <div class="links">
+            <a href="" (click)="forgotPassword($event)">
+                Esqueci minha senha
+            </a>
 
-</div>
+            <a href="" (click)="help($event)">
+                Preciso de ajuda
+            </a>
+        </div>
+
+        <div class="divider">
+            <span>ou</span>
+        </div>
+
+        <div class="alt-login">
+
+            <ion-button expand="block" fill="outline" disabled>
+                Entrar com QR Code
+            </ion-button>
+
+            <ion-button expand="block" fill="outline" disabled>
+                Certificado Digital
+            </ion-button>
+
+        </div>
+
+    </div>
+
+</ion-content>
