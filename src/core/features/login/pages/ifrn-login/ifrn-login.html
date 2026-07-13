@@ -1,65 +1,52 @@
-<ion-content fullscreen>
+<ion-content class="login-page">
 
-    <div class="govbr-login">
+    <div class="logo">
+        <img src="assets/img/logo-ifrn.png" alt="IFRN">
+    </div>
 
-        <div class="header">
-            <!-- Troque pelo logo do IFRN -->
-            <h2>logo ifrn</h2>
-        </div>
+    <div class="login-card">
 
-        <h2>Entrar no SUAP</h2>
+        <h2>Digite a sua senha</h2>
 
-        <p class="subtitle">
-            Utilize sua conta institucional para acessar o ambiente virtual.
-        </p>
-
-        <ion-item lines="full">
+        <ion-item lines="none">
             <ion-input label="IFRN-id" labelPlacement="stacked" [(ngModel)]="username" placeholder="Digite seu usuário">
             </ion-input>
         </ion-item>
 
-        <ion-note class="help-text">
-            IFRN-id é sua matrícula ou CPF para acesso externo.
-        </ion-note>
+        <small>
+            IFRN-id é sua matrícula no IFRN, ou seu CPF caso possua acesso externo.
+        </small>
 
-        <ion-item lines="full">
+        <ion-item lines="none">
             <ion-input type="password" label="Senha" labelPlacement="stacked" [(ngModel)]="password" placeholder="Digite sua senha">
             </ion-input>
         </ion-item>
 
-        <ion-button expand="block" class="login-button" (click)="login()">
-            Continuar
+        <ion-button expand="block" class="btn-login" (click)="login()">
+            Entrar
         </ion-button>
 
-        <ion-button expand="block" fill="outline" class="cancel-button" (click)="clear()">
-            Limpar
+        <ion-button expand="block" fill="outline" class="btn-cancel" (click)="clear()">
+            Cancelar
         </ion-button>
 
         <div class="links">
+
             <a href="" (click)="forgotPassword($event)">
                 Esqueci minha senha
             </a>
 
             <a href="" (click)="help($event)">
-                Preciso de ajuda
+                Ficou com dúvidas?
             </a>
+
         </div>
 
         <div class="divider">
             <span>ou</span>
         </div>
 
-        <div class="alt-login">
 
-            <ion-button expand="block" fill="outline" disabled>
-                Entrar com QR Code
-            </ion-button>
-
-            <ion-button expand="block" fill="outline" disabled>
-                Certificado Digital
-            </ion-button>
-
-        </div>
 
     </div>
 
