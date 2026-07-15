@@ -1,48 +1,73 @@
-<ion-content class="login-page">
+<ion-content class="ifrn-login">
 
-    <div class="logo">
-        <img src="assets/img/logo-ifrn.png" alt="IFRN">
-    </div>
+    <header class="ifrn-login__header">
+        <img class="ifrn-login__logo" src="assets/img/Gov.br_logo.svg.webp" alt="gov.br">
+    </header>
 
-    <div class="login-card">
+    <main class="ifrn-login__content">
+        <section class="ifrn-login__card" aria-labelledby="ifrn-login-title">
+            <h1 id="ifrn-login-title">Digite sua senha</h1>
 
-        <h2>Digite a sua senha</h2>
+            <form class="ifrn-login__form" (submit)="$event.preventDefault(); login()">
+                <div class="ifrn-login__field">
+                    <label for="ifrn-login-username">IFRN-id</label>
 
-        <ion-item lines="none">
-            <ion-input label="IFRN-id" labelPlacement="stacked" [(ngModel)]="username" placeholder="Digite seu usuário">
-            </ion-input>
-        </ion-item>
+                    <div class="ifrn-login__input">
+                        <input
+                            id="ifrn-login-username"
+                            name="username"
+                            type="text"
+                            [(ngModel)]="username"
+                            autocomplete="username"
+                            placeholder="Digite sua senha atual"
+                        >
 
-        <small>
-            IFRN-id é sua matrícula no IFRN, ou seu CPF caso possua acesso externo.
-        </small>
+                        <span class="ifrn-login__icon" aria-hidden="true">
+                            <ion-icon name="eye-outline" aria-hidden="true"></ion-icon>
+                        </span>
+                    </div>
 
-        <ion-item lines="none">
-            <ion-input type="password" label="Senha" labelPlacement="stacked" [(ngModel)]="password" placeholder="Digite sua senha">
-            </ion-input>
-        </ion-item>
+                    <p>
+                        IFRN-id é sua matrícula no IFRN, caso você tenha, ou o seu CPF, caso seja colaborador externo.
+                    </p>
+                </div>
 
-        <ion-button expand="block" class="btn-login" (click)="login()">
-            Entrar
-        </ion-button>
+                <div class="ifrn-login__field">
+                    <label for="ifrn-login-password">Senha</label>
 
-        <ion-button expand="block" fill="outline" class="btn-cancel" (click)="clear()">
-            Cancelar
-        </ion-button>
+                    <div class="ifrn-login__input">
+                        <input
+                            id="ifrn-login-password"
+                            name="password"
+                            type="password"
+                            [(ngModel)]="password"
+                            autocomplete="current-password"
+                            placeholder="Digite sua senha atual"
+                        >
 
-        <div class="links">
+                        <span class="ifrn-login__icon" aria-hidden="true">
+                            <ion-icon name="eye-outline" aria-hidden="true"></ion-icon>
+                        </span>
+                    </div>
+                </div>
 
-            <a href="" (click)="forgotPassword($event)">
+                <button class="ifrn-login__button ifrn-login__button--primary" type="button" (click)="login()">
+                    Entrar
+                </button>
+
+                <button class="ifrn-login__button ifrn-login__button--secondary" type="button" (click)="clear()">
+                    Cancelar
+                </button>
+            </form>
+
+            <a class="ifrn-login__link ifrn-login__link--forgot" href="" (click)="forgotPassword($event)">
                 Esqueci minha senha
             </a>
+        </section>
 
-            <a href="" (click)="help($event)">
-                Ficou com dúvidas?
-            </a>
-
-        </div>
-
-
-    </div>
+        <a class="ifrn-login__link ifrn-login__link--help" href="" (click)="help($event)">
+            Ficou com dúvidas?
+        </a>
+    </main>
 
 </ion-content>
