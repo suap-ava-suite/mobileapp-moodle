@@ -4,70 +4,135 @@
         <img class="ifrn-login__logo" src="assets/img/Gov.br_logo.svg.webp" alt="gov.br">
     </header>
 
+
     <main class="ifrn-login__content">
+
         <section class="ifrn-login__card" aria-labelledby="ifrn-login-title">
-            <h1 id="ifrn-login-title">Digite sua senha</h1>
+
+
+            <h1 id="ifrn-login-title">
+                Digite sua senha
+            </h1>
+
+
 
             <form class="ifrn-login__form" (submit)="$event.preventDefault(); login()">
+
+
+
+                <!-- Campo IFRN-id -->
                 <div class="ifrn-login__field">
-                    <label for="ifrn-login-username">IFRN-id</label>
+
+                    <label for="ifrn-login-username">
+                        IFRN-id
+                    </label>
+
 
                     <div class="ifrn-login__input">
-                        <input
-                            id="ifrn-login-username"
-                            name="username"
-                            type="text"
-                            [(ngModel)]="username"
-                            autocomplete="username"
-                            placeholder="Digite sua senha atual"
-                        >
 
-                        <span class="ifrn-login__icon" aria-hidden="true">
-                            <ion-icon name="eye-outline" aria-hidden="true"></ion-icon>
-                        </span>
+                        <input id="ifrn-login-username" name="username" type="text" [(ngModel)]="username" autocomplete="username"
+                            placeholder="Digite seu IFRN-id">
+
                     </div>
+
 
                     <p>
-                        IFRN-id é sua matrícula no IFRN, caso você tenha, ou o seu CPF, caso seja colaborador externo.
+                        IFRN-id é sua matrícula no IFRN, caso você tenha,
+                        ou o seu CPF, caso seja colaborador externo.
                     </p>
+
                 </div>
 
+
+
+
+                <!-- Campo senha -->
                 <div class="ifrn-login__field">
-                    <label for="ifrn-login-password">Senha</label>
+
+                    <label for="ifrn-login-password">
+                        Senha
+                    </label>
+
+
 
                     <div class="ifrn-login__input">
-                        <input
-                            id="ifrn-login-password"
-                            name="password"
-                            type="password"
-                            [(ngModel)]="password"
-                            autocomplete="current-password"
-                            placeholder="Digite sua senha atual"
-                        >
 
-                        <span class="ifrn-login__icon" aria-hidden="true">
-                            <ion-icon name="eye-outline" aria-hidden="true"></ion-icon>
-                        </span>
+
+                        <input id="ifrn-login-password" name="password" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password"
+                            autocomplete="current-password" placeholder="Digite sua senha atual">
+
+
+
+                        <button type="button" class="ifrn-login__icon" (click)="togglePassword()" aria-label="Mostrar ou esconder senha">
+
+
+                            <ion-icon [name]="showPassword ?
+                                'eye-off-outline' :
+                                'eye-outline'">
+                            </ion-icon>
+
+
+                        </button>
+
+
                     </div>
+
+
                 </div>
 
+
+
+
+
+                <!-- Botão entrar -->
                 <button class="ifrn-login__button ifrn-login__button--primary" type="button" (click)="login()">
+
                     Entrar
+
                 </button>
 
+
+
+
+
+                <!-- Botão cancelar -->
                 <button class="ifrn-login__button ifrn-login__button--secondary" type="button" (click)="clear()">
+
                     Cancelar
+
                 </button>
+
+
             </form>
 
+
+
+
+
+            <!-- Recuperar senha -->
             <a class="ifrn-login__link ifrn-login__link--forgot" href="" (click)="forgotPassword($event)">
+
                 Esqueci minha senha
+
             </a>
+
+
         </section>
 
+
+
+
+
+        <!-- Ajuda -->
         <a class="ifrn-login__link ifrn-login__link--help" href="" (click)="help($event)">
+
             Ficou com dúvidas?
+
         </a>
+
+
+
     </main>
+
 
 </ion-content>
