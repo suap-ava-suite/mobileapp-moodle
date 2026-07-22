@@ -17,7 +17,6 @@ import { Router } from '@angular/router';
 import { CoreSharedModule } from '@/core/shared.module';
 import { AuthService } from '@/core/services_mobile/auth.service';
 
-
 @Component({
     selector: 'page-ifrn-login',
     templateUrl: './ifrn-login.html',
@@ -35,14 +34,10 @@ export class IfrnLoginPage {
     // Controla mostrar/esconder senha
     showPassword = false;
 
-
-
     constructor(
         private authService: AuthService,
         private router: Router
     ) {}
-
-
 
     /**
      * Alterna visualização da senha
@@ -52,9 +47,6 @@ export class IfrnLoginPage {
         this.showPassword = !this.showPassword;
 
     }
-
-
-
 
     login(): void {
 
@@ -68,8 +60,6 @@ export class IfrnLoginPage {
 
         }
 
-
-
         const credenciais = {
 
             username: this.username,
@@ -77,8 +67,6 @@ export class IfrnLoginPage {
             password: this.password
 
         };
-
-
 
         this.authService.login(credenciais).subscribe({
 
@@ -137,10 +125,6 @@ export class IfrnLoginPage {
 
     }
 
-
-
-
-
     clear(): void {
 
         this.username = '';
@@ -148,10 +132,6 @@ export class IfrnLoginPage {
         this.password = '';
 
     }
-
-
-
-
 
     forgotPassword(event: Event): void {
 
@@ -162,10 +142,6 @@ export class IfrnLoginPage {
         );
 
     }
-
-
-
-
 
     help(event: Event): void {
 
