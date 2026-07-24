@@ -84,6 +84,12 @@ const appRoutes: Routes = [
         canActivate: [redirectGuard],
     },
     {
+        path: 'hello-world',
+        loadComponent: () =>
+            import('@features/hello_world/hello-world')
+                .then(module => module.HelloWorldPage),
+    },
+    {
         path: 'logout',
         loadComponent: () => import('@features/login/pages/logout/logout'),
     },
