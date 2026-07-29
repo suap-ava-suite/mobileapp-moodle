@@ -48,7 +48,7 @@ const appRoutes: Routes = [
             {
                 path: 'ifrn',
                 loadComponent: () =>
-                    import('@features/login/pages/ifrn-login/ifrn-login')
+                    import('@/MoodleIFRN/ifrn-login/ifrn-login')
                         .then(m => m.IfrnLoginPage),
             },
             {
