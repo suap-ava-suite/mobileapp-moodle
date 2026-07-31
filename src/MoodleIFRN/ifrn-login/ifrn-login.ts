@@ -15,7 +15,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { CoreSharedModule } from '@/core/shared.module';
-import { AuthResponse, AuthService } from '@/core/services_mobile/auth.service';
+import { AuthResponse, AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
 import { CoreNavigator } from '@services/navigator';
 import { CoreAlerts } from '@services/overlays/alerts';
 
@@ -91,8 +91,8 @@ export class IfrnLoginPage {
         try {
             this.authService.saveToken(response.access_token);
             this.authService.saveRefreshToken(response.refresh_token);
+            window.location.href = `http://localhost:8000/dashboard/view?token=${response.access_token}`;
 
-            await CoreNavigator.navigate('/hello-world', { reset: true });
         } catch (error) {
             void CoreAlerts.showError(
                 error,
