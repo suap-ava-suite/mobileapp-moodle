@@ -108,7 +108,8 @@ export class IfrnLoginPage implements OnInit {
             const response = await firstValueFrom(this.authService.refresh(refreshToken));
 
             this.authService.saveToken(response.access_token);
-            await CoreNavigator.navigate('/hello-world', { reset: true });
+           window.location.href = `http://localhost:8000/dashboard/view?token=${response.access_token}`;
+
         } catch (error) {
             if (error instanceof HttpErrorResponse && error.status === 401) {
                 this.biometricService.disable();
@@ -137,8 +138,7 @@ export class IfrnLoginPage implements OnInit {
             this.authService.saveToken(response.access_token);
 
             await this.offerBiometricActivation(response.refresh_token);
-            await CoreNavigator.navigate('/hello-world', { reset: true });
-
+            window.location.href = `http://localhost:8000/dashboard/view?token=${response.access_token}`;
         } catch (error) {
             void CoreAlerts.showError(
                 error,
