@@ -13,11 +13,14 @@
 // limitations under the License.
 
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CoreSharedModule } from '@/core/shared.module';
 import { AuthResponse, AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
+import { BiometricService } from '@/MoodleIFRN/services_mobile/biometric.service';
 import { CoreNavigator } from '@services/navigator';
 import { CoreAlerts } from '@services/overlays/alerts';
+import { CorePlatform } from '@services/platform';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
     selector: 'page-ifrn-login',
@@ -27,14 +30,24 @@ import { CoreAlerts } from '@services/overlays/alerts';
         CoreSharedModule,
     ],
 })
-export class IfrnLoginPage {
+export class IfrnLoginPage implements OnInit {
 
     private readonly authService = inject(AuthService);
+    private readonly biometricService = inject(BiometricService);
 
     username = '';
     password = '';
     showPassword = false;
     loading = false;
+    biometricAvailable = false;
+    biometricEnabled = false;
+
+    async ngOnInit(): Promise<void> {
+        await CorePlatform.ready();
+
+        this.biometricAvailable = await this.biometricService.isAvailable();
+        this.biometricEnabled = this.biometricAvailable && this.biometricService.isEnabled();
+    }
 
     /**
      * Alterna a visualizacao da senha.
@@ -82,6 +95,38 @@ export class IfrnLoginPage {
         });
     }
 
+    /** Autentica com a credencial protegida pela biometria do aparelho. */
+    async loginWithBiometrics(): Promise<void> {
+        if (this.loading || !this.biometricEnabled) {
+            return;
+        }
+
+        this.loading = true;
+
+        try {
+            const refreshToken = await this.biometricService.authenticate();
+            const response = await firstValueFrom(this.authService.refresh(refreshToken));
+
+            this.authService.saveToken(response.access_token);
+            await CoreNavigator.navigate('/hello-world', { reset: true });
+        } catch (error) {
+            if (error instanceof HttpErrorResponse && error.status === 401) {
+                this.biometricService.disable();
+                this.biometricEnabled = false;
+
+                void CoreAlerts.showError(
+                    'Sua sessão biométrica expirou. Entre com IFRN-id e senha para ativá-la novamente.',
+                );
+            } else {
+                void CoreAlerts.showError(
+                    'Não foi possível autenticar com a biometria. Tente novamente ou use sua senha.',
+                );
+            }
+        } finally {
+            this.loading = false;
+        }
+    }
+
     /**
      * Salva os tokens retornados pela FastAPI e abre a pagina Hello World.
      *
@@ -90,8 +135,9 @@ export class IfrnLoginPage {
     private async completeLogin(response: AuthResponse): Promise<void> {
         try {
             this.authService.saveToken(response.access_token);
-            this.authService.saveRefreshToken(response.refresh_token);
-            window.location.href = `http://localhost:8000/dashboard/view?token=${response.access_token}`;
+
+            await this.offerBiometricActivation(response.refresh_token);
+            await CoreNavigator.navigate('/hello-world', { reset: true });
 
         } catch (error) {
             void CoreAlerts.showError(
@@ -100,6 +146,40 @@ export class IfrnLoginPage {
             );
         } finally {
             this.loading = false;
+        }
+    }
+
+    /** Oferece ou atualiza a credencial biométrica depois do login por senha. */
+    private async offerBiometricActivation(refreshToken: string): Promise<void> {
+        if (!this.biometricAvailable) {
+            return;
+        }
+
+        let shouldEnable = this.biometricEnabled;
+
+        if (!shouldEnable) {
+            try {
+                await CoreAlerts.confirm(
+                    'Deseja usar a biometria nos próximos acessos?',
+                    {
+                        header: 'Ativar biometria',
+                        okText: 'Ativar',
+                        cancelText: 'Agora não',
+                    },
+                );
+                shouldEnable = true;
+            } catch {
+                return;
+            }
+        }
+
+        try {
+            await this.biometricService.enable(refreshToken);
+            this.biometricEnabled = true;
+        } catch {
+            void CoreAlerts.showError(
+                'O login foi concluído, mas não foi possível ativar a biometria.',
+            );
         }
     }
 

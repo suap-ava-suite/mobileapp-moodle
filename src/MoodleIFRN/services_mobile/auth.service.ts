@@ -7,9 +7,10 @@
 //     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an
-// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-// either express or implied.
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 import { HttpBackend, HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
@@ -27,9 +28,11 @@ export interface AuthResponse {
     providedIn: 'root',
 })
 export class AuthService {
+
     private readonly http = new HttpClient(inject(HttpBackend));
 
     private readonly apiUrl = 'http://localhost:8000';
+    private accessToken: string | null = null;
 
     /**
      * Realiza o login no FastAPI.
@@ -38,10 +41,9 @@ export class AuthService {
         username: string;
         password: string;
     }): Observable<AuthResponse> {
-        const headers = new HttpHeaders({
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-        });
+        const headers = new HttpHeaders()
+            .set('Content-Type', 'application/json')
+            .set('Accept', 'application/json');
 
         return this.http.post<AuthResponse>(
             `${this.apiUrl}/auth/login`,
@@ -51,31 +53,31 @@ export class AuthService {
     }
 
     /**
-     * Salva o Access Token.
+     * Renova a sessão usando a credencial liberada pela biometria.
      */
-    saveToken(token: string): void {
-        localStorage.setItem('access_token', token);
+    refresh(refreshToken: string): Observable<AuthResponse> {
+        /* eslint-disable @typescript-eslint/naming-convention */
+        const payload = { refresh_token: refreshToken };
+        /* eslint-enable @typescript-eslint/naming-convention */
+
+        return this.http.post<AuthResponse>(
+            `${this.apiUrl}/auth/refresh`,
+            payload,
+        );
     }
 
     /**
-     * Salva o Refresh Token.
+     * Mantém o access token apenas em memória durante a sessão do aplicativo.
      */
-    saveRefreshToken(refreshToken: string): void {
-        localStorage.setItem('refresh_token', refreshToken);
+    saveToken(token: string): void {
+        this.accessToken = token;
     }
 
     /**
      * Retorna o Access Token.
      */
     getToken(): string | null {
-        return localStorage.getItem('access_token');
-    }
-
-    /**
-     * Retorna o Refresh Token.
-     */
-    getRefreshToken(): string | null {
-        return localStorage.getItem('refresh_token');
+        return this.accessToken;
     }
 
     /**
@@ -91,18 +93,17 @@ export class AuthService {
     getAuthHeaders(): HttpHeaders {
         const token = this.getToken();
 
-        return new HttpHeaders({
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-            Authorization: token ? `Bearer ${token}` : '',
-        });
+        return new HttpHeaders()
+            .set('Content-Type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', token ? `Bearer ${token}` : '');
     }
 
     /**
      * Remove os tokens salvos.
      */
     logout(): void {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        this.accessToken = null;
     }
+
 }
