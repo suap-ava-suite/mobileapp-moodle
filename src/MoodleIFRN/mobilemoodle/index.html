@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#098E95">
+    <title>Painel AVA · IFRN</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core@8.8.1/css/ionic.bundle.css">
+    <link rel="stylesheet" href="/mobilemoodle/css/painel.css">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core@8.8.1/dist/ionic/ionic.esm.js"></script>
+    <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core@8.8.1/dist/ionic/ionic.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/ionicons@7.4.0/dist/ionicons/ionicons.esm.js"></script>
+</head>
+<body>
+    <ion-app>
+        <ion-menu content-id="main-content" type="overlay">
+            <ion-header>
+                <ion-toolbar color="primary">
+                    <ion-title>Painel AVA</ion-title>
+                    <ion-buttons slot="end">
+                        <ion-menu-toggle>
+                            <ion-button aria-label="Fechar menu">
+                                <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+                            </ion-button>
+                        </ion-menu-toggle>
+                    </ion-buttons>
+                </ion-toolbar>
+            </ion-header>
+            <ion-content class="menu-content">
+                <ion-list lines="none">
+                    <ion-item button detail="false" href="#/painel">
+                        <ion-icon slot="start" name="albums-outline"></ion-icon>
+                        <ion-label>Meus cursos</ion-label>
+                    </ion-item>
+                    <ion-item href="https://ajuda.ead.ifrn.edu.br/" target="_blank" rel="noopener">
+                        <ion-icon slot="start" name="help-circle-outline"></ion-icon>
+                        <ion-label>Ajuda</ion-label>
+                    </ion-item>
+                </ion-list>
+                <div class="menu-user" id="menu-user"></div>
+            </ion-content>
+        </ion-menu>
+
+        <div class="ion-page" id="main-content">
+            <ion-header>
+                <ion-toolbar>
+                    <ion-buttons slot="start">
+                        <ion-menu-button auto-hide="false" color="primary"></ion-menu-button>
+                    </ion-buttons>
+                    <ion-title id="page-title">Meus cursos</ion-title>
+                    <ion-buttons slot="end">
+                        <ion-avatar class="toolbar-avatar" id="toolbar-avatar" aria-hidden="true">M</ion-avatar>
+                    </ion-buttons>
+                </ion-toolbar>
+            </ion-header>
+
+            <ion-content id="page-content">
+                <div class="page-loading">
+                    <ion-spinner name="crescent" color="primary"></ion-spinner>
+                    <p>Carregando painel...</p>
+                </div>
+            </ion-content>
+        </div>
+    </ion-app>
+
+    <script src="/mobilemoodle/js/api.js"></script>
+    <script src="/mobilemoodle/js/app.js"></script>
+</body>
+</html>

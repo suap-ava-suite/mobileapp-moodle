@@ -17,7 +17,6 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CoreSharedModule } from '@/core/shared.module';
 import { AuthResponse, AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
 import { BiometricService } from '@/MoodleIFRN/services_mobile/biometric.service';
-import { CoreNavigator } from '@services/navigator';
 import { CoreAlerts } from '@services/overlays/alerts';
 import { CorePlatform } from '@services/platform';
 import { firstValueFrom } from 'rxjs';
