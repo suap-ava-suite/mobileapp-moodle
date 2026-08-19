@@ -122,6 +122,9 @@
         if (refresher) {
             refresher.addEventListener("ionRefresh", function (event) {
                 dashboardCache = null;
+                if (window.MobileMoodleApi && window.MobileMoodleApi.invalidateCache) {
+                    window.MobileMoodleApi.invalidateCache();
+                }
                 loadRoute().finally(function () {
                     event.target.complete();
                 });
