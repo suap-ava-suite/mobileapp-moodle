@@ -1,0 +1,190 @@
+@use "variables";
+
+// Cards do Painel AVA (theme_ifrn25) + Ionic
+
+.tabs-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 0 12px;
+    margin-bottom: 4px;
+}
+
+.tabs-row ion-chip {
+    flex-shrink: 0;
+}
+
+.card-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.painel-card {
+    margin: 0 0 14px;
+    border: 1px solid var(--light);
+    box-shadow: 1px 1px 8px rgba(20, 20, 20, 0.25);
+    border-radius: 8px;
+}
+
+.painel-card ion-card-content {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.painel-card-title {
+    margin: 0;
+    font: var(--font-heading1);
+    color: var(--dark);
+    letter-spacing: 0;
+}
+
+.painel-card-header-shortname {
+    display: block;
+    margin-top: 4px;
+    font: var(--font-button2);
+    color: var(--dark);
+}
+
+.painel-card-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.painel-card-details-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 140px;
+}
+
+.painel-progress-bar-container {
+    background: #e3e3e3;
+    border-radius: 50px;
+    height: 4px;
+    max-width: 187px;
+    width: 40%;
+    overflow: hidden;
+    flex: 1;
+}
+
+.painel-progress-bar {
+    background: linear-gradient(270deg, #9f6ede 0%, #633594 100%);
+    border-radius: 50px;
+    height: 100%;
+}
+
+.painel-card-details-progress span {
+    font-family: var(--font-family);
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.painel-card-details-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+}
+
+.painel-card-info-icon,
+.painel-card-details-info-published {
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    height: 24px;
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    font: var(--font-heading6);
+}
+
+.painel-card-info-icon ion-icon,
+.painel-card-details-info-published ion-icon {
+    font-size: 12px;
+}
+
+.painel-card-details-info-favourite {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    display: grid;
+    place-items: center;
+    border: none;
+    padding: 0;
+}
+
+.painel-card-details-info-favourite ion-icon {
+    font-size: 12px;
+}
+
+.painel-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.card-skeleton {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 1px 1px 8px rgba(20, 20, 20, 0.25);
+    border: 1px solid var(--light);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.title-skeleton,
+.subtitle-skeleton,
+.progress-bar-skeleton,
+.badge-skeleton {
+    background: var(--light-dark);
+    border-radius: 4px;
+    animation: pulse 1s infinite ease-in-out;
+}
+
+.title-skeleton {
+    height: 24px;
+    width: 60%;
+}
+
+.subtitle-skeleton {
+    height: 18px;
+    width: 40%;
+}
+
+.progress-bar-skeleton {
+    height: 8px;
+    width: 40%;
+    max-width: 187px;
+}
+
+.badge-skeleton {
+    height: 24px;
+    width: 80px;
+    border-radius: 14px;
+    margin-left: auto;
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.45;
+    }
+}

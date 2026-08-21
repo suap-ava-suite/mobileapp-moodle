@@ -1,0 +1,71 @@
+@use "variables";
+
+// Sidebar Ionic adaptado do theme_ifrn25
+
+.menu-content {
+    --background: var(--primary);
+    --color: #ffffff;
+}
+
+.menu-content ion-item {
+    --background: transparent;
+    --color: #ffffff;
+    --padding-start: 16px;
+    font-weight: 600;
+}
+
+.menu-content ion-icon {
+    color: var(--primary-light);
+}
+
+.menu-content ion-item.menu-item-active {
+    --background: var(--primary-dark);
+    border-radius: 8px;
+}
+
+.menu-user {
+    margin: 16px;
+    padding: 12px;
+    background: #ffffff;
+    color: #2b2b2b;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.menu-user__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--primary-light);
+}
+
+.menu-user__info {
+    min-width: 0;
+}
+
+.menu-user strong,
+.menu-user span {
+    display: block;
+}
+
+.menu-user span {
+    color: var(--muted);
+    font-size: 0.8rem;
+}
+
+.menu-divider {
+    height: 1px;
+    margin: 8px 16px;
+    background: rgba(206, 253, 239, 0.35);
+}
+
+.menu-section-label {
+    margin: 8px 16px 4px;
+    font: var(--font-heading6);
+    letter-spacing: 0.04em;
+    color: var(--primary-light);
+    text-transform: uppercase;
+}

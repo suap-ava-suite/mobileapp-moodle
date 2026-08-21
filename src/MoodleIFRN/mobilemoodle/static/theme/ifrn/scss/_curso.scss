@@ -1,0 +1,107 @@
+@use "variables";
+
+.breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+    font-size: 0.8rem;
+    color: var(--muted);
+
+    a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    strong {
+        color: var(--dark);
+    }
+}
+
+.course-hero,
+.topic-card {
+    margin: 0 0 14px;
+    border: 1px solid var(--light);
+    box-shadow: 1px 1px 8px rgba(20, 20, 20, 0.18);
+    border-radius: 8px;
+}
+
+.course-meta {
+    margin: 12px 0;
+    padding: 0;
+    list-style: none;
+    color: var(--cinza-secundario);
+
+    li {
+        margin-bottom: 4px;
+    }
+}
+
+.section-title {
+    margin: 8px 0 12px;
+    font: var(--font-heading2);
+}
+
+.topic-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+}
+
+.topic-index {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.topic-card h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.topic-card p {
+    margin: 2px 0 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.course-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+
+    ion-progress-bar {
+        flex: 1;
+        max-width: 180px;
+        height: 4px;
+        border-radius: 50px;
+        --background: #e3e3e3;
+        --progress-background: linear-gradient(270deg, #9f6ede 0%, #633594 100%);
+    }
+
+    span {
+        font-size: 0.75rem;
+        color: var(--muted);
+    }
+}
+
+.env-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--verde-claro);
+    color: var(--verde-icon);
+}

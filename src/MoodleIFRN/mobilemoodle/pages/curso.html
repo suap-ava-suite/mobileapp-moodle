@@ -1,0 +1,46 @@
+<!-- Partial Ionic · Detalhe do curso -->
+<template id="tpl-curso">
+    <div class="curso-page">
+        <nav class="breadcrumb">
+            <a href="#/painel">Painel AVA</a>
+            <span>/</span>
+            <strong id="curso-breadcrumb-name"></strong>
+        </nav>
+
+        <ion-card class="course-hero">
+            <ion-card-content>
+                <span class="env-chip">
+                    <ion-icon name="folder-outline"></ion-icon>
+                    AVA Acadêmico
+                </span>
+                <h2 class="painel-card-title" id="curso-title"></h2>
+                <ul class="course-meta">
+                    <li><strong>Professor:</strong> <span id="curso-teacher"></span></li>
+                    <li><strong>Carga horária:</strong> <span id="curso-workload"></span></li>
+                    <li><strong>Progresso:</strong> <span id="curso-progress-text"></span></li>
+                </ul>
+                <div class="course-progress">
+                    <ion-progress-bar id="curso-progress-bar" value="0"></ion-progress-bar>
+                    <span id="curso-progress-label">0% concluído</span>
+                </div>
+            </ion-card-content>
+        </ion-card>
+
+        <h2 class="section-title">Conteúdo do curso</h2>
+        <div id="curso-sections"></div>
+
+        <ion-button expand="block" href="#/painel" fill="outline" color="primary">
+            Voltar ao painel
+        </ion-button>
+    </div>
+</template>
+
+<template id="tpl-curso-section">
+    <article class="topic-card">
+        <span class="topic-index"></span>
+        <div>
+            <h3 class="topic-name"></h3>
+            <p>Tópico da sala virtual</p>
+        </div>
+    </article>
+</template>

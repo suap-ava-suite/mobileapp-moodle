@@ -140,6 +140,22 @@
         color: #1351b4;
     }
 
+    &__button--govbr {
+        background: #e6e6e6;
+        border: 1px solid #e6e6e6;
+        color: #1351b4;
+        gap: 6px;
+    }
+
+    &__button--govbr:hover {
+        background: #dcdcdc;
+    }
+
+    &__govbr-mark {
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }
+
     &__link {
         color: #1351b4;
         display: block;

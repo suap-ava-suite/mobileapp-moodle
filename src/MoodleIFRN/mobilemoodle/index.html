@@ -4,12 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#098E95">
+    <meta name="referrer" content="no-referrer">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <title>Painel AVA · IFRN</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            margin: 0;
+            min-height: 100%;
+            background: #f7fafb;
+            color: #2b2b2b;
+            font-family: "Noto Sans", system-ui, sans-serif;
+        }
+        .boot-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-height: 50vh;
+            padding: 24px;
+            text-align: center;
+            color: #54595e;
+            font-size: 0.9375rem;
+        }
+    </style>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core@8.8.1/css/ionic.bundle.css">
-    <link rel="stylesheet" href="/mobilemoodle/css/painel.css">
+    <link rel="stylesheet" href="static/theme/ifrn/css/painel.css">
     <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core@8.8.1/dist/ionic/ionic.esm.js"></script>
     <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core@8.8.1/dist/ionic/ionic.js"></script>
     <script type="module" src="https://cdn.jsdelivr.net/npm/ionicons@7.4.0/dist/ionicons/ionicons.esm.js"></script>
@@ -30,17 +50,28 @@
                 </ion-toolbar>
             </ion-header>
             <ion-content class="menu-content">
+                <div class="menu-user" id="menu-user">
+                    <div class="menu-user__avatar menu-user__avatar--initials" id="menu-user-avatar" aria-hidden="true">U</div>
+                    <div class="menu-user__info" id="menu-user-info"></div>
+                </div>
+
+                <div class="menu-divider"></div>
+                <p class="menu-section-label">Navegação</p>
+
                 <ion-list lines="none">
-                    <ion-item button detail="false" href="#/painel">
+                    <ion-item button detail="false" href="#/painel" class="menu-item-active">
                         <ion-icon slot="start" name="albums-outline"></ion-icon>
                         <ion-label>Meus cursos</ion-label>
                     </ion-item>
-                    <ion-item href="https://ajuda.ead.ifrn.edu.br/" target="_blank" rel="noopener">
+                    <ion-item href="https://ajuda.ead.ifrn.edu.br/" target="_blank" rel="noopener noreferrer">
                         <ion-icon slot="start" name="help-circle-outline"></ion-icon>
                         <ion-label>Ajuda</ion-label>
                     </ion-item>
+                    <ion-item button detail="false" id="menu-logout">
+                        <ion-icon slot="start" name="log-out-outline"></ion-icon>
+                        <ion-label>Sair</ion-label>
+                    </ion-item>
                 </ion-list>
-                <div class="menu-user" id="menu-user"></div>
             </ion-content>
         </ion-menu>
 
@@ -58,15 +89,26 @@
             </ion-header>
 
             <ion-content id="page-content">
-                <div class="page-loading">
-                    <ion-spinner name="crescent" color="primary"></ion-spinner>
+                <div class="boot-loading page-loading">
                     <p>Carregando painel...</p>
                 </div>
             </ion-content>
         </div>
     </ion-app>
 
-    <script src="/mobilemoodle/js/api.js"></script>
-    <script src="/mobilemoodle/js/app.js"></script>
+    <div id="page-templates" hidden></div>
+
+    <!-- API -->
+    <script src="js/api-errors.js" defer></script>
+    <script src="js/api-auth.js" defer></script>
+    <script src="js/api-http.js" defer></script>
+    <script src="js/api.js" defer></script>
+
+    <!-- App -->
+    <script src="js/app-utils.js" defer></script>
+    <script src="js/app-status.js" defer></script>
+    <script src="js/app-views.js" defer></script>
+    <script src="js/app-router.js" defer></script>
+    <script src="js/app.js" defer></script>
 </body>
 </html>

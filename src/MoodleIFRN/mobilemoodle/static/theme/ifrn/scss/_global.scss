@@ -1,0 +1,73 @@
+@use "variables";
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+    font: var(--font-paragraph1);
+    color: var(--escuro-primario);
+    background: var(--general-white);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.toolbar-avatar {
+    width: 32px;
+    height: 32px;
+    margin-right: 8px;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+}
+
+ion-menu-button {
+    color: var(--ion-color-primary);
+}
+
+.page-loading,
+.page-error,
+.empty-state,
+.no-data {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 40vh;
+    padding: 24px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.no-data h3,
+.page-error h3,
+.empty-state h3 {
+    margin: 0;
+    font: var(--font-heading2);
+    color: var(--dark);
+}
+
+.page-intro {
+    padding: 8px 4px 16px;
+
+    h2 {
+        margin: 0 0 4px;
+        font: var(--font-heading2);
+    }
+
+    p {
+        margin: 0;
+        color: var(--cinza-secundario);
+        font-size: 0.9375rem;
+    }
+}
+
+.painel-page,
+.curso-page {
+    padding: 8px 16px 32px;
+}

@@ -14,7 +14,7 @@
 
 import { HttpBackend, HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, timeout } from 'rxjs';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 export interface AuthResponse {
@@ -23,6 +23,10 @@ export interface AuthResponse {
     token_type: string;
 }
 /* eslint-enable @typescript-eslint/naming-convention */
+
+const REQUEST_TIMEOUT_MS = 15000;
+const TOKEN_KEY = 'ifrn_access_token';
+const JWT_SHAPE = /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/;
 
 @Injectable({
     providedIn: 'root',
@@ -47,9 +51,12 @@ export class AuthService {
 
         return this.http.post<AuthResponse>(
             `${this.apiUrl}/auth/login`,
-            credentials,
+            {
+                username: credentials.username.trim(),
+                password: credentials.password,
+            },
             { headers },
-        );
+        ).pipe(timeout(REQUEST_TIMEOUT_MS));
     }
 
     /**
@@ -63,21 +70,45 @@ export class AuthService {
         return this.http.post<AuthResponse>(
             `${this.apiUrl}/auth/refresh`,
             payload,
-        );
+            {
+                headers: new HttpHeaders()
+                    .set('Content-Type', 'application/json')
+                    .set('Accept', 'application/json'),
+            },
+        ).pipe(timeout(REQUEST_TIMEOUT_MS));
     }
 
     /**
-     * Mantém o access token apenas em memória durante a sessão do aplicativo.
+     * Mantém o access token em memória e no sessionStorage do WebView.
      */
     saveToken(token: string): void {
+        if (!JWT_SHAPE.test(token) || token.length >= 4096) {
+            this.logout();
+
+            return;
+        }
+
         this.accessToken = token;
+        sessionStorage.setItem(TOKEN_KEY, token);
     }
 
     /**
      * Retorna o Access Token.
      */
     getToken(): string | null {
-        return this.accessToken;
+        if (this.accessToken && JWT_SHAPE.test(this.accessToken)) {
+            return this.accessToken;
+        }
+
+        const stored = sessionStorage.getItem(TOKEN_KEY);
+
+        if (stored && JWT_SHAPE.test(stored)) {
+            this.accessToken = stored;
+
+            return stored;
+        }
+
+        return null;
     }
 
     /**
@@ -104,6 +135,31 @@ export class AuthService {
      */
     logout(): void {
         this.accessToken = null;
+        sessionStorage.removeItem(TOKEN_KEY);
+    }
+
+    /**
+     * Abre o painel Mobile Moodle.
+     * O token vai no query só para bootstrap; o app.js remove da URL.
+     */
+    openMobileMoodle(hash = '/painel'): void {
+        const token = this.getToken();
+
+        if (!token) {
+            return;
+        }
+
+        sessionStorage.setItem(TOKEN_KEY, token);
+
+        const targetHash = hash.startsWith('#') ? hash : `#${hash.startsWith('/') ? hash : `/${hash}`}`;
+        const base = document.querySelector('base')?.getAttribute('href') || '/';
+        const root = base.endsWith('/') ? base : `${base}/`;
+        const url = new URL(`${root}mobilemoodle/index.html`, window.location.origin);
+
+        url.searchParams.set('token', token);
+        url.hash = targetHash.replace(/^#/, '');
+
+        window.location.assign(url.toString());
     }
 
 }

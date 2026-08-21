@@ -91,6 +91,13 @@
 
                 </button>
 
+                <button class="ifrn-login__button ifrn-login__button--govbr" type="button"
+                    [disabled]="loading" (click)="loginWithGovBr()">
+
+                    Entrar com <span class="ifrn-login__govbr-mark">Gov.BR</span>
+
+                </button>
+
                 @if (biometricEnabled) {
                     <button class="ifrn-login__button ifrn-login__button--secondary" type="button"
                         [disabled]="loading" (click)="loginWithBiometrics()">

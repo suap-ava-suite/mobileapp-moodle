@@ -19,7 +19,7 @@ import { AuthResponse, AuthService } from '@/MoodleIFRN/services_mobile/auth.ser
 import { BiometricService } from '@/MoodleIFRN/services_mobile/biometric.service';
 import { CoreAlerts } from '@services/overlays/alerts';
 import { CorePlatform } from '@services/platform';
-import { firstValueFrom } from 'rxjs';
+import { TimeoutError, firstValueFrom } from 'rxjs';
 
 @Component({
     selector: 'page-ifrn-login',
@@ -40,6 +40,8 @@ export class IfrnLoginPage implements OnInit {
     loading = false;
     biometricAvailable = false;
     biometricEnabled = false;
+
+    private lastLoginAt = 0;
 
     async ngOnInit(): Promise<void> {
         await CorePlatform.ready();
@@ -63,8 +65,18 @@ export class IfrnLoginPage implements OnInit {
             return;
         }
 
+        if (Date.now() - this.lastLoginAt < 800) {
+            return;
+        }
+
         if (!this.username.trim() || !this.password) {
             void CoreAlerts.showError('Por favor, preencha todos os campos.');
+
+            return;
+        }
+
+        if (this.username.trim().length > 120 || this.password.length > 200) {
+            void CoreAlerts.showError('Credenciais inválidas.');
 
             return;
         }
@@ -75,21 +87,16 @@ export class IfrnLoginPage implements OnInit {
         };
 
         this.loading = true;
+        this.lastLoginAt = Date.now();
 
         this.authService.login(credentials).subscribe({
             next: (response) => {
                 void this.completeLogin(response);
             },
-            error: (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse | TimeoutError) => {
                 this.loading = false;
 
-                void CoreAlerts.showError(
-                    error.status === 0
-                        ? 'O servi\u00e7o de autentica\u00e7\u00e3o est\u00e1 offline. Inicie a FastAPI na porta 8000.'
-                        : error.status === 401
-                            ? 'Usu\u00e1rio ou senha inv\u00e1lidos.'
-                            : 'N\u00e3o foi poss\u00edvel conectar ao servi\u00e7o de autentica\u00e7\u00e3o.',
-                );
+                void CoreAlerts.showError(this.messageForAuthError(error));
             },
         });
     }
@@ -107,8 +114,7 @@ export class IfrnLoginPage implements OnInit {
             const response = await firstValueFrom(this.authService.refresh(refreshToken));
 
             this.authService.saveToken(response.access_token);
-           window.location.href = `http://localhost:8000/dashboard/view?token=${response.access_token}`;
-
+            this.authService.openMobileMoodle('/painel');
         } catch (error) {
             if (error instanceof HttpErrorResponse && error.status === 401) {
                 this.biometricService.disable();
@@ -128,16 +134,17 @@ export class IfrnLoginPage implements OnInit {
     }
 
     /**
-     * Salva os tokens retornados pela FastAPI e abre a pagina Hello World.
+     * Salva os tokens e abre o painel Mobile Moodle.
      *
      * @param response Tokens retornados pela FastAPI.
      */
     private async completeLogin(response: AuthResponse): Promise<void> {
         try {
             this.authService.saveToken(response.access_token);
+            this.password = '';
 
             await this.offerBiometricActivation(response.refresh_token);
-            window.location.href = `http://localhost:8000/dashboard/view?token=${response.access_token}`;
+            this.authService.openMobileMoodle('/painel');
         } catch (error) {
             void CoreAlerts.showError(
                 error,
@@ -183,6 +190,20 @@ export class IfrnLoginPage implements OnInit {
     }
 
     /**
+     * Login Gov.br depende de integração OAuth no backend.
+     * No app, orientamos o uso do IFRN-id até a integração oficial.
+     */
+    loginWithGovBr(): void {
+        if (this.loading) {
+            return;
+        }
+
+        void CoreAlerts.showError(
+            'O acesso com Gov.br será liberado quando a integração oficial estiver ativa. Por enquanto, use IFRN-id e senha.',
+        );
+    }
+
+    /**
      * Limpa as credenciais informadas.
      */
     clear(): void {
@@ -197,6 +218,9 @@ export class IfrnLoginPage implements OnInit {
      */
     forgotPassword(event: Event): void {
         event.preventDefault();
+        void CoreAlerts.showError(
+            'A recuperação de senha é feita no SUAP/IFRN-id. Acesse o portal institucional pelo navegador.',
+        );
     }
 
     /**
@@ -206,6 +230,35 @@ export class IfrnLoginPage implements OnInit {
      */
     help(event: Event): void {
         event.preventDefault();
+        window.open('https://ajuda.ead.ifrn.edu.br/', '_blank', 'noopener,noreferrer');
+    }
+
+    private messageForAuthError(error: HttpErrorResponse | TimeoutError): string {
+        if (error instanceof TimeoutError || (error instanceof HttpErrorResponse && error.status === 0 && error.message?.includes('Timeout'))) {
+            return 'A autenticação demorou demais. Tente novamente.';
+        }
+
+        if (!(error instanceof HttpErrorResponse)) {
+            return 'Não foi possível conectar ao serviço de autenticação.';
+        }
+
+        if (error.status === 0) {
+            return 'O serviço de autenticação está offline. Inicie a FastAPI na porta 8000.';
+        }
+
+        if (error.status === 401) {
+            return 'Usuário ou senha inválidos.';
+        }
+
+        if (error.status === 429) {
+            return 'Muitas tentativas. Aguarde um momento e tente de novo.';
+        }
+
+        if (error.status >= 500) {
+            return 'Serviço de autenticação indisponível. Tente novamente em instantes.';
+        }
+
+        return 'Não foi possível conectar ao serviço de autenticação.';
     }
 
 }

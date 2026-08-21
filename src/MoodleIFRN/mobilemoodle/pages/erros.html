@@ -1,0 +1,24 @@
+<!-- Páginas de erro (somente texto) -->
+<template id="tpl-error-page">
+    <div class="status-page" role="alert">
+        <p class="status-page__code" id="status-code"></p>
+        <h2 class="status-page__title" id="status-title"></h2>
+        <p class="status-page__message" id="status-message"></p>
+        <div class="status-page__actions" id="status-actions"></div>
+    </div>
+</template>
+
+<template id="tpl-not-found">
+    <div class="status-page status-page--notfound" role="alert">
+        <p class="status-page__code">404</p>
+        <h2 class="status-page__title">Página não encontrada</h2>
+        <p class="status-page__message">
+            O endereço que você tentou abrir não existe ou foi removido.
+        </p>
+        <div class="status-page__actions">
+            <ion-button id="status-go-painel" color="primary" href="#/painel">
+                Voltar ao painel
+            </ion-button>
+        </div>
+    </div>
+</template>
