@@ -6,7 +6,7 @@
     const MAX_COURSE_CACHE = 40;
 
     // DEMO: true = força tela de erro 500 no painel. Volte para false depois do teste.
-    const DEMO_FORCE_500 = true;
+    const DEMO_FORCE_500 = false;
 
     const dashboardCache = {
         value: null,
