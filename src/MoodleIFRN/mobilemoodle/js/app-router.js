@@ -1,12 +1,23 @@
+/**
+ * app-router.js
+ * Roteamento por hash (#/painel, #/curso/123) e orquestra o carregamento das telas.
+ */
 (function (window) {
     "use strict";
 
     const MM = (window.MobileMoodle = window.MobileMoodle || {});
     const App = (MM.App = MM.App || {});
 
+    // Promise dos templates HTML (carregados uma vez).
     let templatesReady = null;
+
+    // Contador para ignorar respostas antigas se o usuário mudar de rota rápido.
     let routeSeq = 0;
 
+    /**
+     * Lê window.location.hash e devolve a rota atual.
+     * Exemplos: #/painel → painel | #/curso/5 → curso | #/xyz → notfound
+     */
     function parseRoute() {
         const hash = window.location.hash.replace(/^#/, "") || "/painel";
         const courseMatch = hash.match(/^\/curso\/(\d{1,10})$/);
@@ -22,11 +33,16 @@
         return { name: "notfound" };
     }
 
+    /**
+     * Carrega pages/painel.html, curso.html e erros.html dentro de #page-templates.
+     * Só baixa da rede na primeira vez.
+     */
     async function loadTemplates() {
         if (templatesReady) {
             return templatesReady;
         }
 
+        // Já estão no DOM (ex.: embutidos no HTML) → nada a fazer.
         if (
             document.getElementById("tpl-painel") &&
             document.getElementById("tpl-curso") &&
@@ -38,6 +54,7 @@
         }
 
         const assetBase = App.ASSET_BASE;
+        // Se o script estiver em static/theme/ifrn/js/, sobe até a raiz do mobilemoodle.
         const base = assetBase.indexOf("static/theme/ifrn/") !== -1
             ? assetBase.replace(/static\/theme\/ifrn\/$/, "")
             : assetBase;
@@ -49,13 +66,14 @@
         ]).then(function (parts) {
             App.templatesRoot.innerHTML = parts.join("\n");
         }).catch(function (error) {
-            templatesReady = null;
+            templatesReady = null; // permite tentar de novo depois
             throw error;
         });
 
         return templatesReady;
     }
 
+    /** Cache local do dashboard na camada da UI (além do cache da API). */
     async function loadDashboard(force) {
         if (!force && App.dashboardCache) {
             return App.dashboardCache;
@@ -66,6 +84,10 @@
         return App.dashboardCache;
     }
 
+    /**
+     * Ponto central: decide o que mostrar com base na rota.
+     * @param {boolean} force — true força refresh da API.
+     */
     async function loadRoute(force) {
         const seq = ++routeSeq;
         const route = parseRoute();
@@ -73,6 +95,7 @@
         try {
             await loadTemplates();
 
+            // Se outra navegação começou depois desta, abandona.
             if (seq !== routeSeq) {
                 return;
             }
@@ -96,6 +119,7 @@
 
             App.showLoading(route.name === "curso" ? "Carregando curso..." : "Carregando painel...");
 
+            // Rota de curso: busca dashboard (usuário) + curso em paralelo.
             if (route.name === "curso") {
                 const [dashboard, course] = await Promise.all([
                     loadDashboard(force),
@@ -111,6 +135,7 @@
                 return;
             }
 
+            // Painel: refresh força limpar caches.
             if (force) {
                 App.dashboardCache = null;
                 window.MobileMoodleApi.invalidateCache();
@@ -128,6 +153,7 @@
                 return;
             }
 
+            // Qualquer ApiError / falha cai na tela de status.
             App.showStatusError(error);
         }
     }

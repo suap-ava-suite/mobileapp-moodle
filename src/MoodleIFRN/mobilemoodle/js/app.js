@@ -1,16 +1,23 @@
+/**
+ * app.js
+ * Bootstrap da aplicação: liga o DOM, menu, base da API e eventos iniciais.
+ * Deve ser o último script da lista (usa App.* definido nos arquivos anteriores).
+ */
 (function (window) {
     "use strict";
 
     const MM = (window.MobileMoodle = window.MobileMoodle || {});
     const App = (MM.App = MM.App || {});
 
+    // Referências aos elementos principais do index.html.
     App.content = document.getElementById("page-content");
     App.title = document.getElementById("page-title");
     App.menuUserInfo = document.getElementById("menu-user-info");
     App.toolbarAvatar = document.getElementById("toolbar-avatar");
     App.templatesRoot = document.getElementById("page-templates");
-    App.dashboardCache = null;
+    App.dashboardCache = null; // cache local da UI
 
+    /** Sai da sessão e mostra tela de "faça login de novo". */
     function logout() {
         if (window.MobileMoodleApi && window.MobileMoodleApi.clearToken) {
             window.MobileMoodleApi.clearToken();
@@ -25,6 +32,7 @@
         });
     }
 
+    /** Liga o item "Sair" do menu lateral. */
     function bindMenu() {
         const logoutBtn = document.getElementById("menu-logout");
 
@@ -36,6 +44,12 @@
         }
     }
 
+    /**
+     * Decide a URL base da API:
+     * 1) ?api=https://... na query
+     * 2) localhost → http://localhost:8000 (FastAPI de desenvolvimento)
+     * 3) senão → mesma origem da página
+     */
     function resolveApiBase() {
         const params = new URLSearchParams(window.location.search);
         const fromQuery = params.get("api");
@@ -51,10 +65,12 @@
         return window.location.origin;
     }
 
+    // Troca de hash (#/painel ↔ #/curso/1) → recarrega a rota.
     window.addEventListener("hashchange", function () {
         App.loadRoute(false);
     });
 
+    // Arranque: configura API, menu e primeira rota.
     window.addEventListener("DOMContentLoaded", function () {
         if (window.MobileMoodleApi && window.MobileMoodleApi.setApiBaseUrl) {
             window.MobileMoodleApi.setApiBaseUrl(resolveApiBase());
@@ -62,6 +78,7 @@
 
         bindMenu();
 
+        // Sem hash → define painel (o hashchange dispara loadRoute).
         if (!window.location.hash) {
             window.location.hash = "/painel";
 

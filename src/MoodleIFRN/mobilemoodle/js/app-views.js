@@ -1,9 +1,14 @@
+/**
+ * app-views.js
+ * Renderização das telas: painel (lista de cursos) e detalhe do curso.
+ */
 (function (window) {
     "use strict";
 
     const MM = (window.MobileMoodle = window.MobileMoodle || {});
     const App = (MM.App = MM.App || {});
 
+    /** Atualiza avatar e nome no menu / toolbar. */
     function setUser(dashboard) {
         const nome = dashboard.nome || "Estudante";
         const username = dashboard.username || "";
@@ -22,6 +27,7 @@
             (username ? "<span>@" + App.escapeHtml(username) + "</span>" : "");
     }
 
+    /** Monta um card de curso a partir do template tpl-painel-card. */
     function buildCourseCard(course) {
         const fragment = App.cloneTemplate("tpl-painel-card");
 
@@ -37,6 +43,7 @@
         const label = fragment.querySelector(".painel-progress-label");
         const env = fragment.querySelector(".painel-card-header-env");
 
+        // Clique no card abre #/curso/{id}
         link.href = "#/curso/" + encodeURIComponent(String(course.id));
         cardTitle.textContent = course.name || ("Curso " + course.id);
         shortname.textContent = course.shortname || ("Curso " + course.id);
@@ -50,6 +57,7 @@
         return fragment;
     }
 
+    /** Desenha a lista de cursos do dashboard. */
     function renderPainel(dashboard) {
         App.title.textContent = "Meus cursos";
         setUser(dashboard);
@@ -75,6 +83,7 @@
             badge.textContent = String(total);
         }
 
+        // Sem cursos → estado vazio do template.
         if (!courses.length) {
             const empty = App.cloneTemplate("tpl-empty-cursos");
 
@@ -82,6 +91,7 @@
                 cardsHost.appendChild(empty);
             }
         } else {
+            // Fragment evita vários reflows ao inserir vários cards.
             const batch = document.createDocumentFragment();
 
             courses.forEach(function (course) {
@@ -90,6 +100,7 @@
             cardsHost.appendChild(batch);
         }
 
+        // Pull-to-refresh do Ionic.
         const refresher = document.getElementById("painel-refresher");
 
         if (refresher) {
@@ -101,6 +112,7 @@
         }
     }
 
+    /** Desenha a página de um curso (progresso + seções/tópicos). */
     function renderCurso(course, dashboard) {
         App.title.textContent = course.name || "Curso";
         setUser(dashboard);
@@ -121,6 +133,7 @@
         const progressBar = document.getElementById("curso-progress-bar");
 
         if (progressBar) {
+            // ion-progress-bar usa valor de 0 a 1.
             progressBar.value = progress / 100;
         }
 

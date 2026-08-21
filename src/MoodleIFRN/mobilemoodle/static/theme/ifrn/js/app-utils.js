@@ -1,9 +1,17 @@
+/**
+ * app-utils.js
+ * Funções auxiliares da UI: base de assets, escape HTML, templates, fetch de partials.
+ */
 (function (window) {
     "use strict";
 
     const MM = (window.MobileMoodle = window.MobileMoodle || {});
     const App = (MM.App = MM.App || {});
 
+    /**
+     * Descobre a pasta raiz do mobilemoodle a partir da URL do script.
+     * Ex.: .../mobilemoodle/js/app-utils.js → .../mobilemoodle/
+     */
     function resolveAssetBase() {
         const scripts = document.getElementsByTagName("script");
 
@@ -22,6 +30,7 @@
         }
     }
 
+    /** Evita XSS ao inserir texto do usuário/API no HTML. */
     function escapeHtml(value) {
         return String(value ?? "")
             .replace(/&/g, "&amp;")
@@ -30,12 +39,17 @@
             .replace(/"/g, "&quot;");
     }
 
+    /** Primeira letra do nome para avatar. */
     function initials(name) {
         const letters = String(name || "U").trim().charAt(0).toUpperCase();
 
         return letters || "U";
     }
 
+    /**
+     * Clona um <template id="..."> do DOM.
+     * Os templates vêm de pages/painel.html, curso.html e erros.html.
+     */
     function cloneTemplate(id) {
         const tpl = document.getElementById(id);
 
@@ -46,6 +60,7 @@
         return tpl.content.cloneNode(true);
     }
 
+    /** Baixa um arquivo de texto (partial HTML) com timeout curto. */
     async function fetchText(url) {
         const controller = new AbortController();
         const timer = window.setTimeout(function () {
