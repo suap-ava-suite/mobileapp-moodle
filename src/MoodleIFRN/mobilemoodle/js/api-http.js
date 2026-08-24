@@ -12,6 +12,31 @@
 
     let baseUrl = DEFAULT_BASE_URL;
 
+    /** Só aceita mesma origem ou localhost de desenvolvimento. */
+    function isAllowedApiBase(url) {
+        try {
+            const parsed = new URL(url);
+            const origin = window.location.origin;
+
+            if (parsed.origin === origin) {
+                return true;
+            }
+
+            return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(parsed.origin);
+        } catch {
+            return false;
+        }
+    }
+
+    /** Path relativo seguro (bloqueia //host, http:, javascript:, etc.). */
+    function isSafeApiPath(path) {
+        return typeof path === "string" &&
+            path.charAt(0) === "/" &&
+            path.charAt(1) !== "/" &&
+            !/^[a-z][a-z0-9+.-]*:/i.test(path) &&
+            path.indexOf("\\") === -1;
+    }
+
     /** Define a origem da API (ex.: http://localhost:8000). */
     function setApiBaseUrl(url) {
         if (typeof url !== "string") {
@@ -20,19 +45,28 @@
             return;
         }
 
-        // Remove barra final para evitar // no path.
-        baseUrl = url.trim().replace(/\/+$/, "");
+        const cleaned = url.trim().replace(/\/+$/, "");
+
+        if (!cleaned || !isAllowedApiBase(cleaned)) {
+            baseUrl = DEFAULT_BASE_URL;
+
+            return;
+        }
+
+        baseUrl = cleaned;
     }
 
     /** Junta base + path (ex.: http://localhost:8000 + /dashboard/). */
     function joinUrl(path) {
-        const right = path.startsWith("/") ? path : "/" + path;
-
-        if (!baseUrl) {
-            return right;
+        if (!isSafeApiPath(path)) {
+            throw new MM.ApiError(400, "Caminho de API inválido.");
         }
 
-        return baseUrl + right;
+        if (!baseUrl) {
+            return path;
+        }
+
+        return baseUrl + path;
     }
 
     /** Tenta extrair message/detail do JSON de erro da API. */
@@ -69,19 +103,21 @@
             throw new MM.ApiError(401);
         }
 
+        if (!isSafeApiPath(path)) {
+            throw new MM.ApiError(400, "Caminho de API inválido.");
+        }
+
         // Timeout via AbortController (padrão do fetch).
         const controller = new AbortController();
         const timeoutId = window.setTimeout(function () {
             controller.abort();
         }, REQUEST_TIMEOUT_MS);
 
-        const headers = Object.assign(
-            {
-                Accept: "application/json",
-                Authorization: "Bearer " + token,
-            },
-            (options && options.headers) || {},
-        );
+        // Headers fechados: evita sobrescrever Authorization por options.headers.
+        const headers = {
+            Accept: "application/json",
+            Authorization: "Bearer " + token,
+        };
 
         let response;
 

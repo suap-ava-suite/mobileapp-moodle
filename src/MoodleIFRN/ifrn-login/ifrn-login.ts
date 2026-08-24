@@ -69,20 +69,22 @@ export class IfrnLoginPage implements OnInit {
             return;
         }
 
-        if (!this.username.trim() || !this.password) {
+        const username = this.username.trim().replace(/[\u0000-\u001F\u007F]/g, '');
+
+        if (!username || !this.password) {
             void CoreAlerts.showError('Por favor, preencha todos os campos.');
 
             return;
         }
 
-        if (this.username.trim().length > 120 || this.password.length > 200) {
+        if (username.length > 120 || this.password.length > 200) {
             void CoreAlerts.showError('Credenciais inválidas.');
 
             return;
         }
 
         const credentials = {
-            username: this.username.trim(),
+            username,
             password: this.password,
         };
 

@@ -45,19 +45,11 @@
     }
 
     /**
-     * Decide a URL base da API:
-     * 1) ?api=https://... na query
-     * 2) localhost → http://localhost:8000 (FastAPI de desenvolvimento)
-     * 3) senão → mesma origem da página
+     * Decide a URL base da API (lista fechada — evita ?api= redirecionar o token).
+     * 1) localhost → http://localhost:8000 (FastAPI de desenvolvimento)
+     * 2) senão → mesma origem da página
      */
     function resolveApiBase() {
-        const params = new URLSearchParams(window.location.search);
-        const fromQuery = params.get("api");
-
-        if (fromQuery && /^https?:\/\//i.test(fromQuery)) {
-            return fromQuery.replace(/\/+$/, "");
-        }
-
         if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(window.location.origin)) {
             return "http://localhost:8000";
         }

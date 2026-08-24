@@ -13,9 +13,38 @@
     // Formato básico de JWT: três partes separadas por ponto.
     const JWT_SHAPE = /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/;
 
-    /** Valida formato e tamanho do token antes de aceitar. */
+    /** Decodifica o payload do JWT (sem verificar assinatura — só checagem local). */
+    function readJwtPayload(token) {
+        try {
+            const part = token.split(".")[1];
+            const normalized = part.replace(/-/g, "+").replace(/_/g, "/");
+            const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+            const json = window.atob(padded);
+
+            return JSON.parse(json);
+        } catch {
+            return null;
+        }
+    }
+
+    /** Valida formato, tamanho e expiração (exp) antes de aceitar. */
     function isValidToken(token) {
-        return typeof token === "string" && JWT_SHAPE.test(token) && token.length < 4096;
+        if (typeof token !== "string" || !JWT_SHAPE.test(token) || token.length >= 4096) {
+            return false;
+        }
+
+        const payload = readJwtPayload(token);
+
+        if (!payload || typeof payload !== "object") {
+            return false;
+        }
+
+        // Sem exp → aceita (API de teste pode não enviar). Com exp → rejeita se vencido.
+        if (typeof payload.exp === "number" && payload.exp * 1000 <= Date.now()) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -61,7 +90,15 @@
 
         const stored = sessionStorage.getItem(TOKEN_KEY);
 
-        return isValidToken(stored) ? stored : null;
+        if (stored && isValidToken(stored)) {
+            return stored;
+        }
+
+        if (stored) {
+            clearToken();
+        }
+
+        return null;
     }
 
     /** Salva o token; se for inválido, limpa a sessão. */

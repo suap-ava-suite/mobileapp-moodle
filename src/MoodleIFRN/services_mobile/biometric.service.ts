@@ -16,6 +16,8 @@ import { FingerprintAIO } from '@awesome-cordova-plugins/fingerprint-aio/ngx';
 import { inject, Injectable } from '@angular/core';
 
 const BIOMETRIC_ENABLED_KEY = 'ifrn_biometric_login_enabled';
+const JWT_SHAPE = /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/;
+const MAX_SECRET_LENGTH = 4096;
 
 @Injectable({ providedIn: 'root' })
 export class BiometricService {
@@ -40,6 +42,10 @@ export class BiometricService {
     }
 
     async enable(refreshToken: string): Promise<void> {
+        if (!this.isValidSecret(refreshToken)) {
+            throw new Error('Credencial biométrica inválida.');
+        }
+
         await this.fingerprint.registerBiometricSecret({
             title: 'Ativar entrada biométrica',
             description: 'Confirme sua identidade para ativar a entrada biométrica.',
@@ -60,11 +66,24 @@ export class BiometricService {
             disableBackup: true,
         });
 
-        return this.decodeSecret(encodedToken);
+        const refreshToken = this.decodeSecret(encodedToken);
+
+        if (!this.isValidSecret(refreshToken)) {
+            this.disable();
+            throw new Error('Credencial biométrica inválida.');
+        }
+
+        return refreshToken;
     }
 
     disable(): void {
         localStorage.removeItem(BIOMETRIC_ENABLED_KEY);
+    }
+
+    private isValidSecret(value: string): boolean {
+        return typeof value === 'string' &&
+            JWT_SHAPE.test(value) &&
+            value.length < MAX_SECRET_LENGTH;
     }
 
     private encodeSecret(value: string): string {
@@ -74,7 +93,7 @@ export class BiometricService {
     }
 
     private decodeSecret(value: string): string {
-        if (!/^(?:[0-9a-f]{2})+$/i.test(value)) {
+        if (!/^(?:[0-9a-f]{2})+$/i.test(value) || value.length > MAX_SECRET_LENGTH * 2) {
             throw new Error('Credencial biométrica inválida.');
         }
 

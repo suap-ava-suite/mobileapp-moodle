@@ -27,6 +27,40 @@ export interface AuthResponse {
 const REQUEST_TIMEOUT_MS = 15000;
 const TOKEN_KEY = 'ifrn_access_token';
 const JWT_SHAPE = /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/;
+const MAX_TOKEN_LENGTH = 4096;
+
+function readJwtPayload(token: string): Record<string, unknown> | null {
+    try {
+        const part = token.split('.')[1];
+        const normalized = part.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
+        const json = atob(padded);
+
+        return JSON.parse(json) as Record<string, unknown>;
+    } catch {
+        return null;
+    }
+}
+
+function isValidAccessToken(token: string): boolean {
+    if (!JWT_SHAPE.test(token) || token.length >= MAX_TOKEN_LENGTH) {
+        return false;
+    }
+
+    const payload = readJwtPayload(token);
+
+    if (!payload) {
+        return false;
+    }
+
+    const exp = payload['exp'];
+
+    if (typeof exp === 'number' && exp * 1000 <= Date.now()) {
+        return false;
+    }
+
+    return true;
+}
 
 @Injectable({
     providedIn: 'root',
@@ -82,7 +116,7 @@ export class AuthService {
      * Mantém o access token em memória e no sessionStorage do WebView.
      */
     saveToken(token: string): void {
-        if (!JWT_SHAPE.test(token) || token.length >= 4096) {
+        if (!isValidAccessToken(token)) {
             this.logout();
 
             return;
@@ -96,17 +130,20 @@ export class AuthService {
      * Retorna o Access Token.
      */
     getToken(): string | null {
-        if (this.accessToken && JWT_SHAPE.test(this.accessToken)) {
+        if (this.accessToken && isValidAccessToken(this.accessToken)) {
             return this.accessToken;
         }
 
         const stored = sessionStorage.getItem(TOKEN_KEY);
 
-        if (stored && JWT_SHAPE.test(stored)) {
+        if (stored && isValidAccessToken(stored)) {
             this.accessToken = stored;
 
             return stored;
         }
+
+        this.accessToken = null;
+        sessionStorage.removeItem(TOKEN_KEY);
 
         return null;
     }
@@ -140,7 +177,7 @@ export class AuthService {
 
     /**
      * Abre o painel Mobile Moodle.
-     * O token vai no query só para bootstrap; o app.js remove da URL.
+     * Token fica só no sessionStorage (mesma origem) — não vai na URL.
      */
     openMobileMoodle(hash = '/painel'): void {
         const token = this.getToken();
@@ -156,7 +193,6 @@ export class AuthService {
         const root = base.endsWith('/') ? base : `${base}/`;
         const url = new URL(`${root}mobilemoodle/index.html`, window.location.origin);
 
-        url.searchParams.set('token', token);
         url.hash = targetHash.replace(/^#/, '');
 
         window.location.assign(url.toString());
