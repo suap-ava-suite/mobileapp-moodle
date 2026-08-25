@@ -12,7 +12,7 @@
     // Referências aos elementos principais do index.html.
     App.content = document.getElementById("page-content");
     App.title = document.getElementById("page-title");
-    App.menuUserInfo = document.getElementById("menu-user-info");
+    App.menuUserInfo = document.getElementById("sidebar-user-name");
     App.toolbarAvatar = document.getElementById("toolbar-avatar");
     App.templatesRoot = document.getElementById("page-templates");
     App.dashboardCache = null; // cache local da UI
@@ -32,15 +32,12 @@
         });
     }
 
-    /** Liga o item "Sair" do menu lateral. */
-    function bindMenu() {
-        const logoutBtn = document.getElementById("menu-logout");
+    App.logout = logout;
 
-        if (logoutBtn) {
-            logoutBtn.addEventListener("click", function (event) {
-                event.preventDefault();
-                logout();
-            });
+    /** Liga sidebar AVA (perfil, ajuda, acessibilidade, filtros). */
+    function bindMenu() {
+        if (typeof App.bindSidebar === "function") {
+            App.bindSidebar();
         }
     }
 

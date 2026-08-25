@@ -8,23 +8,76 @@
     const MM = (window.MobileMoodle = window.MobileMoodle || {});
     const App = (MM.App = MM.App || {});
 
-    /** Atualiza avatar e nome no menu / toolbar. */
+    /** Atualiza avatar e nome no menu / toolbar (estilo AVA). */
     function setUser(dashboard) {
         const nome = dashboard.nome || "Estudante";
-        const username = dashboard.username || "";
         const letter = App.initials(nome);
+        const foto = dashboard.foto_url || dashboard.foto || dashboard.avatar_url || "";
 
-        App.toolbarAvatar.textContent = letter;
+        App.sidebarUserName = nome;
 
-        const menuAvatar = document.getElementById("menu-user-avatar");
-
-        if (menuAvatar) {
-            menuAvatar.textContent = letter;
+        if (App.toolbarAvatar) {
+            App.toolbarAvatar.textContent = letter;
         }
 
-        App.menuUserInfo.innerHTML =
-            "<strong>" + App.escapeHtml(nome) + "</strong>" +
-            (username ? "<span>@" + App.escapeHtml(username) + "</span>" : "");
+        const nameEl = document.getElementById("sidebar-user-name");
+
+        if (nameEl) {
+            nameEl.textContent = nome;
+        }
+
+        if (App.menuUserInfo && App.menuUserInfo !== nameEl) {
+            App.menuUserInfo.textContent = nome;
+        }
+
+        const profileBtn = document.getElementById("btn-toggle-profile");
+
+        if (profileBtn) {
+            let avatar = document.getElementById("menu-user-avatar");
+
+            if (foto) {
+                if (!avatar || avatar.tagName !== "IMG") {
+                    const img = document.createElement("img");
+
+                    img.id = "menu-user-avatar";
+                    img.className = "profile-image";
+                    img.alt = "Imagem de perfil";
+
+                    if (avatar) {
+                        avatar.replaceWith(img);
+                    } else {
+                        profileBtn.insertBefore(img, profileBtn.firstChild);
+                    }
+
+                    avatar = img;
+                }
+
+                avatar.src = foto;
+            } else {
+                if (!avatar || avatar.tagName === "IMG") {
+                    const div = document.createElement("div");
+
+                    div.id = "menu-user-avatar";
+                    div.className = "profile-image profile-image--initials";
+                    div.setAttribute("aria-hidden", "true");
+
+                    if (avatar) {
+                        avatar.replaceWith(div);
+                    } else {
+                        profileBtn.insertBefore(div, profileBtn.firstChild);
+                    }
+
+                    avatar = div;
+                }
+
+                avatar.className = "profile-image profile-image--initials";
+                avatar.textContent = letter;
+            }
+        }
+
+        if (typeof App.applyUserFilter === "function") {
+            App.applyUserFilter(dashboard);
+        }
     }
 
     /** Monta um card de curso a partir do template tpl-painel-card. */
@@ -59,7 +112,7 @@
 
     /** Desenha a lista de cursos do dashboard. */
     function renderPainel(dashboard) {
-        App.title.textContent = "Meus cursos";
+        App.title.textContent = "Painel AVA";
         setUser(dashboard);
 
         const total = dashboard.total_courses || 0;

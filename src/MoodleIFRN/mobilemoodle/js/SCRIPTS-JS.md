@@ -7,7 +7,7 @@ Ordem de carga no `index.html`:
 
 ```text
 api-errors.js → api-auth.js → api-http.js → api.js
-app-utils.js  → app-status.js → app-views.js → app-router.js → app.js
+app-utils.js  → app-status.js → app-views.js → app-router.js → app-sidebar.js → app.js
 ```
 
 ---
@@ -39,6 +39,7 @@ Flag `DEMO_FORCE_500` em `api.js`: quando `true`, força erro 500 no painel (só
 | `app-status.js` | Loading, tela de erro, not found |
 | `app-views.js` | Render do painel e do curso |
 | `app-router.js` | Parse do hash + orquestra carregamento |
+| `app-sidebar.js` | Sidebar AVA: perfil, acessibilidade, ajuda, filtros |
 | `app.js` | Bootstrap: DOM, menu, base da API, `hashchange` |
 
 ---
