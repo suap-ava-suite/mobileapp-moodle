@@ -75,4 +75,22 @@ ion-menu-button {
 .painel-page,
 .curso-page {
     padding: 8px 16px 32px;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+ion-content#page-content {
+    --padding-bottom: env(safe-area-inset-bottom);
+}
+
+#main-content ion-header ion-toolbar {
+    --background: var(--branco-primario);
+    --color: var(--dark);
+    --border-width: 0 0 1px 0;
+    --border-color: var(--light);
+}
+
+#main-content ion-title {
+    color: var(--dark);
+    font: var(--font-heading3);
 }

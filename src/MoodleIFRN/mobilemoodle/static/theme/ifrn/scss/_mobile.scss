@@ -1,0 +1,401 @@
+@use "variables";
+
+// Responsividade mobile (Ionic / theme_ifrn25 ≤ 767.98px)
+
+@media (max-width: 767.98px) {
+    // Safe areas (notch / home indicator)
+    ion-app {
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
+
+    ion-header ion-toolbar {
+        --padding-top: max(4px, env(safe-area-inset-top));
+        --min-height: 52px;
+        padding-left: 4px;
+        padding-right: 4px;
+    }
+
+    ion-title {
+        font-size: 1rem !important;
+        padding-inline: 4px;
+    }
+
+    .toolbar-avatar {
+        width: 28px;
+        height: 28px;
+        margin-right: max(4px, env(safe-area-inset-right));
+        font-size: 0.75rem;
+    }
+
+    .ava-menu {
+        --width: min(294px, 86vw);
+    }
+
+    .painel-page,
+    .curso-page {
+        padding: 4px 12px calc(24px + env(safe-area-inset-bottom));
+    }
+
+    .page-intro {
+        padding: 4px 2px 12px;
+
+        h2 {
+            font: var(--font-heading2);
+        }
+
+        p {
+            font-size: 0.875rem;
+            line-height: 1.45;
+        }
+    }
+
+    // Topbar / abas
+    .ava-topbar,
+    .tabs-row {
+        margin: 4px 0 12px;
+        padding: 0.5rem 0.35rem;
+        gap: 0.35rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+        touch-action: pan-x;
+    }
+
+    .ava-topbar .ava-tab,
+    .tabs-row .ava-tab {
+        font-size: 0.875rem;
+        padding: 0.35rem 0.7rem;
+        min-height: 36px;
+    }
+
+    .ava-tab__badge {
+        min-width: 20px;
+        height: 20px;
+        font-size: 0.625rem;
+    }
+
+    // Cards de diário / autoinscrição
+    .card-container {
+        padding: 2px 0;
+    }
+
+    .painel-card {
+        margin-bottom: 0.85rem;
+        border-radius: 8px;
+    }
+
+    .painel-card ion-card-content {
+        padding: 14px;
+        gap: 10px;
+    }
+
+    .painel-card-title {
+        font: var(--font-heading2) !important;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .painel-card-header-shortname {
+        font-size: 0.75rem;
+        min-width: 0;
+        max-width: 100%;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .painel-card-details {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        width: 100%;
+    }
+
+    .painel-card-details-progress {
+        flex-flow: wrap-reverse;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .painel-progress-bar-container {
+        flex: 1;
+        width: 100%;
+        max-width: none;
+        min-width: 120px;
+    }
+
+    .painel-card-details-info {
+        gap: 0.5rem;
+        margin-left: 0;
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .painel-card-info-icon,
+    .painel-card-details-info-published,
+    .painel-card-details-info-unpublished,
+    .painel-card-info-enrolled {
+        max-width: 100%;
+
+        span {
+            max-width: 12rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
+    .painel-card-details--autoinscricao {
+        width: 100%;
+    }
+
+    .painel-card-actions {
+        width: 100%;
+        min-width: 0;
+        flex-direction: column;
+
+        ion-button {
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            min-height: 40px;
+        }
+    }
+
+    .card-skeleton {
+        padding: 16px;
+    }
+
+    .no-data {
+        margin-top: 1.25rem;
+        padding: 16px 12px;
+        min-height: 30vh;
+    }
+
+    // Curso / seções / atividades
+    .breadcrumb {
+        font-size: 0.75rem;
+        gap: 4px;
+        margin-bottom: 12px;
+    }
+
+    .enrol-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+        padding-block: 0.75rem;
+    }
+
+    .course-header h1,
+    .course-header .painel-card-title {
+        font: var(--font-heading2);
+        overflow-wrap: anywhere;
+    }
+
+    .enrol-header-topics {
+        gap: 0.65rem;
+    }
+
+    .topic-item {
+        font-size: 0.8125rem;
+        width: 100%;
+    }
+
+    .course-actions {
+        width: 100%;
+
+        ion-button {
+            width: 100%;
+            margin: 0;
+        }
+    }
+
+    .course-progress {
+        width: 100%;
+        flex-wrap: wrap;
+
+        ion-progress-bar {
+            max-width: none;
+            width: 100%;
+            flex: 1 1 100%;
+        }
+    }
+
+    .course-summary {
+        margin: 1rem 0;
+    }
+
+    .section-title {
+        margin: 4px 0 10px;
+    }
+
+    .topic-card__header {
+        padding: 12px;
+        gap: 10px;
+        min-height: 56px;
+    }
+
+    .topic-index {
+        width: 32px;
+        height: 32px;
+        font-size: 0.875rem;
+    }
+
+    .topic-name {
+        font-size: 0.9375rem;
+        overflow-wrap: anywhere;
+    }
+
+    .topic-card__body {
+        padding: 2px 6px 10px;
+    }
+
+    .activity-item {
+        padding: 12px 8px;
+        gap: 10px;
+        min-height: 52px;
+    }
+
+    .activity-item__icon {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+
+    .activity-item__name {
+        font-size: 0.9375rem;
+        overflow-wrap: anywhere;
+    }
+
+    // Sidebar menu
+    .sidebar-container {
+        padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+    }
+
+    .sidebar-content-header {
+        margin: 0.75rem 0.75rem 0.75rem;
+    }
+
+    .sidebar-user-content {
+        margin: 0.75rem;
+    }
+
+    .sidebar-user-content-profile {
+        padding: 0.5rem 0.75rem;
+        min-height: 48px;
+    }
+
+    .sidebar-modal-button {
+        min-height: 44px;
+        padding: 0.65rem 1rem;
+    }
+
+    .sidebar-course-content {
+        margin: 0.75rem;
+    }
+
+    .sidebar-course-content-filters {
+        margin-inline: 0.5rem;
+    }
+
+    // Modal lateral (perfil / a11y / filtros)
+    .sidebar-modal__panel {
+        width: min(100vw, 100%);
+        max-width: 100%;
+        border-radius: 16px 0 0 16px;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .sidebar-modal__header {
+        padding-top: max(16px, env(safe-area-inset-top));
+    }
+
+    .sidebar-modal__body {
+        padding: 12px 14px calc(16px + env(safe-area-inset-bottom));
+    }
+
+    .checkbox-access-label {
+        padding: 0.65rem 0.85rem;
+        min-height: 44px;
+    }
+
+    .cycle-btn {
+        min-height: 44px;
+    }
+
+    // Splash
+    .ava-splash,
+    .page-loading.ava-splash,
+    .boot-loading.ava-splash {
+        min-height: calc(100dvh - 120px);
+        padding: 20px 16px calc(24px + env(safe-area-inset-bottom));
+        gap: 0.85rem;
+    }
+
+    .ava-splash__logo {
+        width: min(96px, 32vw);
+        border-radius: 18px;
+    }
+
+    .ava-splash__spinner {
+        width: 48px;
+        height: 48px;
+        border-width: 5px;
+    }
+
+    .ava-splash__text {
+        font-size: 0.9375rem;
+        padding-inline: 8px;
+    }
+}
+
+// Telas bem estreitas (phones pequenos)
+@media (max-width: 379.98px) {
+    .painel-page,
+    .curso-page {
+        padding-inline: 10px;
+    }
+
+    .ava-topbar .ava-tab,
+    .tabs-row .ava-tab {
+        font-size: 0.8125rem;
+        padding: 0.3rem 0.55rem;
+    }
+
+    .painel-card-title {
+        font-size: 1rem !important;
+    }
+
+    .painel-card-details-info {
+        gap: 0.35rem;
+    }
+}
+
+// Landscape mobile
+@media (max-width: 900px) and (orientation: landscape) {
+    .ava-splash,
+    .page-loading.ava-splash,
+    .boot-loading.ava-splash {
+        min-height: 70vh;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-content: center;
+    }
+
+    .ava-splash__logo {
+        width: 72px;
+    }
+
+    .ava-splash__spinner {
+        width: 40px;
+        height: 40px;
+    }
+
+    ion-header ion-toolbar {
+        --min-height: 48px;
+    }
+}

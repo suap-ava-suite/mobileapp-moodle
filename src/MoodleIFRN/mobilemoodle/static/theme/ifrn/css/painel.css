@@ -158,6 +158,24 @@ ion-menu-button {
 .painel-page,
 .curso-page {
   padding: 8px 16px 32px;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+ion-content#page-content {
+  --padding-bottom: env(safe-area-inset-bottom);
+}
+
+#main-content ion-header ion-toolbar {
+  --background: var(--branco-primario);
+  --color: var(--dark);
+  --border-width: 0 0 1px 0;
+  --border-color: var(--light);
+}
+
+#main-content ion-title {
+  color: var(--dark);
+  font: var(--font-heading3);
 }
 
 .ava-menu {
@@ -1001,55 +1019,83 @@ body.color_mode_high_contrast .selector-cycle-access .cycle-btn {
     opacity: 0.85;
   }
 }
+.ava-topbar,
 .tabs-row {
   display: flex;
-  gap: 0;
+  gap: 0.5rem;
   overflow-x: auto;
-  padding: 0;
-  margin: 0 0 12px;
-  border-bottom: 1px solid var(--light);
+  margin: 8px 0 16px;
+  padding: 0.75rem 0.25rem;
+  border-radius: 8px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1607843137);
+  background: var(--branco-primario);
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
+.ava-topbar::-webkit-scrollbar,
 .tabs-row::-webkit-scrollbar {
   display: none;
 }
 
+.ava-topbar .ava-tab,
 .tabs-row .ava-tab {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   flex-shrink: 0;
-  padding: 12px 16px;
+  padding: 0.25rem 0.75rem;
   border: none;
-  border-bottom: 3px solid transparent;
+  border-radius: 1.5rem;
   background: transparent;
-  color: var(--cinza-secundario);
+  color: var(--primary);
   font: var(--font-button2);
   cursor: pointer;
   white-space: nowrap;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
+.ava-topbar .ava-tab:disabled,
 .tabs-row .ava-tab:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
+.ava-topbar .ava-tab.is-active,
 .tabs-row .ava-tab.is-active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
-  font-weight: 700;
+  color: #fff;
+  background-color: var(--primary);
+  font-weight: 600;
 }
 
+.ava-tab__label-desktop {
+  display: none;
+}
+
+.ava-tab__label-mobile {
+  display: inline;
+}
+
+@media (min-width: 768px) {
+  .ava-tab__label-desktop {
+    display: inline;
+  }
+  .ava-tab__label-mobile {
+    display: none;
+  }
+}
 .ava-tab__badge {
   display: inline-grid;
   place-items: center;
   min-width: 22px;
   height: 22px;
-  padding: 0 6px;
-  border-radius: 11px;
-  background: var(--secondary);
+  padding: 1px 6px;
+  border-radius: 50%;
+  background: var(--secondary-light);
+  color: var(--secondary-dark);
+  font: var(--font-heading5);
+}
+
+.ava-tab.is-active .ava-tab__badge {
+  background: rgba(255, 255, 255, 0.22);
   color: #fff;
-  font: var(--font-heading6);
 }
 
 .card-container {
@@ -1103,6 +1149,27 @@ body.color_mode_high_contrast .selector-cycle-access .cycle-btn {
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.painel-card-details--autoinscricao {
+  margin-top: 0.25rem;
+  align-items: flex-start;
+}
+
+.painel-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex: 1;
+  min-width: 160px;
+}
+.painel-card-actions ion-button {
+  margin: 0;
+  text-transform: none;
+  font: var(--font-button3);
+  --border-radius: 8px;
+  flex: 1 1 auto;
+  max-width: 220px;
 }
 
 .painel-card-details-progress {
@@ -1159,7 +1226,8 @@ body.color_mode_high_contrast .selector-cycle-access .cycle-btn {
 }
 
 .painel-card-info-icon,
-.painel-card-details-info-published {
+.painel-card-details-info-published,
+.painel-card-info-enrolled {
   background-color: var(--primary-light);
   color: var(--primary-dark);
 }
@@ -1171,7 +1239,8 @@ body.color_mode_high_contrast .selector-cycle-access .cycle-btn {
 
 .painel-card-info-icon ion-icon,
 .painel-card-details-info-published ion-icon,
-.painel-card-details-info-unpublished ion-icon {
+.painel-card-details-info-unpublished ion-icon,
+.painel-card-info-enrolled ion-icon {
   font-size: 12px;
 }
 
@@ -1204,6 +1273,11 @@ body.color_mode_high_contrast .selector-cycle-access .cycle-btn {
   text-decoration: none;
   color: inherit;
   display: block;
+}
+
+.no-data__hint {
+  margin: 0;
+  max-width: 28rem;
 }
 
 .card-skeleton {
@@ -1306,6 +1380,9 @@ body.color_mode_high_contrast .selector-cycle-access .cycle-btn {
   }
   .painel-progress-bar-container {
     width: 40vw;
+  }
+  .painel-card-actions ion-button {
+    max-width: none;
   }
 }
 .breadcrumb {
@@ -1604,5 +1681,327 @@ body.color_mode_high_contrast .selector-cycle-access .cycle-btn {
   .enrol-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+@media (max-width: 767.98px) {
+  ion-app {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  ion-header ion-toolbar {
+    --padding-top: max(4px, env(safe-area-inset-top));
+    --min-height: 52px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+  ion-title {
+    font-size: 1rem !important;
+    padding-inline: 4px;
+  }
+  .toolbar-avatar {
+    width: 28px;
+    height: 28px;
+    margin-right: max(4px, env(safe-area-inset-right));
+    font-size: 0.75rem;
+  }
+  .ava-menu {
+    --width: min(294px, 86vw);
+  }
+  .painel-page,
+  .curso-page {
+    padding: 4px 12px calc(24px + env(safe-area-inset-bottom));
+  }
+  .page-intro {
+    padding: 4px 2px 12px;
+  }
+  .page-intro h2 {
+    font: var(--font-heading2);
+  }
+  .page-intro p {
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+  .ava-topbar,
+  .tabs-row {
+    margin: 4px 0 12px;
+    padding: 0.5rem 0.35rem;
+    gap: 0.35rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
+  }
+  .ava-topbar .ava-tab,
+  .tabs-row .ava-tab {
+    font-size: 0.875rem;
+    padding: 0.35rem 0.7rem;
+    min-height: 36px;
+  }
+  .ava-tab__badge {
+    min-width: 20px;
+    height: 20px;
+    font-size: 0.625rem;
+  }
+  .card-container {
+    padding: 2px 0;
+  }
+  .painel-card {
+    margin-bottom: 0.85rem;
+    border-radius: 8px;
+  }
+  .painel-card ion-card-content {
+    padding: 14px;
+    gap: 10px;
+  }
+  .painel-card-title {
+    font: var(--font-heading2) !important;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .painel-card-header-shortname {
+    font-size: 0.75rem;
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .painel-card-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+  }
+  .painel-card-details-progress {
+    flex-flow: wrap-reverse;
+    width: 100%;
+    min-width: 0;
+  }
+  .painel-progress-bar-container {
+    flex: 1;
+    width: 100%;
+    max-width: none;
+    min-width: 120px;
+  }
+  .painel-card-details-info {
+    gap: 0.5rem;
+    margin-left: 0;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .painel-card-info-icon,
+  .painel-card-details-info-published,
+  .painel-card-details-info-unpublished,
+  .painel-card-info-enrolled {
+    max-width: 100%;
+  }
+  .painel-card-info-icon span,
+  .painel-card-details-info-published span,
+  .painel-card-details-info-unpublished span,
+  .painel-card-info-enrolled span {
+    max-width: 12rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .painel-card-details--autoinscricao {
+    width: 100%;
+  }
+  .painel-card-actions {
+    width: 100%;
+    min-width: 0;
+    flex-direction: column;
+  }
+  .painel-card-actions ion-button {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    min-height: 40px;
+  }
+  .card-skeleton {
+    padding: 16px;
+  }
+  .no-data {
+    margin-top: 1.25rem;
+    padding: 16px 12px;
+    min-height: 30vh;
+  }
+  .breadcrumb {
+    font-size: 0.75rem;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+  .enrol-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    padding-block: 0.75rem;
+  }
+  .course-header h1,
+  .course-header .painel-card-title {
+    font: var(--font-heading2);
+    overflow-wrap: anywhere;
+  }
+  .enrol-header-topics {
+    gap: 0.65rem;
+  }
+  .topic-item {
+    font-size: 0.8125rem;
+    width: 100%;
+  }
+  .course-actions {
+    width: 100%;
+  }
+  .course-actions ion-button {
+    width: 100%;
+    margin: 0;
+  }
+  .course-progress {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .course-progress ion-progress-bar {
+    max-width: none;
+    width: 100%;
+    flex: 1 1 100%;
+  }
+  .course-summary {
+    margin: 1rem 0;
+  }
+  .section-title {
+    margin: 4px 0 10px;
+  }
+  .topic-card__header {
+    padding: 12px;
+    gap: 10px;
+    min-height: 56px;
+  }
+  .topic-index {
+    width: 32px;
+    height: 32px;
+    font-size: 0.875rem;
+  }
+  .topic-name {
+    font-size: 0.9375rem;
+    overflow-wrap: anywhere;
+  }
+  .topic-card__body {
+    padding: 2px 6px 10px;
+  }
+  .activity-item {
+    padding: 12px 8px;
+    gap: 10px;
+    min-height: 52px;
+  }
+  .activity-item__icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+  .activity-item__name {
+    font-size: 0.9375rem;
+    overflow-wrap: anywhere;
+  }
+  .sidebar-container {
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+  }
+  .sidebar-content-header {
+    margin: 0.75rem 0.75rem 0.75rem;
+  }
+  .sidebar-user-content {
+    margin: 0.75rem;
+  }
+  .sidebar-user-content-profile {
+    padding: 0.5rem 0.75rem;
+    min-height: 48px;
+  }
+  .sidebar-modal-button {
+    min-height: 44px;
+    padding: 0.65rem 1rem;
+  }
+  .sidebar-course-content {
+    margin: 0.75rem;
+  }
+  .sidebar-course-content-filters {
+    margin-inline: 0.5rem;
+  }
+  .sidebar-modal__panel {
+    width: min(100vw, 100%);
+    max-width: 100%;
+    border-radius: 16px 0 0 16px;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .sidebar-modal__header {
+    padding-top: max(16px, env(safe-area-inset-top));
+  }
+  .sidebar-modal__body {
+    padding: 12px 14px calc(16px + env(safe-area-inset-bottom));
+  }
+  .checkbox-access-label {
+    padding: 0.65rem 0.85rem;
+    min-height: 44px;
+  }
+  .cycle-btn {
+    min-height: 44px;
+  }
+  .ava-splash,
+  .page-loading.ava-splash,
+  .boot-loading.ava-splash {
+    min-height: calc(100dvh - 120px);
+    padding: 20px 16px calc(24px + env(safe-area-inset-bottom));
+    gap: 0.85rem;
+  }
+  .ava-splash__logo {
+    width: min(96px, 32vw);
+    border-radius: 18px;
+  }
+  .ava-splash__spinner {
+    width: 48px;
+    height: 48px;
+    border-width: 5px;
+  }
+  .ava-splash__text {
+    font-size: 0.9375rem;
+    padding-inline: 8px;
+  }
+}
+@media (max-width: 379.98px) {
+  .painel-page,
+  .curso-page {
+    padding-inline: 10px;
+  }
+  .ava-topbar .ava-tab,
+  .tabs-row .ava-tab {
+    font-size: 0.8125rem;
+    padding: 0.3rem 0.55rem;
+  }
+  .painel-card-title {
+    font-size: 1rem !important;
+  }
+  .painel-card-details-info {
+    gap: 0.35rem;
+  }
+}
+@media (max-width: 900px) and (orientation: landscape) {
+  .ava-splash,
+  .page-loading.ava-splash,
+  .boot-loading.ava-splash {
+    min-height: 70vh;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+  }
+  .ava-splash__logo {
+    width: 72px;
+  }
+  .ava-splash__spinner {
+    width: 40px;
+    height: 40px;
+  }
+  ion-header ion-toolbar {
+    --min-height: 48px;
   }
 }

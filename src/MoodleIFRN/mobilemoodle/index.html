@@ -2,8 +2,11 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5">
     <meta name="theme-color" content="#098E95">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="referrer" content="no-referrer">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Content-Security-Policy"
@@ -31,7 +34,7 @@
             justify-content: center;
             gap: 1rem;
             min-height: 50vh;
-            padding: 24px;
+            padding: 24px 16px;
             text-align: center;
             color: #2b2b2b;
             background: rgba(255, 255, 255, 0.92);
@@ -57,6 +60,25 @@
         }
         @keyframes ava-boot-spin {
             100% { transform: rotate(360deg); }
+        }
+        @media (max-width: 767.98px) {
+            .boot-loading.ava-splash {
+                min-height: calc(100dvh - 120px);
+                padding: 20px 16px calc(24px + env(safe-area-inset-bottom));
+                gap: 0.85rem;
+            }
+            .boot-loading .ava-splash__logo {
+                width: min(96px, 32vw);
+                border-radius: 18px;
+            }
+            .boot-loading .ava-splash__spinner {
+                width: 48px;
+                height: 48px;
+                border-width: 5px;
+            }
+            .boot-loading .ava-splash__text {
+                font-size: 0.9375rem;
+            }
         }
     </style>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core@8.8.1/css/ionic.bundle.css">

@@ -15,7 +15,8 @@ ifrn/
 │   ├── _accessibility.scss ← painel de acessibilidade (igual ao AVA)
 │   ├── _splash.scss    ← load view (logo + spinner)
 │   ├── _cards.scss
-│   └── _curso.scss     ← curso, seções e atividades
+│   ├── _curso.scss     ← curso, seções e atividades
+│   └── _mobile.scss    ← responsividade celular (≤768px)
 └── img/                ← ícones e imagens do tema (splash-logo, app-icon…)
 ```
 
@@ -49,7 +50,7 @@ Preferências ficam em `localStorage` (`ifrn_a11y_prefs`) e são reaplicadas ao 
 
 | Tela | Referência visual |
 |------|-------------------|
-| Lista de cursos | Cards + abas do `theme_ifrn25` (progresso roxo, badges teal) |
+| Lista de cursos | Abas **Diários** / **Autoinscrição** (pills do topbar AVA) + cards |
 | Detalhe do curso | Cabeçalho estilo `enrol-header` + visão geral |
 | Seções | Tópicos expansíveis com índice numerado |
 | Atividades | Lista com ícone por `modname` e status de conclusão |
@@ -68,6 +69,7 @@ Preferências ficam em `localStorage` (`ifrn_a11y_prefs`) e são reaplicadas ao 
 | `_splash.scss` | Splash / loading overlay |
 | `_cards.scss` | Cards de curso no painel |
 | `_curso.scss` | Curso, seções e atividades |
+| `_mobile.scss` | Layout mobile / safe-areas / landscape |
 | `painel.scss` | Arquivo que agrega os partials |
 
 O `index.html` referencia `css/painel.css`. Se o SCSS for alterado, regenere o CSS:

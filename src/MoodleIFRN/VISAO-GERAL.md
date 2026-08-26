@@ -84,7 +84,7 @@ Login IFRN  →  JWT salvo no sessionStorage  →  Painel (#/painel)
 
 - [x] Login com IFRN-id e senha
 - [x] Login biométrico (quando o dispositivo permite)
-- [x] Painel com lista de cursos e progresso
+- [x] Painel com abas **Diários** e **Autoinscrição** (estilo AVA)
 - [x] Página de detalhe do curso (seções expansíveis + atividades)
 - [x] Ícone e splash do Painel AVA (web + assets nativos em `resources/`)
 - [x] Tratamento de erros (401, 404, 500, 502, 503, rede, timeout)
@@ -96,7 +96,7 @@ Login IFRN  →  JWT salvo no sessionStorage  →  Painel (#/painel)
 
 - [ ] Integração real com Gov.br (hoje só mensagem informativa)
 - [ ] Trocar FastAPI de teste pela API de produção
-- [ ] Abas “Diários” e “Autoinscrição” (hoje desabilitadas no layout)
+- [ ] Endpoints reais de inscrever/cancelar na aba Autoinscrição
 - [ ] Validação de assinatura JWT no backend (obrigatória em produção)
 
 ---

@@ -1,6 +1,6 @@
 # Contrato da API
 
-O app fala com um backend HTTP (hoje: FastAPI de teste em `localhost:8000`).  
+O app fala com um backend HTTP (hoje: FastAPI de teste em `localhost:8000`).
 Este documento descreve o que o **cliente espera**, para alinhar com o time/backend.
 
 ---
@@ -83,7 +83,8 @@ Retorno esperado (campos usados pela UI):
 {
   "nome": "Nome do estudante",
   "username": "matricula",
-  "total_courses": 2,
+  "papel": "coordenador",
+  "total_courses": 3,
   "courses": [
     {
       "id": 1,
@@ -92,9 +93,25 @@ Retorno esperado (campos usados pela UI):
       "progress": 40,
       "moodle": "AVA"
     }
+  ],
+  "diarios": [],
+  "autoinscricoes": [
+    {
+      "id": 10,
+      "name": "Curso FIC aberto",
+      "shortname": "FIC1",
+      "moodle": "AVA Aberto",
+      "is_enrolled": false,
+      "details_url": ""
+    }
   ]
 }
 ```
+
+A aba **Diários** usa `diarios` se existir; senão cai em `courses` (API de teste).  
+A aba **Autoinscrição** usa `autoinscricoes` (ou `self_enrolments`).  
+`total_courses` deve refletir a quantidade real de itens em `courses`/`diarios`.  
+`papel` opcional: `coordenador` ou `estudante` (demo FastAPI).
 
 ### `GET /courses/{id}`
 
@@ -129,7 +146,7 @@ Retorno esperado (campos usados pela UI):
 }
 ```
 
-Campos de atividade aceitos: `modname` (ou `module` / `type`), `name` (ou `title`), `completion` (boolean opcional).  
+Campos de atividade aceitos: `modname` (ou `module` / `type`), `name` (ou `title`), `completion` (boolean opcional).
 Seções aceitam `activities`, `modules` ou `cms`.
 ---
 

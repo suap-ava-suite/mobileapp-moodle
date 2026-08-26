@@ -104,7 +104,39 @@
         }
     }
 
-    /** Monta um card de curso a partir do template tpl-painel-card. */
+    const TAB_META = {
+        diarios: {
+            title: "Meus Diários",
+            empty:
+                "É possível que a Secretaria Acadêmica ainda não tenha lhe inserido em diário algum; neste caso, aguarde.",
+        },
+        autoinscricoes: {
+            title: "Cursos com Autoinscrição",
+            empty:
+                "Não há cursos com autoinscrição disponíveis no momento. Ajuste os filtros ou volte mais tarde.",
+        },
+    };
+
+    /** Normaliza listas do dashboard (compatível com API de teste e AVA). */
+    function getPainelLists(dashboard) {
+        const diarios = dashboard.diarios || dashboard.courses || [];
+        const autoinscricoes = dashboard.autoinscricoes || dashboard.self_enrolments || [];
+
+        return {
+            diarios: Array.isArray(diarios) ? diarios : [],
+            autoinscricoes: Array.isArray(autoinscricoes) ? autoinscricoes : [],
+        };
+    }
+
+    function itemName(item) {
+        return item.name || item.fullname || ("Curso " + (item.id || ""));
+    }
+
+    function itemEnv(item) {
+        return item.moodle || item.environment || (item.ambiente && item.ambiente.titulo) || "AVA Acadêmico";
+    }
+
+    /** Monta um card de diário a partir do template tpl-painel-card. */
     function buildCourseCard(course) {
         const fragment = App.cloneTemplate("tpl-painel-card");
 
@@ -120,18 +152,26 @@
         const label = fragment.querySelector(".painel-progress-label");
         const env = fragment.querySelector(".painel-card-header-env");
         const favBtn = fragment.querySelector(".painel-card-details-info-favourite");
+        const progressBlock = fragment.querySelector(".painel-card-details-progress");
 
         link.href = "#/curso/" + encodeURIComponent(String(course.id));
-        cardTitle.textContent = course.name || ("Curso " + course.id);
-        shortname.textContent = course.shortname || ("Curso " + course.id);
-        bar.style.width = progress + "%";
-        label.textContent = progress + "% concluído";
+        cardTitle.textContent = itemName(course);
+        shortname.textContent = course.shortname || itemName(course);
 
-        if (env && course.moodle) {
-            env.textContent = course.moodle;
+        if (course.hasprogress === false && course.progress == null) {
+            if (progressBlock) {
+                progressBlock.hidden = true;
+            }
+        } else {
+            bar.style.width = progress + "%";
+            label.textContent = progress + "% concluído";
         }
 
-        if (favBtn && course.isfavourite) {
+        if (env) {
+            env.textContent = itemEnv(course);
+        }
+
+        if (favBtn && (course.isfavourite || course.favourite)) {
             favBtn.classList.remove("painel-card-details-info-favourite");
             favBtn.classList.add("painel-card-details-info-unfavourite");
             const icon = favBtn.querySelector("ion-icon");
@@ -144,46 +184,221 @@
         return fragment;
     }
 
-    /** Desenha a lista de cursos do dashboard. */
+    /** Card da aba Autoinscrição (inscrever / acessar). */
+    function buildAutoinscricaoCard(course) {
+        const fragment = App.cloneTemplate("tpl-painel-card-autoinscricao");
+
+        if (!fragment) {
+            return document.createTextNode("");
+        }
+
+        const enrolled = Boolean(course.is_enrolled || course.enrolled);
+        const link = fragment.querySelector(".painel-card-link");
+        const cardTitle = fragment.querySelector(".painel-card-title");
+        const shortname = fragment.querySelector(".painel-card-header-shortname");
+        const env = fragment.querySelector(".painel-card-header-env");
+        const enrolledBadge = fragment.querySelector(".painel-card-info-enrolled");
+        const btnEnroll = fragment.querySelector(".btn-enroll");
+        const btnAccess = fragment.querySelector(".btn-access");
+        const btnUnenroll = fragment.querySelector(".btn-unenroll");
+        const courseId = course.id;
+
+        link.href = course.details_url
+            ? course.details_url
+            : "#/curso/" + encodeURIComponent(String(courseId));
+        cardTitle.textContent = itemName(course);
+        shortname.textContent = course.shortname || itemName(course);
+
+        if (env) {
+            env.textContent = itemEnv(course);
+        }
+
+        if (enrolledBadge) {
+            enrolledBadge.hidden = !enrolled;
+        }
+
+        if (btnEnroll) {
+            btnEnroll.hidden = enrolled;
+            btnEnroll.addEventListener("click", function () {
+                window.alert(
+                    "A inscrição será confirmada quando a API de autoinscrição estiver disponível."
+                );
+            });
+        }
+
+        if (btnAccess) {
+            btnAccess.hidden = !enrolled;
+            btnAccess.setAttribute(
+                "href",
+                "#/curso/" + encodeURIComponent(String(courseId))
+            );
+        }
+
+        if (btnUnenroll) {
+            btnUnenroll.hidden = !enrolled;
+            btnUnenroll.addEventListener("click", function () {
+                window.alert(
+                    "O cancelamento de inscrição será liberado com a API de autoinscrição."
+                );
+            });
+        }
+
+        return fragment;
+    }
+
+    function renderEmpty(host, tabKey) {
+        const empty = App.cloneTemplate("tpl-empty-cursos");
+
+        if (!empty) {
+            return;
+        }
+
+        const hint = empty.querySelector(".no-data__hint");
+        const meta = TAB_META[tabKey] || TAB_META.diarios;
+
+        if (hint) {
+            hint.textContent = meta.empty;
+        }
+
+        host.appendChild(empty);
+    }
+
+    function renderTabCards(host, tabKey, lists) {
+        const items = lists[tabKey] || [];
+
+        host.innerHTML = "";
+        host.setAttribute("data-active-tab", tabKey);
+
+        if (!items.length) {
+            renderEmpty(host, tabKey);
+
+            return;
+        }
+
+        const batch = document.createDocumentFragment();
+
+        items.forEach(function (item) {
+            if (tabKey === "autoinscricoes") {
+                batch.appendChild(buildAutoinscricaoCard(item));
+            } else {
+                batch.appendChild(buildCourseCard(item));
+            }
+        });
+        host.appendChild(batch);
+    }
+
+    function updateIntro(tabKey, lists) {
+        const titleEl = document.getElementById("painel-intro-title");
+        const intro = document.getElementById("painel-intro-text");
+        const meta = TAB_META[tabKey] || TAB_META.diarios;
+        const items = lists[tabKey] || [];
+        const total = items.length;
+
+        if (titleEl) {
+            titleEl.textContent = meta.title;
+        }
+
+        if (!intro) {
+            return;
+        }
+
+        if (tabKey === "autoinscricoes") {
+            const label = total === 1 ? "curso com autoinscrição" : "cursos com autoinscrição";
+
+            intro.innerHTML =
+                total > 0
+                    ? "Há <strong>" + total + "</strong> " + label + " disponíveis."
+                    : "Nenhum curso com autoinscrição listado no momento.";
+
+            return;
+        }
+
+        const label = total === 1 ? "diário" : "diários";
+        const papel = App.dashboardPapel === "coordenador"
+            ? ' <span class="env-chip">Coordenador</span>'
+            : "";
+
+        intro.innerHTML =
+            "Você possui <strong>" + total + "</strong> " + label + " no AVA IFRN." + papel;
+    }
+
+    function setActiveTab(tabKey, lists) {
+        const tabs = document.querySelectorAll("#painel-tabs .ava-tab");
+        const cardsHost = document.getElementById("painel-cards");
+
+        tabs.forEach(function (tab) {
+            const active = tab.getAttribute("data-tab") === tabKey;
+
+            tab.classList.toggle("is-active", active);
+            tab.setAttribute("aria-selected", active ? "true" : "false");
+        });
+
+        updateIntro(tabKey, lists);
+
+        if (cardsHost) {
+            renderTabCards(cardsHost, tabKey, lists);
+        }
+
+        App.activePainelTab = tabKey;
+    }
+
+    function bindTabs(lists) {
+        const tabsHost = document.getElementById("painel-tabs");
+
+        if (!tabsHost || tabsHost.dataset.bound === "1") {
+            return;
+        }
+
+        tabsHost.dataset.bound = "1";
+        tabsHost.addEventListener("click", function (event) {
+            const tab = event.target.closest(".ava-tab");
+
+            if (!tab || tab.disabled) {
+                return;
+            }
+
+            const key = tab.getAttribute("data-tab");
+
+            if (!key || key === App.activePainelTab) {
+                return;
+            }
+
+            setActiveTab(key, lists);
+        });
+    }
+
+    /** Desenha o painel (abas Diários + Autoinscrição). */
     function renderPainel(dashboard) {
         App.title.textContent = "Painel AVA";
         setUser(dashboard);
 
-        const total = dashboard.total_courses || 0;
-        const label = total === 1 ? "curso matriculado" : "cursos matriculados";
-        const courses = dashboard.courses || [];
+        const lists = getPainelLists(dashboard);
         const page = App.cloneTemplate("tpl-painel");
+        const initialTab = App.activePainelTab === "autoinscricoes"
+            ? "autoinscricoes"
+            : "diarios";
+
+        App.dashboardPapel = dashboard.papel || dashboard.role || "estudante";
 
         App.content.innerHTML = "";
         App.content.appendChild(page);
 
-        const intro = document.getElementById("painel-intro-text");
-        const badge = document.getElementById("tab-badge-cursos");
-        const cardsHost = document.getElementById("painel-cards");
+        const badgeDiarios = document.getElementById("tab-badge-diarios");
+        const badgeAuto = document.getElementById("tab-badge-autoinscricoes");
 
-        if (intro) {
-            intro.innerHTML =
-                "Você possui <strong>" + total + "</strong> " + label + " no AVA IFRN.";
+        if (badgeDiarios) {
+            badgeDiarios.textContent = String(lists.diarios.length);
         }
 
-        if (badge) {
-            badge.textContent = String(total);
+        if (badgeAuto) {
+            const n = lists.autoinscricoes.length;
+
+            badgeAuto.textContent = String(n);
+            badgeAuto.hidden = n === 0;
         }
 
-        if (!courses.length) {
-            const empty = App.cloneTemplate("tpl-empty-cursos");
-
-            if (empty) {
-                cardsHost.appendChild(empty);
-            }
-        } else {
-            const batch = document.createDocumentFragment();
-
-            courses.forEach(function (course) {
-                batch.appendChild(buildCourseCard(course));
-            });
-            cardsHost.appendChild(batch);
-        }
+        bindTabs(lists);
+        setActiveTab(initialTab, lists);
 
         const refresher = document.getElementById("painel-refresher");
 
