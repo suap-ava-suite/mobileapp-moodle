@@ -4,8 +4,8 @@ Partials HTML (templates) carregados pelo painel em tempo de execução.
 
 | Arquivo | Conteúdo |
 |---------|----------|
-| `painel.html` | Lista de cursos, chips/abas, card de curso, estado vazio |
-| `curso.html` | Cabeçalho do curso, progresso, lista de seções/tópicos |
+| `painel.html` | Lista de cursos, abas AVA, card de curso, skeleton, estado vazio |
+| `curso.html` | Cabeçalho do curso, visão geral, seções expansíveis e atividades |
 | `erros.html` | Template de erro genérico + página “não encontrada” |
 
 Os templates usam a tag `<template id="…">` e são clonados em `app-views.js` / `app-status.js`.

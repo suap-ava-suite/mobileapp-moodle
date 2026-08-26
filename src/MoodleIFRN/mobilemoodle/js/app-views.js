@@ -8,6 +8,30 @@
     const MM = (window.MobileMoodle = window.MobileMoodle || {});
     const App = (MM.App = MM.App || {});
 
+    const ACTIVITY_ICONS = {
+        assign: "create-outline",
+        forum: "chatbubbles-outline",
+        quiz: "help-circle-outline",
+        resource: "document-text-outline",
+        url: "link-outline",
+        page: "document-outline",
+        folder: "folder-outline",
+        book: "book-outline",
+        label: "pricetag-outline",
+        lesson: "school-outline",
+        scorm: "cube-outline",
+        h5pactivity: "game-controller-outline",
+        workshop: "people-outline",
+        choice: "list-outline",
+        feedback: "chatbox-ellipses-outline",
+        glossary: "library-outline",
+        wiki: "globe-outline",
+        data: "server-outline",
+        chat: "chatbubble-outline",
+        bigbluebuttonbn: "videocam-outline",
+        attendance: "checkmark-done-outline",
+    };
+
     /** Atualiza avatar e nome no menu / toolbar (estilo AVA). */
     function setUser(dashboard) {
         const nome = dashboard.nome || "Estudante";
@@ -95,8 +119,8 @@
         const bar = fragment.querySelector(".painel-progress-bar");
         const label = fragment.querySelector(".painel-progress-label");
         const env = fragment.querySelector(".painel-card-header-env");
+        const favBtn = fragment.querySelector(".painel-card-details-info-favourite");
 
-        // Clique no card abre #/curso/{id}
         link.href = "#/curso/" + encodeURIComponent(String(course.id));
         cardTitle.textContent = course.name || ("Curso " + course.id);
         shortname.textContent = course.shortname || ("Curso " + course.id);
@@ -105,6 +129,16 @@
 
         if (env && course.moodle) {
             env.textContent = course.moodle;
+        }
+
+        if (favBtn && course.isfavourite) {
+            favBtn.classList.remove("painel-card-details-info-favourite");
+            favBtn.classList.add("painel-card-details-info-unfavourite");
+            const icon = favBtn.querySelector("ion-icon");
+
+            if (icon) {
+                icon.setAttribute("name", "star");
+            }
         }
 
         return fragment;
@@ -136,7 +170,6 @@
             badge.textContent = String(total);
         }
 
-        // Sem cursos → estado vazio do template.
         if (!courses.length) {
             const empty = App.cloneTemplate("tpl-empty-cursos");
 
@@ -144,7 +177,6 @@
                 cardsHost.appendChild(empty);
             }
         } else {
-            // Fragment evita vários reflows ao inserir vários cards.
             const batch = document.createDocumentFragment();
 
             courses.forEach(function (course) {
@@ -153,7 +185,6 @@
             cardsHost.appendChild(batch);
         }
 
-        // Pull-to-refresh do Ionic.
         const refresher = document.getElementById("painel-refresher");
 
         if (refresher) {
@@ -165,7 +196,90 @@
         }
     }
 
-    /** Desenha a página de um curso (progresso + seções/tópicos). */
+    function activityIcon(modname) {
+        const key = String(modname || "").toLowerCase();
+
+        return ACTIVITY_ICONS[key] || "document-text-outline";
+    }
+
+    function activityLabel(modname) {
+        const key = String(modname || "").toLowerCase();
+
+        if (!key) {
+            return "Atividade";
+        }
+
+        const map = {
+            assign: "Tarefa",
+            forum: "Fórum",
+            quiz: "Questionário",
+            resource: "Arquivo",
+            url: "URL",
+            page: "Página",
+            folder: "Pasta",
+            book: "Livro",
+            label: "Rótulo",
+            lesson: "Lição",
+            scorm: "SCORM",
+            h5pactivity: "H5P",
+            workshop: "Workshop",
+            choice: "Escolha",
+            feedback: "Pesquisa",
+            glossary: "Glossário",
+            wiki: "Wiki",
+            data: "Banco de dados",
+            chat: "Chat",
+            bigbluebuttonbn: "BigBlueButton",
+            attendance: "Frequência",
+        };
+
+        return map[key] || key;
+    }
+
+    function buildActivity(activity) {
+        const fragment = App.cloneTemplate("tpl-curso-activity");
+
+        if (!fragment) {
+            return document.createTextNode("");
+        }
+
+        const icon = fragment.querySelector(".activity-item__icon ion-icon");
+        const name = fragment.querySelector(".activity-item__name");
+        const mod = fragment.querySelector(".activity-item__mod");
+        const status = fragment.querySelector(".activity-item__status");
+        const modname = activity.modname || activity.module || activity.type || "";
+
+        if (icon) {
+            icon.setAttribute("name", activityIcon(modname));
+        }
+
+        name.textContent = activity.name || activity.title || "Atividade";
+        mod.textContent = activityLabel(modname);
+
+        if (status && typeof activity.completion === "boolean") {
+            status.hidden = false;
+            status.textContent = activity.completion ? "Concluída" : "Pendente";
+            status.classList.toggle("activity-item__status--pending", !activity.completion);
+        }
+
+        return fragment;
+    }
+
+    function bindSectionToggle(article) {
+        const header = article.querySelector(".topic-card__header");
+
+        if (!header) {
+            return;
+        }
+
+        header.addEventListener("click", function () {
+            const open = article.classList.toggle("is-open");
+
+            header.setAttribute("aria-expanded", open ? "true" : "false");
+        });
+    }
+
+    /** Desenha a página de um curso (progresso + seções + atividades). */
     function renderCurso(course, dashboard) {
         App.title.textContent = course.name || "Curso";
         setUser(dashboard);
@@ -183,10 +297,24 @@
         document.getElementById("curso-progress-text").textContent = progress + "%";
         document.getElementById("curso-progress-label").textContent = progress + "% concluído";
 
+        const envTag = document.getElementById("curso-env-tag");
+
+        if (envTag && course.moodle) {
+            envTag.textContent = course.moodle;
+        }
+
+        const summary = course.summary || course.description || "";
+        const summaryBlock = document.getElementById("curso-summary-block");
+        const summaryEl = document.getElementById("curso-summary");
+
+        if (summary && summaryBlock && summaryEl) {
+            summaryEl.textContent = String(summary).replace(/<[^>]+>/g, " ").trim();
+            summaryBlock.hidden = !summaryEl.textContent;
+        }
+
         const progressBar = document.getElementById("curso-progress-bar");
 
         if (progressBar) {
-            // ion-progress-bar usa valor de 0 a 1.
             progressBar.value = progress / 100;
         }
 
@@ -203,9 +331,39 @@
 
         sections.forEach(function (section, index) {
             const item = App.cloneTemplate("tpl-curso-section");
+            const activities = section.activities || section.modules || section.cms || [];
+            const countEl = item.querySelector(".topic-card__count");
+            const list = item.querySelector(".activity-list");
+            const article = item.querySelector(".topic-card");
 
             item.querySelector(".topic-index").textContent = String(index + 1);
             item.querySelector(".topic-name").textContent = section.name || ("Tópico " + (index + 1));
+
+            const count = activities.length;
+
+            countEl.textContent = count === 1
+                ? "1 atividade"
+                : (count > 0 ? count + " atividades" : "Tópico da sala virtual");
+
+            if (!count) {
+                const empty = document.createElement("p");
+
+                empty.className = "activity-empty";
+                empty.textContent = "Nenhuma atividade nesta seção.";
+                list.appendChild(empty);
+            } else {
+                activities.forEach(function (activity) {
+                    list.appendChild(buildActivity(activity));
+                });
+            }
+
+            // Abre a primeira seção por padrão (como o Moodle costuma destacar o tópico atual).
+            if (index === 0 && article) {
+                article.classList.add("is-open");
+                item.querySelector(".topic-card__header").setAttribute("aria-expanded", "true");
+            }
+
+            bindSectionToggle(article);
             batch.appendChild(item);
         });
         sectionsHost.appendChild(batch);

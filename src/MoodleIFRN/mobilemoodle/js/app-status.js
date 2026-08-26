@@ -8,12 +8,15 @@
     const MM = (window.MobileMoodle = window.MobileMoodle || {});
     const App = (MM.App = MM.App || {});
 
-    /** Spinner + mensagem enquanto carrega painel/curso. */
+    /** Splash AVA (logo + spinner) enquanto carrega painel/curso. */
     function showLoading(message) {
+        const logoSrc = (App.ASSET_BASE || "") + "static/theme/ifrn/img/splash-logo.png";
+
         App.content.innerHTML =
-            '<div class="page-loading">' +
-                '<ion-spinner name="crescent" color="primary"></ion-spinner>' +
-                "<p>" + App.escapeHtml(message || "Carregando...") + "</p>" +
+            '<div class="ava-splash page-loading" role="status" aria-live="polite">' +
+                '<img class="ava-splash__logo" src="' + logoSrc + '" alt="Painel AVA">' +
+                '<div class="ava-splash__spinner" aria-hidden="true"></div>' +
+                '<p class="ava-splash__text">' + App.escapeHtml(message || "Carregando...") + "</p>" +
             "</div>";
     }
 

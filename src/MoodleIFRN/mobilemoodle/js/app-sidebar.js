@@ -67,42 +67,8 @@
     }
 
     function bindAccessibilityControls() {
-        const panel = $("sidebar-modal-body");
-        const root = document.documentElement;
-        let scale = Number(root.dataset.fontScale) || 1;
-
-        panel.querySelectorAll("[data-a11y]").forEach(function (btn) {
-            btn.addEventListener("click", function () {
-                const action = btn.getAttribute("data-a11y");
-
-                if (action === "zoom-in") {
-                    scale = Math.min(1.35, +(scale + 0.1).toFixed(2));
-                } else if (action === "zoom-out") {
-                    scale = Math.max(0.85, +(scale - 0.1).toFixed(2));
-                } else {
-                    scale = 1;
-                }
-
-                root.dataset.fontScale = String(scale);
-                root.style.fontSize = scale === 1 ? "" : 16 * scale + "px";
-            });
-        });
-
-        const contrast = $("a11y-contrast");
-        const underline = $("a11y-underline");
-
-        if (contrast) {
-            contrast.checked = document.body.classList.contains("a11y-contrast");
-            contrast.addEventListener("change", function () {
-                document.body.classList.toggle("a11y-contrast", contrast.checked);
-            });
-        }
-
-        if (underline) {
-            underline.checked = document.body.classList.contains("a11y-underline");
-            underline.addEventListener("change", function () {
-                document.body.classList.toggle("a11y-underline", underline.checked);
-            });
+        if (App.A11y && typeof App.A11y.bindPanel === "function") {
+            App.A11y.bindPanel();
         }
     }
 

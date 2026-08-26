@@ -85,7 +85,8 @@ Login IFRN  →  JWT salvo no sessionStorage  →  Painel (#/painel)
 - [x] Login com IFRN-id e senha
 - [x] Login biométrico (quando o dispositivo permite)
 - [x] Painel com lista de cursos e progresso
-- [x] Página de detalhe do curso
+- [x] Página de detalhe do curso (seções expansíveis + atividades)
+- [x] Ícone e splash do Painel AVA (web + assets nativos em `resources/`)
 - [x] Tratamento de erros (401, 404, 500, 502, 503, rede, timeout)
 - [x] Página “não encontrada”
 - [x] Cache curto do dashboard/cursos

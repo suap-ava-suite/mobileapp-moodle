@@ -65,6 +65,10 @@
             window.MobileMoodleApi.setApiBaseUrl(resolveApiBase());
         }
 
+        if (App.A11y && typeof App.A11y.init === "function") {
+            App.A11y.init();
+        }
+
         bindMenu();
 
         // Sem hash → define painel (o hashchange dispara loadRoute).

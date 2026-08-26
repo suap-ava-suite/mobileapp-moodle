@@ -6,7 +6,7 @@ body {
     margin: 0;
     font: var(--font-paragraph1);
     color: var(--escuro-primario);
-    background: var(--general-white);
+    background: var(--branco-secundario);
 }
 
 * {
@@ -29,7 +29,6 @@ ion-menu-button {
     color: var(--ion-color-primary);
 }
 
-.page-loading,
 .page-error,
 .empty-state,
 .no-data {
@@ -42,6 +41,12 @@ ion-menu-button {
     padding: 24px;
     text-align: center;
     color: var(--muted);
+}
+
+.no-data {
+    margin-top: 2rem;
+    max-width: 1360px;
+    margin-inline: auto;
 }
 
 .no-data h3,

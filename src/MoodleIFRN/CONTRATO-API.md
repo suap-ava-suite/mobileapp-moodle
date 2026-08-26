@@ -107,13 +107,30 @@ Retorno esperado (campos usados pela UI):
   "teacher": "Professor(a)",
   "workload": "60h",
   "progress": 40,
+  "moodle": "AVA Acadêmico",
+  "summary": "Texto opcional de visão geral",
   "sections": [
-    { "name": "Tópico 1" },
-    { "name": "Tópico 2" }
+    {
+      "name": "Tópico 1",
+      "activities": [
+        {
+          "name": "Fórum de avisos",
+          "modname": "forum",
+          "completion": true
+        },
+        {
+          "name": "Material da aula",
+          "modname": "resource",
+          "completion": false
+        }
+      ]
+    }
   ]
 }
 ```
 
+Campos de atividade aceitos: `modname` (ou `module` / `type`), `name` (ou `title`), `completion` (boolean opcional).  
+Seções aceitam `activities`, `modules` ou `cms`.
 ---
 
 ## Status HTTP que o painel trata

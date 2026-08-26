@@ -395,46 +395,6 @@
     gap: 8px;
 }
 
-.ava-a11y-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 10px 0;
-    font: var(--font-heading4);
-}
-
-.ava-a11y-actions {
-    display: flex;
-    gap: 6px;
-
-    button {
-        min-width: 36px;
-        height: 36px;
-        border: 1px solid var(--light);
-        border-radius: 8px;
-        background: #fff;
-        color: var(--primary-dark);
-        font-weight: 700;
-        cursor: pointer;
-    }
-}
-
-.ava-a11y-switch {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 0;
-    font: var(--font-heading4);
-    cursor: pointer;
-
-    input {
-        width: 18px;
-        height: 18px;
-        accent-color: var(--primary);
-    }
-}
-
 .filter-select-area {
     display: flex;
     align-items: center;
@@ -492,12 +452,4 @@
 .menu-section-label,
 .menu-divider {
     display: none;
-}
-
-body.a11y-contrast {
-    filter: contrast(1.15);
-}
-
-body.a11y-underline a {
-    text-decoration: underline !important;
 }

@@ -1,0 +1,64 @@
+@use "variables";
+
+// Splash / load view — espelho do .loading-overlay do theme_ifrn25
+
+.ava-splash,
+.page-loading.ava-splash,
+.boot-loading.ava-splash {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    min-height: 50vh;
+    padding: 24px 16px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--dark);
+}
+
+.ava-splash--fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    min-height: 100%;
+    background: var(--branco-primario);
+}
+
+.ava-splash__logo {
+    width: min(112px, 28vw);
+    height: auto;
+    border-radius: 20px;
+    box-shadow: var(--shadow-primary);
+}
+
+.ava-splash__spinner {
+    border: 6px solid var(--verde-claro);
+    border-top: 6px solid var(--verde-escuro);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: ava-spin 1s linear infinite;
+    margin: 0.25rem 0;
+}
+
+.ava-splash__text {
+    margin: 0;
+    font: var(--font-button1);
+    color: var(--dark);
+}
+
+@keyframes ava-spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ava-splash__spinner {
+        animation: none;
+        border-top-color: var(--verde-escuro);
+        opacity: 0.85;
+    }
+}
