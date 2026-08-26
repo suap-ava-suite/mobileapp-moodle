@@ -1,0 +1,72 @@
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+    background: #fefefe;
+    color: #2b2b2b;
+    font-family: "Noto Sans", system-ui, sans-serif;
+}
+
+.boot-loading.ava-splash {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    min-height: 50vh;
+    padding: 24px 16px;
+    text-align: center;
+    color: #2b2b2b;
+    background: rgba(255, 255, 255, 0.92);
+
+    .ava-splash__logo {
+        width: min(112px, 28vw);
+        height: auto;
+        border-radius: 20px;
+        box-shadow: 0 4px 4px #00000040;
+    }
+
+    .ava-splash__spinner {
+        border: 6px solid #dff4ee;
+        border-top: 6px solid #0b6064;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: ava-boot-spin 1s linear infinite;
+    }
+
+    .ava-splash__text {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+}
+
+@keyframes ava-boot-spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .boot-loading.ava-splash {
+        min-height: calc(100dvh - 120px);
+        padding: 20px 16px calc(24px + env(safe-area-inset-bottom));
+        gap: 0.85rem;
+
+        .ava-splash__logo {
+            width: min(96px, 32vw);
+            border-radius: 18px;
+        }
+
+        .ava-splash__spinner {
+            width: 48px;
+            height: 48px;
+            border-width: 5px;
+        }
+
+        .ava-splash__text {
+            font-size: 0.9375rem;
+        }
+    }
+}
