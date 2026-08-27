@@ -1,0 +1,179 @@
+<ion-content class="marketplace-ifrn" [fullscreen]="true" [scrollY]="true">
+    <div class="page">
+
+        <!-- Painel esquerdo -->
+        <section class="panel panel--login">
+            <ion-grid class="panel__inner" fixed>
+                <ion-row class="ion-justify-content-center">
+                    <ion-col size="12" size-md="10" size-lg="8">
+
+                        <!-- Identidade IFRN -->
+                        <div
+                            class="brand"
+                            aria-label="Instituto Federal do Rio Grande do Norte">
+
+                            <img
+                                class="ifrn-logo"
+                                [src]="ifrnSymbolSrc"
+                                alt=""
+                                aria-hidden="true"
+                            />
+
+                            <span class="brand__text">
+                                <strong>INSTITUTO FEDERAL</strong>
+                                <small>Rio Grande do Norte</small>
+                            </span>
+                        </div>
+
+                        <!-- Hero -->
+                        <div class="hero ion-text-center">
+                            <h1 class="hero__title">
+                                AVA <span>IFRN</span>
+                            </h1>
+
+                            <h2 class="hero__subtitle">
+                                Ambiente Virtual de Aprendizagem
+                            </h2>
+
+                            <p class="hero__text">
+                                Acesse seus cursos, disciplinas e atividades acadêmicas
+                                em um ambiente integrado ao IFRN.
+                            </p>
+
+                            <!-- Entrar -->
+                            <ion-button
+                                expand="block"
+                                class="btn-enter"
+                                (click)="enterAva()">
+
+                                <ion-icon
+                                    name="lock-closed-outline"
+                                    slot="start"
+                                    aria-hidden="true">
+                                </ion-icon>
+
+                                Entrar no AVA
+
+                                <ion-icon
+                                    name="chevron-forward-outline"
+                                    slot="end"
+                                    aria-hidden="true">
+                                </ion-icon>
+                            </ion-button>
+
+                            <!-- Ajuda -->
+                            <ion-button
+                                expand="block"
+                                fill="clear"
+                                class="help-link"
+                                (click)="openHelp()">
+
+                                <ion-icon
+                                    name="help-circle-outline"
+                                    slot="start"
+                                    aria-hidden="true">
+                                </ion-icon>
+
+                                Precisa de ajuda?
+                            </ion-button>
+                        </div>
+
+                        <!-- Recursos -->
+                        <ion-grid class="features">
+                            <ion-row>
+
+                                <ion-col size="4">
+                                    <div class="features__item">
+                                        <span
+                                            class="features__icon"
+                                            aria-hidden="true">
+                                            <ion-icon name="shield-checkmark-outline"></ion-icon>
+                                        </span>
+
+                                        <span class="features__copy">
+                                            <strong>Seguro</strong>
+                                            <small>Acesso via SUAP</small>
+                                        </span>
+                                    </div>
+                                </ion-col>
+
+                                <ion-col size="4">
+                                    <div class="features__item">
+                                        <span
+                                            class="features__icon"
+                                            aria-hidden="true">
+                                            <ion-icon name="school-outline"></ion-icon>
+                                        </span>
+
+                                        <span class="features__copy">
+                                            <strong>Acadêmico</strong>
+                                            <small>Ambiente oficial</small>
+                                        </span>
+                                    </div>
+                                </ion-col>
+
+                                <ion-col size="4">
+                                    <div class="features__item">
+                                        <span
+                                            class="features__icon"
+                                            aria-hidden="true">
+                                            <ion-icon name="git-network-outline"></ion-icon>
+                                        </span>
+
+                                        <span class="features__copy">
+                                            <strong>Integrado</strong>
+                                            <small>Sistemas IFRN</small>
+                                        </span>
+                                    </div>
+                                </ion-col>
+
+                            </ion-row>
+                        </ion-grid>
+
+                        <!-- Rodapé -->
+                        <p class="copyright ion-text-center">
+                            © {{ currentYear }} IFRN. Todos os direitos reservados.
+                        </p>
+
+                    </ion-col>
+                </ion-row>
+            </ion-grid>
+        </section>
+
+        <!-- Painel direito -->
+        <section
+            class="panel panel--ifrn"
+            aria-hidden="true">
+
+            <div class="ifrn-panel">
+
+                <!-- Elementos decorativos -->
+                <div
+                    class="ifrn-panel__pattern"
+                    aria-hidden="true">
+
+                    <span
+                        class="ifrn-panel__dot ifrn-panel__dot--1">
+                    </span>
+
+                    <span
+                        class="ifrn-panel__dot ifrn-panel__dot--2">
+                    </span>
+
+                    <span
+                        class="ifrn-panel__dot ifrn-panel__dot--3">
+                    </span>
+                </div>
+
+                <!-- Faixas institucionais -->
+                <div class="ifrn-panel__stripes" aria-hidden="true">
+                    <span class="ifrn-panel__strip-red"></span>
+                    <span class="ifrn-panel__strip-green"></span>
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+</ion-content>

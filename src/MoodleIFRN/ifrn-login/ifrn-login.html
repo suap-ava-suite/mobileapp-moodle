@@ -1,6 +1,9 @@
 <ion-content class="ifrn-login">
 
     <header class="ifrn-login__header">
+        @if (canGoBack) {
+           
+        }
         <img class="ifrn-login__logo" src="assets/img/Gov.br_logo.svg.webp" alt="gov.br">
     </header>
 
@@ -42,9 +45,6 @@
                     </p>
 
                 </div>
-
-
-
 
                 <!-- Campo senha -->
                 <div class="ifrn-login__field">
@@ -127,9 +127,6 @@
 
 
         </section>
-
-
-
 
         <!-- Ajuda -->
         <a class="ifrn-login__link ifrn-login__link--help" href="" (click)="help($event)">

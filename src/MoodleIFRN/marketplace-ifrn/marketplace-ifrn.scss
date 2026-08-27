@@ -1,0 +1,476 @@
+.marketplace-ifrn {
+    --background: #ffffff;
+    --padding-top: 0;
+    --padding-bottom: 0;
+    --padding-start: 0;
+    --padding-end: 0;
+
+    --ifrn-text: #1e1e1e;
+    --ifrn-muted: #4a4a4a;
+    --ifrn-subtle: #9a9a9a;
+    --ifrn-green: #539839;
+    --ifrn-green-light: #6fb353;
+    --ifrn-green-dark: #3d7a2f;
+    --ifrn-green-hover: #356628;
+    --ifrn-red: #b93120;
+    --ifrn-art-bg: #eef6ee;
+    --ifrn-border: #e0e0e0;
+    --ifrn-font: "Noto Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    color: var(--ifrn-text);
+    font-family: var(--ifrn-font);
+    line-height: 1.5;
+
+    ion-grid {
+        --ion-grid-padding: 0;
+        padding: 0;
+    }
+
+    ion-button {
+        letter-spacing: normal;
+        margin: 0;
+        text-transform: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .page {
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+    }
+
+    .panel {
+        position: relative;
+    }
+
+    .panel--login {
+        background: #ffffff;
+        flex: 1;
+        z-index: 2;
+    }
+
+    .panel--ifrn {
+        background: var(--ifrn-art-bg);
+        flex-shrink: 0;
+        min-height: clamp(180px, 28vh, 240px);
+        overflow: hidden;
+    }
+
+    .panel--ifrn::before {
+        background: linear-gradient(0deg, transparent 55%, #ffffff 100%);
+        content: "";
+        height: 36px;
+        left: 0;
+        pointer-events: none;
+        position: absolute;
+        right: 0;
+        top: 0;
+        z-index: 2;
+    }
+
+    .panel__inner {
+        margin: 0 auto;
+        max-width: 420px;
+        padding:
+            calc(16px + var(--ion-safe-area-top, 0px))
+            20px
+            calc(20px + var(--ion-safe-area-bottom, 0px));
+        width: 100%;
+    }
+
+    .ifrn-logo {
+        aspect-ratio: 76 / 100;
+        display: block;
+        flex-shrink: 0;
+        height: 40px;
+        object-fit: contain;
+        width: auto;
+    }
+
+    .ifrn-logo--large {
+        height: 72px;
+        margin: 0 auto;
+    }
+
+    .brand {
+        align-items: center;
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .brand__text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.15;
+        text-align: left;
+    }
+
+    .brand__text strong {
+        color: var(--ifrn-text);
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+    }
+
+    .brand__text small {
+        color: var(--ifrn-muted);
+        font-size: 0.62rem;
+        font-weight: 500;
+    }
+
+    .hero {
+        margin-bottom: 1.25rem;
+    }
+
+    .hero__title {
+        color: var(--ifrn-text);
+        font-size: clamp(2rem, 8vw, 2.6rem);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1.05;
+        margin: 0 0 0.35rem;
+    }
+
+    .hero__title span {
+        color: var(--ifrn-green);
+    }
+
+    .hero__subtitle {
+        color: var(--ifrn-text);
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 0 0 0.75rem;
+    }
+
+    .hero__text {
+        color: var(--ifrn-muted);
+        font-size: 0.9rem;
+        line-height: 1.55;
+        margin: 0 auto 1.25rem;
+        max-width: 32ch;
+    }
+
+    ion-button.btn-enter {
+        --background: var(--ifrn-green-dark);
+        --background-activated: var(--ifrn-green-hover);
+        --background-focused: var(--ifrn-green-hover);
+        --background-hover: var(--ifrn-green-hover);
+        --border-radius: 12px;
+        --box-shadow: 0 4px 14px rgba(61, 122, 47, 0.28);
+        --color: #ffffff;
+        --padding-bottom: 15px;
+        --padding-top: 15px;
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 auto;
+        max-width: 340px;
+        min-height: 52px;
+    }
+
+    ion-button.help-link {
+        --color: var(--ifrn-green-light);
+        font-size: 0.88rem;
+        font-weight: 500;
+        margin: 0.35rem auto 0;
+        max-width: 340px;
+        min-height: 44px;
+    }
+
+    .features {
+        border-top: 1px solid var(--ifrn-border);
+        margin-top: 0.5rem;
+        padding: 1.25rem 0 0;
+    }
+
+    .features ion-row {
+        margin: 0 -4px;
+    }
+
+    .features ion-col {
+        padding: 0 4px;
+    }
+
+    .features__item {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        text-align: center;
+    }
+
+    .features__icon {
+        color: var(--ifrn-green);
+        display: flex;
+    }
+
+    .features__icon ion-icon {
+        font-size: 1.35rem;
+    }
+
+    .features__copy {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+    }
+
+    .features__copy strong {
+        color: var(--ifrn-text);
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .features__copy small {
+        color: var(--ifrn-subtle);
+        font-size: 0.65rem;
+        line-height: 1.3;
+    }
+
+    .copyright {
+        color: var(--ifrn-subtle);
+        font-size: 0.65rem;
+        margin: 1rem 0 0;
+    }
+
+    .ifrn-panel {
+        align-items: center;
+        display: flex;
+        height: 100%;
+        justify-content: center;
+        min-height: inherit;
+        padding: 1.25rem 1rem;
+        position: relative;
+    }
+
+    .ifrn-panel__pattern {
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        position: absolute;
+    }
+
+    .ifrn-panel__dot {
+        background: rgba(83, 152, 57, 0.1);
+        border-radius: 50%;
+        position: absolute;
+    }
+
+    .ifrn-panel__dot--1 {
+        height: 100px;
+        right: -20px;
+        top: -15px;
+        width: 100px;
+    }
+
+    .ifrn-panel__dot--2 {
+        background: rgba(185, 49, 32, 0.08);
+        bottom: 10%;
+        height: 70px;
+        left: -15px;
+        width: 70px;
+    }
+
+    .ifrn-panel__dot--3 {
+        bottom: -10px;
+        height: 60px;
+        right: 20%;
+        width: 60px;
+    }
+
+    .ifrn-panel__content {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;
+        max-width: 300px;
+        position: relative;
+        width: 100%;
+        z-index: 1;
+    }
+
+    .ifrn-panel__identity {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        line-height: 1.15;
+    }
+
+    .ifrn-panel__identity strong {
+        color: var(--ifrn-text);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+    }
+
+    .ifrn-panel__identity span {
+        color: var(--ifrn-muted);
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+
+    .ifrn-panel__tagline {
+        color: var(--ifrn-muted);
+        font-size: 0.75rem;
+        line-height: 1.45;
+        margin: 0;
+        max-width: 28ch;
+    }
+
+    .ifrn-panel__ava {
+        align-items: center;
+        display: flex;
+        gap: 0.6rem;
+        justify-content: center;
+    }
+
+    .ifrn-panel__ava-mark {
+        color: var(--ifrn-green);
+        font-size: 1.4rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        line-height: 1;
+    }
+
+    .ifrn-panel__ava-sep {
+        background: var(--ifrn-border);
+        display: block;
+        height: 20px;
+        width: 1px;
+    }
+
+    .ifrn-panel__ava-text {
+        color: var(--ifrn-text);
+        font-size: 1.4rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        line-height: 1;
+    }
+
+    .ifrn-panel__systems {
+        width: 100%;
+    }
+
+    .ifrn-panel__systems ion-row {
+        gap: 0.4rem;
+    }
+
+    .ifrn-panel__system {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid rgba(83, 152, 57, 0.2);
+        border-radius: 999px;
+        color: var(--ifrn-text);
+        display: inline-flex;
+        font-size: 0.68rem;
+        font-weight: 600;
+        gap: 0.3rem;
+        padding: 0.3rem 0.65rem;
+        white-space: nowrap;
+    }
+
+    .ifrn-panel__system ion-icon {
+        color: var(--ifrn-green);
+        font-size: 0.9rem;
+    }
+
+    .ifrn-panel__strip {
+        display: flex;
+        height: 4px;
+        margin-top: 0.15rem;
+        max-width: 220px;
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .ifrn-panel__strip-red {
+        background: var(--ifrn-red);
+        flex: 0 0 38%;
+    }
+
+    .ifrn-panel__strip-green {
+        background: var(--ifrn-green);
+        flex: 1;
+    }
+}
+
+@media (min-width: 768px) {
+    .marketplace-ifrn {
+        .page {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+            grid-template-rows: 1fr;
+        }
+
+        .panel--ifrn {
+            min-height: 100%;
+            order: 1;
+        }
+
+        .panel--ifrn::before {
+            display: none;
+        }
+
+        .panel--ifrn::after {
+            background: var(--ifrn-art-bg);
+            border-radius: 0 100% 100% 0 / 50%;
+            bottom: 5%;
+            content: "";
+            position: absolute;
+            right: -60px;
+            top: 5%;
+            width: 120px;
+            z-index: 1;
+        }
+
+        .panel--login {
+            order: 2;
+        }
+
+        .ifrn-panel {
+            padding: 2rem;
+        }
+
+        .ifrn-logo--large {
+            height: 88px;
+        }
+
+        .ifrn-panel__ava-mark,
+        .ifrn-panel__ava-text {
+            font-size: 1.8rem;
+        }
+
+        .panel__inner {
+            max-width: 480px;
+            min-height: 100%;
+            padding:
+                calc(2rem + var(--ion-safe-area-top, 0px))
+                24px
+                calc(2rem + var(--ion-safe-area-bottom, 0px));
+        }
+    }
+}
+
+@media (max-height: 700px) {
+    .marketplace-ifrn {
+        .panel--ifrn {
+            min-height: 160px;
+        }
+
+        .brand {
+            margin-bottom: 1rem;
+        }
+
+        .hero__text {
+            margin-bottom: 1rem;
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .marketplace-ifrn {
+        ion-button.btn-enter {
+            transition: none;
+        }
+    }
+}

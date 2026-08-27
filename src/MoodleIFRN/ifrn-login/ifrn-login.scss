@@ -9,8 +9,28 @@
         background: #ffffff;
         box-shadow: 0 2px 8px rgba(0, 0, 0, .22);
         display: flex;
+        gap: 12px;
         height: calc(62px + var(--ion-safe-area-top, 0px));
         padding: var(--ion-safe-area-top, 0px) 20px 0;
+    }
+
+    &__back {
+        align-items: center;
+        appearance: none;
+        background: transparent;
+        border: 0;
+        color: #1351b4;
+        cursor: pointer;
+        display: inline-flex;
+        font-size: 14px;
+        font-weight: 600;
+        gap: 2px;
+        margin-right: 4px;
+        padding: 8px 4px 8px 0;
+
+        ion-icon {
+            font-size: 18px;
+        }
     }
 
     &__logo {
