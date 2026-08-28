@@ -1,6 +1,6 @@
 @use "variables";
 
-// Splash / load view — espelho do .loading-overlay do theme_ifrn25
+// Splash / load view — logo central com gauge girando ao redor
 
 .ava-splash,
 .page-loading.ava-splash,
@@ -26,27 +26,54 @@
     background: var(--branco-primario);
 }
 
-.ava-splash__logo {
-    width: min(112px, 28vw);
-    height: auto;
-    border-radius: 20px;
-    box-shadow: var(--shadow-primary);
+.ava-splash__brand {
+    aspect-ratio: 1;
+    display: grid;
+    margin: 0 auto;
+    place-items: center;
+    position: relative;
+    width: min(132px, 34vw);
 }
 
-.ava-splash__spinner {
-    border: 6px solid var(--verde-claro);
-    border-top: 6px solid var(--verde-escuro);
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    animation: ava-spin 1s linear infinite;
-    margin: 0.25rem 0;
+.ava-splash__gauge {
+    animation: ava-spin 1.1s linear infinite;
+    inset: 0;
+    position: absolute;
+}
+
+.ava-splash__gauge-svg {
+    display: block;
+    height: 100%;
+    width: 100%;
+}
+
+.ava-splash__gauge-track {
+    fill: none;
+    stroke: rgba(9, 142, 149, 0.14);
+    stroke-width: 4;
+}
+
+.ava-splash__gauge-arc {
+    fill: none;
+    stroke: url(#ava-splash-gauge-grad);
+    stroke-dasharray: 68 271;
+    stroke-linecap: round;
+    stroke-width: 5;
+}
+
+.ava-splash__logo {
+    border-radius: 18px;
+    box-shadow: var(--shadow-primary);
+    height: auto;
+    position: relative;
+    width: 68%;
+    z-index: 1;
 }
 
 .ava-splash__text {
-    margin: 0;
-    font: var(--font-button1);
     color: var(--dark);
+    font: var(--font-button1);
+    margin: 0;
 }
 
 @keyframes ava-spin {
@@ -55,10 +82,13 @@
     }
 }
 
+body.stop_animations .ava-splash__gauge {
+    animation: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
-    .ava-splash__spinner {
+    .ava-splash__gauge {
         animation: none;
-        border-top-color: var(--verde-escuro);
-        opacity: 0.85;
+        opacity: 0.9;
     }
 }

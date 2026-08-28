@@ -23,7 +23,8 @@ mobilemoodle/
 │   ├── painel.html     ← lista de cursos
 │   ├── curso.html      ← detalhe do curso
 │   └── erros.html      ← telas de erro / not found
-├── js/                 ← lógica (ver js/SCRIPTS-JS.md)
+├── ts/                 ← fonte TypeScript (ver ts/SCRIPTS-TS.md)
+├── js/                 ← JavaScript compilado (carregado pelo index.html)
 └── static/theme/ifrn/
     ├── css/painel.css  ← CSS compilado usado pelo index
     ├── scss/           ← fontes SCSS do tema
@@ -40,7 +41,7 @@ mobilemoodle/
 | `#/curso/{id}` | Detalhe do curso (`id` numérico) |
 | qualquer outra | Página “não encontrada” |
 
-O roteamento está em `js/app-router.js`.
+O roteamento está em `ts/app-router.ts` (compilado para `js/app-router.js`).
 
 ---
 
@@ -72,9 +73,9 @@ O visual segue a identidade do AVA IFRN (cores, cards de curso, progresso, menu)
 
 1. `AuthService` autentica e grava o JWT no `sessionStorage`
 2. Navega para `mobilemoodle/index.html#/painel`
-3. `api-auth.js` lê o token e as chamadas HTTP usam `Authorization: Bearer …`
+3. `api-auth.ts` lê o token e as chamadas HTTP usam `Authorization: Bearer …`
 
-Documentação dos scripts: [`js/SCRIPTS-JS.md`](./js/SCRIPTS-JS.md)
+Documentação dos scripts: [`ts/SCRIPTS-TS.md`](./ts/SCRIPTS-TS.md)
 
 ---
 

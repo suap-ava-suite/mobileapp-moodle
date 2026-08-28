@@ -335,15 +335,21 @@
         gap: 0.85rem;
     }
 
-    .ava-splash__logo {
-        width: min(96px, 32vw);
-        border-radius: 18px;
+    .ava-splash__brand {
+        width: min(120px, 36vw);
     }
 
-    .ava-splash__spinner {
-        width: 48px;
-        height: 48px;
-        border-width: 5px;
+    .ava-splash__logo {
+        border-radius: 16px;
+        width: 66%;
+    }
+
+    .ava-splash__gauge-track {
+        stroke-width: 3.5;
+    }
+
+    .ava-splash__gauge-arc {
+        stroke-width: 4.5;
     }
 
     .ava-splash__text {
@@ -386,13 +392,12 @@
         align-content: center;
     }
 
-    .ava-splash__logo {
-        width: 72px;
+    .ava-splash__brand {
+        width: 108px;
     }
 
-    .ava-splash__spinner {
-        width: 40px;
-        height: 40px;
+    .ava-splash__logo {
+        width: 64%;
     }
 
     ion-header ion-toolbar {

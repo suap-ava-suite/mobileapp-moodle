@@ -50,7 +50,7 @@ Login IFRN  →  JWT salvo no sessionStorage  →  Painel (#/painel)
 | Login IFRN | [`ifrn-login/LOGIN-IFRN.md`](./ifrn-login/LOGIN-IFRN.md) |
 | Auth + biometria | [`services_mobile/SERVICOS-AUTH-BIOMETRIA.md`](./services_mobile/SERVICOS-AUTH-BIOMETRIA.md) |
 | Painel de cursos | [`mobilemoodle/PAINEL-CURSOS.md`](./mobilemoodle/PAINEL-CURSOS.md) |
-| Scripts JS do painel | [`mobilemoodle/js/SCRIPTS-JS.md`](./mobilemoodle/js/SCRIPTS-JS.md) |
+| Scripts TS do painel | [`mobilemoodle/ts/SCRIPTS-TS.md`](./mobilemoodle/ts/SCRIPTS-TS.md) |
 | Templates HTML | [`mobilemoodle/pages/TEMPLATES-HTML.md`](./mobilemoodle/pages/TEMPLATES-HTML.md) |
 | Tema visual | [`mobilemoodle/static/theme/ifrn/TEMA-VISUAL.md`](./mobilemoodle/static/theme/ifrn/TEMA-VISUAL.md) |
 | Segurança | [`SEGURANCA.md`](./SEGURANCA.md) |

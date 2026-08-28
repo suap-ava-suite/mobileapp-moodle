@@ -42,7 +42,8 @@
         "lang:update-langpacks": "./scripts/update_langpacks.sh",
         "lang:detect-langpacks": "./scripts/update_langpacks.sh detect",
         "lang:create-langindex": "./scripts/create_langindex.sh",
-        "patch:login-route": "node scripts/patch-login-route.js"
+        "patch:login-route": "node scripts/patch-login-route.js",
+        "build:mobilemoodle": "tsc -p src/MoodleIFRN/mobilemoodle/tsconfig.json"
     },
     "dependencies": {
         "@angular/animations": "20.3.18",

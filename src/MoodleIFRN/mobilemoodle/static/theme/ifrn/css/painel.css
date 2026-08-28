@@ -984,27 +984,54 @@ body.color_mode_high_contrast .selector-cycle-access .cycle-btn {
   background: var(--branco-primario);
 }
 
-.ava-splash__logo {
-  width: min(112px, 28vw);
-  height: auto;
-  border-radius: 20px;
-  box-shadow: var(--shadow-primary);
+.ava-splash__brand {
+  aspect-ratio: 1;
+  display: grid;
+  margin: 0 auto;
+  place-items: center;
+  position: relative;
+  width: min(132px, 34vw);
 }
 
-.ava-splash__spinner {
-  border: 6px solid var(--verde-claro);
-  border-top: 6px solid var(--verde-escuro);
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: ava-spin 1s linear infinite;
-  margin: 0.25rem 0;
+.ava-splash__gauge {
+  animation: ava-spin 1.1s linear infinite;
+  inset: 0;
+  position: absolute;
+}
+
+.ava-splash__gauge-svg {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.ava-splash__gauge-track {
+  fill: none;
+  stroke: rgba(9, 142, 149, 0.14);
+  stroke-width: 4;
+}
+
+.ava-splash__gauge-arc {
+  fill: none;
+  stroke: url(#ava-splash-gauge-grad);
+  stroke-dasharray: 68 271;
+  stroke-linecap: round;
+  stroke-width: 5;
+}
+
+.ava-splash__logo {
+  border-radius: 18px;
+  box-shadow: var(--shadow-primary);
+  height: auto;
+  position: relative;
+  width: 68%;
+  z-index: 1;
 }
 
 .ava-splash__text {
-  margin: 0;
-  font: var(--font-button1);
   color: var(--dark);
+  font: var(--font-button1);
+  margin: 0;
 }
 
 @keyframes ava-spin {
@@ -1012,11 +1039,14 @@ body.color_mode_high_contrast .selector-cycle-access .cycle-btn {
     transform: rotate(360deg);
   }
 }
+body.stop_animations .ava-splash__gauge {
+  animation: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .ava-splash__spinner {
+  .ava-splash__gauge {
     animation: none;
-    border-top-color: var(--verde-escuro);
-    opacity: 0.85;
+    opacity: 0.9;
   }
 }
 .ava-topbar,
@@ -1953,14 +1983,18 @@ body.color_mode_high_contrast .selector-cycle-access .cycle-btn {
     padding: 20px 16px calc(24px + env(safe-area-inset-bottom));
     gap: 0.85rem;
   }
-  .ava-splash__logo {
-    width: min(96px, 32vw);
-    border-radius: 18px;
+  .ava-splash__brand {
+    width: min(120px, 36vw);
   }
-  .ava-splash__spinner {
-    width: 48px;
-    height: 48px;
-    border-width: 5px;
+  .ava-splash__logo {
+    border-radius: 16px;
+    width: 66%;
+  }
+  .ava-splash__gauge-track {
+    stroke-width: 3.5;
+  }
+  .ava-splash__gauge-arc {
+    stroke-width: 4.5;
   }
   .ava-splash__text {
     font-size: 0.9375rem;
@@ -1994,12 +2028,11 @@ body.color_mode_high_contrast .selector-cycle-access .cycle-btn {
     justify-content: center;
     align-content: center;
   }
-  .ava-splash__logo {
-    width: 72px;
+  .ava-splash__brand {
+    width: 108px;
   }
-  .ava-splash__spinner {
-    width: 40px;
-    height: 40px;
+  .ava-splash__logo {
+    width: 64%;
   }
   ion-header ion-toolbar {
     --min-height: 48px;

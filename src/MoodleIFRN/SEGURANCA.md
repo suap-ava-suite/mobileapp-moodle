@@ -9,12 +9,12 @@ Não substituem segurança de backend (assinatura JWT, rate limit, HTTPS, etc.).
 
 | Medida | Onde |
 |--------|------|
-| Access token em `sessionStorage` (não `localStorage`) | `auth.service.ts`, `api-auth.js` |
+| Access token em `sessionStorage` (não `localStorage`) | `auth.service.ts`, `api-auth.ts` |
 | Token **não** vai na URL ao abrir o painel | `auth.service.ts` → `openMobileMoodle()` |
-| Se ainda existir `?token=`, remove da barra de endereço | `api-auth.js` |
+| Se ainda existir `?token=`, remove da barra de endereço | `api-auth.ts` |
 | Valida formato JWT e tamanho máximo | login + painel |
 | Rejeita token com `exp` vencido | login + painel |
-| Logout limpa token e cache | `app.js`, `api-auth.js` |
+| Logout limpa token e cache | `app.ts`, `api-auth.ts` |
 
 ---
 
@@ -22,13 +22,13 @@ Não substituem segurança de backend (assinatura JWT, rate limit, HTTPS, etc.).
 
 | Medida | Onde |
 |--------|------|
-| `Authorization: Bearer` fixo (não sobrescrito) | `api-http.js` |
-| `credentials: "omit"` | `api-http.js` |
-| Timeout de 15s | `api-http.js`, `auth.service.ts` |
-| Só paths relativos seguros (`/dashboard/`, etc.) | `api-http.js` |
-| Base da API: mesma origem ou localhost | `app.js`, `api-http.js` |
-| Removido o override perigoso `?api=https://…` | `app.js` |
-| ID de curso só numérico | `api.js`, `app-router.js` |
+| `Authorization: Bearer` fixo (não sobrescrito) | `api-http.ts` |
+| `credentials: "omit"` | `api-http.ts` |
+| Timeout de 15s | `api-http.ts`, `auth.service.ts` |
+| Só paths relativos seguros (`/dashboard/`, etc.) | `api-http.ts` |
+| Base da API: mesma origem ou localhost | `app.ts`, `api-http.ts` |
+| Removido o override perigoso `?api=https://…` | `app.ts` |
+| ID de curso só numérico | `api.ts`, `app-router.ts` |
 
 ---
 
@@ -36,8 +36,8 @@ Não substituem segurança de backend (assinatura JWT, rate limit, HTTPS, etc.).
 
 | Medida | Onde |
 |--------|------|
-| `escapeHtml` / `textContent` para dados da API | `app-utils.js`, `app-views.js`, `app-status.js` |
-| Mensagens de erro limitadas em tamanho | `api-http.js` |
+| `escapeHtml` / `textContent` para dados da API | `app-utils.ts`, `app-views.ts`, `app-status.ts` |
+| Mensagens de erro limitadas em tamanho | `api-http.ts` |
 | CSP básica no painel | `mobilemoodle/index.html` |
 | `referrer: no-referrer` e `X-Content-Type-Options: nosniff` | `index.html` |
 | Links externos com `noopener noreferrer` | menu / login |
