@@ -1,10 +1,14 @@
 # Criação da rota de login IFRN
 
-Para registrar / reparar a rota de login IFRN no Moodle Mobile:
+Para registrar / reparar as rotas IFRN no Moodle Mobile após uma atualização:
 
 ```bash
-npm run patch:login-route
+npm run patch:ifrn
 ```
+
+O script fica em `src/MoodleIFRN/patch-moodle-ifrn.js` — copie a pasta `MoodleIFRN` inteira para o novo projeto e execute de novo.
+
+Documentação: [`src/MoodleIFRN/PATCH-AO-ATUALIZAR.md`](src/MoodleIFRN/PATCH-AO-ATUALIZAR.md)
 
 A documentação completa da customização está em:
 

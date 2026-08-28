@@ -62,9 +62,9 @@ Login IFRN  →  JWT salvo no sessionStorage  →  Painel (#/painel)
 
 | Integração | Onde |
 |------------|------|
-| Rota de login | `src/core/features/login/login.module.ts` → `/login/ifrn` |
+| Rota de login | `src/core/features/login/login.module.ts` → `/login/marketplace-ifrn` e `/login/ifrn-login` |
 | Assets do painel | `angular.json` copia `src/MoodleIFRN/mobilemoodle` → `mobilemoodle/` no build |
-| Script de apoio | `npm run patch:login-route` (ver `readme_ifrn.md` na raiz) |
+| Script de apoio | `npm run patch:ifrn` (ver [`PATCH-AO-ATUALIZAR.md`](./PATCH-AO-ATUALIZAR.md)) |
 
 ---
 
