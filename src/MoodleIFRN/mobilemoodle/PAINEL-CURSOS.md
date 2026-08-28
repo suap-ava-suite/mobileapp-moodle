@@ -24,7 +24,7 @@ mobilemoodle/
 │   ├── curso.html      ← detalhe do curso
 │   └── erros.html      ← telas de erro / not found
 ├── ts/                 ← fonte TypeScript (ver ts/SCRIPTS-TS.md)
-├── js/                 ← JavaScript compilado (carregado pelo index.html)
+├── dist/               ← bundle compilado (carregado pelo index.html)
 └── static/theme/ifrn/
     ├── css/painel.css  ← CSS compilado usado pelo index
     ├── scss/           ← fontes SCSS do tema
@@ -41,7 +41,7 @@ mobilemoodle/
 | `#/curso/{id}` | Detalhe do curso (`id` numérico) |
 | qualquer outra | Página “não encontrada” |
 
-O roteamento está em `ts/app-router.ts` (compilado para `js/app-router.js`).
+O roteamento está em `ts/app-router.ts` (compilado para `dist/mobilemoodle.js`).
 
 ---
 

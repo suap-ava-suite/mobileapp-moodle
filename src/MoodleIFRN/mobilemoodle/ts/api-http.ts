@@ -2,10 +2,8 @@
  * api-http.ts
  * Cliente HTTP: fetch com Bearer, timeout e tratamento de erros.
  */
-(function (window: Window) {
-    'use strict';
+import { MM } from './namespace';
 
-    const MM = (window.MobileMoodle = window.MobileMoodle || ({} as MobileMoodleNamespace));
     const DEFAULT_BASE_URL = '';
     const REQUEST_TIMEOUT_MS = 15000;
 
@@ -149,4 +147,3 @@
     MM.setApiBaseUrl = setApiBaseUrl;
     MM.joinUrl = joinUrl;
     MM.request = request;
-})(window);

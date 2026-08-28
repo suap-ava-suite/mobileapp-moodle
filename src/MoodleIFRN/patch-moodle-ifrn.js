@@ -64,7 +64,7 @@ const MOODLEMOODLE_ASSET = `              {
 const GULP_MOBILEMOODLE_BLOCK = `${MARKER.gulpTaskStart}
 gulp.task('mobilemoodle-ts', (done) => {
     try {
-        execSync('npx tsc -p src/MoodleIFRN/mobilemoodle/tsconfig.json', { stdio: 'inherit' });
+        execSync('node src/MoodleIFRN/mobilemoodle/build.mjs', { stdio: 'inherit' });
         done();
     } catch (error) {
         done(error);
@@ -239,7 +239,7 @@ function patchPackageScripts() {
     let changed = false;
 
     if (!pkg.scripts['build:mobilemoodle']) {
-        pkg.scripts['build:mobilemoodle'] = 'tsc -p src/MoodleIFRN/mobilemoodle/tsconfig.json';
+        pkg.scripts['build:mobilemoodle'] = 'node src/MoodleIFRN/mobilemoodle/build.mjs';
         changed = true;
     }
 

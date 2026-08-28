@@ -2,11 +2,8 @@
  * app-sidebar.ts
  * Sidebar AVA: perfil, acessibilidade, ajuda e filtros.
  */
-(function (window: Window) {
-    'use strict';
+import { MM, App } from './namespace';
 
-    const MM = (window.MobileMoodle = window.MobileMoodle || ({} as MobileMoodleNamespace));
-    const App = (MM.App = MM.App || ({} as MobileMoodleApp));
 
     const FILTER_LABELS: Record<string, string> = {
         inprogress: 'Em andamento',
@@ -34,7 +31,7 @@
         label: FILTER_LABELS.allincludinghidden,
     };
 
-    function $(id: string): HTMLElement | null {
+    function getEl(id: string): HTMLElement | null {
         return document.getElementById(id);
     }
 
@@ -43,7 +40,7 @@
             el.classList.remove('active');
         });
 
-        const btn = $(BUTTON_IDS[type]);
+        const btn = getEl(BUTTON_IDS[type]);
 
         if (btn) {
             btn.classList.add('active');
@@ -57,7 +54,7 @@
     }
 
     function closeModal(): void {
-        const modal = $('sidebar-modal');
+        const modal = getEl('sidebar-modal');
 
         if (modal) {
             modal.hidden = true;
@@ -73,7 +70,7 @@
     }
 
     function updateFilterChip(): void {
-        const chip = $('sidebar-filter-situacao');
+        const chip = getEl('sidebar-filter-situacao');
 
         if (chip && App.activeFilter) {
             chip.textContent = App.activeFilter.label;
@@ -81,9 +78,9 @@
     }
 
     function bindFilterControls(): void {
-        const select = $('filter-situacao') as HTMLSelectElement | null;
-        const apply = $('filter-apply');
-        const clear = $('filter-clear');
+        const select = getEl('filter-situacao') as HTMLSelectElement | null;
+        const apply = getEl('filter-apply');
+        const clear = getEl('filter-clear');
 
         const activeFilter = App.activeFilter;
 
@@ -125,10 +122,10 @@
 
     function openModal(type: SidebarModalType): void {
         const meta = MODAL_META[type];
-        const modal = $('sidebar-modal');
-        const body = $('sidebar-modal-body');
-        const title = $('sidebar-modal-title');
-        const icon = $('sidebar-modal-icon') as HTMLElement | null;
+        const modal = getEl('sidebar-modal');
+        const body = getEl('sidebar-modal-body');
+        const title = getEl('sidebar-modal-title');
+        const icon = getEl('sidebar-modal-icon') as HTMLElement | null;
 
         if (!meta || !modal || !body) {
             return;
@@ -154,13 +151,13 @@
         modal.hidden = false;
 
         if (type === 'profile') {
-            const nameEl = $('modal-profile-name');
+            const nameEl = getEl('modal-profile-name');
 
             if (nameEl) {
                 nameEl.textContent = App.sidebarUserName || 'Estudante';
             }
 
-            const logoutBtn = $('modal-logout');
+            const logoutBtn = getEl('modal-logout');
 
             if (logoutBtn && typeof App.logout === 'function') {
                 logoutBtn.addEventListener('click', () => {
@@ -201,7 +198,7 @@
             ['btn-open-filter-label', 'filter'],
             ['sidebar-active-filters', 'filter'],
         ] as [string, SidebarModalType][]).forEach((pair) => {
-            const el = $(pair[0]);
+            const el = getEl(pair[0]);
 
             if (!el) {
                 return;
@@ -212,8 +209,8 @@
             });
         });
 
-        const closeBtn = $('sidebar-modal-close');
-        const backdrop = $('sidebar-modal-backdrop');
+        const closeBtn = getEl('sidebar-modal-close');
+        const backdrop = getEl('sidebar-modal-backdrop');
 
         if (closeBtn) {
             closeBtn.addEventListener('click', closeModal);
@@ -236,4 +233,3 @@
     App.updateFilterChip = updateFilterChip;
     App.bindSidebar = bindSidebar;
     App.FILTER_LABELS = FILTER_LABELS;
-})(window);

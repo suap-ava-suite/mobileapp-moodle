@@ -20,7 +20,7 @@ A documentação completa da customização está em:
 - [Login IFRN](src/MoodleIFRN/ifrn-login/LOGIN-IFRN.md)
 - [Serviços (auth + biometria)](src/MoodleIFRN/services_mobile/SERVICOS-AUTH-BIOMETRIA.md)
 - [Painel de cursos](src/MoodleIFRN/mobilemoodle/PAINEL-CURSOS.md)
-- [Scripts JS do painel](src/MoodleIFRN/mobilemoodle/js/SCRIPTS-JS.md)
+- [Scripts TypeScript do painel](src/MoodleIFRN/mobilemoodle/ts/SCRIPTS-TS.md)
 - [Templates HTML](src/MoodleIFRN/mobilemoodle/pages/TEMPLATES-HTML.md)
 - [Tema visual](src/MoodleIFRN/mobilemoodle/static/theme/ifrn/TEMA-VISUAL.md)
 - [Segurança](src/MoodleIFRN/SEGURANCA.md)

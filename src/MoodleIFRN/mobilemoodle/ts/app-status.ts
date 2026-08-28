@@ -2,11 +2,8 @@
  * app-status.ts
  * Telas de estado: loading, erro e not found.
  */
-(function (window: Window) {
-    'use strict';
+import { MM, App } from './namespace';
 
-    const MM = (window.MobileMoodle = window.MobileMoodle || ({} as MobileMoodleNamespace));
-    const App = (MM.App = MM.App || ({} as MobileMoodleApp));
 
     const SPLASH_GAUGE_SVG =
         '<div class="ava-splash__gauge" aria-hidden="true">' +
@@ -203,4 +200,3 @@
     App.waitLoadingMinimum = waitLoadingMinimum;
     App.showNotFound = showNotFound;
     App.showStatusError = showStatusError;
-})(window);

@@ -2,11 +2,8 @@
  * app-utils.ts
  * Base de assets, escape HTML, templates e fetch de partials.
  */
-(function (window: Window) {
-    'use strict';
+import { MM, App } from './namespace';
 
-    const MM = (window.MobileMoodle = window.MobileMoodle || ({} as MobileMoodleNamespace));
-    const App = (MM.App = MM.App || ({} as MobileMoodleApp));
 
     function resolveAssetBase(): string {
         const scripts = document.getElementsByTagName('script');
@@ -14,8 +11,8 @@
         for (let i = scripts.length - 1; i >= 0; i -= 1) {
             const src = scripts[i].src || '';
 
-            if (src.indexOf('/js/') !== -1) {
-                return src.replace(/\/js\/[^/?#]+(?:\?.*)?$/i, '/');
+            if (src.indexOf('/dist/') !== -1) {
+                return src.replace(/\/dist\/[^/?#]+(?:\?.*)?$/i, '/');
             }
         }
 
@@ -78,4 +75,3 @@
     App.initials = initials;
     App.cloneTemplate = cloneTemplate;
     App.fetchText = fetchText;
-})(window);

@@ -2,10 +2,8 @@
  * api-auth.ts
  * JWT: ler da URL (?token=), guardar no sessionStorage e limpar.
  */
-(function (window: Window) {
-    'use strict';
+import { MM } from './namespace';
 
-    const MM = (window.MobileMoodle = window.MobileMoodle || ({} as MobileMoodleNamespace));
 
     const TOKEN_KEY = 'ifrn_access_token';
     const JWT_SHAPE = /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/;
@@ -114,4 +112,3 @@
     MM.getToken = getToken;
     MM.setToken = setToken;
     MM.clearToken = clearToken;
-})(window);

@@ -44,7 +44,7 @@
         "lang:create-langindex": "./scripts/create_langindex.sh",
         "patch:login-route": "node src/MoodleIFRN/patch-moodle-ifrn.js",
         "patch:ifrn": "node src/MoodleIFRN/patch-moodle-ifrn.js",
-        "build:mobilemoodle": "tsc -p src/MoodleIFRN/mobilemoodle/tsconfig.json"
+        "build:mobilemoodle": "node src/MoodleIFRN/mobilemoodle/build.mjs"
     },
     "dependencies": {
         "@angular/animations": "20.3.18",

@@ -2,10 +2,8 @@
  * api-errors.ts
  * Mensagens, títulos e a classe ApiError usados quando a API falha.
  */
-(function (window: Window) {
-    'use strict';
+import { MM } from './namespace';
 
-    const MM = (window.MobileMoodle = window.MobileMoodle || ({} as MobileMoodleNamespace));
 
     function messageForStatus(status: number, detail?: string): string {
         switch (status) {
@@ -86,4 +84,3 @@
     MM.titleForStatus = titleForStatus;
     MM.isRetryable = isRetryable;
     MM.ApiError = ApiError as unknown as MobileMoodleNamespace['ApiError'];
-})(window);

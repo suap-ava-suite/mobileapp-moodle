@@ -2,10 +2,8 @@
  * api.ts
  * getDashboard / getCourse com cache em memória e fachada MobileMoodleApi.
  */
-(function (window: Window) {
-    'use strict';
+import { MM } from './namespace';
 
-    const MM = (window.MobileMoodle = window.MobileMoodle || ({} as MobileMoodleNamespace));
     const CACHE_TTL_MS = 60 * 1000;
     const MAX_COURSE_CACHE = 40;
     const DEMO_FORCE_500 = false;
@@ -136,4 +134,3 @@
         getDashboard,
         getCourse,
     };
-})(window);

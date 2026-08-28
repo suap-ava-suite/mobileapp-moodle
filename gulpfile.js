@@ -56,7 +56,7 @@ gulp.task('freeze-dependencies', (done) => {
 
 gulp.task('mobilemoodle-ts', (done) => {
     try {
-        execSync('npx tsc -p src/MoodleIFRN/mobilemoodle/tsconfig.json', { stdio: 'inherit' });
+        execSync('node src/MoodleIFRN/mobilemoodle/build.mjs', { stdio: 'inherit' });
         done();
     } catch (error) {
         done(error);

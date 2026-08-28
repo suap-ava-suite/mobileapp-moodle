@@ -2,11 +2,8 @@
  * app-views.ts
  * Renderização do painel e do detalhe do curso.
  */
-(function (window: Window) {
-    'use strict';
+import { MM, App } from './namespace';
 
-    const MM = (window.MobileMoodle = window.MobileMoodle || ({} as MobileMoodleNamespace));
-    const App = (MM.App = MM.App || ({} as MobileMoodleApp));
 
     const ACTIVITY_ICONS: Record<string, string> = {
         assign: 'create-outline',
@@ -683,4 +680,3 @@
     App.setUser = setUser;
     App.renderPainel = renderPainel;
     App.renderCurso = renderCurso;
-})(window);

@@ -2,11 +2,8 @@
  * app-router.ts
  * Roteamento por hash e orquestração do carregamento das telas.
  */
-(function (window: Window) {
-    'use strict';
+import { MM, App } from './namespace';
 
-    const MM = (window.MobileMoodle = window.MobileMoodle || ({} as MobileMoodleNamespace));
-    const App = (MM.App = MM.App || ({} as MobileMoodleApp));
 
     let templatesReady: Promise<void> | null = null;
     let routeSeq = 0;
@@ -144,4 +141,3 @@
 
     App.parseRoute = parseRoute;
     App.loadRoute = loadRoute;
-})(window);

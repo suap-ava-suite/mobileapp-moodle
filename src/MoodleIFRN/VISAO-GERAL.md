@@ -24,10 +24,11 @@ App Moodle Mobile (Angular/Ionic)
  ├── ifrn-login/              ← tela de login IFRN
  ├── services_mobile/         ← AuthService + BiometricService
  │
- └── mobilemoodle/           ← painel web (HTML/JS/Ionic)
+ └── mobilemoodle/           ← painel web (HTML/TS/Ionic)
         ├── index.html
         ├── pages/           ← templates (painel, curso, erros)
-        ├── js/              ← API + roteamento + UI
+        ├── ts/              ← fonte TypeScript
+        ├── dist/            ← bundle compilado
         └── static/theme/ifrn/
 ```
 

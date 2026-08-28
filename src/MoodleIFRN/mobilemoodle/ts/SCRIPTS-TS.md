@@ -1,6 +1,6 @@
 # Scripts TypeScript do painel
 
-Código-fonte em `ts/`; o navegador carrega o JavaScript compilado em `js/`.
+Código-fonte em `ts/`; o navegador carrega o bundle compilado em `dist/mobilemoodle.js`.
 
 Cada arquivo tem uma responsabilidade. Todos usam o namespace global `window.MobileMoodle` (e a fachada `window.MobileMoodleApi`).
 
@@ -12,19 +12,27 @@ npm run build:mobilemoodle
 
 Também compila automaticamente ao rodar `ionic serve` ou `ionic build` (tarefa gulp `mobilemoodle-ts`).
 
-A saída vai para `../js/`. **Não apague essa pasta** — o `index.html` carrega os `.js` no navegador; o TypeScript em `ts/` é só o código-fonte.
+A saída vai para `dist/mobilemoodle.js`. O `index.html` carrega esse bundle; o TypeScript em `ts/` é só o código-fonte.
 
 Ou diretamente:
 
 ```bash
-npx tsc -p src/MoodleIFRN/mobilemoodle/tsconfig.json
+node src/MoodleIFRN/mobilemoodle/build.mjs
 ```
 
-## Ordem de carga no `index.html`
+## Entrada e ordem de inicialização
+
+O ponto de entrada é `main.ts`, que importa os módulos nesta ordem:
 
 ```text
-api-errors.js → api-auth.js → api-http.js → api.js
-app-utils.js  → app-status.js → app-views.js → app-router.js → app-accessibility.js → app-sidebar.js → app.js
+namespace → api-errors → api-auth → api-http → api → app-utils → app-status
+→ app-views → app-router → app-accessibility → app-sidebar → app
+```
+
+No `index.html`:
+
+```html
+<script src="dist/mobilemoodle.js" defer></script>
 ```
 
 ## Camada de API
@@ -50,6 +58,7 @@ Flag `DEMO_FORCE_500` em `api.ts`: quando `true`, força erro 500 no painel (só
 
 | Arquivo | Função |
 |---------|--------|
+| `namespace.ts` | Inicializa `window.MobileMoodle` e `App` |
 | `app-utils.ts` | Base de assets, `escapeHtml`, templates, `fetchText` |
 | `app-status.ts` | Loading, tela de erro, not found |
 | `app-views.ts` | Render do painel e do curso |

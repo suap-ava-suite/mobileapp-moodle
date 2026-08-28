@@ -2,11 +2,8 @@
  * app-accessibility.ts
  * Preferências de acessibilidade do Painel AVA (localStorage).
  */
-(function (window: Window) {
-    'use strict';
+import { MM, App } from './namespace';
 
-    const MM = (window.MobileMoodle = window.MobileMoodle || ({} as MobileMoodleNamespace));
-    const App = (MM.App = MM.App || ({} as MobileMoodleApp));
 
     const STORAGE_KEY = 'ifrn_a11y_prefs';
 
@@ -47,7 +44,7 @@
 
     let vlibrasReady = false;
 
-    function $(id: string): HTMLElement | null {
+    function getEl(id: string): HTMLElement | null {
         return document.getElementById(id);
     }
 
@@ -226,12 +223,12 @@
             }
         });
 
-        const zoomWrap = $('selector-cycle-access');
-        const zoomValue = $('zoom-value');
-        const zoomIndicators = $('cycle-indicators');
-        const colorWrap = $('selector-cycle-color');
-        const colorLabel = $('color-mode-label');
-        const colorIndicators = $('color-indicators');
+        const zoomWrap = getEl('selector-cycle-access');
+        const zoomValue = getEl('zoom-value');
+        const zoomIndicators = getEl('cycle-indicators');
+        const colorWrap = getEl('selector-cycle-color');
+        const colorLabel = getEl('color-mode-label');
+        const colorIndicators = getEl('color-indicators');
 
         if (zoomWrap) {
             zoomWrap.classList.toggle('active', state.zoom_level > 100);
@@ -268,8 +265,8 @@
             });
         });
 
-        const zoomBtn = $('cycle-toggle');
-        const colorBtn = $('color-mode-toggle');
+        const zoomBtn = getEl('cycle-toggle');
+        const colorBtn = getEl('color-mode-toggle');
 
         if (zoomBtn) {
             zoomBtn.addEventListener('click', (event) => {
@@ -300,4 +297,3 @@
         getState: () => Object.assign({}, state),
         COLOR_MODE_LABELS,
     };
-})(window);

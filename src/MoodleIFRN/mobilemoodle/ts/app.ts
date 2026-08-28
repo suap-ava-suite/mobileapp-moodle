@@ -2,11 +2,8 @@
  * app.ts
  * Bootstrap: DOM, menu, base da API e eventos iniciais.
  */
-(function (window: Window) {
-    'use strict';
+import { MM, App } from './namespace';
 
-    const MM = (window.MobileMoodle = window.MobileMoodle || ({} as MobileMoodleNamespace));
-    const App = (MM.App = MM.App || ({} as MobileMoodleApp));
 
     App.content = document.getElementById('page-content');
     App.title = document.getElementById('page-title');
@@ -64,7 +61,9 @@
             App.markLoadingStart?.();
         }
 
-        if (!window.location.hash) {
+        const hash = window.location.hash.replace(/^#/, '');
+
+        if (!hash || hash === '/') {
             window.location.hash = '/painel';
 
             return;
@@ -72,4 +71,3 @@
 
         App.loadRoute?.(false);
     });
-})(window);
