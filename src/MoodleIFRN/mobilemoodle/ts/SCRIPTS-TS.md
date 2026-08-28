@@ -10,6 +10,10 @@ Cada arquivo tem uma responsabilidade. Todos usam o namespace global `window.Mob
 npm run build:mobilemoodle
 ```
 
+Também compila automaticamente ao rodar `ionic serve` ou `ionic build` (tarefa gulp `mobilemoodle-ts`).
+
+A saída vai para `../js/`. **Não apague essa pasta** — o `index.html` carrega os `.js` no navegador; o TypeScript em `ts/` é só o código-fonte.
+
 Ou diretamente:
 
 ```bash

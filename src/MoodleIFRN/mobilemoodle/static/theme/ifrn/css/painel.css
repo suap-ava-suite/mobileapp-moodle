@@ -1020,11 +1020,14 @@ body.color_mode_high_contrast .selector-cycle-access .cycle-btn {
 }
 
 .ava-splash__logo {
-  border-radius: 18px;
-  box-shadow: var(--shadow-primary);
-  height: auto;
+  aspect-ratio: 1;
+  background: var(--branco-primario);
+  border-radius: 50%;
+  box-shadow: 0 2px 10px rgba(11, 96, 100, 0.12);
+  height: 86%;
+  object-fit: cover;
   position: relative;
-  width: 68%;
+  width: 86%;
   z-index: 1;
 }
 
@@ -1987,8 +1990,8 @@ body.stop_animations .ava-splash__gauge {
     width: min(120px, 36vw);
   }
   .ava-splash__logo {
-    border-radius: 16px;
-    width: 66%;
+    height: 86%;
+    width: 86%;
   }
   .ava-splash__gauge-track {
     stroke-width: 3.5;
@@ -2032,7 +2035,8 @@ body.stop_animations .ava-splash__gauge {
     width: 108px;
   }
   .ava-splash__logo {
-    width: 64%;
+    height: 84%;
+    width: 84%;
   }
   ion-header ion-toolbar {
     --min-height: 48px;
