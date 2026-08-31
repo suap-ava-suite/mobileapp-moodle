@@ -26,9 +26,10 @@ App Moodle Mobile (Angular/Ionic)
  │
  └── mobilemoodle/           ← painel web (HTML/TS/Ionic)
         ├── index.html
+        ├── mobilemoodle.ts   ← entrada TypeScript
+        ├── mobilemoodle.js   ← bundle compilado
+        ├── core_mobile/     ← módulos TypeScript
         ├── pages/           ← templates (painel, curso, erros)
-        ├── ts/              ← fonte TypeScript
-        ├── dist/            ← bundle compilado
         └── static/theme/ifrn/
 ```
 
@@ -50,10 +51,10 @@ Login IFRN  →  JWT salvo no sessionStorage  →  Painel (#/painel)
 | Visão geral (este arquivo) | [`VISAO-GERAL.md`](./VISAO-GERAL.md) |
 | Login IFRN | [`ifrn-login/LOGIN-IFRN.md`](./ifrn-login/LOGIN-IFRN.md) |
 | Auth + biometria | [`services_mobile/SERVICOS-AUTH-BIOMETRIA.md`](./services_mobile/SERVICOS-AUTH-BIOMETRIA.md) |
-| Painel de cursos | [`mobilemoodle/PAINEL-CURSOS.md`](./mobilemoodle/PAINEL-CURSOS.md) |
-| Scripts TS do painel | [`mobilemoodle/ts/SCRIPTS-TS.md`](./mobilemoodle/ts/SCRIPTS-TS.md) |
-| Templates HTML | [`mobilemoodle/pages/TEMPLATES-HTML.md`](./mobilemoodle/pages/TEMPLATES-HTML.md) |
-| Tema visual | [`mobilemoodle/static/theme/ifrn/TEMA-VISUAL.md`](./mobilemoodle/static/theme/ifrn/TEMA-VISUAL.md) |
+| Painel de cursos | [`docs/PAINEL-CURSOS.md`](./PAINEL-CURSOS.md) |
+| Scripts TS do painel | [`mobilemoodle/core_mobile/SCRIPTS-TS.md`](../mobilemoodle/core_mobile/SCRIPTS-TS.md) |
+| Templates HTML | [`docs/TEMPLATES-HTML.md`](./TEMPLATES-HTML.md) |
+| Tema visual | [`docs/TEMA-VISUAL.md`](./TEMA-VISUAL.md) |
 | Segurança | [`SEGURANCA.md`](./SEGURANCA.md) |
 | Contrato da API | [`CONTRATO-API.md`](./CONTRATO-API.md) |
 

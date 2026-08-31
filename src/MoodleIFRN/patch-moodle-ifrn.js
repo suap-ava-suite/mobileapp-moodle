@@ -223,10 +223,10 @@ function patchGulpfile() {
 
     const watchBlock = "gulp.watch(['./moodle.config.json', './moodle.config.*.json'], { interval: 500 }, gulp.parallel('env'));";
 
-    if (content.includes(watchBlock) && !content.includes('src/MoodleIFRN/mobilemoodle/ts/**/*.ts')) {
+    if (content.includes(watchBlock) && !content.includes('src/MoodleIFRN/mobilemoodle/core_mobile/**/*.ts')) {
         content = content.replace(
             watchBlock,
-            `${watchBlock}\n    gulp.watch('src/MoodleIFRN/mobilemoodle/ts/**/*.ts', { interval: 500 }, gulp.parallel('mobilemoodle-ts'));`,
+            `${watchBlock}\n    gulp.watch('src/MoodleIFRN/mobilemoodle/core_mobile/**/*.ts', { interval: 500 }, gulp.parallel('mobilemoodle-ts'));\n    gulp.watch('src/MoodleIFRN/mobilemoodle/mobilemoodle.ts', { interval: 500 }, gulp.parallel('mobilemoodle-ts'));`,
         );
     }
 
@@ -244,11 +244,6 @@ function patchPackageScripts() {
     }
 
     const patchScript = 'node src/MoodleIFRN/patch-moodle-ifrn.js';
-
-    if (pkg.scripts['patch:login-route'] !== patchScript) {
-        pkg.scripts['patch:login-route'] = patchScript;
-        changed = true;
-    }
 
     if (pkg.scripts['patch:ifrn'] !== patchScript) {
         pkg.scripts['patch:ifrn'] = patchScript;

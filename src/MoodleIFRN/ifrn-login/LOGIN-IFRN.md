@@ -2,7 +2,7 @@
 
 Tela de login institucional do AVA IFRN, feita em **Angular + Ionic**.
 
-Rota no app: `/login/ifrn`
+Rota no app: `/login/ifrn-login`
 
 ---
 

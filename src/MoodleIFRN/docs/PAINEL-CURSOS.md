@@ -18,13 +18,13 @@ URL típica após o login:
 ```text
 mobilemoodle/
 ├── index.html          ← shell (menu, toolbar, área de conteúdo)
-├── notfound.html       ← página estática auxiliar
+├── mobilemoodle.ts     ← entrada TypeScript
+├── mobilemoodle.js     ← bundle compilado (carregado pelo index.html)
+├── core_mobile/        ← módulos TypeScript (ver SCRIPTS-TS.md)
 ├── pages/              ← templates HTML carregados sob demanda
 │   ├── painel.html     ← lista de cursos
 │   ├── curso.html      ← detalhe do curso
 │   └── erros.html      ← telas de erro / not found
-├── ts/                 ← fonte TypeScript (ver ts/SCRIPTS-TS.md)
-├── dist/               ← bundle compilado (carregado pelo index.html)
 └── static/theme/ifrn/
     ├── css/painel.css  ← CSS compilado usado pelo index
     ├── scss/           ← fontes SCSS do tema
@@ -41,7 +41,7 @@ mobilemoodle/
 | `#/curso/{id}` | Detalhe do curso (`id` numérico) |
 | qualquer outra | Página “não encontrada” |
 
-O roteamento está em `ts/app-router.ts` (compilado para `dist/mobilemoodle.js`).
+O roteamento está em `core_mobile/app-router.ts` (compilado para `mobilemoodle.js`).
 
 ---
 
@@ -75,7 +75,7 @@ O visual segue a identidade do AVA IFRN (cores, cards de curso, progresso, menu)
 2. Navega para `mobilemoodle/index.html#/painel`
 3. `api-auth.ts` lê o token e as chamadas HTTP usam `Authorization: Bearer …`
 
-Documentação dos scripts: [`ts/SCRIPTS-TS.md`](./ts/SCRIPTS-TS.md)
+Documentação dos scripts: [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../mobilemoodle/core_mobile/SCRIPTS-TS.md)
 
 ---
 
@@ -89,4 +89,4 @@ Documentação dos scripts: [`ts/SCRIPTS-TS.md`](./ts/SCRIPTS-TS.md)
 Base em desenvolvimento (localhost): `http://localhost:8000`  
 Fora do localhost: mesma origem da página.
 
-Detalhes do contrato: [`../CONTRATO-API.md`](../CONTRATO-API.md)
+Detalhes do contrato: [`./CONTRATO-API.md`](./CONTRATO-API.md)

@@ -83,5 +83,5 @@ AuthService.saveToken()
 sessionStorage["ifrn_access_token"]
         │
         ▼
-mobilemoodle/ts/api-auth.ts  →  Authorization: Bearer …
+mobilemoodle/core_mobile/api-auth.ts  →  Authorization: Bearer …
 ```

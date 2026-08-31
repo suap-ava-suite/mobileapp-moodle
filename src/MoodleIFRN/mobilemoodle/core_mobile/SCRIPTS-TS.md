@@ -1,6 +1,6 @@
 # Scripts TypeScript do painel
 
-Código-fonte em `ts/`; o navegador carrega o bundle compilado em `dist/mobilemoodle.js`.
+Código-fonte em `mobilemoodle.ts` e `core_mobile/`; o navegador carrega o bundle compilado em `mobilemoodle.js`.
 
 Cada arquivo tem uma responsabilidade. Todos usam o namespace global `window.MobileMoodle` (e a fachada `window.MobileMoodleApi`).
 
@@ -12,7 +12,7 @@ npm run build:mobilemoodle
 
 Também compila automaticamente ao rodar `ionic serve` ou `ionic build` (tarefa gulp `mobilemoodle-ts`).
 
-A saída vai para `dist/mobilemoodle.js`. O `index.html` carrega esse bundle; o TypeScript em `ts/` é só o código-fonte.
+A saída vai para `mobilemoodle.js`. O `index.html` carrega esse bundle; o TypeScript em `mobilemoodle.ts` e `core_mobile/` é o código-fonte.
 
 Ou diretamente:
 
@@ -22,7 +22,7 @@ node src/MoodleIFRN/mobilemoodle/build.mjs
 
 ## Entrada e ordem de inicialização
 
-O ponto de entrada é `main.ts`, que importa os módulos nesta ordem:
+O ponto de entrada é `mobilemoodle.ts`, que importa os módulos nesta ordem:
 
 ```text
 namespace → api-errors → api-auth → api-http → api → app-utils → app-status
@@ -32,7 +32,7 @@ namespace → api-errors → api-auth → api-http → api → app-utils → app
 No `index.html`:
 
 ```html
-<script src="dist/mobilemoodle.js" defer></script>
+<script src="mobilemoodle.js" defer></script>
 ```
 
 ## Camada de API
@@ -44,7 +44,7 @@ No `index.html`:
 | `api-http.ts` | `fetch` autenticado, timeout 15s, base URL segura |
 | `api.ts` | `getDashboard` / `getCourse` + cache em memória (TTL 1 min) |
 
-Tipos compartilhados: `ts/global.d.ts`.
+Tipos compartilhados: `core_mobile/global.d.ts`.
 
 ### Cache
 
@@ -89,4 +89,4 @@ Exposta por `api.ts` para o restante do app:
 - Textos da API passam por `escapeHtml` / `textContent` na UI
 - Headers de autenticação não são sobrescritos por opções externas
 
-Mais detalhes: [`../../SEGURANCA.md`](../../SEGURANCA.md)
+Mais detalhes: [`../../docs/SEGURANCA.md`](../../docs/SEGURANCA.md)

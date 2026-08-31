@@ -4,7 +4,7 @@ Partials HTML (templates) carregados pelo painel em tempo de execução.
 
 | Arquivo | Conteúdo |
 |---------|----------|
-| `painel.html` | Abas Diários/Autoinscrição, cards, skeleton, estado vazio |
+| `painel.html` | Abas Diários/Autoinscrição, cards, estado vazio |
 | `curso.html` | Cabeçalho do curso, visão geral, seções expansíveis e atividades |
 | `erros.html` | Template de erro genérico + página “não encontrada” |
 

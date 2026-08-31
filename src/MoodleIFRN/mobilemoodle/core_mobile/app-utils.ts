@@ -11,8 +11,8 @@ import { MM, App } from './namespace';
         for (let i = scripts.length - 1; i >= 0; i -= 1) {
             const src = scripts[i].src || '';
 
-            if (src.indexOf('/dist/') !== -1) {
-                return src.replace(/\/dist\/[^/?#]+(?:\?.*)?$/i, '/');
+            if (src.indexOf('/mobilemoodle.js') !== -1) {
+                return src.replace(/\/mobilemoodle\.js(?:\?.*)?$/i, '/');
             }
         }
 

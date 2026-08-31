@@ -3,7 +3,7 @@
         "target": "ES2020",
         "module": "ESNext",
         "lib": ["ES2020", "DOM"],
-        "rootDir": "ts",
+        "rootDir": ".",
         "strict": true,
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
@@ -12,5 +12,5 @@
         "moduleResolution": "bundler",
         "noEmit": true
     },
-    "include": ["ts/**/*.ts"]
+    "include": ["mobilemoodle.ts", "core_mobile/**/*.ts"]
 }

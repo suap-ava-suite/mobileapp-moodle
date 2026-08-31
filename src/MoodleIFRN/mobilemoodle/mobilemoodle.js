@@ -1,10 +1,10 @@
 "use strict";
 (() => {
-  // src/MoodleIFRN/mobilemoodle/ts/namespace.ts
+  // src/MoodleIFRN/mobilemoodle/core_mobile/namespace.ts
   var MM = window.MobileMoodle = window.MobileMoodle || {};
   var App = MM.App = MM.App || {};
 
-  // src/MoodleIFRN/mobilemoodle/ts/api-errors.ts
+  // src/MoodleIFRN/mobilemoodle/core_mobile/api-errors.ts
   function messageForStatus(status, detail) {
     switch (status) {
       case 401:
@@ -76,7 +76,7 @@
   MM.isRetryable = isRetryable;
   MM.ApiError = ApiError;
 
-  // src/MoodleIFRN/mobilemoodle/ts/api-auth.ts
+  // src/MoodleIFRN/mobilemoodle/core_mobile/api-auth.ts
   var TOKEN_KEY = "ifrn_access_token";
   var JWT_SHAPE = /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/;
   function readJwtPayload(token) {
@@ -154,7 +154,7 @@
   MM.setToken = setToken;
   MM.clearToken = clearToken;
 
-  // src/MoodleIFRN/mobilemoodle/ts/api-http.ts
+  // src/MoodleIFRN/mobilemoodle/core_mobile/api-http.ts
   var DEFAULT_BASE_URL = "";
   var REQUEST_TIMEOUT_MS = 15e3;
   var baseUrl = DEFAULT_BASE_URL;
@@ -263,7 +263,7 @@
   MM.joinUrl = joinUrl;
   MM.request = request;
 
-  // src/MoodleIFRN/mobilemoodle/ts/api.ts
+  // src/MoodleIFRN/mobilemoodle/core_mobile/api.ts
   var CACHE_TTL_MS = 60 * 1e3;
   var MAX_COURSE_CACHE = 40;
   var DEMO_FORCE_500 = false;
@@ -357,13 +357,13 @@
     getCourse
   };
 
-  // src/MoodleIFRN/mobilemoodle/ts/app-utils.ts
+  // src/MoodleIFRN/mobilemoodle/core_mobile/app-utils.ts
   function resolveAssetBase() {
     const scripts = document.getElementsByTagName("script");
     for (let i = scripts.length - 1; i >= 0; i -= 1) {
       const src = scripts[i].src || "";
-      if (src.indexOf("/dist/") !== -1) {
-        return src.replace(/\/dist\/[^/?#]+(?:\?.*)?$/i, "/");
+      if (src.indexOf("/mobilemoodle.js") !== -1) {
+        return src.replace(/\/mobilemoodle\.js(?:\?.*)?$/i, "/");
       }
     }
     try {
@@ -411,7 +411,7 @@
   App.cloneTemplate = cloneTemplate;
   App.fetchText = fetchText;
 
-  // src/MoodleIFRN/mobilemoodle/ts/app-status.ts
+  // src/MoodleIFRN/mobilemoodle/core_mobile/app-status.ts
   var SPLASH_GAUGE_SVG = '<div class="ava-splash__gauge" aria-hidden="true"><svg class="ava-splash__gauge-svg" viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="ava-splash-gauge-grad" gradientUnits="userSpaceOnUse" x1="60" y1="6" x2="60" y2="114"><stop offset="0%" stop-color="#61c924"></stop><stop offset="55%" stop-color="#098e95"></stop><stop offset="100%" stop-color="#0b6064"></stop></linearGradient></defs><circle class="ava-splash__gauge-track" cx="60" cy="60" r="54"></circle><circle class="ava-splash__gauge-arc" cx="60" cy="60" r="54"></circle></svg></div>';
   var LOADING_MIN_MS = 3e3;
   var loadingStartedAt = 0;
@@ -536,7 +536,7 @@
   App.showNotFound = showNotFound;
   App.showStatusError = showStatusError;
 
-  // src/MoodleIFRN/mobilemoodle/ts/app-views.ts
+  // src/MoodleIFRN/mobilemoodle/core_mobile/app-views.ts
   var ACTIVITY_ICONS = {
     assign: "create-outline",
     forum: "chatbubbles-outline",
@@ -1041,7 +1041,7 @@
   App.renderPainel = renderPainel;
   App.renderCurso = renderCurso;
 
-  // src/MoodleIFRN/mobilemoodle/ts/app-router.ts
+  // src/MoodleIFRN/mobilemoodle/core_mobile/app-router.ts
   var templatesReady = null;
   var routeSeq = 0;
   function parseRoute() {
@@ -1142,7 +1142,7 @@
   App.parseRoute = parseRoute;
   App.loadRoute = loadRoute;
 
-  // src/MoodleIFRN/mobilemoodle/ts/app-accessibility.ts
+  // src/MoodleIFRN/mobilemoodle/core_mobile/app-accessibility.ts
   var STORAGE_KEY = "ifrn_a11y_prefs";
   var BOOL_KEYS = [
     "dyslexia_friendly",
@@ -1374,7 +1374,7 @@
     COLOR_MODE_LABELS
   };
 
-  // src/MoodleIFRN/mobilemoodle/ts/app-sidebar.ts
+  // src/MoodleIFRN/mobilemoodle/core_mobile/app-sidebar.ts
   var FILTER_LABELS = {
     inprogress: "Em andamento",
     allincludinghidden: "Todos os di\xE1rios (lento)",
@@ -1554,7 +1554,7 @@
   App.bindSidebar = bindSidebar;
   App.FILTER_LABELS = FILTER_LABELS;
 
-  // src/MoodleIFRN/mobilemoodle/ts/app.ts
+  // src/MoodleIFRN/mobilemoodle/core_mobile/app.ts
   App.content = document.getElementById("page-content");
   App.title = document.getElementById("page-title");
   App.menuUserInfo = document.getElementById("sidebar-user-name");
