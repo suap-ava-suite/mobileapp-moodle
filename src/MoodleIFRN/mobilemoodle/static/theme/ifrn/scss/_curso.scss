@@ -132,7 +132,7 @@
         height: 4px;
         border-radius: 50px;
         --background: #e3e3e3;
-        --progress-background: linear-gradient(270deg, #9f6ede 0%, #633594 100%);
+        --progress-background: var(--dsgov-blue-70);
     }
 
     span {

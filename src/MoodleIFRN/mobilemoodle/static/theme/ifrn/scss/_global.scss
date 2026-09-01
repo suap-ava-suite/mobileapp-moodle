@@ -1,5 +1,13 @@
 @use "variables";
 
+:root {
+    --keyboard-height: 0px;
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
+}
+
 html,
 body {
     height: 100%;
@@ -7,6 +15,14 @@ body {
     font: var(--font-paragraph1);
     color: var(--escuro-primario);
     background: var(--branco-secundario);
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+ion-app {
+    height: calc(100% - var(--keyboard-height, 0px));
+    max-width: 100vw;
 }
 
 * {
@@ -23,6 +39,17 @@ body {
     font-weight: 700;
     display: grid;
     place-items: center;
+    border: none;
+    border-radius: 50%;
+    padding: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    &:hover,
+    &:focus-visible {
+        outline: 2px solid var(--dsgov-focus-ring-blue, rgba(19, 81, 180, 0.35));
+        outline-offset: 2px;
+    }
 }
 
 ion-menu-button {
@@ -80,7 +107,24 @@ ion-menu-button {
 }
 
 ion-content#page-content {
-    --padding-bottom: env(safe-area-inset-bottom);
+    --padding-bottom: max(env(safe-area-inset-bottom), var(--ion-safe-area-bottom, 0px));
+}
+
+body.keyboard-is-open {
+    ion-content#page-content,
+    ion-content.menu-content {
+        --keyboard-offset: var(--keyboard-height, 0px);
+        --padding-bottom: max(12px, var(--keyboard-height, 0px));
+    }
+
+    .sidebar-modal__panel {
+        max-height: calc(100dvh - var(--keyboard-height, 0px));
+    }
+
+    .sidebar-modal__body {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
 }
 
 #main-content ion-header ion-toolbar {

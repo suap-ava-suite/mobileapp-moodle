@@ -56,6 +56,7 @@ import { MM, App } from './namespace';
 
         if (App.toolbarAvatar) {
             App.toolbarAvatar.textContent = letter;
+            App.toolbarAvatar.setAttribute('aria-label', 'Abrir perfil de ' + nome);
         }
 
         const nameEl = document.getElementById('sidebar-user-name');
@@ -308,41 +309,13 @@ import { MM, App } from './namespace';
         host.appendChild(batch);
     }
 
-    function updateIntro(tabKey: PainelTabKey, lists: PainelLists): void {
+    function updateIntro(tabKey: PainelTabKey): void {
         const titleEl = document.getElementById('painel-intro-title');
-        const intro = document.getElementById('painel-intro-text');
         const meta = TAB_META[tabKey] || TAB_META.diarios;
-        const items: DashboardCourse[] = tabKey === 'autoinscricoes'
-            ? lists.autoinscricoes
-            : lists.diarios;
-        const total = items.length;
 
         if (titleEl) {
             titleEl.textContent = meta.title;
         }
-
-        if (!intro) {
-            return;
-        }
-
-        if (tabKey === 'autoinscricoes') {
-            const label = total === 1 ? 'curso com autoinscrição' : 'cursos com autoinscrição';
-
-            intro.innerHTML =
-                total > 0
-                    ? 'Há <strong>' + total + '</strong> ' + label + ' disponíveis.'
-                    : 'Nenhum curso com autoinscrição listado no momento.';
-
-            return;
-        }
-
-        const label = total === 1 ? 'diário' : 'diários';
-        const papel = App.dashboardPapel === 'coordenador'
-            ? ' <span class="env-chip">Coordenador</span>'
-            : '';
-
-        intro.innerHTML =
-            'Você possui <strong>' + total + '</strong> ' + label + ' no AVA IFRN.' + papel;
     }
 
     function setActiveTab(tabKey: PainelTabKey, lists: PainelLists): void {
@@ -356,7 +329,7 @@ import { MM, App } from './namespace';
             tab.setAttribute('aria-selected', active ? 'true' : 'false');
         });
 
-        updateIntro(tabKey, lists);
+        updateIntro(tabKey);
 
         if (cardsHost) {
             renderTabCards(cardsHost, tabKey, lists);
@@ -412,20 +385,6 @@ import { MM, App } from './namespace';
 
         App.content.innerHTML = '';
         App.content.appendChild(page);
-
-        const badgeDiarios = document.getElementById('tab-badge-diarios');
-        const badgeAuto = document.getElementById('tab-badge-autoinscricoes');
-
-        if (badgeDiarios) {
-            badgeDiarios.textContent = String(lists.diarios.length);
-        }
-
-        if (badgeAuto) {
-            const n = lists.autoinscricoes.length;
-
-            badgeAuto.textContent = String(n);
-            (badgeAuto as HTMLElement).hidden = n === 0;
-        }
 
         bindTabs(lists);
         setActiveTab(initialTab, lists);

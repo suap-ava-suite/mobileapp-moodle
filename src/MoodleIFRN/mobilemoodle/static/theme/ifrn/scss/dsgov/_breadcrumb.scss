@@ -1,0 +1,392 @@
+// ==================================================
+// Breadcrumb & Page Header — Tema IFRN DS-GOV (v3.0)
+// ==================================================
+// Estilização do breadcrumb em card topo e título da disciplina
+// Baseado no padrão visual IFRN / Design System Gov.br
+// ==================================================
+
+// ---------------------------------------------------------
+// 1. Container do Cabeçalho da Página (#page-header)
+// Ocupa 100% da largura do contêiner principal (.main-inner)
+// ---------------------------------------------------------
+#page-header,
+.header-maxwidth {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+#page-header {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 0 $spacing-md 0 !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+
+    .w-100 {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0 !important;
+    }
+
+    .d-flex.flex-wrap {
+        align-items: center !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    // ---------------------------------------------------------
+    // 2. Card do Breadcrumb (#page-navbar)
+    // 100% de largura horizontal preenchendo o contêiner principal
+    // ---------------------------------------------------------
+    #page-navbar {
+        display: flex !important;
+        align-items: center !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
+        flex: 1 1 100% !important;
+        box-sizing: border-box !important;
+        background-color: $bg-white !important;
+        border: $border-width-thin solid $border-default !important; // #cccccc
+        border-radius: $border-radius-sm !important; // 8px
+        padding: 10px 20px !important;
+        margin-top: 0 !important;
+        margin-bottom: $spacing-md !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+
+        &:empty {
+            display: none !important;
+        }
+
+        nav,
+        nav[aria-label],
+        .breadcrumb-nav {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+
+        .breadcrumb {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            list-style: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background-color: transparent !important;
+            border-radius: 0 !important;
+            font-family: $font-family-rawline !important;
+            font-size: $font-size-sm !important; // ~13.6px
+            line-height: 1.2 !important;
+
+            --bs-breadcrumb-divider: '/';
+        }
+
+        .breadcrumb-item {
+            display: inline-flex !important;
+            align-items: center !important;
+            color: $text-dark !important;
+            font-size: $font-size-sm !important;
+            line-height: 1.2 !important;
+
+            // Separador (/) entre itens do breadcrumb (não aplica no primeiro item visível)
+            &:not(:first-child)::before {
+                content: '/' !important;
+                color: $text-muted !important; // #888888
+                padding: 0 8px !important;
+                font-size: $font-size-sm !important;
+                font-weight: $font-weight-normal !important;
+                float: none !important;
+                display: inline-flex !important;
+                align-items: center !important;
+            }
+
+            // Ícone de casinha 🏠 (Home) apontando para Meus Cursos
+            &.breadcrumb-home-icon,
+            &[data-key="home-root"] {
+                a {
+                    color: $blue-warm-vivid-70 !important;
+                    text-decoration: none !important;
+                    display: inline-flex !important;
+                    align-items: center !important;
+
+                    i.fa {
+                        color: $blue-warm-vivid-70 !important;
+                        font-size: 1.1rem !important;
+                    }
+
+                    &:hover i.fa {
+                        color: $blue-warm-vivid-90 !important;
+                    }
+                }
+            }
+
+            // Links navegáveis intermediários (ex: código do curso, seções/unidades)
+            a {
+                color: $blue-warm-vivid-70 !important;
+                text-decoration: none !important;
+                font-weight: $font-weight-semibold !important;
+                font-size: $font-size-sm !important;
+                font-family: $font-family-rawline !important;
+                transition: color $transition-fast, text-decoration $transition-fast !important;
+                display: inline-flex !important;
+                align-items: center !important;
+
+                &:hover {
+                    color: $blue-warm-vivid-90 !important;
+                    text-decoration: underline !important;
+                }
+
+                @include focus-visible-ring;
+            }
+
+            // Item ativo / atual (último item da trilha)
+            &.active,
+            &:last-child {
+                color: $text-medium !important; // #555555
+                font-weight: $font-weight-normal !important;
+                font-size: $font-size-sm !important;
+
+                span,
+                > span,
+                a {
+                    color: $text-medium !important;
+                    font-weight: $font-weight-normal !important;
+                    pointer-events: none !important;
+                    cursor: default !important;
+                    text-decoration: none !important;
+                    word-break: break-word !important;
+                    overflow-wrap: anywhere !important;
+                }
+            }
+
+            // Item oculto / dimmed
+            &.dimmed_text {
+                opacity: 0.6 !important;
+            }
+        }
+    }
+
+    // ---------------------------------------------------------
+    // 3. Título da Disciplina / Página (.page-context-header)
+    // Título amplo, limpo e em negrito alinhado com o ícone à esquerda
+    // ---------------------------------------------------------
+    .page-context-header {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 16px !important;
+        margin: 0 0 $spacing-md 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+
+        .page-header-image {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            order: 1 !important; // Ícone sempre à esquerda
+            margin: 0 !important;
+            flex-shrink: 0 !important;
+
+            .activityiconcontainer {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 48px !important;
+                height: 48px !important;
+                border-radius: 8px !important;
+                margin: 0 !important;
+
+                .activityicon,
+                .icon {
+                    width: 32px !important;
+                    height: 32px !important;
+                    max-width: 32px !important;
+                    max-height: 32px !important;
+                }
+            }
+        }
+
+        .page-header-headings {
+            order: 2 !important; // Título à direita do ícone
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            justify-content: center !important;
+            margin: 0 !important;
+            padding: 0 !important;
+
+            h1,
+            .h1,
+            h2,
+            .h2 {
+                font-family: $font-family-rawline !important;
+                font-size: 1.75rem !important; // ~28px
+                font-weight: $font-weight-bold !important;
+                color: $blue-warm-vivid-90 !important; // #071d41
+                margin: 0 !important;
+                line-height: 1.25 !important;
+                text-align: left !important;
+            }
+
+            .text-muted.text-uppercase {
+                font-size: $font-size-xs !important;
+                font-weight: $font-weight-semibold !important;
+                color: $text-medium !important;
+                margin-bottom: 2px !important;
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// 4. Ocultação de Breadcrumbs em Páginas sem Trilha (Meus Cursos, Painel e Login)
+// ---------------------------------------------------------
+#page-my-index.pagelayout-mycourses #page-navbar,
+#page-my-index.page-mycourses #page-navbar,
+.pagelayout-mycourses #page-navbar,
+.page-mycourses #page-navbar,
+.path-my-courses #page-navbar,
+#page-my-courses #page-navbar,
+#page-my-index.pagelayout-mydashboard #page-navbar,
+.pagelayout-mydashboard #page-navbar,
+body.path-login #page-navbar {
+    display: none !important;
+}
+
+// ---------------------------------------------------------
+// 5. Centralização do Cabeçalho APENAS em Páginas de Atividades (mod/*/view e similares)
+// Alinha ao centro o conjunto [Ícone + Título] com o ícone no lado esquerdo
+// ---------------------------------------------------------
+body.path-mod,
+body[class*="path-mod-"],
+body[id^="page-mod-"] {
+    #page-header {
+        .d-flex.align-items-center {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: 100% !important;
+            text-align: center !important;
+        }
+
+        .me-auto,
+        .header-actions-container {
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+
+        .me-auto {
+            width: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        .page-context-header {
+            display: inline-flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin: $spacing-sm auto $spacing-md auto !important;
+            gap: 16px !important;
+            width: auto !important;
+
+            .page-header-image {
+                order: 1 !important; // Ícone no lado esquerdo do título
+                margin: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+
+            .page-header-headings {
+                order: 2 !important; // Título no lado direito do ícone
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                justify-content: center !important;
+                text-align: left !important;
+                margin: 0 !important;
+
+                h1,
+                .h1,
+                h2,
+                .h2 {
+                    text-align: left !important;
+                    margin: 0 !important;
+                }
+            }
+        }
+    }
+
+    // Centralização de cabeçalho de atividade nativo se renderizado no corpo
+    .activity-header {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        margin: 0 auto $spacing-md auto !important;
+    }
+}
+
+// ---------------------------------------------------------
+// 6. Alinhamento à Esquerda em Páginas de Curso e Painéis (user/index, grade, course/view)
+// ---------------------------------------------------------
+body:not(.path-mod):not([class*="path-mod-"]):not([id^="page-mod-"]) {
+    #page-header {
+        .d-flex.align-items-center {
+            display: flex !important;
+            justify-content: flex-start !important;
+            align-items: center !important;
+            width: 100% !important;
+            text-align: left !important;
+        }
+
+        .me-auto {
+            margin-left: 0 !important;
+            margin-right: auto !important;
+            width: auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            justify-content: flex-start !important;
+        }
+
+        .page-context-header {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            margin: 0 0 $spacing-md 0 !important;
+            text-align: left !important;
+            width: 100% !important;
+
+            .page-header-headings {
+                text-align: left !important;
+                align-items: flex-start !important;
+
+                h1,
+                .h1,
+                h2,
+                .h2 {
+                    text-align: left !important;
+                    margin: 0 !important;
+                }
+            }
+        }
+    }
+}

@@ -1,80 +1,84 @@
-// Variáveis do tema AVA IFRN (theme_ifrn25 / Painel AVA)
+// Variáveis do painel mobile — aliases sobre tokens DS-GOV (theme_ifrn_dsgov)
+// Requer @use "dsgov-tokens" antes deste arquivo em painel.scss
 
 :root {
-    --page-max-width: 1312px;
-    --vermelho-primario: #dc030f;
-    --verde-tema: #098e95;
-    --verde-terciario: #d2f4b7;
-    --verde-primario: #61c924;
-    --verde-secundario: #347932;
-    --verde-botao: #31872d;
-    --verde-escuro: #0b6064;
-    --verde-claro: #dff4ee;
-    --verde-icon: #338f74;
-    --azul-primario: #0f6cbf;
-    --escuro-primario: #2b2b2b;
-    --cinza-primario: #cccccc;
-    --cinza-secundario: #54595e;
-    --cinza-terciario: #dfdfdf;
-    --branco-primario: #ffffff;
-    --branco-secundario: #fefefe;
-    --background-color: #f5f5f5;
-    --unnamed-color-1d2125: #1d2125;
+    --page-max-width: var(--dsgov-container-max-width);
 
-    --primary: #098e95;
-    --primary-dark: #0f5a60;
-    --primary-light: #cefdef;
-    --secondary: #9f6ede;
-    --secondary-dark: #633594;
-    --secondary-light: #e7dbf9;
-    --success: #85c121;
-    --success-dark: #3f5d17;
-    --success-light: #e3f9ce;
-    --danger: #fe5448;
-    --danger-dark: #a41a10;
-    --danger-light: #ffe2e0;
-    --warning: #ebbe34;
-    --warning-dark: #bc7d12;
-    --warning-light: #faf3c7;
-    --info: #ff7e33;
-    --info-dark: #c62f08;
-    --info-light: #ffe9d4;
-    --light: #ebebeb;
-    --light-dark: #cccccc;
-    --light-lighter: #f5f5f5;
-    --dark: #2b2b2b;
-    --dark-darker: #141414;
-    --dark-light: #858585;
-    --muted: #7d848b;
-    --general-white: #ffffff;
-    --bg-green: #fafefd;
-    --bg-green-gradient: linear-gradient(131.57deg, #f1fdf9 7.49%, #ffffff 84.71%);
+    // Legado AVA → DS-GOV
+    --vermelho-primario: var(--dsgov-error);
+    --verde-tema: var(--dsgov-blue-70);
+    --verde-terciario: var(--dsgov-green-badge-bg);
+    --verde-primario: var(--dsgov-green-60);
+    --verde-secundario: var(--dsgov-green-hover);
+    --verde-botao: var(--dsgov-green-60);
+    --verde-escuro: var(--dsgov-blue-90);
+    --verde-claro: var(--dsgov-blue-10);
+    --verde-icon: var(--dsgov-blue-70);
+    --azul-primario: var(--dsgov-blue-70);
+
+    --escuro-primario: var(--dsgov-text-dark);
+    --cinza-primario: var(--dsgov-border-outer);
+    --cinza-secundario: var(--dsgov-text-secondary);
+    --cinza-terciario: var(--dsgov-border-inner);
+    --branco-primario: var(--dsgov-bg-white);
+    --branco-secundario: var(--dsgov-bg-light-gray);
+    --background-color: var(--dsgov-bg-gray);
+    --unnamed-color-1d2125: var(--dsgov-blue-darkest);
+
+    --primary: var(--dsgov-blue-70);
+    --primary-dark: var(--dsgov-blue-90);
+    --primary-light: var(--dsgov-blue-10);
+    --secondary: var(--dsgov-blue-60);
+    --secondary-dark: var(--dsgov-blue-80);
+    --secondary-light: var(--dsgov-blue-badge-bg);
+    --success: var(--dsgov-green-60);
+    --success-dark: var(--dsgov-green-hover);
+    --success-light: var(--dsgov-green-badge-bg);
+    --danger: var(--dsgov-error);
+    --danger-dark: var(--dsgov-error-hover);
+    --danger-light: #fdecea;
+    --warning: var(--dsgov-yellow-20);
+    --warning-dark: var(--dsgov-yellow-30);
+    --warning-light: #fff9e6;
+    --info: var(--dsgov-blue-60);
+    --info-dark: var(--dsgov-blue-90);
+    --info-light: var(--dsgov-blue-10);
+    --light: var(--dsgov-border-inner);
+    --light-dark: var(--dsgov-border-default);
+    --light-lighter: var(--dsgov-bg-gray);
+    --dark: var(--dsgov-text-dark);
+    --dark-darker: var(--dsgov-blue-darkest);
+    --dark-light: var(--dsgov-text-muted);
+    --muted: var(--dsgov-text-muted);
+    --general-white: var(--dsgov-bg-white);
+    --bg-green: var(--dsgov-bg-light-gray);
+    --bg-green-gradient: linear-gradient(131.57deg, var(--dsgov-blue-10) 7.49%, var(--dsgov-bg-white) 84.71%);
 
     --counter-close: 56px;
     --counter-default: 252px;
     --drawer-open: 294px;
     --max-width-layout: 894px;
     --max-width-layout-expanded: 1180px;
-    --shadow-primary: 0 4px 4px 0 #00000040;
+    --shadow-primary: var(--dsgov-shadow-card);
 
-    --ion-color-primary: #098e95;
-    --ion-color-primary-rgb: 9, 142, 149;
-    --ion-color-primary-contrast: #ffffff;
+    --ion-color-primary: var(--dsgov-blue-70);
+    --ion-color-primary-rgb: 19, 81, 180;
+    --ion-color-primary-contrast: var(--dsgov-text-light);
     --ion-color-primary-contrast-rgb: 255, 255, 255;
-    --ion-color-primary-shade: #087c82;
-    --ion-color-primary-tint: #22999f;
-    --ion-color-secondary: #9f6ede;
-    --ion-color-secondary-rgb: 159, 110, 222;
-    --ion-color-secondary-contrast: #ffffff;
-    --ion-color-secondary-shade: #8c61c3;
-    --ion-color-secondary-tint: #a97de1;
-    --ion-font-family: "Noto Sans", Arial, Helvetica, sans-serif;
-    --ion-background-color: #ffffff;
-    --ion-text-color: #2b2b2b;
+    --ion-color-primary-shade: var(--dsgov-blue-80);
+    --ion-color-primary-tint: var(--dsgov-blue-60);
+    --ion-color-secondary: var(--dsgov-blue-60);
+    --ion-color-secondary-rgb: 21, 91, 203;
+    --ion-color-secondary-contrast: var(--dsgov-text-light);
+    --ion-color-secondary-shade: var(--dsgov-blue-80);
+    --ion-color-secondary-tint: var(--dsgov-blue-60);
+    --ion-font-family: var(--dsgov-font-family);
+    --ion-background-color: var(--dsgov-bg-white);
+    --ion-text-color: var(--dsgov-text-dark);
 }
 
 body {
-    --font-family: "Noto Sans", sans-serif;
+    --font-family: var(--dsgov-font-family);
     --font-scale: 1;
 
     --font-heading1: 700 calc(1.5rem * var(--font-scale)) / normal var(--font-family);

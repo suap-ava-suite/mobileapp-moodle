@@ -1,0 +1,334 @@
+@use "dsgov/variables" as ds;
+@use "dsgov/mixins" as mx;
+
+// Tipografia base Rawline no painel
+html,
+body,
+ion-app,
+ion-content,
+ion-header,
+ion-toolbar,
+ion-title,
+ion-button,
+ion-label {
+    font-family: var(--dsgov-font-family);
+}
+
+body,
+ion-content#page-content {
+    background: var(--dsgov-bg-light-gray);
+    color: var(--dsgov-text-dark);
+}
+
+// Menu lateral (cores DS-GOV)
+.menu-content,
+.sidebar-container {
+    background: var(--dsgov-blue-70) !important;
+    color: var(--dsgov-text-light) !important;
+}
+
+.sidebar-title {
+    color: var(--dsgov-text-light) !important;
+}
+
+.btn-toggle-sidebar {
+    background: var(--dsgov-blue-90) !important;
+}
+
+.sidebar-content-divider {
+    background-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+.sidebar-user-content-profile:hover,
+.sidebar-user-content-profile.active {
+    background: var(--dsgov-blue-90) !important;
+    color: var(--dsgov-text-light) !important;
+}
+
+.profile-image--initials {
+    background: var(--dsgov-blue-badge-bg) !important;
+    color: var(--dsgov-blue-90) !important;
+}
+
+.sidebar-modal-button {
+    color: var(--dsgov-text-light) !important;
+
+    &:hover,
+    &:focus-visible {
+        background: var(--dsgov-blue-90) !important;
+    }
+}
+
+// Marketplace IFRN (pré-login — acentos DS-GOV)
+.marketplace-ifrn {
+    --ava-primary: var(--dsgov-blue-70);
+    --ava-primary-dark: var(--dsgov-blue-90);
+    --ava-text: var(--dsgov-text-dark);
+    --ava-muted: var(--dsgov-text-secondary);
+    --ava-subtle: var(--dsgov-text-muted);
+    --ava-border: var(--dsgov-border-inner);
+    --ava-surface: var(--dsgov-bg-white);
+    --ava-bg: var(--dsgov-bg-light-gray);
+    --ava-font: var(--dsgov-font-family);
+
+    ion-button.btn-enter {
+        --border-radius: var(--dsgov-radius-pill);
+        font-weight: var(--dsgov-font-weight-semibold);
+    }
+
+    ion-button.help-link {
+        --color: var(--dsgov-blue-70);
+    }
+}
+
+// ---------------------------------------------------------
+// Abas do painel (padrão DS-GOV underline)
+// ---------------------------------------------------------
+.ava-topbar,
+.tabs-row {
+    background: var(--dsgov-bg-white);
+    border-bottom: ds.$border-width-thin solid ds.$border-light;
+    border-radius: var(--dsgov-radius-default);
+    box-shadow: none;
+    gap: 0;
+    padding: 0;
+    min-height: var(--dsgov-tab-nav-height);
+}
+
+.ava-topbar .ava-tab,
+.tabs-row .ava-tab {
+    border-radius: 0;
+    color: var(--dsgov-text-medium);
+    font-size: var(--dsgov-font-size-base);
+    font-weight: var(--dsgov-font-weight-medium);
+    padding: 0 var(--dsgov-spacing-lg);
+    min-height: var(--dsgov-tab-nav-height);
+    border-bottom: ds.$border-width-thick solid transparent;
+    background: transparent;
+
+    &.is-active {
+        color: var(--dsgov-blue-70);
+        background: transparent;
+        font-weight: var(--dsgov-font-weight-semibold);
+        border-bottom-color: var(--dsgov-blue-70);
+    }
+
+    &:hover:not(:disabled):not(.is-active) {
+        color: var(--dsgov-blue-70);
+        border-bottom-color: var(--dsgov-blue-70);
+        background: var(--dsgov-bg-hover);
+    }
+}
+
+.ava-tab.is-active .ava-tab__badge {
+    background: var(--dsgov-blue-badge-bg);
+    color: var(--dsgov-blue-70);
+}
+
+// ---------------------------------------------------------
+// Cards de curso (DS-GOV coursecard)
+// ---------------------------------------------------------
+.painel-card {
+    border: ds.$border-width-thin solid ds.$border-outer;
+    border-radius: var(--dsgov-radius-default);
+    box-shadow: none;
+    transition: box-shadow var(--dsgov-transition-base), border-color var(--dsgov-transition-base);
+
+    &:hover,
+    &:active {
+        border-color: var(--dsgov-border-heavy);
+        box-shadow: var(--dsgov-shadow-card);
+        transform: none;
+    }
+}
+
+.painel-card-title {
+    color: var(--dsgov-blue-90);
+    font-weight: var(--dsgov-font-weight-bold);
+    font-size: var(--dsgov-font-size-xl);
+}
+
+.painel-card-header-shortname {
+    color: var(--dsgov-text-muted);
+    font-size: var(--dsgov-font-size-sm);
+}
+
+.painel-card-info-icon,
+.painel-card-details-info-published,
+.painel-card-info-enrolled {
+    background: var(--dsgov-blue-badge-bg);
+    color: var(--dsgov-blue-70);
+    border-radius: var(--dsgov-radius-pill-sm);
+    font-weight: var(--dsgov-font-weight-semibold);
+}
+
+.painel-card-details-info-unpublished {
+    background: var(--dsgov-bg-gray);
+    color: var(--dsgov-text-medium);
+}
+
+.painel-card-actions ion-button {
+    --border-radius: var(--dsgov-radius-pill);
+    font-weight: var(--dsgov-font-weight-semibold);
+    text-transform: none;
+}
+
+// ---------------------------------------------------------
+// Barra de progresso (DS-GOV progressbar)
+// ---------------------------------------------------------
+.painel-progress-bar-container {
+    background: var(--dsgov-bg-progress-track);
+    border-radius: var(--dsgov-radius-pill-sm);
+    height: 10px;
+}
+
+.painel-progress-bar {
+    background: var(--dsgov-blue-70);
+    border-radius: var(--dsgov-radius-pill-sm);
+}
+
+.painel-progress-label,
+.painel-card-details-progress span {
+    color: var(--dsgov-text-dark);
+    font-weight: var(--dsgov-font-weight-bold);
+    font-size: var(--dsgov-font-size-sm);
+}
+
+.course-progress ion-progress-bar {
+    --background: var(--dsgov-bg-progress-track);
+    --progress-background: var(--dsgov-blue-70);
+    height: 10px;
+    border-radius: var(--dsgov-radius-pill-sm);
+}
+
+// ---------------------------------------------------------
+// Breadcrumb
+// ---------------------------------------------------------
+.breadcrumb {
+    background: var(--dsgov-bg-white);
+    border: ds.$border-width-thin solid ds.$border-default;
+    border-radius: var(--dsgov-radius-sm);
+    padding: 10px 20px;
+    font-size: var(--dsgov-font-size-sm);
+    color: var(--dsgov-text-dark);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+    a {
+        color: var(--dsgov-blue-70);
+        font-weight: var(--dsgov-font-weight-semibold);
+        text-decoration: none;
+
+        &:hover {
+            color: var(--dsgov-blue-90);
+            text-decoration: underline;
+        }
+    }
+
+    strong {
+        color: var(--dsgov-text-medium);
+        font-weight: var(--dsgov-font-weight-normal);
+    }
+}
+
+// ---------------------------------------------------------
+// Botões Ionic globais do painel
+// ---------------------------------------------------------
+ion-button {
+    --border-radius: var(--dsgov-radius-pill);
+    font-weight: var(--dsgov-font-weight-semibold);
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+#main-content ion-header ion-toolbar {
+    --background: var(--dsgov-bg-white);
+    --color: var(--dsgov-blue-90);
+    --border-color: var(--dsgov-border-inner);
+}
+
+ion-menu-button {
+    color: var(--dsgov-blue-70);
+}
+
+// Modais laterais
+.sidebar-modal__panel {
+    border-radius: var(--dsgov-radius-md) 0 0 var(--dsgov-radius-md);
+}
+
+.sidebar-modal-button,
+.modal-button-option,
+.modal-content-body-filter-button {
+    border-radius: var(--dsgov-radius-pill);
+    font-weight: var(--dsgov-font-weight-semibold);
+}
+
+.modal-content-body-filter-button,
+ion-button[color="primary"] {
+    --background: var(--dsgov-blue-70);
+    --background-activated: var(--dsgov-blue-90);
+    --background-hover: var(--dsgov-blue-90);
+    --border-radius: var(--dsgov-radius-pill);
+}
+
+.filter-select-area select {
+    border: ds.$border-width-thin solid ds.$border-outer;
+    border-radius: var(--dsgov-radius-default);
+    font-size: var(--dsgov-font-size-base);
+
+    &:focus {
+        box-shadow: var(--dsgov-focus-ring-blue);
+    }
+}
+
+.checkbox-access-label {
+    border-radius: var(--dsgov-radius-default);
+
+    &:focus-within {
+        @include mx.focus-visible-ring;
+    }
+}
+
+.cycle-btn {
+    border-radius: var(--dsgov-radius-default);
+}
+
+// Cabeçalho de curso
+.course-header h1,
+.course-header .painel-card-title {
+    color: var(--dsgov-blue-90);
+}
+
+.env-chip,
+.enrol-header-tag {
+    background: var(--dsgov-green-badge-bg);
+    color: var(--dsgov-green-60);
+    border-radius: var(--dsgov-radius-pill-sm);
+    font-weight: var(--dsgov-font-weight-semibold);
+}
+
+.topic-index {
+    background: var(--dsgov-blue-badge-bg);
+    color: var(--dsgov-blue-70);
+    font-weight: var(--dsgov-font-weight-bold);
+}
+
+.topic-card {
+    border: ds.$border-width-thin solid ds.$border-outer;
+    border-radius: var(--dsgov-radius-default);
+}
+
+.activity-item {
+    border-radius: var(--dsgov-radius-default);
+
+    &:focus-visible {
+        @include mx.focus-visible-ring;
+    }
+}
+
+.page-error,
+.empty-state,
+.no-data {
+    h3 {
+        color: var(--dsgov-blue-90);
+    }
+}

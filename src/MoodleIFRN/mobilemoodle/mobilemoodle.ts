@@ -13,4 +13,5 @@ import './core_mobile/app-views';
 import './core_mobile/app-router';
 import './core_mobile/app-accessibility';
 import './core_mobile/app-sidebar';
+import './core_mobile/app-keyboard';
 import './core_mobile/app';

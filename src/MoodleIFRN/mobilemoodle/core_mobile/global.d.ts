@@ -131,6 +131,7 @@ interface MobileMoodleApp {
     activePainelTab?: PainelTabKey;
     activeFilter?: ActiveFilter;
     ASSET_BASE?: string;
+    resolveLoginUrl?: () => string;
     A11y?: A11yModule;
     FILTER_LABELS?: Record<string, string>;
     logout?: () => void;

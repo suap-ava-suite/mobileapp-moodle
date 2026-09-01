@@ -197,6 +197,7 @@ import { MM, App } from './namespace';
             ['btn-toggle-filter', 'filter'],
             ['btn-open-filter-label', 'filter'],
             ['sidebar-active-filters', 'filter'],
+            ['toolbar-avatar', 'profile'],
         ] as [string, SidebarModalType][]).forEach((pair) => {
             const el = getEl(pair[0]);
 

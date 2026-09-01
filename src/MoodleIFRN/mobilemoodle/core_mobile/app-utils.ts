@@ -70,7 +70,20 @@ import { MM, App } from './namespace';
         }
     }
 
+    function resolveLoginUrl(): string {
+        try {
+            const appRoot = new URL('../', App.ASSET_BASE || window.location.href);
+
+            appRoot.hash = '/login/ifrn-login';
+
+            return appRoot.toString();
+        } catch {
+            return '/#/login/ifrn-login';
+        }
+    }
+
     App.ASSET_BASE = resolveAssetBase();
+    App.resolveLoginUrl = resolveLoginUrl;
     App.escapeHtml = escapeHtml;
     App.initials = initials;
     App.cloneTemplate = cloneTemplate;

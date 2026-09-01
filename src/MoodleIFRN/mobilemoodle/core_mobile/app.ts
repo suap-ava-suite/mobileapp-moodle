@@ -2,6 +2,7 @@
  * app.ts
  * Bootstrap: DOM, menu, base da API e eventos iniciais.
  */
+import { initKeyboardInsets } from './app-keyboard';
 import { MM, App } from './namespace';
 
 
@@ -18,12 +19,12 @@ import { MM, App } from './namespace';
         }
 
         App.dashboardCache = null;
-        App.showStatusError?.({
-            status: 401,
-            title: 'Sessão encerrada',
-            message: 'Faça login novamente no aplicativo.',
-            retryable: false,
-        });
+
+        const loginUrl = typeof App.resolveLoginUrl === 'function'
+            ? App.resolveLoginUrl()
+            : '/#/login/ifrn-login';
+
+        window.location.replace(loginUrl);
     }
 
     App.logout = logout;
@@ -47,6 +48,8 @@ import { MM, App } from './namespace';
     });
 
     window.addEventListener('DOMContentLoaded', () => {
+        initKeyboardInsets();
+
         if (window.MobileMoodleApi?.setApiBaseUrl) {
             window.MobileMoodleApi.setApiBaseUrl(resolveApiBase());
         }

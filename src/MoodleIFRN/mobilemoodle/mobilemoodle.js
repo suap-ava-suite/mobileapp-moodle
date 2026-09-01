@@ -405,7 +405,17 @@
       window.clearTimeout(timer);
     }
   }
+  function resolveLoginUrl() {
+    try {
+      const appRoot = new URL("../", App.ASSET_BASE || window.location.href);
+      appRoot.hash = "/login/ifrn-login";
+      return appRoot.toString();
+    } catch {
+      return "/#/login/ifrn-login";
+    }
+  }
   App.ASSET_BASE = resolveAssetBase();
+  App.resolveLoginUrl = resolveLoginUrl;
   App.escapeHtml = escapeHtml;
   App.initials = initials;
   App.cloneTemplate = cloneTemplate;
@@ -516,10 +526,17 @@
         bindRetry(retry);
       }
       if (status === 401 || status === 403) {
-        const hint = document.createElement("p");
-        hint.className = "status-page__hint";
-        hint.textContent = "Fa\xE7a login novamente no aplicativo.";
-        actionsEl.appendChild(hint);
+        const login = document.createElement("ion-button");
+        login.setAttribute("color", "primary");
+        login.textContent = "Ir para o login";
+        login.addEventListener("click", () => {
+          if (typeof App.logout === "function") {
+            App.logout();
+          } else {
+            window.location.replace("/#/login/ifrn-login");
+          }
+        });
+        actionsEl.appendChild(login);
       } else {
         const home = document.createElement("ion-button");
         home.setAttribute("fill", "clear");
@@ -577,6 +594,7 @@
     App.sidebarUserName = nome;
     if (App.toolbarAvatar) {
       App.toolbarAvatar.textContent = letter;
+      App.toolbarAvatar.setAttribute("aria-label", "Abrir perfil de " + nome);
     }
     const nameEl = document.getElementById("sidebar-user-name");
     if (nameEl) {
@@ -770,26 +788,12 @@
     });
     host.appendChild(batch);
   }
-  function updateIntro(tabKey, lists) {
+  function updateIntro(tabKey) {
     const titleEl = document.getElementById("painel-intro-title");
-    const intro = document.getElementById("painel-intro-text");
     const meta = TAB_META[tabKey] || TAB_META.diarios;
-    const items = tabKey === "autoinscricoes" ? lists.autoinscricoes : lists.diarios;
-    const total = items.length;
     if (titleEl) {
       titleEl.textContent = meta.title;
     }
-    if (!intro) {
-      return;
-    }
-    if (tabKey === "autoinscricoes") {
-      const label2 = total === 1 ? "curso com autoinscri\xE7\xE3o" : "cursos com autoinscri\xE7\xE3o";
-      intro.innerHTML = total > 0 ? "H\xE1 <strong>" + total + "</strong> " + label2 + " dispon\xEDveis." : "Nenhum curso com autoinscri\xE7\xE3o listado no momento.";
-      return;
-    }
-    const label = total === 1 ? "di\xE1rio" : "di\xE1rios";
-    const papel = App.dashboardPapel === "coordenador" ? ' <span class="env-chip">Coordenador</span>' : "";
-    intro.innerHTML = "Voc\xEA possui <strong>" + total + "</strong> " + label + " no AVA IFRN." + papel;
   }
   function setActiveTab(tabKey, lists) {
     const tabs = document.querySelectorAll("#painel-tabs .ava-tab");
@@ -799,7 +803,7 @@
       tab.classList.toggle("is-active", active);
       tab.setAttribute("aria-selected", active ? "true" : "false");
     });
-    updateIntro(tabKey, lists);
+    updateIntro(tabKey);
     if (cardsHost) {
       renderTabCards(cardsHost, tabKey, lists);
     }
@@ -838,16 +842,6 @@
     }
     App.content.innerHTML = "";
     App.content.appendChild(page);
-    const badgeDiarios = document.getElementById("tab-badge-diarios");
-    const badgeAuto = document.getElementById("tab-badge-autoinscricoes");
-    if (badgeDiarios) {
-      badgeDiarios.textContent = String(lists.diarios.length);
-    }
-    if (badgeAuto) {
-      const n = lists.autoinscricoes.length;
-      badgeAuto.textContent = String(n);
-      badgeAuto.hidden = n === 0;
-    }
     bindTabs(lists);
     setActiveTab(initialTab, lists);
     const refresher = document.getElementById("painel-refresher");
@@ -1146,7 +1140,6 @@
   var STORAGE_KEY = "ifrn_a11y_prefs";
   var BOOL_KEYS = [
     "dyslexia_friendly",
-    "remove_justify",
     "highlight_links",
     "stop_animations",
     "hidden_illustrative_image",
@@ -1247,6 +1240,7 @@
     BOOL_KEYS.forEach((key) => {
       body.classList.toggle(key, !!state[key]);
     });
+    body.classList.remove("remove_justify");
     COLOR_MODE_OPTIONS.forEach((mode) => {
       body.classList.remove("color_mode_" + mode);
     });
@@ -1523,7 +1517,8 @@
       ["btn-toggle-accessibility", "accessibility"],
       ["btn-toggle-filter", "filter"],
       ["btn-open-filter-label", "filter"],
-      ["sidebar-active-filters", "filter"]
+      ["sidebar-active-filters", "filter"],
+      ["toolbar-avatar", "profile"]
     ].forEach((pair) => {
       const el = getEl2(pair[0]);
       if (!el) {
@@ -1554,6 +1549,95 @@
   App.bindSidebar = bindSidebar;
   App.FILTER_LABELS = FILTER_LABELS;
 
+  // src/MoodleIFRN/mobilemoodle/core_mobile/app-keyboard.ts
+  var KEYBOARD_THRESHOLD = 80;
+  function readSafeAreaInsets() {
+    const probe = document.createElement("div");
+    probe.style.cssText = [
+      "position:fixed",
+      "top:0",
+      "left:0",
+      "padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)",
+      "visibility:hidden",
+      "pointer-events:none"
+    ].join(";");
+    document.documentElement.appendChild(probe);
+    const style = getComputedStyle(probe);
+    const insets = {
+      top: parseFloat(style.paddingTop) || 0,
+      right: parseFloat(style.paddingRight) || 0,
+      bottom: parseFloat(style.paddingBottom) || 0,
+      left: parseFloat(style.paddingLeft) || 0
+    };
+    probe.remove();
+    return insets;
+  }
+  function applySafeAreaVariables() {
+    const insets = readSafeAreaInsets();
+    const root = document.documentElement.style;
+    root.setProperty("--ion-safe-area-top", `${insets.top}px`);
+    root.setProperty("--ion-safe-area-right", `${insets.right}px`);
+    root.setProperty("--ion-safe-area-bottom", `${insets.bottom}px`);
+    root.setProperty("--ion-safe-area-left", `${insets.left}px`);
+  }
+  function syncKeyboardHeight() {
+    const viewport = window.visualViewport;
+    let keyboardHeight = 0;
+    if (viewport) {
+      keyboardHeight = Math.max(0, Math.round(window.innerHeight - viewport.height - viewport.offsetTop));
+    }
+    const isOpen = keyboardHeight >= KEYBOARD_THRESHOLD;
+    const appliedHeight = isOpen ? keyboardHeight : 0;
+    document.documentElement.style.setProperty("--keyboard-height", `${appliedHeight}px`);
+    document.body.classList.toggle("keyboard-is-open", isOpen);
+    if (isOpen) {
+      const insets = readSafeAreaInsets();
+      document.documentElement.style.setProperty("--ion-safe-area-bottom", "0px");
+      document.documentElement.style.setProperty("--ion-safe-area-top", `${insets.top}px`);
+    } else {
+      applySafeAreaVariables();
+    }
+  }
+  function scrollFocusedFieldIntoView() {
+    const active = document.activeElement;
+    if (!(active instanceof HTMLElement)) {
+      return;
+    }
+    if (!active.matches("input, textarea, select")) {
+      return;
+    }
+    window.setTimeout(() => {
+      active.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 320);
+  }
+  function initKeyboardInsets() {
+    applySafeAreaVariables();
+    syncKeyboardHeight();
+    window.visualViewport?.addEventListener("resize", syncKeyboardHeight);
+    window.visualViewport?.addEventListener("scroll", syncKeyboardHeight);
+    window.addEventListener("resize", () => {
+      applySafeAreaVariables();
+      syncKeyboardHeight();
+    });
+    window.addEventListener("orientationchange", () => {
+      window.setTimeout(() => {
+        applySafeAreaVariables();
+        syncKeyboardHeight();
+      }, 250);
+    });
+    document.addEventListener("focusin", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement) || !target.matches("input, textarea, select")) {
+        return;
+      }
+      window.setTimeout(syncKeyboardHeight, 280);
+      scrollFocusedFieldIntoView();
+    });
+    document.addEventListener("focusout", () => {
+      window.setTimeout(syncKeyboardHeight, 280);
+    });
+  }
+
   // src/MoodleIFRN/mobilemoodle/core_mobile/app.ts
   App.content = document.getElementById("page-content");
   App.title = document.getElementById("page-title");
@@ -1566,12 +1650,8 @@
       window.MobileMoodleApi.clearToken();
     }
     App.dashboardCache = null;
-    App.showStatusError?.({
-      status: 401,
-      title: "Sess\xE3o encerrada",
-      message: "Fa\xE7a login novamente no aplicativo.",
-      retryable: false
-    });
+    const loginUrl = typeof App.resolveLoginUrl === "function" ? App.resolveLoginUrl() : "/#/login/ifrn-login";
+    window.location.replace(loginUrl);
   }
   App.logout = logout;
   function bindMenu() {
@@ -1589,6 +1669,7 @@
     App.loadRoute?.(false);
   });
   window.addEventListener("DOMContentLoaded", () => {
+    initKeyboardInsets();
     if (window.MobileMoodleApi?.setApiBaseUrl) {
       window.MobileMoodleApi.setApiBaseUrl(resolveApiBase());
     }

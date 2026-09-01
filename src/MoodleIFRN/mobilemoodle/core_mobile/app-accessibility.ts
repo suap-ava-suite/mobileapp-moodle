@@ -9,7 +9,6 @@ import { MM, App } from './namespace';
 
     const BOOL_KEYS: A11yBoolKey[] = [
         'dyslexia_friendly',
-        'remove_justify',
         'highlight_links',
         'stop_animations',
         'hidden_illustrative_image',
@@ -136,6 +135,8 @@ import { MM, App } from './namespace';
         BOOL_KEYS.forEach((key) => {
             body.classList.toggle(key, !!state[key]);
         });
+
+        body.classList.remove('remove_justify');
 
         COLOR_MODE_OPTIONS.forEach((mode) => {
             body.classList.remove('color_mode_' + mode);

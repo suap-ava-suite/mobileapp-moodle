@@ -42,7 +42,7 @@
     }
 
     &.is-active {
-        color: #fff;
+        color: var(--dsgov-text-light);
         background-color: var(--primary);
         font-weight: 600;
     }
@@ -80,7 +80,7 @@
 
 .ava-tab.is-active .ava-tab__badge {
     background: rgba(255, 255, 255, 0.22);
-    color: #fff;
+    color: var(--dsgov-text-light);
 }
 
 .card-container {
@@ -168,7 +168,7 @@
 }
 
 .painel-progress-bar-container {
-    background: #e3e3e3;
+    background: var(--dsgov-bg-progress-track);
     border-radius: 50px;
     height: 4px;
     max-width: 187px;
@@ -178,7 +178,7 @@
 }
 
 .painel-progress-bar {
-    background: linear-gradient(270deg, #9f6ede 0%, #633594 100%);
+    background: var(--dsgov-blue-70);
     border-radius: 50px;
     height: 100%;
 }

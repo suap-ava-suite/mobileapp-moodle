@@ -178,11 +178,18 @@ import { MM, App } from './namespace';
             }
 
             if (status === 401 || status === 403) {
-                const hint = document.createElement('p');
+                const login = document.createElement('ion-button');
 
-                hint.className = 'status-page__hint';
-                hint.textContent = 'Faça login novamente no aplicativo.';
-                actionsEl.appendChild(hint);
+                login.setAttribute('color', 'primary');
+                login.textContent = 'Ir para o login';
+                login.addEventListener('click', () => {
+                    if (typeof App.logout === 'function') {
+                        App.logout();
+                    } else {
+                        window.location.replace('/#/login/ifrn-login');
+                    }
+                });
+                actionsEl.appendChild(login);
             } else {
                 const home = document.createElement('ion-button');
 

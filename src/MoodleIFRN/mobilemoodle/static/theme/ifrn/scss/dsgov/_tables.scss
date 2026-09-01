@@ -1,0 +1,315 @@
+// ============================================================
+// [Tables] — Tema IFRN DS-GOV (v3.0)
+// ============================================================
+
+// ---------------------------------------------------------
+// 1. Estilo Global de Tabelas (.table, .generictable, .flexible, .userenrolment)
+// ---------------------------------------------------------
+table.table:not(.gradereport-grader-table):not(.user-grade),
+table.generictable:not(.user-grade),
+table.flexible:not(.user-grade),
+table.userenrolment,
+.path-user table,
+.user-index table,
+#participants {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    background-color: $bg-white !important;
+    border: $border-width-thin solid $border-outer !important; // #CCCCCC Borda externa
+    margin-bottom: 1.5rem !important;
+
+    // Neutralização total das variáveis de hover do Bootstrap 5 / Boost
+    --bs-table-hover-bg: transparent !important;
+    --bs-table-accent-bg: transparent !important;
+
+    // Cabeçalho da Tabela
+    thead {
+        background-color: $bg-light-gray !important;
+        border-bottom: 2px solid $border-outer !important;
+        border-radius: 0 !important;
+
+        tr th,
+        tr td,
+        th,
+        td {
+            font-size: $font-size-sm !important;
+            font-weight: $font-weight-bold !important;
+            color: $blue-warm-vivid-90 !important;
+            background-color: $bg-light-gray !important;
+            padding: 14px $spacing-md !important;
+            vertical-align: middle !important;
+            border-top: none !important;
+            border-bottom: $border-width-medium solid $border-outer !important;
+            border-left: none !important;
+            border-right: none !important;
+            border-radius: 0 !important;
+            text-transform: none !important;
+            white-space: nowrap !important;
+
+            a,
+            .cmd {
+                color: $blue-warm-vivid-90 !important;
+                font-weight: $font-weight-bold !important;
+                text-decoration: none !important;
+                border-radius: 0 !important;
+
+                &:hover {
+                    color: $blue-warm-vivid-70 !important;
+                    text-decoration: underline !important;
+                }
+            }
+        }
+    }
+
+    // Coluna de seleção (Checkboxes e Radios de seleção)
+    th.selectall,
+    td.userselect {
+        width: 48px !important;
+        min-width: 48px !important;
+        max-width: 48px !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+
+        input[type="checkbox"],
+        input[type="radio"] {
+            margin: 0 auto !important;
+            display: inline-block !important;
+            vertical-align: middle !important;
+        }
+    }
+
+    // Corpo da Tabela e Estilo Zebrado Sem Hover (Gray = $bg-gray #f6f6f6)
+    tbody {
+        tr,
+        tr:hover,
+        tr:hover > td,
+        tr:hover > th {
+            --bs-table-hover-bg: transparent !important;
+            --bs-table-accent-bg: transparent !important;
+        }
+
+        // Linhas ímpares (Gray #f6f6f6)
+        tr:nth-of-type(odd),
+        tr:nth-of-type(odd):hover,
+        tr:nth-of-type(odd):hover > td,
+        tr:nth-of-type(odd):hover > th {
+            background-color: $bg-gray !important;
+        }
+
+        // Linhas pares (Branco #ffffff)
+        tr:nth-of-type(even),
+        tr:nth-of-type(even):hover,
+        tr:nth-of-type(even):hover > td,
+        tr:nth-of-type(even):hover > th {
+            background-color: $bg-white !important;
+        }
+
+        td,
+        th {
+            font-size: $font-size-sm !important;
+            color: $text-dark !important;
+            padding: 12px $spacing-md !important;
+            vertical-align: middle !important;
+            border-top: none !important;
+            border-bottom: $border-width-thin solid $border-inner !important; // #e6e6e6 Borda interna
+            border-left: none !important;
+            border-right: none !important;
+
+            // Links dentro das células
+            a:not(.btn) {
+                color: $blue-warm-vivid-70 !important;
+                font-weight: $font-weight-semibold !important;
+                text-decoration: none !important;
+
+                &:hover {
+                    color: $blue-warm-vivid-90 !important;
+                    text-decoration: underline !important;
+                }
+            }
+        }
+
+        // Remove borda da última linha do corpo
+        tr:last-child {
+            td,
+            th {
+                border-bottom: none !important;
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// 2. Tabela de Participantes (#participants)
+// Exceção: Avatares circulares e Badges pill
+// ---------------------------------------------------------
+#participants,
+.path-user .userenrolment,
+.user-index #participants {
+    // Exceção de Borda Circular: Avatar do participante (Imagem ou Iniciais)
+    .userpicture,
+    img.userpicture,
+    .userinitials,
+    span.userinitials {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        border-radius: $border-radius-circle !important; // Exceção Circular 50%
+        margin-right: 10px !important;
+        vertical-align: middle !important;
+        object-fit: cover !important;
+        flex-shrink: 0 !important;
+        line-height: 1 !important;
+    }
+
+    // Coluna do Nome do Usuário (Nivelada com e-mail e células)
+    td.cell.c0,
+    td.cell.c1,
+    .user-full-name,
+    td.username,
+    td[class*="cell c"] {
+        vertical-align: middle !important;
+        line-height: 1.4 !important;
+
+        > div,
+        > span,
+        .d-flex {
+            display: inline-flex !important;
+            align-items: center !important;
+            vertical-align: middle !important;
+        }
+
+        a {
+            display: inline-block !important;
+            vertical-align: middle !important;
+            line-height: 1.4 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+    }
+
+    // Alinhamento de colunas de seleção/checkboxes
+    th.c0,
+    td.c0,
+    .selectall,
+    .userselect {
+        text-align: center !important;
+        width: 40px !important;
+        vertical-align: middle !important;
+
+        input[type="checkbox"] {
+            margin: 0 auto !important;
+            vertical-align: middle !important;
+        }
+    }
+
+    // Colunas de Papéis, Grupos e Status
+    td.cell.c2,
+    td.cell.c3,
+    td.cell.c4,
+    td.cell.c5,
+    .roles,
+    .groups,
+    .status {
+        vertical-align: middle !important;
+        line-height: 1.4 !important;
+    }
+
+    // Exceção de Borda Pill: Badges de Papéis e Grupos
+    .badge,
+    .role-tag,
+    .group-tag {
+        font-size: 0.8rem !important;
+        font-weight: $font-weight-semibold !important;
+        padding: $spacing-xs 12px !important;
+        border-radius: $border-radius-pill-sm !important; // Exceção Pill DS Gov.br
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        margin: 2px !important;
+    }
+}
+
+// ---------------------------------------------------------
+// 3. Barra de Iniciais (Nome e Sobrenome A-Z / Initial Bar)
+// Azul primário dos botões gerais ($blue-warm-vivid-70 / #1351b4)
+// ---------------------------------------------------------
+.initialbar,
+.initialbargroups,
+.initials-selector,
+.user-index .initialbar {
+    margin-bottom: 1rem !important;
+
+    .pagination {
+        gap: $spacing-2xs !important;
+    }
+
+    .page-item {
+        .page-link {
+            color: $blue-warm-vivid-70 !important;
+            font-weight: $font-weight-semibold !important;
+            font-size: $font-size-sm !important;
+            padding: 6px 10px !important;
+            border: $border-width-thin solid $border-default !important;
+            background-color: $bg-white !important;
+            transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out !important;
+
+            &:hover,
+            &:focus {
+                background-color: $blue-warm-vivid-10 !important;
+                color: $blue-warm-vivid-90 !important;
+                border-color: $blue-warm-vivid-70 !important;
+            }
+        }
+
+        &.active .page-link,
+        .page-link.active {
+            background-color: $blue-warm-vivid-70 !important; // Mesmo azul do botão inscrever usuários (#1351b4)
+            border-color: $blue-warm-vivid-70 !important;
+            color: $text-light !important;
+            font-weight: $font-weight-bold !important;
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// 4. Permissões de Papéis (Task 13: admin/roles/permissions)
+// ---------------------------------------------------------
+.path-admin-roles,
+.rolecap {
+    table,
+    .rolecap {
+        margin-top: $spacing-xl !important; // 32px
+    }
+}
+
+// ---------------------------------------------------------
+// 5. Relatórios de Log (Task 15: report/log/index)
+// ---------------------------------------------------------
+.path-report-log {
+    table,
+    .logtable {
+        margin-top: $spacing-xl !important; // 32px
+    }
+
+    // Alinhar container inferior para a direita e justificar
+    .paging,
+    .pagination,
+    .logselecform,
+    .form-inline,
+    #page-content > div:last-child {
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+        gap: $spacing-sm !important;
+        margin-top: $spacing-md !important;
+        text-align: right !important;
+    }
+}
