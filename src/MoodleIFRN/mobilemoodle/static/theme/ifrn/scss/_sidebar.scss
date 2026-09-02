@@ -2,13 +2,34 @@
 
 // Sidebar estilo theme_ifrn25 (Painel AVA)
 
+// Containers do menu lateral (perfil, filtro ativo…)
+$sidebar-menu-container-radius: 20px;
+
+// Containers dos modais (filtro, perfil, ajuda…)
+@mixin modal-container-surface {
+    border: 1px solid var(--light);
+    border-radius: 10px;
+    background: var(--light-lighter);
+}
+
 .ava-menu {
     --width: 255px;
+    --border-radius: #{$sidebar-menu-container-radius};
+
+    &::part(container) {
+        top: 8px;
+        bottom: 8px;
+        height: auto;
+        border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        overflow: hidden;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    }
 }
 
 .menu-content {
     --background: var(--primary);
     --color: var(--dsgov-text-light);
+    border-radius: 0 var(--border-radius, var(--dsgov-radius-md, 12px)) var(--border-radius, var(--dsgov-radius-md, 12px)) 0;
 }
 
 .sidebar-container {
@@ -78,8 +99,8 @@
     width: 100%;
     background: var(--dsgov-bg-white);
     color: var(--dsgov-text-dark);
-    border: none;
-    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: $sidebar-menu-container-radius;
     padding: 0.5rem 1rem;
     display: flex;
     align-items: center;
@@ -213,7 +234,8 @@
     width: 100%;
     min-height: 30px;
     background: var(--primary-light);
-    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: $sidebar-menu-container-radius;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -360,6 +382,14 @@
     margin: 0 0 8px;
     font: var(--font-heading2);
     color: var(--dark);
+    padding: 12px 14px;
+    @include modal-container-surface;
+}
+
+.ava-button-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .ava-modal-body__hint {
@@ -381,21 +411,20 @@
 .modal-content-body-help-link {
     display: block;
     padding: 12px 14px;
-    border-radius: 10px;
-    background: var(--light-lighter);
     color: var(--primary-dark);
     text-decoration: none;
     font: var(--font-button2);
-    border: none;
     width: 100%;
     text-align: left;
     cursor: pointer;
+    @include modal-container-surface;
 }
 
 .modal-button-option.exit-button {
     margin-top: 16px;
     background: var(--danger-light);
     color: var(--danger-dark);
+    border-color: rgba(220, 3, 15, 0.25);
 }
 
 .modal-content-body-help-options {
@@ -410,9 +439,7 @@
     align-items: center;
     gap: 10px;
     padding: 10px 12px;
-    border: 1px solid var(--light);
-    border-radius: 10px;
-    background: var(--light-lighter);
+    @include modal-container-surface;
 
     ion-icon {
         color: var(--primary);

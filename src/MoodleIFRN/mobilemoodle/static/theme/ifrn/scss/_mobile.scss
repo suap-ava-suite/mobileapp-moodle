@@ -30,6 +30,12 @@
 
     .ava-menu {
         --width: min(294px, 86vw);
+        --border-radius: 20px;
+
+        &::part(container) {
+            top: max(8px, env(safe-area-inset-top));
+            bottom: max(8px, env(safe-area-inset-bottom));
+        }
     }
 
     .painel-page,

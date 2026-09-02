@@ -304,11 +304,21 @@ body.keyboard-is-open .sidebar-modal__body {
 
 .ava-menu {
   --width: 255px;
+  --border-radius: 20px;
+}
+.ava-menu::part(container) {
+  top: 8px;
+  bottom: 8px;
+  height: auto;
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
 }
 
 .menu-content {
   --background: var(--primary);
   --color: var(--dsgov-text-light);
+  border-radius: 0 var(--border-radius, var(--dsgov-radius-md, 12px)) var(--border-radius, var(--dsgov-radius-md, 12px)) 0;
 }
 
 .sidebar-container {
@@ -374,18 +384,31 @@ body.keyboard-is-open .sidebar-modal__body {
 }
 
 .sidebar-user-content-profile {
-  width: 100%;
-  background: var(--dsgov-bg-white);
-  color: var(--dsgov-text-dark);
-  border: none;
-  border-radius: 1rem;
-  padding: 0.5rem 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.2s ease-in, color 0.2s ease-in;
+    width: calc(100% - 16px);
+    min-height: 56px;
+
+    background: var(--dsgov-bg-white);
+    color: var(--dsgov-text-dark);
+
+    border: none;
+    border-radius: 16px;
+
+    padding: 6px 12px;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    cursor: pointer;
+    text-align: left;
+
+    transition: background 0.2s ease-in, color 0.2s ease-in;
+
+    box-sizing: border-box;
+}
+
+.sidebar-user-content-profile:hover {
+    background: #f1f1f1;
 }
 .sidebar-user-content-profile span {
   font: var(--font-heading4);
@@ -426,20 +449,26 @@ body.keyboard-is-open .sidebar-modal__body {
 
 .sidebar-modal-button {
   display: flex;
-  gap: 0.5rem;
   align-items: center;
-  cursor: pointer;
+
   width: 100%;
+  box-sizing: border-box;
+
   padding: 0.5rem 1rem;
+  padding-left: 1.9rem;
+
   color: var(--branco-primario);
   background: transparent;
   border: none;
   border-radius: 18px;
-  white-space: nowrap;
+
   text-align: left;
   font: inherit;
+  cursor: pointer;
+
   transition: background 0.2s ease-in;
 }
+
 .sidebar-modal-button ion-icon,
 .sidebar-modal-button .sidebar-modal-button-icon {
   width: 18px;
@@ -503,6 +532,7 @@ body.keyboard-is-open .sidebar-modal__body {
   width: 100%;
   min-height: 30px;
   background: var(--primary-light);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 20px;
   display: flex;
   align-items: center;
@@ -642,6 +672,16 @@ body.keyboard-is-open .sidebar-modal__body {
   margin: 0 0 8px;
   font: var(--font-heading2);
   color: var(--dark);
+  padding: 12px 14px;
+  border: 1px solid var(--light);
+  border-radius: 10px;
+  background: var(--light-lighter);
+}
+
+.ava-button-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .ava-modal-body__hint {
@@ -663,21 +703,22 @@ body.keyboard-is-open .sidebar-modal__body {
 .modal-content-body-help-link {
   display: block;
   padding: 12px 14px;
-  border-radius: 10px;
-  background: var(--light-lighter);
   color: var(--primary-dark);
   text-decoration: none;
   font: var(--font-button2);
-  border: none;
   width: 100%;
   text-align: left;
   cursor: pointer;
+  border: 1px solid var(--light);
+  border-radius: 10px;
+  background: var(--light-lighter);
 }
 
 .modal-button-option.exit-button {
   margin-top: 16px;
   background: var(--danger-light);
   color: var(--danger-dark);
+  border-color: rgba(220, 3, 15, 0.25);
 }
 
 .modal-content-body-help-options {
@@ -1792,6 +1833,11 @@ body.stop_animations .ava-splash__gauge {
   }
   .ava-menu {
     --width: min(294px, 86vw);
+    --border-radius: 20px;
+  }
+  .ava-menu::part(container) {
+    top: max(8px, env(safe-area-inset-top));
+    bottom: max(8px, env(safe-area-inset-bottom));
   }
   .painel-page,
   .curso-page {

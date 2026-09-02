@@ -143,8 +143,7 @@ export class IfrnLoginPage implements OnInit {
         this.loading = true;
 
         try {
-            const refreshToken =
-                await this.biometricService.authenticate();
+            const refreshToken = await this.biometricService.authenticate();
 
             const response = await firstValueFrom(
                 this.authService.refresh(refreshToken),
@@ -334,4 +333,3 @@ export class IfrnLoginPage implements OnInit {
         return 'Não foi possível conectar ao serviço de autenticação.';
     }
 }
-
