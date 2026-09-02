@@ -1,0 +1,174 @@
+// ==================================================
+// Course Card — Tema IFRN DS-GOV (v3.0)
+// ==================================================
+// Estilização de cartões de disciplinas no myoverview
+
+.course-card,
+.block-myoverview .course-card,
+.block_myoverview .course-card,
+.path-my .course-card,
+.path-my-courses .course-card {
+    border: $border-width-thin solid $border-outer !important; // Borda externa #CCCCCC
+    border-radius: $border-radius-default !important; // 4px (padrão global de contêineres)
+    background-color: $bg-white !important;
+    padding: $spacing-lg !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    transition: box-shadow $transition-base, border-color $transition-base;
+    
+    &:hover {
+        border-color: $border-heavy !important;
+        box-shadow: $shadow-card !important;
+    }
+    
+    .card-img-top, .card-img {
+        display: none !important;
+    }
+    
+    .card-body {
+        padding: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .course-title {
+        font-size: $font-size-xl !important;
+        font-weight: $font-weight-bold !important;
+        line-height: $line-height-tight !important;
+        margin-bottom: 6px !important;
+        
+        a, .course-link {
+            color: $blue-warm-vivid-90 !important;
+            text-decoration: none !important;
+            transition: color $transition-fast;
+            
+            &:hover {
+                color: $blue-warm-vivid-70 !important;
+            }
+        }
+    }
+    
+    .course-code {
+        color: $text-muted !important;
+        font-size: $font-size-sm !important;
+    }
+    
+    .card-footer {
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        margin: 0 !important;
+        width: auto !important;
+        display: inline-flex !important;
+        
+        &.menu {
+            margin-left: $spacing-sm !important;
+            align-self: center !important;
+        }
+    }
+}
+
+.course-category-tag {
+    font-size: $font-size-base !important;
+    color: $text-secondary !important;
+    font-weight: $font-weight-medium !important;
+    text-transform: none !important;
+
+    .categoryname {
+        color: $text-secondary !important;
+    }
+}
+
+.status-badge {
+    font-size: $font-size-sm !important;
+    font-weight: $font-weight-semibold !important;
+    padding: $spacing-xs 14px !important;
+    border-radius: $border-radius-pill-sm !important;
+    @include flex-center;
+    align-self: center !important;
+    line-height: $line-height-base !important;
+
+    &.academico-badge {
+        background-color: $blue-badge-bg !important;
+        color: $blue-warm-vivid-70 !important;
+        i {
+            color: $blue-warm-vivid-70 !important;
+        }
+    }
+
+    &.publicado-badge {
+        background-color: $green-badge-bg !important;
+        color: $green-cool-vivid-60 !important;
+        i {
+            color: $green-cool-vivid-60 !important;
+        }
+    }
+}
+
+.course-professor {
+    font-size: $font-size-base !important;
+    font-weight: $font-weight-normal !important;
+    color: $text-dark !important;
+
+    .professor-label {
+        font-weight: $font-weight-bold !important;
+        color: $blue-warm-vivid-90 !important;
+    }
+}
+
+.course-progress-wrapper,
+.course-card .course-progress-wrapper {
+    width: 45% !important;
+    max-width: 320px !important;
+    min-width: 200px !important;
+    flex: 1 1 auto !important;
+    
+    .card-footer {
+        display: flex !important;
+        width: 100% !important;
+        background: transparent !important;
+        padding: 0 !important;
+        border: none !important;
+        margin: 0 !important;
+    }
+}
+
+.favourite-icon-wrapper {
+    @include flex-center;
+    align-self: center !important;
+}
+
+.favourite-icon-container {
+    @include flex-center;
+    line-height: 1 !important;
+}
+
+.is-favourite-icon, .not-favourite-icon {
+    cursor: pointer !important;
+    font-size: 1.25rem !important;
+    line-height: 1 !important;
+    @include flex-center;
+
+    i {
+        display: inline-block !important;
+        vertical-align: middle !important;
+        line-height: 1 !important;
+    }
+}
+
+.text-warning-star {
+    color: $yellow-vivid-20 !important;
+}
+
+.text-primary-star {
+    color: $blue-warm-vivid-70 !important;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.course-menu-wrapper {
+    display: none !important;
+}

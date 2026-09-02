@@ -1,0 +1,112 @@
+// ==================================================
+// Base Global — Tema IFRN DS-GOV (v3.0)
+// ==================================================
+// Reset Seletivo: Raio de Borda de 4px para Agrupamentos & Tipografia Universal Rawline
+// ============================================================
+
+// 1. Reset Seletivo de Raio de Borda (4px) para contêineres e agrupamentos
+.card,
+.block,
+.drawer,
+.modal-content,
+.popover,
+.course-section.main,
+section.main,
+fieldset.collapsible,
+fieldset.mform-fieldset,
+#region-main,
+.dropdown-menu,
+.moodle-dialogue-base .moodle-dialogue-wrap {
+    border-radius: $border-radius-default !important; // 4px por padrão
+}
+
+// 2. Exceção Circular Universal para Fotos, Avatares, Ícones de Ação e Redes Sociais
+.userpicture,
+img.userpicture,
+.userinitials,
+span.userinitials,
+.user-avatar,
+img.useravatar,
+.userpicture.defaultuserpic,
+.usermenu .userpicture,
+[data-region="usermenu"] img,
+.usermenu img,
+.avatar,
+img.avatar,
+.profile-picture img,
+.header-action-icon,
+.social-icon,
+.btn-icon {
+    border-radius: $border-radius-circle !important; // 50% Redondo
+}
+
+// 3. Bordas Retas Padronizadas para Tabelas e Estruturas
+table,
+thead,
+tbody,
+tfoot,
+tr,
+th,
+td {
+    border-radius: $border-radius-none !important;
+}
+
+// 4. Tipografia Universal Rawline (preservando ícones FontAwesome e Moodle Icons)
+html, body, #page-wrapper, #page,
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6,
+p, label, input, button, select, textarea,
+.btn, .nav-link, .dropdown-item, .dropdown-menu,
+.card, .modal, .modal-content, .drawer,
+table, th, td, .badge, .form-control, .custom-select, .form-select,
+.popover, .tooltip, [class*="block_"], .section, .section-item, .activity-item, fieldset {
+    font-family: $font-family-base !important;
+}
+
+// Span e Links usam Rawline apenas se não forem ícones FontAwesome / Moodle
+span:not(.fa):not(.fas):not(.far):not(.fab):not(.icon):not([class*="fa-"]):not([class*="icon"]),
+a:not(.fa):not(.fas):not(.far):not(.fab):not(.icon):not([class*="fa-"]):not([class*="icon"]) {
+    font-family: $font-family-base !important;
+}
+
+#page-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#page {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 100px 0 0 0 !important;
+    min-height: calc(100vh - 100px);
+}
+
+// ---------------------------------------------------------
+// 5. Limitação Universal de Largura (max-width: 1300px) em Todas as Telas
+// ---------------------------------------------------------
+:is(
+    .main-inner,
+    #topofscroll,
+    #page:not(.drawers) > #region-main-box,
+    #page:not(.drawers) > #page-content,
+    #page.container-fluid > #region-main-box,
+    #page.container-fluid > #page-content,
+    #page:not(.drawers) .main-inner,
+    .pagelayout-incourse #page #page-content,
+    .pagelayout-standard #page #page-content,
+    .pagelayout-admin #page #page-content,
+    .pagelayout-report #page #page-content,
+    .pagelayout-coursecategory #page #page-content
+) {
+    max-width: $container-max-width !important; // 1300px
+    width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+#page-content {
+    padding-bottom: $spacing-3xl !important;
+}
+

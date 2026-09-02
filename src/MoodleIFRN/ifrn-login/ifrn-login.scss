@@ -1,0 +1,206 @@
+.ifrn-login {
+    --background: #f7f7f7;
+
+    color: #333333;
+    font-family: Arial, Helvetica, sans-serif;
+
+    &__header {
+        align-items: center;
+        background: #ffffff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .22);
+        display: flex;
+        gap: 12px;
+        height: calc(62px + var(--ion-safe-area-top, 0px));
+        padding: var(--ion-safe-area-top, 0px) 20px 0;
+    }
+
+    &__back {
+        align-items: center;
+        appearance: none;
+        background: transparent;
+        border: 0;
+        color: #1351b4;
+        cursor: pointer;
+        display: inline-flex;
+        font-size: 14px;
+        font-weight: 600;
+        gap: 2px;
+        margin-right: 4px;
+        padding: 8px 4px 8px 0;
+
+        ion-icon {
+            font-size: 18px;
+        }
+    }
+
+    &__logo {
+        display: block;
+        height: auto;
+        max-height: 40px;
+        width: 98px;
+    }
+
+    &__content {
+        margin: 0 auto;
+        max-width: 400px;
+        min-height: calc(100% - 62px - var(--ion-safe-area-top, 0px));
+        padding: 26px 28px 48px;
+    }
+
+    &__card {
+        background: #ffffff;
+        border: 1px solid #e5e5e5;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, .14);
+        padding: 14px 10px 28px;
+    }
+
+    h1 {
+        color: #333333;
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.25;
+        margin: 0 0 38px;
+    }
+
+    &__form {
+        display: flex;
+        flex-direction: column;
+    }
+
+    &__field {
+        margin-bottom: 18px;
+    }
+
+    &__field label {
+        color: #333333;
+        display: block;
+        font-size: 16px;
+        font-weight: 400;
+        margin-bottom: 10px;
+    }
+
+    &__field p {
+        color: #555555;
+        font-size: 13px;
+        font-style: italic;
+        line-height: 1.45;
+        margin: 6px 6px 0;
+    }
+
+    &__input {
+        align-items: center;
+        border: 1px solid #777777;
+        border-radius: 4px;
+        display: flex;
+        height: 40px;
+        overflow: hidden;
+    }
+
+    &__input input {
+        appearance: none;
+        background: #ffffff;
+        border: 0;
+        color: #333333;
+        flex: 1;
+        font-size: 14px;
+        height: 100%;
+        min-width: 0;
+        outline: 0;
+        padding: 0 14px 0 18px;
+    }
+
+    &__input input::placeholder {
+        color: #777777;
+        font-style: italic;
+        opacity: 1;
+    }
+
+    &__input button,
+    &__icon {
+        align-items: center;
+        appearance: none;
+        background: transparent;
+        border: 0;
+        color: #333333;
+        display: flex;
+        height: 100%;
+        justify-content: center;
+        padding: 0 12px;
+        width: 44px;
+    }
+
+    &__input ion-icon,
+    &__icon ion-icon {
+        font-size: 20px;
+    }
+
+    &__button {
+        align-items: center;
+        border-radius: 999px;
+        cursor: pointer;
+        display: flex;
+        font-size: 15px;
+        font-weight: 700;
+        height: 40px;
+        justify-content: center;
+        margin-top: 14px;
+        width: 100%;
+    }
+
+    &__button--primary {
+        background: #1351b4;
+        border: 1px solid #1351b4;
+        box-shadow: 0 2px 4px rgba(19, 81, 180, .3);
+        color: #ffffff;
+    }
+
+    &__button--secondary {
+        background: #ffffff;
+        border: 1px solid #1351b4;
+        color: #1351b4;
+    }
+
+    &__button--govbr {
+        background: #e6e6e6;
+        border: 1px solid #e6e6e6;
+        color: #1351b4;
+        gap: 6px;
+    }
+
+    &__button--govbr:hover {
+        background: #dcdcdc;
+    }
+
+    &__govbr-mark {
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }
+
+    &__link {
+        color: #1351b4;
+        display: block;
+        font-size: 14px;
+        text-align: center;
+        text-decoration: underline;
+    }
+
+    &__link--forgot {
+        margin-top: 34px;
+    }
+
+    &__link--help {
+        margin-top: 30px;
+    }
+}
+
+@media (max-width: 360px) {
+    .ifrn-login {
+        &__content {
+            padding: 22px 18px 42px;
+        }
+
+        &__card {
+            padding: 14px 10px 26px;
+        }
+    }
+}

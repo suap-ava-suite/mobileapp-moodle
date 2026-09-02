@@ -1,0 +1,121 @@
+// ==================================================
+// [Footer] — Tema IFRN DS-GOV (v3.0)
+// ==================================================
+
+.br-footer {
+    background-color: $blue-warm-vivid-90 !important;
+    color: $text-light !important;
+    padding: 0 !important;
+    margin-top: $spacing-4xl;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+
+    // Elementos fluidos ocupando 100% da tela
+    > .container-fluid,
+    .footer-bottom-bar > .container-fluid {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+
+        @include media-breakpoint-up(md) {
+            padding-left: 3.5rem !important;
+            padding-right: 3.5rem !important;
+        }
+
+        @include media-breakpoint-up(xl) {
+            padding-left: 5rem !important;
+            padding-right: 5rem !important;
+        }
+    }
+
+    .footer-nav-links {
+        width: 100% !important;
+    }
+
+    .img-invert-brightness {
+        filter: brightness(0) invert(1);
+    }
+
+    .footer-category-link {
+        font-family: $font-family-rawline !important;
+        font-size: $font-size-sm !important;
+        font-weight: $font-weight-bold !important;
+        letter-spacing: 0.05em !important;
+        color: $text-light !important;
+
+        &:hover {
+            text-decoration: underline !important;
+        }
+    }
+
+    .ifrn-cookies-link {
+        color: $text-light !important;
+        font-size: 0.9rem !important;
+
+        .footer-svg-icon {
+            width: 1.2em;
+            height: 1.2em;
+            fill: currentColor;
+            flex-shrink: 0;
+        }
+
+        &:hover {
+            text-decoration: underline !important;
+        }
+    }
+
+    .letter-spacing-1 {
+        letter-spacing: 0.05em;
+    }
+
+    .social-icons-list {
+        .social-icon {
+            color: $text-light !important;
+            width: $icon-size-md;
+            height: $icon-size-md;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: $border-radius-circle !important;
+            transition: background-color 0.15s ease;
+            flex-shrink: 0;
+
+            // Suporte a SVG inline (X, Spotify, Kwai, TikTok)
+            svg {
+                width: 1em;
+                height: 1em;
+                fill: currentColor;
+            }
+
+            &:hover {
+                background-color: $bg-white-alpha-hover !important;
+            }
+        }
+    }
+
+    .acesso-info-icon {
+        svg {
+            width: $icon-size-xl;
+            height: $icon-size-xl;
+            flex-shrink: 0;
+        }
+    }
+
+    .acesso-info-badge {
+        color: $text-light !important;
+
+        &:hover {
+            opacity: 0.9;
+        }
+    }
+
+    .border-white-10 {
+        border-color: $border-white-alpha !important;
+    }
+
+    .footer-bottom-bar {
+        background-color: $blue-darkest !important;
+    }
+}

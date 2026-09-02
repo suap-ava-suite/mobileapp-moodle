@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5">
+    <meta name="theme-color" content="#1351B4">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="referrer" content="no-referrer">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://vlibras.gov.br; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://vlibras.gov.br; img-src 'self' data: https:; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com https://ava-painel-statics.pages.dev data:; connect-src 'self' http://127.0.0.1:8000 http://localhost:8000 https://vlibras.gov.br; frame-src https://vlibras.gov.br; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'">
+    <title>Painel AVA · IFRN</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="static/theme/ifrn/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="static/theme/ifrn/favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="static/theme/ifrn/favicon/apple-touch-icon.png">
+    <link rel="manifest" href="static/theme/ifrn/favicon/site.webmanifest">
+    <link rel="preconnect" href="https://fonts.cdnfonts.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/rawline">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            margin: 0;
+            min-height: 100%;
+            background: #fefefe;
+            color: #2b2b2b;
+            font-family: "Rawline", "Noto Sans", system-ui, sans-serif;
+            overflow-x: hidden;
+        }
+        ion-app {
+            height: calc(100% - var(--keyboard-height, 0px));
+        }
+        .boot-loading.ava-splash {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            min-height: 50vh;
+            padding: 24px 16px;
+            text-align: center;
+            color: #2b2b2b;
+            background: rgba(255, 255, 255, 0.92);
+        }
+        .boot-loading .ava-splash__brand {
+            aspect-ratio: 1;
+            display: grid;
+            margin: 0 auto;
+            place-items: center;
+            position: relative;
+            width: min(132px, 34vw);
+        }
+        .boot-loading .ava-splash__gauge {
+            animation: ava-boot-spin 1.1s linear infinite;
+            inset: 0;
+            position: absolute;
+        }
+        .boot-loading .ava-splash__gauge-svg {
+            display: block;
+            height: 100%;
+            width: 100%;
+        }
+        .boot-loading .ava-splash__gauge-track {
+            fill: none;
+            stroke: rgba(19, 81, 180, 0.14);
+            stroke-width: 4;
+        }
+        .boot-loading .ava-splash__gauge-arc {
+            fill: none;
+            stroke: url(#ava-splash-gauge-grad);
+            stroke-dasharray: 68 271;
+            stroke-linecap: round;
+            stroke-width: 5;
+        }
+        .boot-loading .ava-splash__logo {
+            aspect-ratio: 1;
+            background: #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 2px 10px rgba(7, 29, 65, 0.12);
+            height: 86%;
+            object-fit: cover;
+            position: relative;
+            width: 86%;
+            z-index: 1;
+        }
+        .boot-loading .ava-splash__text {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        @keyframes ava-boot-spin {
+            100% { transform: rotate(360deg); }
+        }
+        @media (max-width: 767.98px) {
+            .boot-loading.ava-splash {
+                min-height: calc(100dvh - 120px);
+                padding: 20px 16px calc(24px + env(safe-area-inset-bottom));
+                gap: 0.85rem;
+            }
+            .boot-loading .ava-splash__brand {
+                width: min(120px, 36vw);
+            }
+            .boot-loading .ava-splash__logo {
+                height: 86%;
+                width: 86%;
+            }
+            .boot-loading .ava-splash__gauge-track {
+                stroke-width: 3.5;
+            }
+            .boot-loading .ava-splash__gauge-arc {
+                stroke-width: 4.5;
+            }
+            .boot-loading .ava-splash__text {
+                font-size: 0.9375rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core@8.8.1/css/ionic.bundle.css">
+    <link rel="stylesheet" href="static/theme/ifrn/css/painel.css">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core@8.8.1/dist/ionic/ionic.esm.js"></script>
+    <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core@8.8.1/dist/ionic/ionic.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/ionicons@7.4.0/dist/ionicons/ionicons.esm.js"></script>
+</head>
+<body>
+    <ion-app>
+        <ion-menu content-id="main-content" type="overlay" class="ava-menu">
+            <ion-content class="menu-content" scroll-y="true">
+                <div id="sidebar-container" class="sidebar-container">
+                    <div class="sidebar-content-header">
+                        <h1 class="sidebar-title">Painel AVA</h1>
+                        <ion-menu-toggle>
+                            <button type="button" id="btn-toggle-sidebar" class="btn-toggle-sidebar" aria-label="Toggle Sidebar">
+                                <img src="static/theme/ifrn/img/sidebar-toggle.svg" alt="">
+                            </button>
+                        </ion-menu-toggle>
+                    </div>
+
+                    <div class="sidebar-content-body">
+                        <div class="sidebar-user-content">
+                            <button type="button" class="sidebar-user-content-profile" id="btn-toggle-profile" aria-label="Perfil">
+                                <div class="profile-image profile-image--initials" id="menu-user-avatar" aria-hidden="true">U</div>
+                                <span id="sidebar-user-name">Estudante</span>
+                            </button>
+
+                            <div class="sidebar-user-content-options">
+                                <button type="button" class="sidebar-modal-button" id="btn-toggle-accessibility">
+                                    <ion-icon name="accessibility" aria-hidden="true"></ion-icon>
+                                    <span>Acessibilidade</span>
+                                </button>
+                                <button type="button" class="sidebar-modal-button" id="btn-toggle-help">
+                                    <ion-icon name="help-circle" aria-hidden="true"></ion-icon>
+                                    <span>Ajuda</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-content-divider"></div>
+
+                        <div class="sidebar-course-content">
+                            <div class="sidebar-course-content-filter-modal-button-area">
+                                <button type="button" class="sidebar-modal-button" id="btn-toggle-filter">
+                                    <ion-icon name="filter" aria-hidden="true"></ion-icon>
+                                    <span class="sidebar-modal-button-text-contracted">FILTRO</span>
+                                    <span>Adicionar filtros</span>
+                                </button>
+                            </div>
+
+                            <div class="sidebar-course-content-filters">
+                                <button type="button" class="sidebar-course-content-filter-title" id="btn-open-filter-label">
+                                    <ion-icon name="options-outline" aria-hidden="true"></ion-icon>
+                                    <span>FILTRADO POR:</span>
+                                </button>
+                                <div class="sidebar-course-content-filters-list" id="sidebar-active-filters">
+                                    <div class="sidebar-course-content-filters-list-item" data-filter="situacao">
+                                        <div class="sidebar-course-content-filters-list-item-divider">
+                                            <ion-icon name="book-outline" aria-hidden="true"></ion-icon>
+                                            <span class="sidebar-course-content-filters-list-item-text" id="sidebar-filter-situacao">
+                                                Todos os diários (lento)
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </ion-content>
+        </ion-menu>
+
+        <div class="ion-page" id="main-content">
+            <ion-header>
+                <ion-toolbar>
+                    <ion-buttons slot="start">
+                        <ion-menu-button auto-hide="false" color="primary" aria-label="Abrir menu"></ion-menu-button>
+                    </ion-buttons>
+                    <ion-title id="page-title">Painel AVA</ion-title>
+                    <ion-buttons slot="end">
+                        <button type="button" class="toolbar-avatar" id="toolbar-avatar" aria-label="Abrir perfil"></button>
+                    </ion-buttons>
+                </ion-toolbar>
+            </ion-header>
+
+            <ion-content id="page-content">
+                <div class="boot-loading ava-splash page-loading" role="status" aria-live="polite">
+                    <div class="ava-splash__brand">
+                        <div class="ava-splash__gauge" aria-hidden="true">
+                            <svg class="ava-splash__gauge-svg" viewBox="0 0 120 120" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="ava-splash-gauge-grad" gradientUnits="userSpaceOnUse" x1="60" y1="6" x2="60" y2="114">
+                                        <stop offset="0%" stop-color="#2d8a45"></stop>
+                                        <stop offset="55%" stop-color="#1351b4"></stop>
+                                        <stop offset="100%" stop-color="#071d41"></stop>
+                                    </linearGradient>
+                                </defs>
+                                <circle class="ava-splash__gauge-track" cx="60" cy="60" r="54"></circle>
+                                <circle class="ava-splash__gauge-arc" cx="60" cy="60" r="54"></circle>
+                            </svg>
+                        </div>
+                        <img class="ava-splash__logo" src="static/theme/ifrn/img/splash-logo.png" alt="Painel AVA">
+                    </div>
+                    <p class="ava-splash__text">Carregando painel...</p>
+                </div>
+            </ion-content>
+        </div>
+
+        <!-- Painéis laterais (estilo AVA) -->
+        <div class="sidebar-modal" id="sidebar-modal" hidden>
+            <div class="sidebar-modal__backdrop" id="sidebar-modal-backdrop"></div>
+            <div class="sidebar-modal__panel" role="dialog" aria-modal="true" aria-labelledby="sidebar-modal-title">
+                <div class="sidebar-modal__header">
+                    <div class="sidebar-modal__header-title">
+                        <ion-icon id="sidebar-modal-icon" name="person-circle-outline" aria-hidden="true"></ion-icon>
+                        <span id="sidebar-modal-title">Perfil</span>
+                    </div>
+                    <button type="button" class="sidebar-modal__close" id="sidebar-modal-close" aria-label="Fechar">
+                        <span class="sidebar-modal__close-icon" aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="sidebar-modal__body" id="sidebar-modal-body"></div>
+            </div>
+        </div>
+    </ion-app>
+
+    <div id="page-templates" hidden></div>
+
+    <template id="tpl-modal-profile">
+        <div class="ava-modal-body">
+            <p class="ava-modal-body__user" id="modal-profile-name"></p>
+            <div class="ava-button-options">
+                <span class="modal-content-body-title">Links</span>
+                <a class="modal-button-option" href="https://suap.ifrn.edu.br/comum/minha_conta/" target="_blank" rel="noopener noreferrer">Perfil no SUAP</a>
+                <a class="modal-button-option" href="https://aberto.ava.ifrn.edu.br" target="_blank" rel="noopener noreferrer">AVA Aberto</a>
+            </div>
+            <button type="button" class="modal-button-option exit-button" id="modal-logout">Sair</button>
+        </div>
+    </template>
+
+    <template id="tpl-modal-help">
+        <div class="ava-modal-body">
+            <a href="https://ajuda.ead.ifrn.edu.br/" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">Central de Ajuda</a>
+            <a href="https://ead.ifrn.edu.br/acesso-a-informacao/ouvidoria/" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">Ouvidoria</a>
+            <a href="https://ajuda.ead.ifrn.edu.br/agenda-telefonica-2022-campus-natal-zona-leste/" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">Contatos</a>
+            <div class="modal-content-body-help-options">
+                <span class="modal-content-body-title">Centrais de Atendimento</span>
+                <a href="https://bit.ly/41734xv" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">AVA (Moodle)</a>
+                <a href="https://bit.ly/3odPfis" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">Secretaria Acadêmica</a>
+                <a href="https://bit.ly/3KXiQEH" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">Central de serviço SUAP</a>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-modal-accessibility">
+        <div class="ava-modal-body accessiblity-options">
+            <div class="custom-checkbox-access">
+                <input type="checkbox" class="checkbox-access-input" id="dyslexia_friendly">
+                <label class="checkbox-access-label" for="dyslexia_friendly" title="OpenDyslexic">
+                    <span class="label-container">
+                        <svg class="icon-id" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" aria-hidden="true">
+                            <path fill="currentColor"
+                                  d="M3.86 4.258c.261-.274 1.293-.326 1.58-.175.475.248 3.363 7.83 4.026 8.87-.573-.077-1.829.164-2.255-.093-.381-.229-.227-1.316-.648-1.399-.446-.09-3.976-.019-4.101.132-.269.33-.167 1.309-.222 1.361-.092.083-1.846-.055-2.24 0l3.86-8.696Zm6.283 2.488c.71-1.33 5.856-.78 5.857.85v4.981c-.628.24-1.286-.382-1.577-.394-.695-.03-1.635.72-3.294.287-2.208-.58-2.06-3.885.747-4.25.728-.096 4.024.303 2.4-.857-1.03-.733-4.584.233-4.133-.617Zm3.859 2.43c-.862-.036-3.678-.227-3.374 1.056.28 1.175 4.239.937 3.374-1.056ZM4.98 6.168c-.408-.364-.42.114-.52.299-.192.358-1.378 3.393-1.22 3.518h2.987c-.192-.51-1.086-3.672-1.248-3.817h.001Z" />
+                        </svg>
+                        Fonte amigável a disléxicos
+                    </span>
+                    <ion-icon class="icon-checked" name="checkmark-circle" aria-hidden="true"></ion-icon>
+                </label>
+            </div>
+
+            <div class="custom-checkbox-access">
+                <input type="checkbox" class="checkbox-access-input" id="highlight_links">
+                <label class="checkbox-access-label" for="highlight_links">
+                    <span class="label-container">
+                        <ion-icon class="icon-id" name="color-fill-outline" aria-hidden="true"></ion-icon>
+                        Destacar links
+                    </span>
+                    <ion-icon class="icon-checked" name="checkmark-circle" aria-hidden="true"></ion-icon>
+                </label>
+            </div>
+
+            <div class="custom-checkbox-access">
+                <input type="checkbox" class="checkbox-access-input" id="stop_animations">
+                <label class="checkbox-access-label" for="stop_animations">
+                    <span class="label-container">
+                        <ion-icon class="icon-id" name="pause-circle-outline" aria-hidden="true"></ion-icon>
+                        Parar animações
+                    </span>
+                    <ion-icon class="icon-checked" name="checkmark-circle" aria-hidden="true"></ion-icon>
+                </label>
+            </div>
+
+            <div class="custom-checkbox-access">
+                <input type="checkbox" class="checkbox-access-input" id="hidden_illustrative_image">
+                <label class="checkbox-access-label" for="hidden_illustrative_image">
+                    <span class="label-container">
+                        <ion-icon class="icon-id" name="image-outline" aria-hidden="true"></ion-icon>
+                        Ocultar imagens ilustrativas
+                    </span>
+                    <ion-icon class="icon-checked" name="checkmark-circle" aria-hidden="true"></ion-icon>
+                </label>
+            </div>
+
+            <div class="custom-checkbox-access">
+                <input type="checkbox" class="checkbox-access-input" id="big_cursor">
+                <label class="checkbox-access-label" for="big_cursor">
+                    <span class="label-container">
+                        <ion-icon class="icon-id" name="navigate-outline" aria-hidden="true"></ion-icon>
+                        Cursor do mouse grande
+                    </span>
+                    <ion-icon class="icon-checked" name="checkmark-circle" aria-hidden="true"></ion-icon>
+                </label>
+            </div>
+
+            <div class="custom-checkbox-access">
+                <input type="checkbox" class="checkbox-access-input" id="vlibras_active">
+                <label class="checkbox-access-label" for="vlibras_active">
+                    <span class="label-container">
+                        <ion-icon class="icon-id" name="hand-left-outline" aria-hidden="true"></ion-icon>
+                        Habilitar VLibras
+                    </span>
+                    <ion-icon class="icon-checked" name="checkmark-circle" aria-hidden="true"></ion-icon>
+                </label>
+            </div>
+
+            <div class="custom-checkbox-access">
+                <input type="checkbox" class="checkbox-access-input" id="high_line_height">
+                <label class="checkbox-access-label" for="high_line_height">
+                    <span class="label-container">
+                        <ion-icon class="icon-id" name="menu-outline" aria-hidden="true"></ion-icon>
+                        Linhas mais distantes
+                    </span>
+                    <ion-icon class="icon-checked" name="checkmark-circle" aria-hidden="true"></ion-icon>
+                </label>
+            </div>
+
+            <div id="selector-cycle-access" class="selector-cycle-access">
+                <label for="cycle-toggle">Zoom:</label>
+                <button type="button" id="cycle-toggle" class="cycle-btn">
+                    <ion-icon class="icon-id" name="search-outline" aria-hidden="true"></ion-icon>
+                    <span id="zoom-value">100%</span>
+                    <div id="cycle-indicators" class="cycle-indicators"></div>
+                </button>
+            </div>
+
+            <div id="selector-cycle-color" class="selector-cycle-access">
+                <label for="color-mode-toggle">Modo de cor:</label>
+                <button type="button" id="color-mode-toggle" class="cycle-btn">
+                    <ion-icon class="icon-id" name="color-palette-outline" aria-hidden="true"></ion-icon>
+                    <span id="color-mode-label">Padrão</span>
+                    <div id="color-indicators" class="cycle-indicators"></div>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-modal-filter">
+        <div class="ava-modal-body">
+            <label class="filter-select-area" for="filter-situacao">
+                <ion-icon name="book-outline" aria-hidden="true"></ion-icon>
+                <select id="filter-situacao">
+                    <option value="inprogress">Em andamento</option>
+                    <option value="allincludinghidden">Todos os diários (lento)</option>
+                    <option value="favourites">Favoritos</option>
+                    <option value="hidden">Ocultos</option>
+                </select>
+            </label>
+            <button type="button" class="modal-content-body-filter-button" id="filter-apply">Filtrar</button>
+            <button type="button" class="modal-content-body-filter-clear" id="filter-clear">
+                <ion-icon name="trash-outline" aria-hidden="true"></ion-icon>
+                <span>Limpar filtros</span>
+            </button>
+        </div>
+    </template>
+
+    <script src="mobilemoodle.js" defer></script>
+</body>
+</html>
