@@ -369,6 +369,11 @@ import { MM, App } from './namespace';
             App.title.textContent = 'Painel AVA';
         }
 
+        if (App.subtitle) {
+            App.subtitle.textContent = 'IFRN';
+            App.subtitle.hidden = false;
+        }
+
         setUser(dashboard);
 
         const lists = getPainelLists(dashboard);
@@ -499,6 +504,11 @@ import { MM, App } from './namespace';
     function renderCurso(course: CourseData, dashboard: DashboardData): void {
         if (App.title) {
             App.title.textContent = course.name || 'Curso';
+        }
+
+        if (App.subtitle) {
+            App.subtitle.textContent = 'Painel AVA';
+            App.subtitle.hidden = false;
         }
 
         setUser(dashboard);

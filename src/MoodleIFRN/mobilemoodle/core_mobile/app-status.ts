@@ -105,6 +105,11 @@ import { MM, App } from './namespace';
             App.title.textContent = 'Não encontrada';
         }
 
+        if (App.subtitle) {
+            App.subtitle.textContent = 'Painel AVA';
+            App.subtitle.hidden = false;
+        }
+
         const page = App.cloneTemplate?.('tpl-not-found');
 
         if (!page || !App.content) {
@@ -142,6 +147,11 @@ import { MM, App } from './namespace';
 
         if (App.title) {
             App.title.textContent = errorTitle;
+        }
+
+        if (App.subtitle) {
+            App.subtitle.textContent = 'Painel AVA';
+            App.subtitle.hidden = false;
         }
 
         App.content.innerHTML = '';

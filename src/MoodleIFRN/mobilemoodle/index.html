@@ -191,15 +191,16 @@
         </ion-menu>
 
         <div class="ion-page" id="main-content">
-            <ion-header>
-                <ion-toolbar>
-                    <ion-buttons slot="start">
-                        <ion-menu-button auto-hide="false" color="primary" aria-label="Abrir menu"></ion-menu-button>
-                    </ion-buttons>
-                    <ion-title id="page-title">Painel AVA</ion-title>
-                    <ion-buttons slot="end">
+            <ion-header class="ava-header">
+                <ion-toolbar class="ava-toolbar">
+                    <div class="ava-toolbar-inner">
+                        <ion-menu-button class="ava-menu-trigger" auto-hide="false" color="primary" aria-label="Abrir menu"></ion-menu-button>
+                        <div class="ava-header-brand">
+                            <span class="ava-header-title" id="page-title">Painel AVA</span>
+                            <span class="ava-header-subtitle" id="page-subtitle">IFRN</span>
+                        </div>
                         <button type="button" class="toolbar-avatar" id="toolbar-avatar" aria-label="Abrir perfil"></button>
-                    </ion-buttons>
+                    </div>
                 </ion-toolbar>
             </ion-header>
 

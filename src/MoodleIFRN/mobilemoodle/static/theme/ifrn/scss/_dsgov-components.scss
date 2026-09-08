@@ -246,7 +246,8 @@ ion-button {
     --border-color: var(--dsgov-border-inner);
 }
 
-ion-menu-button {
+ion-menu-button,
+.ava-menu-trigger {
     color: var(--dsgov-blue-70);
 }
 

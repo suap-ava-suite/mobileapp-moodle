@@ -474,6 +474,10 @@
     if (App.title) {
       App.title.textContent = "N\xE3o encontrada";
     }
+    if (App.subtitle) {
+      App.subtitle.textContent = "Painel AVA";
+      App.subtitle.hidden = false;
+    }
     const page = App.cloneTemplate?.("tpl-not-found");
     if (!page || !App.content) {
       showErrorFallback("O endere\xE7o que voc\xEA tentou abrir n\xE3o existe ou foi removido.", false);
@@ -499,6 +503,10 @@
     }
     if (App.title) {
       App.title.textContent = errorTitle;
+    }
+    if (App.subtitle) {
+      App.subtitle.textContent = "Painel AVA";
+      App.subtitle.hidden = false;
     }
     App.content.innerHTML = "";
     App.content.appendChild(page);
@@ -832,6 +840,10 @@
     if (App.title) {
       App.title.textContent = "Painel AVA";
     }
+    if (App.subtitle) {
+      App.subtitle.textContent = "IFRN";
+      App.subtitle.hidden = false;
+    }
     setUser(dashboard);
     const lists = getPainelLists(dashboard);
     const page = App.cloneTemplate("tpl-painel");
@@ -930,6 +942,10 @@
   function renderCurso(course, dashboard) {
     if (App.title) {
       App.title.textContent = course.name || "Curso";
+    }
+    if (App.subtitle) {
+      App.subtitle.textContent = "Painel AVA";
+      App.subtitle.hidden = false;
     }
     setUser(dashboard);
     const progress = Math.max(0, Math.min(100, Number(course.progress || 0)));
@@ -1551,11 +1567,40 @@
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/app-keyboard.ts
   var KEYBOARD_THRESHOLD = 80;
-  var ANDROID_STATUS_BAR_FALLBACK_PX = 32;
+  var ANDROID_STATUS_BAR_FALLBACK_PX = 24;
+  var INSET_MASK_SYSTEM_AND_CUTOUT = 64 | 2;
   function isAndroidWebView() {
     return /Android/i.test(navigator.userAgent);
   }
-  function readSafeAreaInsets() {
+  function isCordovaRuntime() {
+    return !!window.cordova;
+  }
+  function getCordovaInsetApi() {
+    const api = window.totalpave?.Inset;
+    if (api && typeof api.create === "function") {
+      return api;
+    }
+    return null;
+  }
+  function waitForCordova(timeoutMs = 1500) {
+    return new Promise((resolve) => {
+      if (!isCordovaRuntime()) {
+        resolve();
+        return;
+      }
+      let settled = false;
+      const done = () => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        resolve();
+      };
+      document.addEventListener("deviceready", done, { once: true });
+      window.setTimeout(done, timeoutMs);
+    });
+  }
+  function readCssEnvInsets() {
     const probe = document.createElement("div");
     probe.style.cssText = [
       "position:fixed",
@@ -1574,18 +1619,48 @@
       left: parseFloat(style.paddingLeft) || 0
     };
     probe.remove();
+    return insets;
+  }
+  function setSafeAreaVars(insets) {
+    const root = document.documentElement.style;
+    root.setProperty("--ion-safe-area-top", `${Math.max(0, Math.round(insets.top))}px`);
+    root.setProperty("--ion-safe-area-right", `${Math.max(0, Math.round(insets.right))}px`);
+    root.setProperty("--ion-safe-area-bottom", `${Math.max(0, Math.round(insets.bottom))}px`);
+    root.setProperty("--ion-safe-area-left", `${Math.max(0, Math.round(insets.left))}px`);
+  }
+  function resolveFallbackInsets() {
+    if (!isCordovaRuntime()) {
+      return { top: 0, right: 0, bottom: 0, left: 0 };
+    }
+    const insets = readCssEnvInsets();
     if (insets.top <= 0 && isAndroidWebView()) {
       insets.top = ANDROID_STATUS_BAR_FALLBACK_PX;
     }
     return insets;
   }
   function applySafeAreaVariables() {
-    const insets = readSafeAreaInsets();
-    const root = document.documentElement.style;
-    root.setProperty("--ion-safe-area-top", `${insets.top}px`);
-    root.setProperty("--ion-safe-area-right", `${insets.right}px`);
-    root.setProperty("--ion-safe-area-bottom", `${insets.bottom}px`);
-    root.setProperty("--ion-safe-area-left", `${insets.left}px`);
+    setSafeAreaVars(resolveFallbackInsets());
+  }
+  async function initNativeSafeAreaInsets() {
+    await waitForCordova();
+    const Inset = getCordovaInsetApi();
+    if (!Inset) {
+      return false;
+    }
+    try {
+      const listener = await Inset.create({
+        mask: INSET_MASK_SYSTEM_AND_CUTOUT,
+        includeRoundedCorners: false
+      });
+      const apply = () => {
+        setSafeAreaVars(listener.getInset());
+      };
+      listener.addListener(apply);
+      apply();
+      return true;
+    } catch {
+      return false;
+    }
   }
   function syncKeyboardHeight() {
     const viewport = window.visualViewport;
@@ -1598,10 +1673,8 @@
     document.documentElement.style.setProperty("--keyboard-height", `${appliedHeight}px`);
     document.body.classList.toggle("keyboard-is-open", isOpen);
     if (isOpen) {
-      const insets = readSafeAreaInsets();
       document.documentElement.style.setProperty("--ion-safe-area-bottom", "0px");
-      document.documentElement.style.setProperty("--ion-safe-area-top", `${insets.top}px`);
-    } else {
+    } else if (!getCordovaInsetApi()) {
       applySafeAreaVariables();
     }
   }
@@ -1618,17 +1691,27 @@
     }, 320);
   }
   function initKeyboardInsets() {
+    setSafeAreaVars({ top: 0, right: 0, bottom: 0, left: 0 });
     applySafeAreaVariables();
+    void initNativeSafeAreaInsets().then((nativeOk) => {
+      if (!nativeOk) {
+        applySafeAreaVariables();
+      }
+    });
     syncKeyboardHeight();
     window.visualViewport?.addEventListener("resize", syncKeyboardHeight);
     window.visualViewport?.addEventListener("scroll", syncKeyboardHeight);
     window.addEventListener("resize", () => {
-      applySafeAreaVariables();
+      if (!getCordovaInsetApi()) {
+        applySafeAreaVariables();
+      }
       syncKeyboardHeight();
     });
     window.addEventListener("orientationchange", () => {
       window.setTimeout(() => {
-        applySafeAreaVariables();
+        if (!getCordovaInsetApi()) {
+          applySafeAreaVariables();
+        }
         syncKeyboardHeight();
       }, 250);
     });
@@ -1648,6 +1731,7 @@
   // src/MoodleIFRN/mobilemoodle/core_mobile/app.ts
   App.content = document.getElementById("page-content");
   App.title = document.getElementById("page-title");
+  App.subtitle = document.getElementById("page-subtitle");
   App.menuUserInfo = document.getElementById("sidebar-user-name");
   App.toolbarAvatar = document.getElementById("toolbar-avatar");
   App.templatesRoot = document.getElementById("page-templates");

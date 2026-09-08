@@ -9,24 +9,56 @@
         padding-right: max(env(safe-area-inset-right), var(--ion-safe-area-right, 0px));
     }
 
-    // Android WebView costuma reportar safe-area-top = 0; piso evita header sob a status bar
-    ion-header ion-toolbar {
-        --padding-top: max(32px, env(safe-area-inset-top, 0px), var(--ion-safe-area-top, 0px));
-        --min-height: 52px;
-        padding-left: 4px;
-        padding-right: 4px;
+    .ava-toolbar {
+        --padding-top: var(--ion-safe-area-top, 0px);
+        --min-height: 48px;
     }
 
-    ion-title {
-        font-size: 1rem !important;
-        padding-inline: 4px;
+    .ava-toolbar-inner {
+        gap: 2px;
+        min-height: 48px;
+        height: 48px;
+        padding: 0 clamp(6px, 2.5vw, 12px) 0 4px;
+    }
+
+    .ava-menu-trigger {
+        width: 36px;
+        height: 36px;
+    }
+
+    .ava-header-brand {
+        padding: 0 2px;
+    }
+
+    .ava-header-title {
+        font-size: clamp(0.9375rem, 0.55rem + 2.2vw, 1.15rem);
+    }
+
+    .ava-header-subtitle {
+        font-size: clamp(0.625rem, 0.5rem + 0.55vw, 0.75rem);
     }
 
     .toolbar-avatar {
         width: 28px;
         height: 28px;
-        margin-right: max(4px, env(safe-area-inset-right), var(--ion-safe-area-right, 0px));
-        font-size: 0.75rem;
+        margin-right: 0;
+        margin-left: 4px;
+        flex: 0 0 auto;
+        font-size: 0.7rem;
+    }
+
+    // Telas bem estreitas: só o título, mais espaço útil
+    @media (max-width: 360px) {
+        .ava-header-subtitle {
+            display: none;
+        }
+
+        .ava-toolbar,
+        .ava-toolbar-inner {
+            --min-height: 44px;
+            min-height: 44px;
+            height: 44px;
+        }
     }
 
     .ava-menu {
@@ -34,8 +66,8 @@
         --border-radius: 20px;
 
         &::part(container) {
-            top: max(8px, env(safe-area-inset-top, 0px), var(--ion-safe-area-top, 0px));
-            bottom: max(8px, env(safe-area-inset-bottom, 0px), var(--ion-safe-area-bottom, 0px));
+            top: max(8px, var(--ion-safe-area-top, 0px));
+            bottom: max(8px, var(--ion-safe-area-bottom, 0px));
         }
     }
 
@@ -313,7 +345,7 @@
     }
 
     .sidebar-modal__header {
-        padding-top: max(16px, env(safe-area-inset-top, 0px), var(--ion-safe-area-top, 0px));
+        padding-top: max(16px, var(--ion-safe-area-top, 0px));
     }
 
     .sidebar-modal__body {
@@ -428,7 +460,16 @@
         width: 84%;
     }
 
-    ion-header ion-toolbar {
-        --min-height: 48px;
+    .ava-toolbar {
+        --min-height: 44px;
+    }
+
+    .ava-toolbar-inner {
+        min-height: 44px;
+        height: 44px;
+    }
+
+    .ava-header-subtitle {
+        display: none;
     }
 }

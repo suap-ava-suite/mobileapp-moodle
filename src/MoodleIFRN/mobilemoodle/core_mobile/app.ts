@@ -8,6 +8,7 @@ import { MM, App } from './namespace';
 
     App.content = document.getElementById('page-content');
     App.title = document.getElementById('page-title');
+    App.subtitle = document.getElementById('page-subtitle');
     App.menuUserInfo = document.getElementById('sidebar-user-name');
     App.toolbarAvatar = document.getElementById('toolbar-avatar');
     App.templatesRoot = document.getElementById('page-templates');

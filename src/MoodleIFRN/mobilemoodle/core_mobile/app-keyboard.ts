@@ -1,18 +1,74 @@
 /**
  * app-keyboard.ts
  * Sincroniza altura do teclado e safe-areas no painel mobilemoodle (WebView standalone).
+ *
+ * No Android nativo o Moodle ativa edge-to-edge (StatusBar.overlaysWebView).
+ * Insets reais: cordova-plugin-insets. Em browser/DevTools NÃO força padding extra.
  */
 
 const KEYBOARD_THRESHOLD = 80;
-/** Fallback quando o WebView Android não expõe env(safe-area-inset-top). */
-const ANDROID_STATUS_BAR_FALLBACK_PX = 32;
+
+/** Só no Cordova Android, se o plugin de insets falhar. */
+const ANDROID_STATUS_BAR_FALLBACK_PX = 24;
+
+/** SYSTEM_BARS | DISPLAY_CUTOUT — espelha initialize-edge-to-edge do Moodle. */
+const INSET_MASK_SYSTEM_AND_CUTOUT = 64 | 2;
+
+type SafeInsets = { top: number; right: number; bottom: number; left: number };
+
+interface CordovaInsetListener {
+    getInset(): SafeInsets;
+    addListener(callback: (inset: SafeInsets) => void): void;
+}
+
+interface CordovaInsetApi {
+    create(config: { mask: number; includeRoundedCorners?: boolean }): Promise<CordovaInsetListener>;
+}
 
 function isAndroidWebView(): boolean {
     return /Android/i.test(navigator.userAgent);
 }
 
-function readSafeAreaInsets(): { top: number; bottom: number; left: number; right: number } {
+function isCordovaRuntime(): boolean {
+    return !!(window as Window & { cordova?: unknown }).cordova;
+}
+
+function getCordovaInsetApi(): CordovaInsetApi | null {
+    const api = window.totalpave?.Inset;
+
+    if (api && typeof api.create === 'function') {
+        return api as CordovaInsetApi;
+    }
+
+    return null;
+}
+
+function waitForCordova(timeoutMs = 1500): Promise<void> {
+    return new Promise((resolve) => {
+        if (!isCordovaRuntime()) {
+            resolve();
+
+            return;
+        }
+
+        let settled = false;
+        const done = (): void => {
+            if (settled) {
+                return;
+            }
+
+            settled = true;
+            resolve();
+        };
+
+        document.addEventListener('deviceready', done, { once: true });
+        window.setTimeout(done, timeoutMs);
+    });
+}
+
+function readCssEnvInsets(): SafeInsets {
     const probe = document.createElement('div');
+
     probe.style.cssText = [
         'position:fixed',
         'top:0',
@@ -25,7 +81,7 @@ function readSafeAreaInsets(): { top: number; bottom: number; left: number; righ
     document.documentElement.appendChild(probe);
     const style = getComputedStyle(probe);
 
-    const insets = {
+    const insets: SafeInsets = {
         top: parseFloat(style.paddingTop) || 0,
         right: parseFloat(style.paddingRight) || 0,
         bottom: parseFloat(style.paddingBottom) || 0,
@@ -34,7 +90,27 @@ function readSafeAreaInsets(): { top: number; bottom: number; left: number; righ
 
     probe.remove();
 
-    // Android Cordova/Capacitor frequentemente retorna 0; status bar cobre o header.
+    return insets;
+}
+
+function setSafeAreaVars(insets: SafeInsets): void {
+    const root = document.documentElement.style;
+
+    root.setProperty('--ion-safe-area-top', `${Math.max(0, Math.round(insets.top))}px`);
+    root.setProperty('--ion-safe-area-right', `${Math.max(0, Math.round(insets.right))}px`);
+    root.setProperty('--ion-safe-area-bottom', `${Math.max(0, Math.round(insets.bottom))}px`);
+    root.setProperty('--ion-safe-area-left', `${Math.max(0, Math.round(insets.left))}px`);
+}
+
+function resolveFallbackInsets(): SafeInsets {
+    // Console / browser (sem Cordova): zero no topo — não há status bar sobrepondo.
+    if (!isCordovaRuntime()) {
+        return { top: 0, right: 0, bottom: 0, left: 0 };
+    }
+
+    const insets = readCssEnvInsets();
+
+    // Cordova Android sem valor de env/plugin: fallback curto da status bar.
     if (insets.top <= 0 && isAndroidWebView()) {
         insets.top = ANDROID_STATUS_BAR_FALLBACK_PX;
     }
@@ -43,13 +119,35 @@ function readSafeAreaInsets(): { top: number; bottom: number; left: number; righ
 }
 
 function applySafeAreaVariables(): void {
-    const insets = readSafeAreaInsets();
-    const root = document.documentElement.style;
+    setSafeAreaVars(resolveFallbackInsets());
+}
 
-    root.setProperty('--ion-safe-area-top', `${insets.top}px`);
-    root.setProperty('--ion-safe-area-right', `${insets.right}px`);
-    root.setProperty('--ion-safe-area-bottom', `${insets.bottom}px`);
-    root.setProperty('--ion-safe-area-left', `${insets.left}px`);
+async function initNativeSafeAreaInsets(): Promise<boolean> {
+    await waitForCordova();
+
+    const Inset = getCordovaInsetApi();
+
+    if (!Inset) {
+        return false;
+    }
+
+    try {
+        const listener = await Inset.create({
+            mask: INSET_MASK_SYSTEM_AND_CUTOUT,
+            includeRoundedCorners: false,
+        });
+
+        const apply = (): void => {
+            setSafeAreaVars(listener.getInset());
+        };
+
+        listener.addListener(apply);
+        apply();
+
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 function syncKeyboardHeight(): void {
@@ -67,10 +165,8 @@ function syncKeyboardHeight(): void {
     document.body.classList.toggle('keyboard-is-open', isOpen);
 
     if (isOpen) {
-        const insets = readSafeAreaInsets();
         document.documentElement.style.setProperty('--ion-safe-area-bottom', '0px');
-        document.documentElement.style.setProperty('--ion-safe-area-top', `${insets.top}px`);
-    } else {
+    } else if (!getCordovaInsetApi()) {
         applySafeAreaVariables();
     }
 }
@@ -92,19 +188,33 @@ function scrollFocusedFieldIntoView(): void {
 }
 
 export function initKeyboardInsets(): void {
+    // Zera primeiro para não herdar padding fantasma do Ionic no console.
+    setSafeAreaVars({ top: 0, right: 0, bottom: 0, left: 0 });
     applySafeAreaVariables();
+
+    void initNativeSafeAreaInsets().then((nativeOk) => {
+        if (!nativeOk) {
+            applySafeAreaVariables();
+        }
+    });
 
     syncKeyboardHeight();
 
     window.visualViewport?.addEventListener('resize', syncKeyboardHeight);
     window.visualViewport?.addEventListener('scroll', syncKeyboardHeight);
     window.addEventListener('resize', () => {
-        applySafeAreaVariables();
+        if (!getCordovaInsetApi()) {
+            applySafeAreaVariables();
+        }
+
         syncKeyboardHeight();
     });
     window.addEventListener('orientationchange', () => {
         window.setTimeout(() => {
-            applySafeAreaVariables();
+            if (!getCordovaInsetApi()) {
+                applySafeAreaVariables();
+            }
+
             syncKeyboardHeight();
         }, 250);
     });

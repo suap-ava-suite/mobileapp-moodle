@@ -2,6 +2,10 @@
 
 :root {
     --keyboard-height: 0px;
+    --ion-safe-area-top: 0px;
+    --ion-safe-area-right: 0px;
+    --ion-safe-area-bottom: 0px;
+    --ion-safe-area-left: 0px;
     --safe-area-top: env(safe-area-inset-top, 0px);
     --safe-area-right: env(safe-area-inset-right, 0px);
     --safe-area-bottom: env(safe-area-inset-bottom, 0px);
@@ -32,7 +36,9 @@ ion-app {
 .toolbar-avatar {
     width: 32px;
     height: 32px;
-    margin-right: 8px;
+    margin-right: 0;
+    margin-left: 4px;
+    flex: 0 0 auto;
     background: var(--primary-light);
     color: var(--primary-dark);
     font-size: 0.8rem;
@@ -50,6 +56,84 @@ ion-app {
         outline: 2px solid var(--dsgov-focus-ring-blue, rgba(19, 81, 180, 0.35));
         outline-offset: 2px;
     }
+}
+
+// Header estilo AVA (br-header) — compacto e fluido no mobile
+.ava-header {
+    box-shadow: var(--dsgov-shadow-header, 0 2px 8px rgba(0, 0, 0, 0.2));
+}
+
+.ava-toolbar {
+    --background: var(--branco-primario);
+    --color: var(--dark);
+    --border-width: 0;
+    --min-height: 48px;
+    // Sem piso fixo: 0 no browser; no nativo o JS preenche --ion-safe-area-top
+    --padding-top: var(--ion-safe-area-top, 0px);
+    --padding-bottom: 0px;
+    --padding-start: 0;
+    --padding-end: 0;
+}
+
+.ava-toolbar-inner {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    min-height: 48px;
+    height: 48px;
+    padding: 0 10px 0 4px;
+    box-sizing: border-box;
+}
+
+.ava-menu-trigger {
+    --padding-start: 8px;
+    --padding-end: 8px;
+    color: var(--ion-color-primary);
+    width: 40px;
+    height: 40px;
+    margin: 0;
+    flex: 0 0 auto;
+    border-radius: 50%;
+}
+
+.ava-header-brand {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    min-width: 0;
+    flex: 1 1 auto;
+    padding: 2px 4px;
+    overflow: hidden;
+}
+
+.ava-header-title {
+    display: block;
+    max-width: 100%;
+    margin: 0;
+    font-family: var(--dsgov-font-family, "Rawline", "Noto Sans", sans-serif);
+    font-size: clamp(1rem, 0.35rem + 2.6vw, 1.35rem);
+    font-weight: 500;
+    line-height: 1.15;
+    color: var(--dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ava-header-subtitle {
+    display: block;
+    max-width: 100%;
+    margin: 1px 0 0;
+    font-family: var(--dsgov-font-family, "Rawline", "Noto Sans", sans-serif);
+    font-size: clamp(0.6875rem, 0.55rem + 0.6vw, 0.8rem);
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 ion-menu-button {
@@ -130,11 +214,9 @@ body.keyboard-is-open {
 #main-content ion-header ion-toolbar {
     --background: var(--branco-primario);
     --color: var(--dark);
-    --border-width: 0 0 1px 0;
-    --border-color: var(--light);
+    --border-width: 0;
 }
 
-#main-content ion-title {
+#main-content .ava-header-title {
     color: var(--dark);
-    font: var(--font-heading3);
 }

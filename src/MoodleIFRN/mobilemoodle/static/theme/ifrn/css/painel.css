@@ -173,6 +173,10 @@ body {
 
 :root {
   --keyboard-height: 0px;
+  --ion-safe-area-top: 0px;
+  --ion-safe-area-right: 0px;
+  --ion-safe-area-bottom: 0px;
+  --ion-safe-area-left: 0px;
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-right: env(safe-area-inset-right, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
@@ -203,7 +207,9 @@ ion-app {
 .toolbar-avatar {
   width: 32px;
   height: 32px;
-  margin-right: 8px;
+  margin-right: 0;
+  margin-left: 4px;
+  flex: 0 0 auto;
   background: var(--primary-light);
   color: var(--primary-dark);
   font-size: 0.8rem;
@@ -219,6 +225,82 @@ ion-app {
 .toolbar-avatar:hover, .toolbar-avatar:focus-visible {
   outline: 2px solid var(--dsgov-focus-ring-blue, rgba(19, 81, 180, 0.35));
   outline-offset: 2px;
+}
+
+.ava-header {
+  box-shadow: var(--dsgov-shadow-header, 0 2px 8px rgba(0, 0, 0, 0.2));
+}
+
+.ava-toolbar {
+  --background: var(--branco-primario);
+  --color: var(--dark);
+  --border-width: 0;
+  --min-height: 48px;
+  --padding-top: var(--ion-safe-area-top, 0px);
+  --padding-bottom: 0px;
+  --padding-start: 0;
+  --padding-end: 0;
+}
+
+.ava-toolbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-height: 48px;
+  height: 48px;
+  padding: 0 10px 0 4px;
+  box-sizing: border-box;
+}
+
+.ava-menu-trigger {
+  --padding-start: 8px;
+  --padding-end: 8px;
+  color: var(--ion-color-primary);
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.ava-header-brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  min-width: 0;
+  flex: 1 1 auto;
+  padding: 2px 4px;
+  overflow: hidden;
+}
+
+.ava-header-title {
+  display: block;
+  max-width: 100%;
+  margin: 0;
+  font-family: var(--dsgov-font-family, "Rawline", "Noto Sans", sans-serif);
+  font-size: clamp(1rem, 0.35rem + 2.6vw, 1.35rem);
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ava-header-subtitle {
+  display: block;
+  max-width: 100%;
+  margin: 1px 0 0;
+  font-family: var(--dsgov-font-family, "Rawline", "Noto Sans", sans-serif);
+  font-size: clamp(0.6875rem, 0.55rem + 0.6vw, 0.8rem);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 ion-menu-button {
@@ -293,13 +375,11 @@ body.keyboard-is-open .sidebar-modal__body {
 #main-content ion-header ion-toolbar {
   --background: var(--branco-primario);
   --color: var(--dark);
-  --border-width: 0 0 1px 0;
-  --border-color: var(--light);
+  --border-width: 0;
 }
 
-#main-content ion-title {
+#main-content .ava-header-title {
   color: var(--dark);
-  font: var(--font-heading3);
 }
 
 .ava-menu {
@@ -1796,29 +1876,57 @@ body.stop_animations .ava-splash__gauge {
     padding-left: max(env(safe-area-inset-left), var(--ion-safe-area-left, 0px));
     padding-right: max(env(safe-area-inset-right), var(--ion-safe-area-right, 0px));
   }
-  ion-header ion-toolbar {
-    --padding-top: max(32px, env(safe-area-inset-top, 0px), var(--ion-safe-area-top, 0px));
-    --min-height: 52px;
-    padding-left: 4px;
-    padding-right: 4px;
+  .ava-toolbar {
+    --padding-top: var(--ion-safe-area-top, 0px);
+    --min-height: 48px;
   }
-  ion-title {
-    font-size: 1rem !important;
-    padding-inline: 4px;
+  .ava-toolbar-inner {
+    gap: 2px;
+    min-height: 48px;
+    height: 48px;
+    padding: 0 clamp(6px, 2.5vw, 12px) 0 4px;
+  }
+  .ava-menu-trigger {
+    width: 36px;
+    height: 36px;
+  }
+  .ava-header-brand {
+    padding: 0 2px;
+  }
+  .ava-header-title {
+    font-size: clamp(0.9375rem, 0.55rem + 2.2vw, 1.15rem);
+  }
+  .ava-header-subtitle {
+    font-size: clamp(0.625rem, 0.5rem + 0.55vw, 0.75rem);
   }
   .toolbar-avatar {
     width: 28px;
     height: 28px;
-    margin-right: max(4px, env(safe-area-inset-right), var(--ion-safe-area-right, 0px));
-    font-size: 0.75rem;
+    margin-right: 0;
+    margin-left: 4px;
+    flex: 0 0 auto;
+    font-size: 0.7rem;
   }
+}
+@media (max-width: 767.98px) and (max-width: 360px) {
+  .ava-header-subtitle {
+    display: none;
+  }
+  .ava-toolbar,
+  .ava-toolbar-inner {
+    --min-height: 44px;
+    min-height: 44px;
+    height: 44px;
+  }
+}
+@media (max-width: 767.98px) {
   .ava-menu {
     --width: min(294px, 86vw);
     --border-radius: 20px;
   }
   .ava-menu::part(container) {
-    top: max(8px, env(safe-area-inset-top, 0px), var(--ion-safe-area-top, 0px));
-    bottom: max(8px, env(safe-area-inset-bottom, 0px), var(--ion-safe-area-bottom, 0px));
+    top: max(8px, var(--ion-safe-area-top, 0px));
+    bottom: max(8px, var(--ion-safe-area-bottom, 0px));
   }
   .painel-page,
   .curso-page {
@@ -2044,7 +2152,7 @@ body.stop_animations .ava-splash__gauge {
     padding-bottom: env(safe-area-inset-bottom);
   }
   .sidebar-modal__header {
-    padding-top: max(16px, env(safe-area-inset-top, 0px), var(--ion-safe-area-top, 0px));
+    padding-top: max(16px, var(--ion-safe-area-top, 0px));
   }
   .sidebar-modal__body {
     padding: 12px 14px calc(16px + env(safe-area-inset-bottom));
@@ -2135,8 +2243,15 @@ body.stop_animations .ava-splash__gauge {
     height: 84%;
     width: 84%;
   }
-  ion-header ion-toolbar {
-    --min-height: 48px;
+  .ava-toolbar {
+    --min-height: 44px;
+  }
+  .ava-toolbar-inner {
+    min-height: 44px;
+    height: 44px;
+  }
+  .ava-header-subtitle {
+    display: none;
   }
 }
 html,
@@ -2357,7 +2472,8 @@ ion-button {
   --border-color: var(--dsgov-border-inner);
 }
 
-ion-menu-button {
+ion-menu-button,
+.ava-menu-trigger {
   color: var(--dsgov-blue-70);
 }
 

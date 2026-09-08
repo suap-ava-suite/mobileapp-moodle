@@ -122,6 +122,7 @@ interface A11yModule {
 interface MobileMoodleApp {
     content: HTMLElement | null;
     title: HTMLElement | null;
+    subtitle: HTMLElement | null;
     menuUserInfo: HTMLElement | null;
     toolbarAvatar: HTMLElement | null;
     templatesRoot: HTMLElement | null;
@@ -197,6 +198,22 @@ interface MobileMoodleApiPublic {
 interface Window {
     MobileMoodle: MobileMoodleNamespace;
     MobileMoodleApi: MobileMoodleApiPublic;
+    totalpave?: {
+        Inset: {
+            create: (config: {
+                mask: number;
+                includeRoundedCorners?: boolean;
+            }) => Promise<{
+                getInset: () => { top: number; right: number; bottom: number; left: number };
+                addListener: (callback: (inset: {
+                    top: number;
+                    right: number;
+                    bottom: number;
+                    left: number;
+                }) => void) => void;
+            }>;
+        };
+    };
     VLibras?: {
         Widget: new (url: string) => unknown;
     };
