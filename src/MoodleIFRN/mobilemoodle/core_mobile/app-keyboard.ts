@@ -4,6 +4,12 @@
  */
 
 const KEYBOARD_THRESHOLD = 80;
+/** Fallback quando o WebView Android não expõe env(safe-area-inset-top). */
+const ANDROID_STATUS_BAR_FALLBACK_PX = 32;
+
+function isAndroidWebView(): boolean {
+    return /Android/i.test(navigator.userAgent);
+}
 
 function readSafeAreaInsets(): { top: number; bottom: number; left: number; right: number } {
     const probe = document.createElement('div');
@@ -27,6 +33,11 @@ function readSafeAreaInsets(): { top: number; bottom: number; left: number; righ
     };
 
     probe.remove();
+
+    // Android Cordova/Capacitor frequentemente retorna 0; status bar cobre o header.
+    if (insets.top <= 0 && isAndroidWebView()) {
+        insets.top = ANDROID_STATUS_BAR_FALLBACK_PX;
+    }
 
     return insets;
 }

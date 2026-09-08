@@ -9,8 +9,9 @@
         padding-right: max(env(safe-area-inset-right), var(--ion-safe-area-right, 0px));
     }
 
+    // Android WebView costuma reportar safe-area-top = 0; piso evita header sob a status bar
     ion-header ion-toolbar {
-        --padding-top: max(4px, env(safe-area-inset-top), var(--ion-safe-area-top, 0px));
+        --padding-top: max(32px, env(safe-area-inset-top, 0px), var(--ion-safe-area-top, 0px));
         --min-height: 52px;
         padding-left: 4px;
         padding-right: 4px;
@@ -33,8 +34,8 @@
         --border-radius: 20px;
 
         &::part(container) {
-            top: max(8px, env(safe-area-inset-top));
-            bottom: max(8px, env(safe-area-inset-bottom));
+            top: max(8px, env(safe-area-inset-top, 0px), var(--ion-safe-area-top, 0px));
+            bottom: max(8px, env(safe-area-inset-bottom, 0px), var(--ion-safe-area-bottom, 0px));
         }
     }
 
@@ -312,7 +313,7 @@
     }
 
     .sidebar-modal__header {
-        padding-top: max(16px, env(safe-area-inset-top));
+        padding-top: max(16px, env(safe-area-inset-top, 0px), var(--ion-safe-area-top, 0px));
     }
 
     .sidebar-modal__body {

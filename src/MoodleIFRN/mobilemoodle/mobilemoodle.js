@@ -1551,6 +1551,10 @@
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/app-keyboard.ts
   var KEYBOARD_THRESHOLD = 80;
+  var ANDROID_STATUS_BAR_FALLBACK_PX = 32;
+  function isAndroidWebView() {
+    return /Android/i.test(navigator.userAgent);
+  }
   function readSafeAreaInsets() {
     const probe = document.createElement("div");
     probe.style.cssText = [
@@ -1570,6 +1574,9 @@
       left: parseFloat(style.paddingLeft) || 0
     };
     probe.remove();
+    if (insets.top <= 0 && isAndroidWebView()) {
+      insets.top = ANDROID_STATUS_BAR_FALLBACK_PX;
+    }
     return insets;
   }
   function applySafeAreaVariables() {
