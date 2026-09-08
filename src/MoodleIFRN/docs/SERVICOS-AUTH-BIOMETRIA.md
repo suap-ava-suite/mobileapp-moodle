@@ -2,14 +2,17 @@
 
 Serviços Angular usados pelo login IFRN.
 
+Código-fonte: `src/MoodleIFRN/services_mobile/`  
+Este documento fica em `docs/` para o índice da documentação.
+
 ---
 
 ## Arquivos
 
 | Arquivo | Responsabilidade |
 |---------|------------------|
-| `auth.service.ts` | Login, refresh, guardar/ler/limpar JWT, abrir o painel |
-| `biometric.service.ts` | Ativar / autenticar / desativar login biométrico |
+| `../services_mobile/auth.service.ts` | Login, refresh, guardar/ler/limpar JWT, abrir o painel |
+| `../services_mobile/biometric.service.ts` | Ativar / autenticar / desativar login biométrico |
 
 ---
 
@@ -85,3 +88,10 @@ sessionStorage["ifrn_access_token"]
         ▼
 mobilemoodle/core_mobile/api-auth.ts  →  Authorization: Bearer …
 ```
+
+## Ver também
+
+- [Login IFRN](../ifrn-login/LOGIN-IFRN.md)
+- [Painel de cursos](./PAINEL-CURSOS.md)
+- [Contrato da API](./CONTRATO-API.md)
+- [Índice](./README.md)

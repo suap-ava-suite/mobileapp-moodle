@@ -1,11 +1,25 @@
 /**
  * app-router.ts
- * Roteamento por hash e orquestração do carregamento das telas.
+ * ----------------------------------------------------------------------------
+ * Roteamento por hash (SPA leve, sem Angular Router).
+ *
+ * Rotas:
+ *   #/painel          → lista de diários / autoinscrição
+ *   #/curso/123       → detalhe do curso
+ *   qualquer outra    → not found
+ *
+ * loadRoute():
+ *   1. Garante templates HTML carregados
+ *   2. Checa token
+ *   3. Mostra splash → busca API → renderPainel / renderCurso
+ *
+ * routeSeq evita race: se o usuário mudar o hash no meio do await,
+ * a resposta antiga é ignorada.
  */
 import { MM, App } from './namespace';
 
-
     let templatesReady: Promise<void> | null = null;
+    /** Contador monotônico; cada loadRoute captura seu próprio seq. */
     let routeSeq = 0;
 
     function parseRoute(): RouteInfo {
@@ -23,11 +37,16 @@ import { MM, App } from './namespace';
         return { name: 'notfound' };
     }
 
+    /**
+     * Injeta pages/painel.html, curso.html e erros.html em #page-templates
+     * (só uma vez; templatesReady memoiza a Promise).
+     */
     async function loadTemplates(): Promise<void> {
         if (templatesReady) {
             return templatesReady;
         }
 
+        // Já estão no DOM (ex.: build que embute os partials)
         if (
             document.getElementById('tpl-painel') &&
             document.getElementById('tpl-curso') &&
@@ -69,6 +88,9 @@ import { MM, App } from './namespace';
         return App.dashboardCache;
     }
 
+    /**
+     * @param force true = invalidate + refetch (refresh / retry).
+     */
     async function loadRoute(force: boolean): Promise<void> {
         const seq = ++routeSeq;
         const route = parseRoute();

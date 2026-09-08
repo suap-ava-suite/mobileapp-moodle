@@ -1,10 +1,15 @@
 /**
  * app-status.ts
- * Telas de estado: loading, erro e not found.
+ * ----------------------------------------------------------------------------
+ * Estados visuais enquanto a rota carrega ou falha:
+ * - splash / loading (mínimo ~3s na 1ª carga para não “piscar”)
+ * - not found (hash inválido)
+ * - erro HTTP / rede (template tpl-error-page ou fallback simples)
  */
 import { MM, App } from './namespace';
 
 
+    /** SVG do anel animado do splash AVA. */
     const SPLASH_GAUGE_SVG =
         '<div class="ava-splash__gauge" aria-hidden="true">' +
             '<svg class="ava-splash__gauge-svg" viewBox="0 0 120 120" aria-hidden="true">' +
@@ -23,12 +28,17 @@ import { MM, App } from './namespace';
     const LOADING_MIN_MS = 3000;
     let loadingStartedAt = 0;
 
+    /** Marca o início do splash (usado no boot do index.html também). */
     function markLoadingStart(): void {
         if (!loadingStartedAt) {
             loadingStartedAt = Date.now();
         }
     }
 
+    /**
+     * Garante tempo mínimo de splash na 1ª navegação.
+     * force=true (refresh) pula a espera.
+     */
     function waitLoadingMinimum(force = false): Promise<void> {
         if (force || !loadingStartedAt) {
             loadingStartedAt = 0;
@@ -122,6 +132,7 @@ import { MM, App } from './namespace';
         App.content.appendChild(page);
     }
 
+    /** Tela de erro completa (template) ou HTML mínimo se o template falhar. */
     function showStatusError(error: unknown): void {
         const err = error as Partial<ApiErrorShape>;
         const status = err && typeof err.status === 'number' ? err.status : 0;

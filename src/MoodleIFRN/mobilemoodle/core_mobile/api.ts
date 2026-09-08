@@ -1,6 +1,20 @@
 /**
  * api.ts
- * getDashboard / getCourse com cache em memória e fachada MobileMoodleApi.
+ * ----------------------------------------------------------------------------
+ * Fachada de dados do painel + cache em memória.
+ *
+ * Endpoints:
+ *   GET /dashboard/          → getDashboard()
+ *   GET /courses/:id         → getCourse(id)
+ *
+ * Cache:
+ *   - TTL 60s
+ *   - inFlight evita requests duplicados em paralelo
+ *   - cursos: Map com no máximo 40 entradas (FIFO simples)
+ *
+ * Também monta window.MobileMoodleApi (API pública para o app Ionic / login).
+ *
+ * DEMO_FORCE_500: deixe false em produção; true só para testar tela de erro.
  */
 import { MM } from './namespace';
 
@@ -11,6 +25,7 @@ import { MM } from './namespace';
     interface DashboardCacheEntry {
         value: DashboardData | null;
         fetchedAt: number;
+        /** Promise em andamento — quem pedir de novo reusa a mesma. */
         inFlight: Promise<DashboardData> | null;
     }
 
@@ -33,6 +48,9 @@ import { MM } from './namespace';
         courseCache.clear();
     }
 
+    /**
+     * @param force se true, ignora cache e refaz o GET (pull-to-refresh / retry).
+     */
     function getDashboard(force = false): Promise<DashboardData> {
         if (DEMO_FORCE_500) {
             return Promise.reject(new MM.ApiError(500));
@@ -62,6 +80,7 @@ import { MM } from './namespace';
         return dashboardCache.inFlight;
     }
 
+    /** Remove a entrada mais antiga quando o Map passa do limite. */
     function pruneCourseCache(): void {
         if (courseCache.size <= MAX_COURSE_CACHE) {
             return;
@@ -77,6 +96,7 @@ import { MM } from './namespace';
     function getCourse(courseId: string | number, force = false): Promise<CourseData> {
         const id = String(courseId);
 
+        // Só IDs numéricos (bate com a rota #/curso/123)
         if (!/^\d+$/.test(id)) {
             return Promise.reject(new MM.ApiError(404, 'Identificador de curso inválido.'));
         }
@@ -113,6 +133,7 @@ import { MM } from './namespace';
         return entry.inFlight;
     }
 
+    /** Atalho: só a lista `courses` do dashboard. */
     async function getCoursesList(): Promise<DashboardCourse[]> {
         const dashboard = await getDashboard(false);
 
@@ -124,6 +145,7 @@ import { MM } from './namespace';
     MM.getCourse = getCourse;
     MM.getCoursesList = getCoursesList;
 
+    // API estável para quem está fora do namespace interno (login Ionic, etc.)
     window.MobileMoodleApi = {
         setApiBaseUrl: MM.setApiBaseUrl,
         getToken: MM.getToken,

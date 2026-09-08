@@ -1,10 +1,15 @@
 /**
  * app-sidebar.ts
- * Sidebar AVA: perfil, acessibilidade, ajuda e filtros.
+ * ----------------------------------------------------------------------------
+ * Menu lateral estilo AVA + modais (perfil, ajuda, acessibilidade, filtros).
+ *
+ * openModal(type) clona o template correspondente (tpl-modal-*) e preenche
+ * o painel #sidebar-modal. bindSidebar() liga os botões uma vez no boot.
  */
 import { MM, App } from './namespace';
 
 
+    /** Rótulos exibidos no chip “FILTRADO POR:”. */
     const FILTER_LABELS: Record<string, string> = {
         inprogress: 'Em andamento',
         allincludinghidden: 'Todos os diários (lento)',
@@ -12,6 +17,7 @@ import { MM, App } from './namespace';
         hidden: 'Ocultos',
     };
 
+    /** Metadados de cada modal: título, ícone e id do <template>. */
     const MODAL_META: Record<SidebarModalType, { title: string; icon: string; tpl: string }> = {
         profile: { title: 'Perfil', icon: 'person-circle-outline', tpl: 'tpl-modal-profile' },
         help: { title: 'Ajuda', icon: 'help-circle-outline', tpl: 'tpl-modal-help' },
@@ -120,6 +126,7 @@ import { MM, App } from './namespace';
         }
     }
 
+    /** Abre o modal lateral e conecta controles específicos (logout, a11y, filtro). */
     function openModal(type: SidebarModalType): void {
         const meta = MODAL_META[type];
         const modal = getEl('sidebar-modal');
@@ -176,6 +183,7 @@ import { MM, App } from './namespace';
         }
     }
 
+    /** Sincroniza o filtro ativo com o que veio do dashboard (API). */
     function applyUserFilter(dashboard: DashboardData): void {
         const situacao =
             (dashboard && (dashboard.filtro_situacao || dashboard.situacao || dashboard.filter_situacao)) ||
@@ -189,6 +197,7 @@ import { MM, App } from './namespace';
         updateFilterChip();
     }
 
+    /** Liga cliques do menu, avatar do header, fechar (X / backdrop / Esc). */
     function bindSidebar(): void {
         ([
             ['btn-toggle-profile', 'profile'],

@@ -4,6 +4,8 @@ Código-fonte em `mobilemoodle.ts` e `core_mobile/`; o navegador carrega o bundl
 
 Cada arquivo tem uma responsabilidade. Todos usam o namespace global `window.MobileMoodle` (e a fachada `window.MobileMoodleApi`).
 
+Os `.ts` em `core_mobile/` possuem **comentários de cabeçalho e de trechos-chave** para facilitar a leitura (fluxo JWT, cache, rotas, safe-area, etc.).
+
 ## Compilar
 
 ```bash
@@ -26,7 +28,7 @@ O ponto de entrada é `mobilemoodle.ts`, que importa os módulos nesta ordem:
 
 ```text
 namespace → api-errors → api-auth → api-http → api → app-utils → app-status
-→ app-views → app-router → app-accessibility → app-sidebar → app
+→ app-views → app-router → app-accessibility → app-sidebar → app-keyboard → app
 ```
 
 No `index.html`:
@@ -35,22 +37,25 @@ No `index.html`:
 <script src="mobilemoodle.js" defer></script>
 ```
 
+`app.ts` (último) faz o bootstrap no `DOMContentLoaded` e chama `initKeyboardInsets()`.
+
 ## Camada de API
 
 | Arquivo | Função |
 |---------|--------|
-| `api-errors.ts` | Classe `ApiError` + títulos/mensagens por status HTTP |
+| `api-errors.ts` | Construtor `ApiError` + títulos/mensagens por status HTTP |
 | `api-auth.ts` | JWT: ler, validar, salvar, limpar (`sessionStorage`) |
 | `api-http.ts` | `fetch` autenticado, timeout 15s, base URL segura |
 | `api.ts` | `getDashboard` / `getCourse` + cache em memória (TTL 1 min) |
 
-Tipos compartilhados: `core_mobile/global.d.ts`.
+Tipos compartilhados: `core_mobile/global.d.ts` (só TypeScript — não vira JS).
 
 ### Cache
 
 - Dashboard: um payload por sessão, válido por **60 segundos**
 - Cursos: até **40** entradas no `Map`, mesmo TTL
 - `invalidateCache()` zera tudo (logout / refresh forçado)
+- `inFlight` evita requests duplicados em paralelo
 
 Flag `DEMO_FORCE_500` em `api.ts`: quando `true`, força erro 500 no painel (só para demonstração). Deve ficar `false` no uso normal.
 
@@ -60,12 +65,26 @@ Flag `DEMO_FORCE_500` em `api.ts`: quando `true`, força erro 500 no painel (só
 |---------|--------|
 | `namespace.ts` | Inicializa `window.MobileMoodle` e `App` |
 | `app-utils.ts` | Base de assets, `escapeHtml`, templates, `fetchText` |
-| `app-status.ts` | Loading, tela de erro, not found |
-| `app-views.ts` | Render do painel e do curso |
-| `app-router.ts` | Parse do hash + orquestra carregamento |
+| `app-status.ts` | Loading (splash mínimo ~3s), tela de erro, not found |
+| `app-views.ts` | Render do painel e do curso; atualiza título/subtítulo do header |
+| `app-router.ts` | Parse do hash + orquestra carregamento (`routeSeq` evita race) |
 | `app-accessibility.ts` | Preferências AVA: zoom, contraste, VLibras, etc. |
 | `app-sidebar.ts` | Sidebar AVA: perfil, acessibilidade, ajuda, filtros |
+| `app-keyboard.ts` | Safe-area (status bar) + altura do teclado virtual |
 | `app.ts` | Bootstrap: DOM, menu, base da API, `hashchange` |
+
+### Safe-area e teclado (`app-keyboard.ts`)
+
+| Contexto | Comportamento |
+|----------|----------------|
+| Cordova Android | Usa `window.totalpave.Inset` (mesmo plugin do Moodle core). Fallback ~24px se inset = 0. |
+| Browser / DevTools | `--ion-safe-area-top: 0` — sem padding artificial no topo. |
+| Teclado aberto | Atualiza `--keyboard-height` e classe `body.keyboard-is-open`. |
+
+Variáveis CSS: `--ion-safe-area-top/right/bottom/left`, `--keyboard-height`.  
+Consumidas pelo header (`.ava-toolbar`) e pelo layout mobile (`_mobile.scss`).
+
+Ver também: [`../../docs/TEMA-VISUAL.md`](../../docs/TEMA-VISUAL.md).
 
 ## API pública (`MobileMoodleApi`)
 

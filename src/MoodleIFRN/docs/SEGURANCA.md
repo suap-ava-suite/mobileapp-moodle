@@ -42,6 +42,9 @@ Não substituem segurança de backend (assinatura JWT, rate limit, HTTPS, etc.).
 | `referrer: no-referrer` e `X-Content-Type-Options: nosniff` | `index.html` |
 | Links externos com `noopener noreferrer` | menu / login |
 
+Header e safe-area (sem relação direta com XSS, mas relevantes no mobile): ver [`TEMA-VISUAL.md`](./TEMA-VISUAL.md) e `app-keyboard.ts`.
+
+
 ---
 
 ## Login e biometria

@@ -1,14 +1,23 @@
 /**
  * api-http.ts
- * Cliente HTTP: fetch com Bearer, timeout e tratamento de erros.
+ * ----------------------------------------------------------------------------
+ * Cliente HTTP do painel.
+ *
+ * - Exige JWT (MM.getToken)
+ * - Timeout 15s via AbortController
+ * - 401/403 limpam a sessão
+ * - Só aceita base URL da mesma origem (ou localhost em dev)
+ * - Paths devem ser relativos seguros ("/dashboard/", não "//evil…")
  */
 import { MM } from './namespace';
 
     const DEFAULT_BASE_URL = '';
     const REQUEST_TIMEOUT_MS = 15000;
 
+    /** Origem da API (ex.: http://localhost:8000). Vazio = path relativo à página. */
     let baseUrl = DEFAULT_BASE_URL;
 
+    /** Bloqueia base URL arbitrária (open redirect / SSRF no client). */
     function isAllowedApiBase(url: string): boolean {
         try {
             const parsed = new URL(url);
@@ -24,6 +33,7 @@ import { MM } from './namespace';
         }
     }
 
+    /** Path relativo absoluto: começa com / e não é protocolo ou UNC. */
     function isSafeApiPath(path: string): boolean {
         return typeof path === 'string' &&
             path.charAt(0) === '/' &&
@@ -62,6 +72,7 @@ import { MM } from './namespace';
         return baseUrl + path;
     }
 
+    /** Lê detail/message do JSON de erro (limitado a 280 chars). */
     async function readError(response: Response): Promise<string> {
         try {
             const data = await response.json() as { detail?: string; message?: string } | null;
@@ -83,6 +94,10 @@ import { MM } from './namespace';
         }
     }
 
+    /**
+     * GET/POST autenticado. Headers de auth não vêm de `options` (evita overwrite).
+     * credentials: omit — não envia cookies de terceiros.
+     */
     async function request(path: string, options?: RequestInit): Promise<unknown> {
         const token = MM.getToken();
 

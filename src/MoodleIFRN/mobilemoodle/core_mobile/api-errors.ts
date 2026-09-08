@@ -1,10 +1,17 @@
 /**
  * api-errors.ts
- * Mensagens, títulos e a classe ApiError usados quando a API falha.
+ * ----------------------------------------------------------------------------
+ * Padroniza falhas da API para a UI.
+ *
+ * - messageForStatus / titleForStatus → textos amigáveis por código HTTP
+ * - isRetryable → decide se mostra botão “Tentar novamente”
+ * - ApiError → construtor estilo Error com status, title, message, retryable
+ *
+ * Exposto em MM para os outros módulos (api-http, app-status…).
  */
 import { MM } from './namespace';
 
-
+    /** Mensagem curta exibida ao usuário conforme o status HTTP. */
     function messageForStatus(status: number, detail?: string): string {
         switch (status) {
             case 401:
@@ -29,10 +36,12 @@ import { MM } from './namespace';
                     return 'Erro no servidor (' + status + '). Tente novamente em instantes.';
                 }
 
+                // status 0 = falha de rede; outros 4xx usam detail se vier da API
                 return detail || 'Não foi possível carregar os dados do painel.';
         }
     }
 
+    /** Título curto do card/tela de erro. */
     function titleForStatus(status: number): string {
         switch (status) {
             case 401:
@@ -62,11 +71,16 @@ import { MM } from './namespace';
         }
     }
 
+    /** Erros transitórios (rede, timeout, 5xx) permitem retry na UI. */
     function isRetryable(status: number): boolean {
         return status === 0 || status === 408 || status === 429 || status === 500 ||
             status === 502 || status === 503 || status === 504 || status >= 500;
     }
 
+    /**
+     * Construtor de erro da API (não usa `class` para manter o padrão do bundle).
+     * Uso: `throw new MM.ApiError(401)` ou `new MM.ApiError(500, 'detalhe')`.
+     */
     function ApiError(this: ApiErrorShape & Error, status: number, detail?: string): void {
         const code = Number(status) || 0;
 

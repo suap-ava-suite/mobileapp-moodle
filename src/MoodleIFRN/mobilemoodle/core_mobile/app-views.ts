@@ -1,10 +1,17 @@
 /**
  * app-views.ts
- * Renderização do painel e do detalhe do curso.
+ * ----------------------------------------------------------------------------
+ * Monta o HTML das telas principais a partir dos <template>:
+ *
+ *   renderPainel(dashboard) → abas Diários / Autoinscrição + cards
+ *   renderCurso(course, dashboard) → cabeçalho + seções expansíveis + atividades
+ *
+ * Também atualiza header (título/subtítulo) e dados do usuário na sidebar.
  */
 import { MM, App } from './namespace';
 
 
+    /** Ícone Ionic por modname do Moodle (assign, forum, quiz…). */
     const ACTIVITY_ICONS: Record<string, string> = {
         assign: 'create-outline',
         forum: 'chatbubbles-outline',
@@ -29,6 +36,7 @@ import { MM, App } from './namespace';
         attendance: 'checkmark-done-outline',
     };
 
+    /** Título e mensagem vazia de cada aba do painel. */
     const TAB_META: Record<PainelTabKey, { title: string; empty: string }> = {
         diarios: {
             title: 'Meus Diários',
@@ -47,6 +55,7 @@ import { MM, App } from './namespace';
         autoinscricoes: DashboardCourse[];
     }
 
+    /** Atualiza avatar/nome no header e na sidebar a partir do dashboard. */
     function setUser(dashboard: DashboardData): void {
         const nome = dashboard.nome || 'Estudante';
         const letter = App.initials!(nome);
@@ -119,6 +128,9 @@ import { MM, App } from './namespace';
         }
     }
 
+    /**
+     * Separa listas do payload (API pode usar nomes legados: courses / self_enrolments).
+     */
     function getPainelLists(dashboard: DashboardData): PainelLists {
         const diarios = dashboard.diarios || dashboard.courses || [];
         const autoinscricoes = dashboard.autoinscricoes || dashboard.self_enrolments || [];
@@ -137,6 +149,7 @@ import { MM, App } from './namespace';
         return item.moodle || item.environment || (item.ambiente && item.ambiente.titulo) || 'AVA Acadêmico';
     }
 
+    /** Card de um diário (progresso + link #/curso/:id). */
     function buildCourseCard(course: DashboardCourse): Node {
         const fragment = App.cloneTemplate!('tpl-painel-card');
 
@@ -197,6 +210,7 @@ import { MM, App } from './namespace';
         return fragment;
     }
 
+    /** Card de autoinscrição (botões matricula/acesso — API ainda mockada com alert). */
     function buildAutoinscricaoCard(course: DashboardCourse): Node {
         const fragment = App.cloneTemplate!('tpl-painel-card-autoinscricao');
 
@@ -318,6 +332,7 @@ import { MM, App } from './namespace';
         }
     }
 
+    /** Troca a aba ativa e redesenha os cards. */
     function setActiveTab(tabKey: PainelTabKey, lists: PainelLists): void {
         const tabs = document.querySelectorAll('#painel-tabs .ava-tab');
         const cardsHost = document.getElementById('painel-cards');
@@ -364,6 +379,7 @@ import { MM, App } from './namespace';
         });
     }
 
+    /** Tela inicial: templates + abas + pull-to-refresh (ion-refresher). */
     function renderPainel(dashboard: DashboardData): void {
         if (App.title) {
             App.title.textContent = 'Painel AVA';
@@ -449,6 +465,7 @@ import { MM, App } from './namespace';
         return map[key] || key;
     }
 
+    /** Uma atividade dentro de um tópico (ícone + nome + status de conclusão). */
     function buildActivity(activity: CourseActivity): Node {
         const fragment = App.cloneTemplate!('tpl-curso-activity');
 
@@ -483,6 +500,7 @@ import { MM, App } from './namespace';
         return fragment;
     }
 
+    /** Expande/recolhe tópico ao clicar no header. */
     function bindSectionToggle(article: HTMLElement | null): void {
         if (!article) {
             return;
@@ -501,6 +519,10 @@ import { MM, App } from './namespace';
         });
     }
 
+    /**
+     * Detalhe do curso: metadados + lista de seções.
+     * O primeiro tópico abre por padrão (is-open).
+     */
     function renderCurso(course: CourseData, dashboard: DashboardData): void {
         if (App.title) {
             App.title.textContent = course.name || 'Curso';

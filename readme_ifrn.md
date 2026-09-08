@@ -12,16 +12,18 @@ Documentação: [`src/MoodleIFRN/docs/PATCH-AO-ATUALIZAR.md`](src/MoodleIFRN/doc
 
 A documentação completa da customização está em:
 
-**[`src/MoodleIFRN/docs/VISAO-GERAL.md`](src/MoodleIFRN/docs/VISAO-GERAL.md)**
+**[`src/MoodleIFRN/docs/README.md`](src/MoodleIFRN/docs/README.md)** · **[`src/MoodleIFRN/docs/VISAO-GERAL.md`](src/MoodleIFRN/docs/VISAO-GERAL.md)**
 
 Índice rápido:
 
+- [Índice da documentação](src/MoodleIFRN/docs/README.md)
 - [Visão geral](src/MoodleIFRN/docs/VISAO-GERAL.md)
 - [Login IFRN](src/MoodleIFRN/ifrn-login/LOGIN-IFRN.md)
-- [Serviços (auth + biometria)](src/MoodleIFRN/services_mobile/SERVICOS-AUTH-BIOMETRIA.md)
+- [Serviços (auth + biometria)](src/MoodleIFRN/docs/SERVICOS-AUTH-BIOMETRIA.md)
 - [Painel de cursos](src/MoodleIFRN/docs/PAINEL-CURSOS.md)
 - [Scripts TypeScript do painel](src/MoodleIFRN/mobilemoodle/core_mobile/SCRIPTS-TS.md)
 - [Templates HTML](src/MoodleIFRN/docs/TEMPLATES-HTML.md)
-- [Tema visual](src/MoodleIFRN/docs/TEMA-VISUAL.md)
+- [Tema visual (header / safe-area)](src/MoodleIFRN/docs/TEMA-VISUAL.md)
 - [Segurança](src/MoodleIFRN/docs/SEGURANCA.md)
 - [Contrato da API](src/MoodleIFRN/docs/CONTRATO-API.md)
+- [Patch após atualizar o Moodle](src/MoodleIFRN/docs/PATCH-AO-ATUALIZAR.md)

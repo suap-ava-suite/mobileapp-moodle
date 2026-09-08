@@ -5,7 +5,7 @@ A pasta `MoodleIFRN` fica intacta — basta copiá-la para `src/` e rodar o scri
 
 ## O que o script faz
 
-Arquivo: [`patch-moodle-ifrn.js`](./patch-moodle-ifrn.js)
+Arquivo: [`../patch-moodle-ifrn.js`](../patch-moodle-ifrn.js)
 
 | Arquivo do Moodle | Alteração |
 |-------------------|-----------|

@@ -1,4 +1,10 @@
-/** Tipos compartilhados do painel mobilemoodle (namespace global window.MobileMoodle). */
+/** Tipos compartilhados do painel mobilemoodle (só TypeScript — não vira JS).
+ *
+ * Declara shapes usados em vários módulos:
+ *   DashboardData, CourseData, MobileMoodleApp, MobileMoodleApi…
+ *
+ * O runtime usa window.MobileMoodle / window.MobileMoodleApi (ver namespace.ts e api.ts).
+ */
 
 interface ApiErrorShape {
     status: number;

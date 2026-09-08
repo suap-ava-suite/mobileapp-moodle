@@ -2,17 +2,18 @@
 
 Documentação da customização **AVA IFRN** dentro do app Moodle Mobile.
 
-Esta pasta concentra tudo que foi desenvolvido para o IFRN (login institucional, painel de cursos e serviços de autenticação), **sem alterar o núcleo do Moodle Mobile** além da rota de login.
+Esta pasta concentra tudo que foi desenvolvido para o IFRN (login institucional, painel de cursos e serviços de autenticação), **sem alterar o núcleo do Moodle Mobile** além da rota de login e dos assets/scripts de build.
 
 ---
 
 ## Objetivo
 
-Oferecer uma experiência mobile alinhada ao AVA IFRN:
+Oferecer uma experiência mobile alinhada ao [AVA IFRN](https://ava.ifrn.edu.br/):
 
 1. Login com **IFRN-id** e senha (e biometria, quando disponível)
 2. Após autenticar, abrir o **painel de cursos** (Mobile Moodle)
 3. Consumir uma API (FastAPI de teste hoje; produção depois) com **JWT**
+4. UI no estilo AVA (header, sidebar, cards, acessibilidade) com responsividade mobile
 
 ---
 
@@ -22,13 +23,14 @@ Oferecer uma experiência mobile alinhada ao AVA IFRN:
 App Moodle Mobile (Angular/Ionic)
  │
  ├── ifrn-login/              ← tela de login IFRN
+ ├── marketplace-ifrn/        ← entrada / marketplace IFRN
  ├── services_mobile/         ← AuthService + BiometricService
  │
- └── mobilemoodle/           ← painel web (HTML/TS/Ionic)
-        ├── index.html
-        ├── mobilemoodle.ts   ← entrada TypeScript
-        ├── mobilemoodle.js   ← bundle compilado
-        ├── core_mobile/     ← módulos TypeScript
+ └── mobilemoodle/           ← painel web (HTML/TS/Ionic CDN)
+        ├── index.html       ← shell (menu, header AVA, conteúdo)
+        ├── mobilemoodle.ts  ← entrada TypeScript
+        ├── mobilemoodle.js  ← bundle compilado
+        ├── core_mobile/     ← módulos TypeScript (comentado)
         ├── pages/           ← templates (painel, curso, erros)
         └── static/theme/ifrn/
 ```
@@ -36,27 +38,39 @@ App Moodle Mobile (Angular/Ionic)
 ### Fluxo do usuário
 
 ```text
-Login IFRN  →  JWT salvo no sessionStorage  →  Painel (#/painel)
+Login IFRN  →  JWT no sessionStorage  →  Painel (#/painel)
                       │
                       ├── lista de cursos (GET /dashboard/)
                       └── detalhe do curso (GET /courses/{id})
 ```
 
+### Camadas do painel (`core_mobile/`)
+
+```text
+API:     api-errors → api-auth → api-http → api
+UI:      app-utils → app-status → app-views → app-router
+         app-accessibility → app-sidebar → app-keyboard → app
+```
+
+Detalhes: [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../mobilemoodle/core_mobile/SCRIPTS-TS.md).
+
 ---
 
 ## Documentação por assunto
 
-| Pasta / tema | Documento |
-|--------------|-----------|
+| Tema | Documento |
+|------|-----------|
+| Índice da pasta docs | [`README.md`](./README.md) |
 | Visão geral (este arquivo) | [`VISAO-GERAL.md`](./VISAO-GERAL.md) |
-| Login IFRN | [`ifrn-login/LOGIN-IFRN.md`](./ifrn-login/LOGIN-IFRN.md) |
-| Auth + biometria | [`services_mobile/SERVICOS-AUTH-BIOMETRIA.md`](./services_mobile/SERVICOS-AUTH-BIOMETRIA.md) |
-| Painel de cursos | [`docs/PAINEL-CURSOS.md`](./PAINEL-CURSOS.md) |
-| Scripts TS do painel | [`mobilemoodle/core_mobile/SCRIPTS-TS.md`](../mobilemoodle/core_mobile/SCRIPTS-TS.md) |
-| Templates HTML | [`docs/TEMPLATES-HTML.md`](./TEMPLATES-HTML.md) |
-| Tema visual | [`docs/TEMA-VISUAL.md`](./TEMA-VISUAL.md) |
+| Login IFRN | [`../ifrn-login/LOGIN-IFRN.md`](../ifrn-login/LOGIN-IFRN.md) |
+| Auth + biometria | [`SERVICOS-AUTH-BIOMETRIA.md`](./SERVICOS-AUTH-BIOMETRIA.md) |
+| Painel de cursos | [`PAINEL-CURSOS.md`](./PAINEL-CURSOS.md) |
+| Scripts TS do painel | [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../mobilemoodle/core_mobile/SCRIPTS-TS.md) |
+| Templates HTML | [`TEMPLATES-HTML.md`](./TEMPLATES-HTML.md) |
+| Tema visual / header / safe-area | [`TEMA-VISUAL.md`](./TEMA-VISUAL.md) |
 | Segurança | [`SEGURANCA.md`](./SEGURANCA.md) |
 | Contrato da API | [`CONTRATO-API.md`](./CONTRATO-API.md) |
+| Patch após atualizar o Moodle | [`PATCH-AO-ATUALIZAR.md`](./PATCH-AO-ATUALIZAR.md) |
 
 ---
 
@@ -66,6 +80,7 @@ Login IFRN  →  JWT salvo no sessionStorage  →  Painel (#/painel)
 |------------|------|
 | Rota de login | `src/core/features/login/login.module.ts` → `/login/marketplace-ifrn` e `/login/ifrn-login` |
 | Assets do painel | `angular.json` copia `src/MoodleIFRN/mobilemoodle` → `mobilemoodle/` no build |
+| Compilação TS do painel | gulp `mobilemoodle-ts` / `npm run build:mobilemoodle` |
 | Script de apoio | `npm run patch:ifrn` (ver [`PATCH-AO-ATUALIZAR.md`](./PATCH-AO-ATUALIZAR.md)) |
 
 ---
@@ -88,10 +103,14 @@ Login IFRN  →  JWT salvo no sessionStorage  →  Painel (#/painel)
 - [x] Login biométrico (quando o dispositivo permite)
 - [x] Painel com abas **Diários** e **Autoinscrição** (estilo AVA)
 - [x] Página de detalhe do curso (seções expansíveis + atividades)
-- [x] Ícone e splash do Painel AVA (web + assets nativos em `resources/`)
+- [x] Header estilo AVA (menu + título/subtítulo + avatar), responsivo
+- [x] Safe-area / teclado (`app-keyboard.ts`) — inset nativo no Android; sem padding fantasma no browser
+- [x] Sidebar + modais (perfil, ajuda, acessibilidade, filtros)
+- [x] Ícone e splash do Painel AVA (web + assets nativos)
 - [x] Tratamento de erros (401, 404, 500, 502, 503, rede, timeout)
 - [x] Página “não encontrada”
 - [x] Cache curto do dashboard/cursos
+- [x] Comentários nos módulos `core_mobile/*.ts`
 - [x] Medidas básicas de segurança no cliente
 
 ## Pendências / evolução
@@ -106,4 +125,4 @@ Login IFRN  →  JWT salvo no sessionStorage  →  Painel (#/painel)
 ## Para o coordenador (resumo em 30 segundos)
 
 A pasta `MoodleIFRN` é o **módulo IFRN** do app: login institucional + painel de cursos no estilo AVA.  
-O restante do Moodle Mobile continua intacto. A autenticação fala com uma API via JWT; o painel é uma SPA leve (HTML/JS/Ionic) embutida no build do app.
+O restante do Moodle Mobile continua intacto. A autenticação fala com uma API via JWT; o painel é uma SPA leve (HTML/TS/Ionic) embutida no build do app.

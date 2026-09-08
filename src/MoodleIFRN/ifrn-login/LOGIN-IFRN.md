@@ -71,3 +71,9 @@ ifrn-login
 - A senha **não** é persistida após o login (é limpa da memória da página).
 - O access token fica em `sessionStorage` (não em `localStorage`).
 - A biometria guarda apenas o **refresh token**, protegido pelo cofre do dispositivo.
+
+## Ver também
+
+- [Serviços auth/biometria](../docs/SERVICOS-AUTH-BIOMETRIA.md)
+- [Painel de cursos](../docs/PAINEL-CURSOS.md)
+- [Índice da documentação](../docs/README.md)

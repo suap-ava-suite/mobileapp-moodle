@@ -1,11 +1,17 @@
 /**
  * app-keyboard.ts
- * Sincroniza altura do teclado e safe-areas no painel mobilemoodle (WebView standalone).
+ * ----------------------------------------------------------------------------
+ * Dois papéis:
+ *   1) Safe-area (status bar / notch) → CSS vars --ion-safe-area-*
+ *   2) Altura do teclado virtual → --keyboard-height + classe .keyboard-is-open
  *
- * No Android nativo o Moodle ativa edge-to-edge (StatusBar.overlaysWebView).
- * Insets reais: cordova-plugin-insets. Em browser/DevTools NÃO força padding extra.
+ * Android nativo (Cordova):
+ *   - Preferência: cordova-plugin-insets (window.totalpave.Inset), igual ao core Moodle
+ *   - Fallback: ~24px só se Cordova existir e o inset vier 0
+ *
+ * Browser / DevTools (“console mobile”):
+ *   - NÃO força padding no topo (não há status bar sobrepondo o WebView)
  */
-
 const KEYBOARD_THRESHOLD = 80;
 
 /** Só no Cordova Android, se o plugin de insets falhar. */

@@ -1,10 +1,19 @@
 /**
  * app-utils.ts
- * Base de assets, escape HTML, templates e fetch de partials.
+ * ----------------------------------------------------------------------------
+ * Utilitários de UI compartilhados pelo App:
+ * - descobrir pasta dos assets (logo, pages/*.html)
+ * - escapeHtml / iniciais do nome
+ * - clonar <template id="tpl-…">
+ * - fetchText de partials HTML
+ * - URL de volta ao login IFRN
  */
 import { MM, App } from './namespace';
 
-
+    /**
+     * Base onde estão pages/, static/, etc.
+     * Preferência: pasta do script mobilemoodle.js; fallback: URL atual.
+     */
     function resolveAssetBase(): string {
         const scripts = document.getElementsByTagName('script');
 
@@ -23,6 +32,7 @@ import { MM, App } from './namespace';
         }
     }
 
+    /** Sempre use antes de innerHTML com texto da API. */
     function escapeHtml(value: unknown): string {
         return String(value ?? '')
             .replace(/&/g, '&amp;')
@@ -31,12 +41,14 @@ import { MM, App } from './namespace';
             .replace(/"/g, '&quot;');
     }
 
+    /** Primeira letra do nome para avatar sem foto. */
     function initials(name: unknown): string {
         const letters = String(name || 'U').trim().charAt(0).toUpperCase();
 
         return letters || 'U';
     }
 
+    /** Clona o conteúdo de um <template> do index.html / pages/*.html. */
     function cloneTemplate(id: string): DocumentFragment | null {
         const tpl = document.getElementById(id) as HTMLTemplateElement | null;
 
@@ -47,6 +59,7 @@ import { MM, App } from './namespace';
         return tpl.content.cloneNode(true) as DocumentFragment;
     }
 
+    /** Carrega HTML de partial (painel, curso, erros) com timeout de 10s. */
     async function fetchText(url: string): Promise<string> {
         const controller = new AbortController();
         const timer = window.setTimeout(() => {
@@ -70,6 +83,7 @@ import { MM, App } from './namespace';
         }
     }
 
+    /** Volta um nível (www/) e abre a rota Angular do login IFRN. */
     function resolveLoginUrl(): string {
         try {
             const appRoot = new URL('../', App.ASSET_BASE || window.location.href);

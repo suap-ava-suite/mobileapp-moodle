@@ -1,12 +1,18 @@
 /**
  * app-accessibility.ts
- * Preferências de acessibilidade do Painel AVA (localStorage).
+ * ----------------------------------------------------------------------------
+ * Preferências de acessibilidade espelhando o Painel AVA / theme_ifrn25.
+ *
+ * Estado em localStorage (chave ifrn_a11y_prefs).
+ * applyToBody() aplica classes CSS no <body> (ex.: color_mode_high_contrast).
+ * VLibras é carregado sob demanda quando vlibras_active = true.
  */
 import { MM, App } from './namespace';
 
 
     const STORAGE_KEY = 'ifrn_a11y_prefs';
 
+    /** Toggles booleanos ↔ classes CSS no body. */
     const BOOL_KEYS: A11yBoolKey[] = [
         'dyslexia_friendly',
         'highlight_links',
@@ -83,6 +89,7 @@ import { MM, App } from './namespace';
         }
     }
 
+    /** Injeta o widget VLibras.gov.br uma única vez. */
     function ensureVlibras(): void {
         if (vlibrasReady || !state.vlibras_active) {
             return;
@@ -129,6 +136,7 @@ import { MM, App } from './namespace';
         document.body.appendChild(script);
     }
 
+    /** Reflete o state atual em classes/atributos do document.body. */
     function applyToBody(): void {
         const body = document.body;
 
@@ -169,6 +177,7 @@ import { MM, App } from './namespace';
         applyToBody();
     }
 
+    /** Cicla zoom: 100 → 120 → 130 → 150 → 160 → 100… */
     function cycleZoom(): void {
         const idx = ZOOM_OPTIONS.indexOf(state.zoom_level);
         const next = ZOOM_OPTIONS[(idx + 1) % ZOOM_OPTIONS.length];
@@ -215,6 +224,7 @@ import { MM, App } from './namespace';
         });
     }
 
+    /** Atualiza checkboxes/indicadores do modal de acessibilidade. */
     function syncPanelControls(): void {
         BOOL_KEYS.forEach((key) => {
             const el = document.getElementById(key) as HTMLInputElement | null;
@@ -252,6 +262,7 @@ import { MM, App } from './namespace';
         renderIndicators(colorIndicators, 'color');
     }
 
+    /** Chamado quando o modal de a11y abre (liga listeners nos controles). */
     function bindPanelControls(): void {
         BOOL_KEYS.forEach((key) => {
             const el = document.getElementById(key) as HTMLInputElement | null;
@@ -286,6 +297,7 @@ import { MM, App } from './namespace';
         syncPanelControls();
     }
 
+    /** Boot: lê localStorage e aplica classes (antes mesmo do modal existir). */
     function init(): void {
         loadState();
         applyToBody();
