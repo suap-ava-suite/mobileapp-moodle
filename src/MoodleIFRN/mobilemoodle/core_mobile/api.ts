@@ -3,9 +3,9 @@
  * ----------------------------------------------------------------------------
  * Fachada de dados do painel + cache em memória.
  *
- * Endpoints:
- *   GET /dashboard/          → getDashboard()
- *   GET /courses/:id         → getCourse(id)
+ * Fonte: API oficial do SUAP (JWT do login IFRN).
+ *   GET /api/rh/eu/ + diários  → getDashboard()
+ *   GET turma/diário            → getCourse(id)
  *
  * Cache:
  *   - TTL 60s
@@ -64,10 +64,8 @@ import { MM } from './namespace';
             return dashboardCache.inFlight;
         }
 
-        dashboardCache.inFlight = MM.request('/dashboard/')
-            .then((data: unknown) => {
-                const dashboard = data as DashboardData;
-
+        dashboardCache.inFlight = MM.fetchSuapDashboard()
+            .then((dashboard) => {
                 dashboardCache.value = dashboard;
                 dashboardCache.fetchedAt = Date.now();
 
@@ -117,10 +115,8 @@ import { MM } from './namespace';
             return entry.inFlight;
         }
 
-        entry.inFlight = MM.request('/courses/' + encodeURIComponent(id))
-            .then((data: unknown) => {
-                const course = data as CourseData;
-
+        entry.inFlight = MM.fetchSuapCourse(id)
+            .then((course) => {
                 entry!.value = course;
                 entry!.fetchedAt = Date.now();
 

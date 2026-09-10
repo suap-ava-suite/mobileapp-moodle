@@ -1,24 +1,29 @@
 # Contrato da API
 
-O app fala com um backend HTTP (hoje: FastAPI de teste em `localhost:8000`).
-Este documento descreve o que o **cliente espera**, para alinhar com o time/backend.
+O app usa **duas bases**:
+
+1. **Autenticação** — API oficial do SUAP (`https://suap.ifrn.edu.br`)
+2. **Painel (cursos/diários)** — ainda o backend de teste FastAPI (`localhost:8000`) até a API de produção do AVA
+
+Este documento descreve o que o **cliente espera**.
 
 ---
 
 ## Base URL
 
-| Ambiente | Base |
-|----------|------|
-| Desenvolvimento (app em localhost) | `http://localhost:8000` |
-| Demais ambientes | mesma origem da página do painel |
+| Ambiente | Autenticação | Painel |
+|----------|--------------|--------|
+| Produção / app | `https://suap.ifrn.edu.br` | mesma origem da página (ou backend AVA) |
+| Desenvolvimento do painel | `https://suap.ifrn.edu.br` | `http://localhost:8000` |
 
-Autenticação Angular (`AuthService`) usa `http://localhost:8000` no código atual de desenvolvimento.
+Docs SUAP: https://suap.ifrn.edu.br/api/docs/  
+OpenAPI: https://suap.ifrn.edu.br/api/openapi.json
 
 ---
 
-## Autenticação
+## Autenticação (SUAP)
 
-### `POST /auth/login`
+### `POST /api/token/pair`
 
 **Body**
 
@@ -29,40 +34,63 @@ Autenticação Angular (`AuthService`) usa `http://localhost:8000` no código at
 }
 ```
 
-**Resposta 200**
+**Resposta 200** (SimpleJWT)
 
 ```json
 {
-  "access_token": "eyJ...",
-  "refresh_token": "eyJ...",
-  "token_type": "bearer"
+  "username": "matricula-ou-cpf",
+  "refresh": "eyJ...",
+  "access": "eyJ..."
 }
 ```
+
+O `AuthService` converte para o formato interno `access_token` / `refresh_token` / `token_type`.
 
 **Erros esperados pelo cliente**
 
 | Status | Tratamento na UI |
 |--------|------------------|
-| 401 | Usuário ou senha inválidos |
+| 400 / 401 | IFRN-id ou senha inválidos |
 | 429 | Muitas tentativas |
-| 5xx | Serviço indisponível |
+| 5xx | SUAP indisponível |
 | timeout / offline | Mensagens específicas |
 
 ---
 
-### `POST /auth/refresh`
+### `POST /api/token/refresh`
 
 **Body**
 
 ```json
 {
-  "refresh_token": "eyJ..."
+  "refresh": "eyJ..."
 }
 ```
 
-**Resposta 200**: mesmo formato de `/auth/login`.
+**Resposta 200**
+
+```json
+{
+  "refresh": "eyJ...",
+  "access": "eyJ..."
+}
+```
 
 Usado após biometria. Se retornar **401**, o app desativa a biometria local e pede login com senha.
+
+---
+
+### `POST /api/token/verify`
+
+**Body**
+
+```json
+{
+  "token": "eyJ..."
+}
+```
+
+Confere se o access token ainda é aceito pelo SUAP.
 
 ---
 
@@ -75,45 +103,45 @@ Authorization: Bearer <access_token>
 Accept: application/json
 ```
 
-### `GET /dashboard/`
+O painel **não** usa mais `/dashboard/` da FastAPI.  
+Após o login SUAP, os dados vêm destes endpoints (adaptados em `api-suap.ts`):
 
-Retorno esperado (campos usados pela UI):
+| Uso interno | Endpoint SUAP |
+|-------------|----------------|
+| Nome / foto / papel | `GET /api/rh/eu/` |
+| Lista de diários | `GET /api/ensino/meus-periodos-letivos/` + `GET /api/ensino/diarios/{ano}.{periodo}/` (fallback: `GET /api/ensino/meus-diarios/`) |
+| Detalhe do diário | `GET /api/ensino/minha-turma-virtual/{id}/` (fallback: aulas/materiais/tópicos do diário) |
+
+Formato interno esperado pela UI (`DashboardData`):
 
 ```json
 {
   "nome": "Nome do estudante",
   "username": "matricula",
-  "papel": "coordenador",
+  "papel": "estudante",
   "total_courses": 3,
   "courses": [
     {
       "id": 1,
-      "name": "Nome do curso",
-      "shortname": "CURSO1",
+      "name": "Nome da disciplina",
+      "shortname": "SIGLA",
       "progress": 40,
-      "moodle": "AVA"
+      "moodle": "SUAP"
     }
   ],
   "diarios": [],
-  "autoinscricoes": [
-    {
-      "id": 10,
-      "name": "Curso FIC aberto",
-      "shortname": "FIC1",
-      "moodle": "AVA Aberto",
-      "is_enrolled": false,
-      "details_url": ""
-    }
-  ]
+  "autoinscricoes": []
 }
 ```
 
-A aba **Diários** usa `diarios` se existir; senão cai em `courses` (API de teste).  
-A aba **Autoinscrição** usa `autoinscricoes` (ou `self_enrolments`).  
-`total_courses` deve refletir a quantidade real de itens em `courses`/`diarios`.  
-`papel` opcional: `coordenador` ou `estudante` (demo FastAPI).
+A aba **Diários** usa `diarios` se existir; senão cai em `courses`.  
+A aba **Autoinscrição** usa `autoinscricoes` (hoje vazia no adaptador SUAP).
 
-### `GET /courses/{id}`
+### Detalhe legado (FastAPI de teste)
+
+Os paths abaixo ficam documentados só como referência do protótipo antigo; o cliente atual não os chama:
+
+### `GET /courses/{id}` (legado)
 
 `id` numérico.
 
@@ -175,8 +203,9 @@ Resposta de sucesso deve ser `Content-Type: application/json`.
 
 ## Observação
 
-A FastAPI atual é de **teste**. Quando a API de produção chegar, o ideal é:
+A autenticação já aponta para o **SUAP oficial**.  
+O painel ainda pode usar FastAPI de **teste** para cursos/diários. Quando a API de produção do AVA chegar:
 
-1. Manter os mesmos paths (ou adaptar só os serviços)
-2. Trocar a base URL
-3. Garantir CORS + HTTPS + JWT assinado
+1. Manter os paths do painel (ou adaptar só os serviços)
+2. Trocar a base URL do painel
+3. Garantir CORS + HTTPS + JWT aceito pelo backend AVA

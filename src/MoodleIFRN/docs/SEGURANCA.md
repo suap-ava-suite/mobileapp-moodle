@@ -25,8 +25,8 @@ Não substituem segurança de backend (assinatura JWT, rate limit, HTTPS, etc.).
 | `Authorization: Bearer` fixo (não sobrescrito) | `api-http.ts` |
 | `credentials: "omit"` | `api-http.ts` |
 | Timeout de 15s | `api-http.ts`, `auth.service.ts` |
-| Só paths relativos seguros (`/dashboard/`, etc.) | `api-http.ts` |
-| Base da API: mesma origem ou localhost | `app.ts`, `api-http.ts` |
+| Só paths relativos seguros (`/api/…`) | `api-http.ts` |
+| Base da API: SUAP oficial (`https://suap.ifrn.edu.br`) | `app.ts`, `api-http.ts` |
 | Removido o override perigoso `?api=https://…` | `app.ts` |
 | ID de curso só numérico | `api.ts`, `app-router.ts` |
 

@@ -11,38 +11,73 @@ Este documento fica em `docs/` para o índice da documentação.
 
 | Arquivo | Responsabilidade |
 |---------|------------------|
-| `../services_mobile/auth.service.ts` | Login, refresh, guardar/ler/limpar JWT, abrir o painel |
+| `../services_mobile/auth.service.ts` | Login/refresh/verify no SUAP, guardar/ler/limpar JWT, abrir o painel |
 | `../services_mobile/biometric.service.ts` | Ativar / autenticar / desativar login biométrico |
 
 ---
 
 ## AuthService
 
-### Endpoints usados (FastAPI de teste)
+### Endpoints do SUAP (produção)
+
+Base: `https://suap.ifrn.edu.br`  
+Docs: https://suap.ifrn.edu.br/api/docs/  
+OpenAPI: https://suap.ifrn.edu.br/api/openapi.json
 
 | Método | Caminho | Uso |
 |--------|---------|-----|
-| `POST` | `/auth/login` | Login com usuário e senha |
-| `POST` | `/auth/refresh` | Renovar sessão com refresh token |
+| `POST` | `/api/token/pair` | Login com IFRN-id (`username`) e senha (`password`) |
+| `POST` | `/api/token/refresh` | Renovar sessão com `{ "refresh": "…" }` |
+| `POST` | `/api/token/verify` | Conferir se o access token ainda é válido |
 
-Base atual de desenvolvimento: `http://localhost:8000`
+### Body / resposta de login
+
+**Request**
+
+```json
+{ "username": "matricula-ou-cpf", "password": "senha" }
+```
+
+**Response 200** (SimpleJWT do SUAP)
+
+```json
+{
+  "username": "matricula-ou-cpf",
+  "refresh": "eyJ…",
+  "access": "eyJ…"
+}
+```
+
+O `AuthService` normaliza para o formato interno:
+
+```json
+{
+  "access_token": "eyJ…",
+  "refresh_token": "eyJ…",
+  "token_type": "bearer",
+  "username": "matricula-ou-cpf"
+}
+```
 
 ### Métodos principais
 
 | Método | O que faz |
 |--------|-----------|
-| `login(credentials)` | Autentica e retorna tokens |
+| `login(credentials)` | Autentica no SUAP e retorna tokens |
 | `refresh(refreshToken)` | Troca refresh por novos tokens |
+| `verify(accessToken)` | Confere o token no SUAP |
 | `saveToken(token)` | Valida e grava o access token |
+| `saveUsername(username)` | Guarda matrícula/CPF no sessionStorage |
 | `getToken()` | Lê o token (memória → sessionStorage) |
 | `isAuthenticated()` | `true` se existe token válido |
 | `getAuthHeaders()` | Headers com `Authorization: Bearer …` |
-| `logout()` | Remove o token |
+| `logout()` | Remove token e username |
 | `openMobileMoodle(hash)` | Navega para `mobilemoodle/index.html` |
 
 ### Armazenamento do token
 
 - Chave: `ifrn_access_token`
+- Username: `ifrn_username`
 - Local: `sessionStorage` (+ cópia em memória na sessão Angular)
 - Validação no cliente:
   - formato JWT (3 partes)

@@ -27,6 +27,11 @@ import { MM } from './namespace';
                 return true;
             }
 
+            // API oficial do SUAP (login + diários).
+            if (parsed.origin === 'https://suap.ifrn.edu.br') {
+                return true;
+            }
+
             return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(parsed.origin);
         } catch {
             return false;
@@ -94,11 +99,19 @@ import { MM } from './namespace';
         }
     }
 
+    interface RequestOptions extends RequestInit {
+        /**
+         * Se true, 401/403 NÃO limpam a sessão (útil para endpoints opcionais
+         * do SUAP que variam por perfil: aluno vs servidor).
+         */
+        softAuth?: boolean;
+    }
+
     /**
      * GET/POST autenticado. Headers de auth não vêm de `options` (evita overwrite).
      * credentials: omit — não envia cookies de terceiros.
      */
-    async function request(path: string, options?: RequestInit): Promise<unknown> {
+    async function request(path: string, options?: RequestOptions): Promise<unknown> {
         const token = MM.getToken();
 
         if (!token) {
@@ -109,6 +122,7 @@ import { MM } from './namespace';
             throw new MM.ApiError(400, 'Caminho de API inválido.');
         }
 
+        const softAuth = Boolean(options && options.softAuth);
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => {
             controller.abort();
@@ -141,7 +155,10 @@ import { MM } from './namespace';
         }
 
         if (response.status === 401 || response.status === 403) {
-            MM.clearToken();
+            if (!softAuth) {
+                MM.clearToken();
+            }
+
             throw new MM.ApiError(response.status);
         }
 

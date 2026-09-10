@@ -111,13 +111,17 @@ O visual segue a identidade do AVA IFRN (header, cores, cards, progresso, menu).
 
 ## API consumida pelo painel
 
-| Recurso | Método | Path |
-|---------|--------|------|
-| Dashboard (usuário + cursos) | `GET` | `/dashboard/` |
-| Detalhe do curso | `GET` | `/courses/{id}` |
+Base: `https://suap.ifrn.edu.br` (mesmo JWT do login).
 
-Base em desenvolvimento (localhost): `http://localhost:8000`  
-Fora do localhost: mesma origem da página.
+| Recurso | Método | Path SUAP |
+|---------|--------|-----------|
+| Perfil | `GET` | `/api/rh/eu/` |
+| Períodos | `GET` | `/api/ensino/meus-periodos-letivos/` |
+| Diários (aluno) | `GET` | `/api/ensino/diarios/{ano}.{periodo}/` |
+| Diários abertos | `GET` | `/api/ensino/meus-diarios/` |
+| Detalhe | `GET` | `/api/ensino/minha-turma-virtual/{id}/` |
+
+O adaptador `api-suap.ts` converte essas respostas para o formato interno do painel (`DashboardData` / `CourseData`).
 
 Detalhes do contrato: [`./CONTRATO-API.md`](./CONTRATO-API.md)
 

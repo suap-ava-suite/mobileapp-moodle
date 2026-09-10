@@ -59,7 +59,14 @@
         font-size: 18px;
         font-weight: 700;
         line-height: 1.25;
-        margin: 0 0 38px;
+        margin: 0 0 8px;
+    }
+
+    &__subtitle {
+        color: #555555;
+        font-size: 14px;
+        line-height: 1.4;
+        margin: 0 0 28px;
     }
 
     &__form {

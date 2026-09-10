@@ -47,13 +47,12 @@ import { MM, App } from './namespace';
         }
     }
 
-    /** Em localhost aponta para a API de desenvolvimento; senão usa a mesma origem. */
+    /**
+     * Base da API do painel: SUAP oficial (mesmo JWT do login).
+     * Docs: https://suap.ifrn.edu.br/api/docs/
+     */
     function resolveApiBase(): string {
-        if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(window.location.origin)) {
-            return 'http://localhost:8000';
-        }
-
-        return window.location.origin;
+        return 'https://suap.ifrn.edu.br';
     }
 
     window.addEventListener('hashchange', () => {

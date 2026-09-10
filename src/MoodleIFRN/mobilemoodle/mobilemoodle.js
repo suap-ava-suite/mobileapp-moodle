@@ -165,6 +165,9 @@
       if (parsed.origin === origin) {
         return true;
       }
+      if (parsed.origin === "https://suap.ifrn.edu.br") {
+        return true;
+      }
       return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(parsed.origin);
     } catch {
       return false;
@@ -219,6 +222,7 @@
     if (!isSafeApiPath(path)) {
       throw new MM.ApiError(400, "Caminho de API inv\xE1lido.");
     }
+    const softAuth = Boolean(options && options.softAuth);
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => {
       controller.abort();
@@ -246,7 +250,9 @@
       window.clearTimeout(timeoutId);
     }
     if (response.status === 401 || response.status === 403) {
-      MM.clearToken();
+      if (!softAuth) {
+        MM.clearToken();
+      }
       throw new MM.ApiError(response.status);
     }
     if (!response.ok) {
@@ -262,6 +268,258 @@
   MM.setApiBaseUrl = setApiBaseUrl;
   MM.joinUrl = joinUrl;
   MM.request = request;
+
+  // src/MoodleIFRN/mobilemoodle/core_mobile/api-suap.ts
+  function asPagedResults(data) {
+    if (Array.isArray(data)) {
+      return data;
+    }
+    if (data && typeof data === "object" && Array.isArray(data.results)) {
+      return data.results;
+    }
+    return [];
+  }
+  function absoluteSuapUrl(pathOrUrl) {
+    if (!pathOrUrl) {
+      return void 0;
+    }
+    if (/^https?:\/\//i.test(pathOrUrl) || pathOrUrl.startsWith("data:")) {
+      return pathOrUrl;
+    }
+    if (pathOrUrl.startsWith("/")) {
+      return "https://suap.ifrn.edu.br" + pathOrUrl;
+    }
+    return pathOrUrl;
+  }
+  function displayName(eu) {
+    return eu.nome_social || eu.nome_usual || eu.nome || eu.identificacao || "Usu\xE1rio SUAP";
+  }
+  function roleFromTipo(tipo) {
+    const value = (tipo || "").toLowerCase();
+    if (value.includes("servidor") || value.includes("professor") || value.includes("docente")) {
+      return "coordenador";
+    }
+    return "estudante";
+  }
+  function latestPeriod(periods) {
+    if (!periods.length) {
+      return null;
+    }
+    return periods.reduce((best, current) => {
+      if (current.ano_letivo > best.ano_letivo || current.ano_letivo === best.ano_letivo && current.periodo_letivo > best.periodo_letivo) {
+        return current;
+      }
+      return best;
+    });
+  }
+  function progressFromDisciplina(disciplina) {
+    if (!disciplina) {
+      return null;
+    }
+    const total = Number(disciplina.ch_total_aula || 0);
+    const done = Number(disciplina.ch_cumprida_aula || 0);
+    if (total > 0) {
+      return Math.max(0, Math.min(100, Math.round(done / total * 100)));
+    }
+    if (typeof disciplina.frequencia === "number") {
+      return Math.max(0, Math.min(100, Math.round(disciplina.frequencia)));
+    }
+    return null;
+  }
+  function mapDiarioToCourse(diario) {
+    const disciplina = diario.disciplina;
+    const name = diario.componente_curricular || disciplina?.descricao || disciplina?.sigla || `Di\xE1rio ${diario.id}`;
+    const progress = progressFromDisciplina(disciplina);
+    return {
+      id: diario.id,
+      name,
+      fullname: name,
+      shortname: disciplina?.sigla || String(diario.id),
+      progress,
+      hasprogress: progress != null,
+      moodle: diario.ambiente_virtual || "SUAP",
+      is_enrolled: true,
+      enrolled: true
+    };
+  }
+  function isApiError(error) {
+    return Boolean(
+      error && typeof error === "object" && typeof error.status === "number"
+    );
+  }
+  async function softGet(path) {
+    try {
+      return await MM.request(path, { softAuth: true });
+    } catch (error) {
+      if (isApiError(error) && (error.status === 404 || error.status === 403 || error.status === 400)) {
+        return null;
+      }
+      throw error;
+    }
+  }
+  async function fetchStudentDiarios(period) {
+    const semestre = `${period.ano_letivo}.${period.periodo_letivo}`;
+    const bySemestre = await softGet(`/api/ensino/diarios/${encodeURIComponent(semestre)}/`);
+    if (bySemestre) {
+      return asPagedResults(bySemestre);
+    }
+    const byPeriod = await softGet(
+      `/api/ensino/meus-diarios/${period.ano_letivo}/${period.periodo_letivo}/`
+    );
+    if (byPeriod) {
+      return asPagedResults(byPeriod);
+    }
+    return [];
+  }
+  async function fetchOpenDiarios() {
+    const open = await softGet("/api/ensino/meus-diarios/");
+    return open ? asPagedResults(open) : [];
+  }
+  async function fetchSuapDashboard() {
+    const eu = await MM.request("/api/rh/eu/");
+    const periodsRaw = await softGet("/api/ensino/meus-periodos-letivos/");
+    const periods = periodsRaw ? asPagedResults(periodsRaw) : [];
+    const period = latestPeriod(periods);
+    let diarios = [];
+    if (period) {
+      diarios = await fetchStudentDiarios(period);
+    }
+    if (!diarios.length) {
+      diarios = await fetchOpenDiarios();
+    }
+    const courses = diarios.map(mapDiarioToCourse);
+    const username = typeof sessionStorage !== "undefined" ? sessionStorage.getItem("ifrn_username") || void 0 : void 0;
+    return {
+      nome: displayName(eu),
+      username,
+      foto_url: absoluteSuapUrl(eu.foto),
+      foto: absoluteSuapUrl(eu.foto),
+      avatar_url: absoluteSuapUrl(eu.foto),
+      papel: roleFromTipo(eu.tipo_usuario),
+      role: roleFromTipo(eu.tipo_usuario),
+      courses,
+      diarios: courses,
+      autoinscricoes: [],
+      self_enrolments: [],
+      total_courses: courses.length,
+      filtro_situacao: "inprogress",
+      situacao: "inprogress"
+    };
+  }
+  function teachersLabel(professores) {
+    if (!professores || !professores.length) {
+      return "Professor(a) n\xE3o informado";
+    }
+    return professores.map((item) => item.nome_usual || item.nome || "").filter(Boolean).join(", ") || "Professor(a) n\xE3o informado";
+  }
+  function sectionsFromTurma(turma) {
+    const sections = [];
+    const aulas = Array.isArray(turma.aulas) ? turma.aulas : [];
+    const materiais = Array.isArray(turma.materiais_de_aula) ? turma.materiais_de_aula : [];
+    if (aulas.length) {
+      sections.push({
+        name: "Aulas",
+        activities: aulas.map((aula) => ({
+          name: aula.conteudo || `Aula ${aula.data || ""}`.trim(),
+          modname: "lesson",
+          completion: false
+        }))
+      });
+    }
+    if (materiais.length) {
+      sections.push({
+        name: "Materiais",
+        activities: materiais.map((material) => ({
+          name: material.descricao || "Material",
+          modname: "resource",
+          completion: false
+        }))
+      });
+    }
+    return sections;
+  }
+  async function sectionsFromDiarioEndpoints(diarioId) {
+    const [aulasRaw, materiaisRaw, topicosRaw] = await Promise.all([
+      softGet(`/api/ensino/diarios/${encodeURIComponent(diarioId)}/aulas/`),
+      softGet(`/api/ensino/diarios/${encodeURIComponent(diarioId)}/materiais/`),
+      softGet(`/api/ensino/diarios/${encodeURIComponent(diarioId)}/topicos/`)
+    ]);
+    const sections = [];
+    const aulas = asPagedResults(aulasRaw);
+    const materiais = asPagedResults(materiaisRaw);
+    const topicos = asPagedResults(topicosRaw);
+    if (aulas.length) {
+      sections.push({
+        name: "Aulas",
+        activities: aulas.map((aula) => ({
+          name: aula.conteudo || `Aula ${aula.data || ""}`.trim(),
+          modname: "lesson",
+          completion: false
+        }))
+      });
+    }
+    if (materiais.length) {
+      sections.push({
+        name: "Materiais",
+        activities: materiais.map((material) => ({
+          name: material.descricao || "Material",
+          modname: "resource",
+          completion: false
+        }))
+      });
+    }
+    if (topicos.length) {
+      sections.push({
+        name: "T\xF3picos",
+        activities: topicos.map((topico) => ({
+          name: topico.titulo || topico.descricao || `T\xF3pico ${topico.id || ""}`,
+          modname: "forum",
+          completion: false
+        }))
+      });
+    }
+    return sections;
+  }
+  async function fetchSuapCourse(courseId) {
+    const turma = await softGet(
+      `/api/ensino/minha-turma-virtual/${encodeURIComponent(courseId)}/`
+    );
+    if (turma) {
+      const name = turma.componente_curricular || `Di\xE1rio ${courseId}`;
+      return {
+        id: turma.id || Number(courseId),
+        name,
+        teacher: teachersLabel(turma.professores),
+        workload: "",
+        progress: 0,
+        moodle: "SUAP",
+        summary: [
+          turma.ano_letivo && turma.periodo_letivo ? `Per\xEDodo ${turma.ano_letivo}.${turma.periodo_letivo}` : ""
+        ].filter(Boolean).join(" \xB7 "),
+        sections: sectionsFromTurma(turma)
+      };
+    }
+    const professoresRaw = await softGet(
+      `/api/ensino/diarios/${encodeURIComponent(courseId)}/professores/`
+    );
+    const sections = await sectionsFromDiarioEndpoints(courseId);
+    const professores = asPagedResults(professoresRaw);
+    if (!sections.length && !professores.length) {
+      throw new MM.ApiError(404, "Di\xE1rio n\xE3o encontrado no SUAP.");
+    }
+    return {
+      id: Number(courseId),
+      name: `Di\xE1rio ${courseId}`,
+      teacher: teachersLabel(professores),
+      workload: "",
+      progress: 0,
+      moodle: "SUAP",
+      summary: "",
+      sections
+    };
+  }
+  MM.fetchSuapDashboard = fetchSuapDashboard;
+  MM.fetchSuapCourse = fetchSuapCourse;
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/api.ts
   var CACHE_TTL_MS = 60 * 1e3;
@@ -292,8 +550,7 @@
     if (dashboardCache.inFlight && !force) {
       return dashboardCache.inFlight;
     }
-    dashboardCache.inFlight = MM.request("/dashboard/").then((data) => {
-      const dashboard = data;
+    dashboardCache.inFlight = MM.fetchSuapDashboard().then((dashboard) => {
       dashboardCache.value = dashboard;
       dashboardCache.fetchedAt = Date.now();
       return dashboard;
@@ -328,8 +585,7 @@
     if (entry.inFlight && !force) {
       return entry.inFlight;
     }
-    entry.inFlight = MM.request("/courses/" + encodeURIComponent(id)).then((data) => {
-      const course = data;
+    entry.inFlight = MM.fetchSuapCourse(id).then((course) => {
       entry.value = course;
       entry.fetchedAt = Date.now();
       return course;
@@ -1751,10 +2007,7 @@
     }
   }
   function resolveApiBase() {
-    if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(window.location.origin)) {
-      return "http://localhost:8000";
-    }
-    return window.location.origin;
+    return "https://suap.ifrn.edu.br";
   }
   window.addEventListener("hashchange", () => {
     App.loadRoute?.(false);

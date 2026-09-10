@@ -6,6 +6,7 @@ import './core_mobile/namespace';
 import './core_mobile/api-errors';
 import './core_mobile/api-auth';
 import './core_mobile/api-http';
+import './core_mobile/api-suap';
 import './core_mobile/api';
 import './core_mobile/app-utils';
 import './core_mobile/app-status';

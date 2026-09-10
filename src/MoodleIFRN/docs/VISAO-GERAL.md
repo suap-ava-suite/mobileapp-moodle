@@ -89,11 +89,12 @@ Detalhes: [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../mobilemoodle/core_mob
 
 | Item | Valor atual |
 |------|-------------|
-| API de autenticação / dados | `http://localhost:8000` (FastAPI de teste) |
-| Token | JWT (`access_token` / `refresh_token`) |
+| API de autenticação | `https://suap.ifrn.edu.br` (`/api/token/pair`, `/refresh`, `/verify`) |
+| API de dados do painel | `https://suap.ifrn.edu.br` (`/api/rh/eu/`, diários de ensino) |
+| Token | JWT SUAP (`access` / `refresh`, normalizado no cliente) |
 | Chave no navegador | `sessionStorage.ifrn_access_token` |
 
-> Em produção, a URL da API deve apontar para o backend oficial do IFRN. O painel, em ambiente que não é localhost, usa a **mesma origem** da página.
+> Login e painel usam o mesmo JWT do SUAP (IFRN-id + senha).
 
 ---
 

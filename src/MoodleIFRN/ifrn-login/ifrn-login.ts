@@ -78,7 +78,7 @@ export class IfrnLoginPage implements OnInit {
     }
 
     /**
-     * Autentica as credenciais na FastAPI.
+     * Autentica IFRN-id e senha na API do SUAP e abre o painel.
      */
     login(): void {
         if (this.loading) {
@@ -101,7 +101,8 @@ export class IfrnLoginPage implements OnInit {
             return;
         }
 
-        if (username.length > 120 || this.password.length > 200) {
+        // Limites alinhados ao schema do SUAP (/api/token/pair).
+        if (username.length > 150 || this.password.length > 128) {
             void CoreAlerts.showError(
                 'Credenciais inválidas.',
             );
@@ -174,9 +175,9 @@ export class IfrnLoginPage implements OnInit {
     }
 
     /**
-     * Salva os tokens e abre o painel Mobile Moodle.
+     * Salva os tokens do SUAP e abre o painel Mobile Moodle.
      *
-     * @param response Tokens retornados pela FastAPI.
+     * @param response Tokens retornados por POST /api/token/pair.
      */
     private async completeLogin(
         response: AuthResponse,
@@ -184,6 +185,9 @@ export class IfrnLoginPage implements OnInit {
         try {
             this.authService.saveToken(
                 response.access_token,
+            );
+            this.authService.saveUsername(
+                response.username || this.username,
             );
 
             this.password = '';
@@ -270,13 +274,15 @@ export class IfrnLoginPage implements OnInit {
     }
 
     /**
-     * Informa como recuperar a senha.
+     * Abre o SUAP para recuperação de senha (mesmo portal do IFRN-id).
      */
     forgotPassword(event: Event): void {
         event.preventDefault();
 
-        void CoreAlerts.showError(
-            'A recuperação de senha é feita no SUAP/IFRN-id. Acesse o portal institucional pelo navegador.',
+        window.open(
+            'https://suap.ifrn.edu.br/',
+            '_blank',
+            'noopener,noreferrer',
         );
     }
 
@@ -294,7 +300,7 @@ export class IfrnLoginPage implements OnInit {
     }
 
     /**
-     * Converte erros da API em mensagens amigáveis.
+     * Converte erros da API do SUAP em mensagens amigáveis.
      */
     private messageForAuthError(
         error: HttpErrorResponse | TimeoutError,
@@ -311,15 +317,15 @@ export class IfrnLoginPage implements OnInit {
         }
 
         if (!(error instanceof HttpErrorResponse)) {
-            return 'Não foi possível conectar ao serviço de autenticação.';
+            return 'Não foi possível conectar ao SUAP.';
         }
 
         if (error.status === 0) {
-            return 'O serviço de autenticação está offline. Inicie a FastAPI na porta 8000.';
+            return 'Não foi possível alcançar o SUAP. Verifique sua conexão com a internet.';
         }
 
-        if (error.status === 401) {
-            return 'Usuário ou senha inválidos.';
+        if (error.status === 400 || error.status === 401) {
+            return 'IFRN-id ou senha inválidos. Use as mesmas credenciais do SUAP.';
         }
 
         if (error.status === 429) {
@@ -327,9 +333,9 @@ export class IfrnLoginPage implements OnInit {
         }
 
         if (error.status >= 500) {
-            return 'Serviço de autenticação indisponível. Tente novamente em instantes.';
+            return 'O SUAP está indisponível no momento. Tente novamente em instantes.';
         }
 
-        return 'Não foi possível conectar ao serviço de autenticação.';
+        return 'Não foi possível autenticar no SUAP. Tente novamente.';
     }
 }

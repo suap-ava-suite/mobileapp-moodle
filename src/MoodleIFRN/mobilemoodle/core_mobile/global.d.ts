@@ -32,6 +32,7 @@ interface DashboardCourse {
 
 interface DashboardData {
     nome?: string;
+    username?: string;
     foto_url?: string;
     foto?: string;
     avatar_url?: string;
@@ -42,6 +43,7 @@ interface DashboardData {
     filter_situacao?: string;
     filtro_label?: string;
     situacao_label?: string;
+    total_courses?: number;
     courses?: DashboardCourse[];
     diarios?: DashboardCourse[];
     autoinscricoes?: DashboardCourse[];
@@ -183,7 +185,12 @@ interface MobileMoodleNamespace {
     clearToken: () => void;
     setApiBaseUrl: (url: string) => void;
     joinUrl: (path: string) => string;
-    request: (path: string, options?: RequestInit) => Promise<unknown>;
+    request: (
+        path: string,
+        options?: RequestInit & { softAuth?: boolean },
+    ) => Promise<unknown>;
+    fetchSuapDashboard: () => Promise<DashboardData>;
+    fetchSuapCourse: (courseId: string) => Promise<CourseData>;
     invalidateCache: () => void;
     getDashboard: (force?: boolean) => Promise<DashboardData>;
     getCourse: (courseId: string | number, force?: boolean) => Promise<CourseData>;
