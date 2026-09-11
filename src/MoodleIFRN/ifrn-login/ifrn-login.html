@@ -1,6 +1,9 @@
 <ion-content class="ifrn-login">
 
     <header class="ifrn-login__header">
+        @if (canGoBack) {
+
+        }
         <img class="ifrn-login__logo" src="assets/img/Gov.br_logo.svg.webp" alt="gov.br">
     </header>
 
@@ -11,8 +14,12 @@
 
 
             <h1 id="ifrn-login-title">
-                {{ 'ifrn.login.title' | translate }}
+                Entrar com SUAP
             </h1>
+
+            <p class="ifrn-login__subtitle">
+                Use o mesmo IFRN-id e senha do SUAP.
+            </p>
 
 
 
@@ -41,9 +48,6 @@
                     </p>
 
                 </div>
-
-
-
 
                 <!-- Campo senha -->
                 <div class="ifrn-login__field">
@@ -82,8 +86,6 @@
 
 
 
-
-
                 <!-- Botão entrar -->
                 <button class="ifrn-login__button ifrn-login__button--primary" type="submit" [disabled]="loading">
 
@@ -109,8 +111,6 @@
 
 
 
-
-
                 <!-- Botão cancelar -->
                 <button class="ifrn-login__button ifrn-login__button--secondary" type="button" (click)="clear()">
 
@@ -122,9 +122,6 @@
             </form>
 
 
-
-
-
             <!-- Recuperar senha -->
             <a class="ifrn-login__link ifrn-login__link--forgot" href="" (click)="forgotPassword($event)">
 
@@ -134,9 +131,6 @@
 
 
         </section>
-
-
-
 
         <!-- Ajuda -->
         <a class="ifrn-login__link ifrn-login__link--help" href="" (click)="help($event)">

@@ -1,0 +1,175 @@
+// ============================================================
+// DESIGN TOKENS — Theme IFRN DS-GOV (v3.0)
+// ============================================================
+
+// ---------------------------------------------------------
+// 1. CORES INSTITUCIONAIS E PALETA GOV.BR
+// ---------------------------------------------------------
+$blue-warm-vivid-90: #071d41; // Azul Escuro Institucional
+$blue-warm-vivid-70: #1351b4; // Azul Primário Gov.br
+$blue-warm-vivid-80: #0c326f; // Azul Primário Dark
+$blue-warm-vivid-60: #155bcb; // Azul Intermediário
+$blue-warm-vivid-20: #c5d6f5; // Azul Claro Borda
+$blue-warm-vivid-10: #eaeff8; // Azul Claro Suave (Hover acordeão/links)
+$blue-darkest:       #04122b; // Azul Noturno (Rodapé inferior)
+
+$green-cool-vivid-60: #2d8a45; // Verde Sucesso Gov.br
+$green-cool-hover:    #184f16; // Verde Sucesso Hover
+$green-badge-bg:     #d4f0d8; // Fundo de Badge Verde
+
+$yellow-vivid-30:    #DDAA01; // Amarelo Alerta Dark
+$yellow-vivid-20:    #FFCD07; // Amarelo Alerta Bright
+
+$color-error:         #d93514; // Vermelho Erro Gov.br
+$color-error-hover:   #a8250b; // Vermelho Erro Hover
+$blue-badge-bg:       #d9e7ff; // Fundo de Badge Azul
+
+// ---------------------------------------------------------
+// 2. CORES NEUTRAS E TEXTO
+// ---------------------------------------------------------
+$color-black:        #000000;
+$text-darkest:       #000000;
+$text-dark:          #333333;
+$text-secondary:     #444444;
+$text-medium:        #555555;
+$text-muted:         #666666;
+$text-light:         #ffffff;
+
+$bg-white:           #ffffff;
+$bg-gray:            #f6f6f6;
+$bg-gray-hover:      #eeeeee;
+$bg-light-gray:      #f7f9fa;
+$bg-hover:           #f0f2f5;
+$bg-blue-light:      #f0f5ff;
+$bg-disabled:        #e6e6e6;
+$bg-progress-track:  #e0e0e0;
+$bg-progress-zero:   #c4c4c4;
+
+// ---------------------------------------------------------
+// 3. BORDAS E CORES DE CONTÊINER
+// ---------------------------------------------------------
+$border-outer:       #cccccc; // Borda externa de agrupamentos (#CCCCCC)
+$border-inner:       #e6e6e6; // Borda interna / divisórias (#e6e6e6)
+
+$border-light:       #e5e5e5;
+$border-divider:     #dddddd;
+$border-subtle:      #f0f0f0;
+$border-default:     #cccccc;
+$border-medium:      #9e9e9e;
+$border-heavy:       #676767;
+
+// ---------------------------------------------------------
+// 4. SOMBRAS E ALPHAS (RGBA)
+// ---------------------------------------------------------
+$shadow-header:      0 2px 8px rgba(0, 0, 0, 0.20);
+$shadow-popover:     0 8px 24px rgba(0, 0, 0, 0.15);
+$shadow-card:        0 4px 16px rgba(0, 0, 0, 0.04);
+$shadow-login-card:  0 4px 16px rgba(0, 0, 0, 0.08);
+$shadow-dropdown:    0 5px 15px rgba(0, 0, 0, 0.10);
+
+$bg-blue-alpha-hover:  rgba(19, 81, 180, 0.08);
+$bg-blue-alpha-subtle: rgba(19, 81, 180, 0.05);
+$focus-ring-blue:      0 0 0 3px rgba(19, 81, 180, 0.35);
+$focus-ring-blue-btn:  0 0 0 3px rgba(19, 81, 180, 0.45);
+$focus-ring-error:     0 0 0 3px rgba(217, 53, 20, 0.25);
+$bg-white-alpha-hover: rgba(255, 255, 255, 0.15);
+$border-white-alpha:   rgba(255, 255, 255, 0.10);
+
+// ---------------------------------------------------------
+// 5. TIPOGRAFIA
+// ---------------------------------------------------------
+$font-family-rawline: 'Rawline', sans-serif;
+$font-family-base:    'Rawline', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+// ---------------------------------------------------------
+// 6. DIMENSÕES, RADIIS E Z-INDEXES
+// ---------------------------------------------------------
+$header-height:           80px;
+$tab-nav-height:          50px;
+$container-max-width:     1300px;
+$login-card-max-width:    600px;
+
+$z-index-header:          1060; // Cabeçalho fixo acima de gavetas e conteúdo da página
+$z-index-sticky-footer:   1055; // Barra de ações adesiva no rodapé
+$z-index-drawer:          1050; // Gavetas laterais (abaixo do cabeçalho)
+$z-index-dropdown-page:   1035; // Dropdowns da página (abaixo do cabeçalho 1060 e gavetas 1050)
+$z-index-dropdown-header: 1100; // Dropdowns do cabeçalho (usermenu, notificações)
+$z-index-dropdown:        1035; // Padrão geral de dropdowns na página
+$z-index-footer:          10;   // Rodapé com z-index neutro
+
+$border-radius-none:      0;
+$border-radius-default:   4px;
+$border-radius-xs:        4px;
+$border-radius-sm:        8px;
+$border-radius-md:        12px;
+$border-radius-pill-sm:   20px;
+$border-radius-pill:      24px;
+$border-radius-pill-lg:   28px;
+$border-radius-circle:    50%;
+
+// ---------------------------------------------------------
+// 7. ESCALA DE ESPAÇAMENTO
+// ---------------------------------------------------------
+$spacing-2xs:  2px;
+$spacing-xs:   4px;
+$spacing-sm:   8px;
+$spacing-md:   16px;
+$spacing-lg:   24px;
+$spacing-xl:   32px;
+$spacing-2xl:  40px;
+$spacing-3xl:  48px;
+$spacing-4xl:  60px;
+
+// ---------------------------------------------------------
+// 8. ESCALA TIPOGRÁFICA
+// ---------------------------------------------------------
+$font-size-2xs:  0.65rem;   // ~10.4px
+$font-size-xs:   0.75rem;   // 12px
+$font-size-sm:   0.85rem;   // ~13.6px
+$font-size-base: 0.95rem;   // ~15.2px
+$font-size-md:   1rem;      // 16px
+$font-size-lg:   1.15rem;   // ~18.4px
+$font-size-xl:   1.35rem;   // ~21.6px
+$font-size-2xl:  1.5rem;    // 24px
+
+$font-weight-normal:   400;
+$font-weight-medium:   500;
+$font-weight-semibold: 600;
+$font-weight-bold:     700;
+
+$line-height-tight:    1.3;
+$line-height-base:     1.42857;
+$line-height-relaxed:  1.6;
+
+// ---------------------------------------------------------
+// 9. TAMANHOS DE ÍCONES
+// ---------------------------------------------------------
+$icon-size-xs:  14px;
+$icon-size-sm:  20px;
+$icon-size-md:  32px;
+$icon-size-lg:  36px;
+$icon-size-xl:  42px;
+
+// ---------------------------------------------------------
+// 10. BREAKPOINTS
+// ---------------------------------------------------------
+$breakpoint-sm:  576px;
+$breakpoint-md:  768px;
+$breakpoint-lg:  992px;
+$breakpoint-xl:  1200px;
+
+// ---------------------------------------------------------
+// 11. ESPESSURA DE BORDAS
+// ---------------------------------------------------------
+$border-width-thin:    1px;
+$border-width-medium:  2px;
+$border-width-thick:   3px;
+$border-width-accent:  5px;
+$border-width-login:   6px;
+
+// ---------------------------------------------------------
+// 12. TRANSIÇÕES
+// ---------------------------------------------------------
+$transition-fast: 0.15s ease;
+$transition-base: 0.2s ease;
+$transition-slow: 0.3s ease;

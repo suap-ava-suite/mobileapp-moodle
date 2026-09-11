@@ -2,16 +2,37 @@
 
 // Sidebar estilo theme_ifrn25 (Painel AVA)
 
+// Containers do menu lateral (perfil, filtro ativo…)
+$sidebar-menu-container-radius: 20px;
+
+// Containers dos modais (filtro, perfil, ajuda…)
+@mixin modal-container-surface {
+    border: 1px solid var(--light);
+    border-radius: 10px;
+    background: var(--light-lighter);
+}
+
 .ava-menu {
     --width: 255px;
+    --border-radius: #{$sidebar-menu-container-radius};
+
+    &::part(container) {
+        top: 8px;
+        bottom: 8px;
+        height: auto;
+        border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        overflow: hidden;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    }
 }
 
 .menu-content {
     --background: var(--primary);
-    --color: #ffffff;
+    --color: var(--dsgov-text-light);
 
     // A sidebar cobre a tela inteira, inclusive a área da barra de status.
     --padding-top: var(--ifrn-safe-area-top, 0px);
+    border-radius: 0 var(--border-radius, var(--dsgov-radius-md, 12px)) var(--border-radius, var(--dsgov-radius-md, 12px)) 0;
 }
 
 .sidebar-container {
@@ -66,7 +87,7 @@
 .sidebar-content-divider {
     margin: 1rem 0.5rem;
     height: 1px;
-    background-color: rgba(206, 253, 239, 0.35);
+    background-color: rgba(255, 255, 255, 0.22);
 }
 
 .sidebar-user-content {
@@ -79,10 +100,10 @@
 
 .sidebar-user-content-profile {
     width: 100%;
-    background: #ffffff;
-    color: var(--dark);
-    border: none;
-    border-radius: 1rem;
+    background: var(--dsgov-bg-white);
+    color: var(--dsgov-text-dark);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: $sidebar-menu-container-radius;
     padding: 0.5rem 1rem;
     display: flex;
     align-items: center;
@@ -216,7 +237,8 @@
     width: 100%;
     min-height: 30px;
     background: var(--primary-light);
-    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: $sidebar-menu-container-radius;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -271,8 +293,8 @@
     z-index: 1;
     width: min(320px, 92vw);
     height: 100%;
-    background: #ffffff;
-    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.18);
+    background: var(--dsgov-bg-white);
+    box-shadow: var(--dsgov-shadow-popover);
     display: flex;
     flex-direction: column;
     animation: sidebar-modal-in 0.2s ease-out;
@@ -298,7 +320,7 @@
     padding: 16px;
     border-bottom: 1px solid var(--light);
     background: var(--primary);
-    color: #ffffff;
+    color: var(--dsgov-text-light);
 }
 
 .sidebar-modal__header-title {
@@ -323,18 +345,28 @@
 .sidebar-modal__close {
     width: 32px;
     height: 32px;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.35);
     border-radius: 8px;
     background: var(--primary-dark);
-    color: #ffffff;
+    color: var(--dsgov-text-light);
     display: grid;
     place-items: center;
     cursor: pointer;
     padding: 0;
+    flex-shrink: 0;
 
     ion-icon {
         font-size: 18px;
+        color: inherit;
     }
+}
+
+.sidebar-modal__close-icon {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 400;
+    line-height: 1;
+    color: inherit;
 }
 
 .sidebar-modal__body {
@@ -353,6 +385,14 @@
     margin: 0 0 8px;
     font: var(--font-heading2);
     color: var(--dark);
+    padding: 12px 14px;
+    @include modal-container-surface;
+}
+
+.ava-button-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .ava-modal-body__hint {
@@ -374,21 +414,20 @@
 .modal-content-body-help-link {
     display: block;
     padding: 12px 14px;
-    border-radius: 10px;
-    background: var(--light-lighter);
     color: var(--primary-dark);
     text-decoration: none;
     font: var(--font-button2);
-    border: none;
     width: 100%;
     text-align: left;
     cursor: pointer;
+    @include modal-container-surface;
 }
 
 .modal-button-option.exit-button {
     margin-top: 16px;
     background: var(--danger-light);
     color: var(--danger-dark);
+    border-color: rgba(220, 3, 15, 0.25);
 }
 
 .modal-content-body-help-options {
@@ -398,54 +437,12 @@
     gap: 8px;
 }
 
-.ava-a11y-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 10px 0;
-    font: var(--font-heading4);
-}
-
-.ava-a11y-actions {
-    display: flex;
-    gap: 6px;
-
-    button {
-        min-width: 36px;
-        height: 36px;
-        border: 1px solid var(--light);
-        border-radius: 8px;
-        background: #fff;
-        color: var(--primary-dark);
-        font-weight: 700;
-        cursor: pointer;
-    }
-}
-
-.ava-a11y-switch {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 0;
-    font: var(--font-heading4);
-    cursor: pointer;
-
-    input {
-        width: 18px;
-        height: 18px;
-        accent-color: var(--primary);
-    }
-}
-
 .filter-select-area {
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 10px 12px;
-    border: 1px solid var(--light);
-    border-radius: 10px;
-    background: var(--light-lighter);
+    @include modal-container-surface;
 
     ion-icon {
         color: var(--primary);
@@ -470,7 +467,7 @@
     border-radius: 10px;
     padding: 12px;
     background: var(--primary);
-    color: #ffffff;
+    color: var(--dsgov-text-light);
     font: var(--font-button2);
     cursor: pointer;
 }
@@ -495,12 +492,4 @@
 .menu-section-label,
 .menu-divider {
     display: none;
-}
-
-body.a11y-contrast {
-    filter: contrast(1.15);
-}
-
-body.a11y-underline a {
-    text-decoration: underline !important;
 }

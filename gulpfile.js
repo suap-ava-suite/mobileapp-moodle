@@ -20,6 +20,7 @@ const BuildIconsJsonTask = require('./gulp/task-build-icons-json');
 const OverrideLangTask = require('./gulp/task-override-lang');
 const FreezeDependenciesTask = require('./gulp/task-freeze-dependencies');
 const gulp = require('gulp');
+const { execSync } = require('child_process');
 
 const paths = {
     lang: [
@@ -60,6 +61,15 @@ gulp.task('freeze-dependencies', (done) => {
     new FreezeDependenciesTask().run(done);
 });
 
+gulp.task('mobilemoodle-ts', (done) => {
+    try {
+        execSync('node src/MoodleIFRN/mobilemoodle/build.mjs', { stdio: 'inherit' });
+        done();
+    } catch (error) {
+        done(error);
+    }
+});
+
 // Build a Moodle plugin to run Behat tests.
 if (BuildBehatPluginTask.isBehatConfigured()) {
     gulp.task('behat', (done) => {
@@ -73,6 +83,7 @@ gulp.task(
         gulp.series('lang', 'lang-custom'),
         'env',
         'icons',
+        'mobilemoodle-ts',
         ...(BuildBehatPluginTask.isBehatConfigured() ? ['behat'] : [])
     ]),
 );
@@ -80,6 +91,8 @@ gulp.task(
 gulp.task('watch', () => {
     gulp.watch(paths.lang, { interval: 500 }, gulp.series('lang', 'lang-custom'));
     gulp.watch(['./moodle.config.json', './moodle.config.*.json'], { interval: 500 }, gulp.parallel('env'));
+    gulp.watch('src/MoodleIFRN/mobilemoodle/core_mobile/**/*.ts', { interval: 500 }, gulp.parallel('mobilemoodle-ts'));
+    gulp.watch('src/MoodleIFRN/mobilemoodle/mobilemoodle.ts', { interval: 500 }, gulp.parallel('mobilemoodle-ts'));
 
     if (BuildBehatPluginTask.isBehatConfigured()) {
         gulp.watch(['./tests/behat'], { interval: 500 }, gulp.parallel('behat'));

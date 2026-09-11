@@ -1,0 +1,336 @@
+// ==================================================
+// Botões — Tema IFRN DS-GOV (v3.0)
+// ==================================================
+// Design System Gov.br v3.0 para IFRN DS-GOV
+// Estilização global de botões e exceções de formato Pill e Circulares
+// ============================================================
+
+// Exceção de Formato Pill padrão DS Gov.br v3.0 para botões universais
+.btn:not(.ifrn-filter-toggle-btn):not(.btn-icon):not(.btn-close):not(.close):not(.page-link):not(.btn-clear):not([data-action="clearsearch"]):not(.dropdown-toggle),
+input[type="submit"]:not(.page-link),
+input[type="reset"] {
+    font-weight: $font-weight-semibold !important;
+    font-size: $font-size-base !important;
+    border-radius: $border-radius-pill !important; // Exceção Pill DS Gov.br v3.0
+    padding: $spacing-sm $spacing-lg !important;
+    line-height: $line-height-base !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: $spacing-sm !important;
+    cursor: pointer !important;
+    box-shadow: none !important;
+    outline: none !important;
+    @include transition-fast;
+
+    &:focus,
+    &:focus-visible {
+        @include focus-visible-ring;
+    }
+
+    &:disabled,
+    &.disabled {
+        opacity: 0.6 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+        box-shadow: none !important;
+    }
+}
+
+// ---------------------------------------------------------
+// Botão Primário (Azul Gov.br preenchido)
+// ---------------------------------------------------------
+.btn-primary,
+input[type="submit"].btn-primary,
+button[type="submit"].btn-primary,
+input[name="saveanddisplay"],
+button[name="saveanddisplay"],
+input[name="saveandreturn"],
+button[name="saveandreturn"],
+input[name="submitbutton"],
+button[name="submitbutton"],
+input#id_submitbutton,
+button#id_submitbutton,
+input#id_saveanddisplay,
+button#id_saveanddisplay,
+input#id_saveandreturn,
+button#id_saveandreturn {
+    background-color: $blue-warm-vivid-70 !important;
+    border: $border-width-thin solid $blue-warm-vivid-70 !important;
+    color: $text-light !important;
+
+    &:hover,
+    &:active,
+    &.active {
+        background-color: $blue-warm-vivid-90 !important;
+        border-color: $blue-warm-vivid-90 !important;
+        color: $text-light !important;
+    }
+}
+
+// ---------------------------------------------------------
+// Botão Secundário / Outline Primário (Outline azul Gov.br)
+// ---------------------------------------------------------
+.btn-secondary,
+.btn-outline-primary,
+.btn-cancel,
+input[name="cancel"],
+button[name="cancel"],
+input#id_cancel,
+button#id_cancel,
+a#id_cancel {
+    background-color: transparent !important;
+    border: $border-width-thin solid $blue-warm-vivid-70 !important;
+    color: $blue-warm-vivid-70 !important;
+
+    &:hover,
+    &:active,
+    &.active {
+        background-color: $blue-warm-vivid-10 !important;
+        border-color: $blue-warm-vivid-70 !important;
+        color: $blue-warm-vivid-90 !important;
+    }
+}
+
+// ---------------------------------------------------------
+// Botão Terciário / Link (Sem borda, fundo transparente)
+// ---------------------------------------------------------
+.btn-link,
+.btn-tertiary {
+    background-color: transparent !important;
+    border: $border-width-thin solid transparent !important;
+    color: $blue-warm-vivid-70 !important;
+    text-decoration: none !important;
+
+    &:hover,
+    &:active {
+        background-color: $blue-warm-vivid-10 !important;
+        color: $blue-warm-vivid-90 !important;
+        text-decoration: none !important;
+    }
+}
+
+// ---------------------------------------------------------
+// Botão de Perigo / Destruição (Vermelho Gov.br)
+// ---------------------------------------------------------
+.btn-danger {
+    background-color: $color-error !important;
+    border: $border-width-thin solid $color-error !important;
+    color: $text-light !important;
+
+    &:hover,
+    &:active {
+        background-color: $color-error-hover !important;
+        border-color: $color-error-hover !important;
+        color: $text-light !important;
+    }
+}
+
+.btn-outline-danger {
+    background-color: transparent !important;
+    border: $border-width-thin solid $color-error !important;
+    color: $color-error !important;
+
+    &:hover,
+    &:active {
+        background-color: $color-error !important;
+        border-color: $color-error !important;
+        color: $text-light !important;
+    }
+}
+
+// ---------------------------------------------------------
+// Botão de Sucesso / Confirmação (Verde Gov.br)
+// ---------------------------------------------------------
+.btn-success {
+    background-color: $green-cool-vivid-60 !important;
+    border: $border-width-thin solid $green-cool-vivid-60 !important;
+    color: $text-light !important;
+
+    &:hover,
+    &:active {
+        background-color: $green-cool-hover !important;
+        border-color: $green-cool-hover !important;
+        color: $text-light !important;
+    }
+}
+
+.btn-outline-success {
+    background-color: transparent !important;
+    border: $border-width-thin solid $green-cool-vivid-60 !important;
+    color: $green-cool-vivid-60 !important;
+
+    &:hover,
+    &:active {
+        background-color: $green-cool-vivid-60 !important;
+        border-color: $green-cool-vivid-60 !important;
+        color: $text-light !important;
+    }
+}
+
+// ---------------------------------------------------------
+// Tamanhos de Botão
+// ---------------------------------------------------------
+.btn-sm {
+    padding: $spacing-xs $spacing-md !important;
+    font-size: 0.8125rem !important;
+    border-radius: $border-radius-pill-sm !important;
+}
+
+.btn-lg {
+    padding: 12px $spacing-xl !important;
+    font-size: $font-size-md !important;
+    border-radius: $border-radius-pill-lg !important;
+}
+
+// ---------------------------------------------------------
+// Exceção: Botões apenas com ícone / Utilitários Circulares
+// ---------------------------------------------------------
+.btn-icon,
+.btn-close,
+.close {
+    border-radius: $border-radius-circle !important; // Exceção Circular
+    padding: 6px !important;
+    width: auto !important;
+    min-width: unset !important;
+}
+
+// ---------------------------------------------------------
+// Botão de Limpeza em Inputs de Busca (.btn-clear)
+// ---------------------------------------------------------
+.btn-clear,
+button[data-action="clearsearch"] {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 8px !important;
+    color: $text-muted !important;
+    box-shadow: none !important;
+
+    &:hover {
+        color: $blue-warm-vivid-70 !important;
+        background: transparent !important;
+    }
+}
+
+// ---------------------------------------------------------
+// Barra de Iniciais ("Filtrar por nome") — Compacto e Alinhado
+// ---------------------------------------------------------
+.initialbar {
+    .initialbarlabel {
+        font-weight: $font-weight-bold !important;
+        color: $blue-warm-vivid-90 !important;
+        font-size: $font-size-sm !important;
+        display: block !important;
+        width: 100% !important;
+        margin-bottom: 4px !important;
+    }
+
+    .initialbargroups {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 2px !important;
+    }
+
+    .pagination {
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 2px !important;
+    }
+
+    .page-item {
+        margin: 0 !important;
+        padding: 0 !important;
+
+        .page-link,
+        input.page-link,
+        input[type="button"].page-link {
+            padding: 2px 6px !important;
+            font-size: 0.75rem !important;
+            min-width: 24px !important;
+            height: 24px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: $border-radius-xs !important;
+            text-align: center !important;
+            border: 1px solid $border-inner !important;
+            background-color: $bg-white !important;
+            color: $blue-warm-vivid-70 !important;
+            font-weight: $font-weight-medium !important;
+            line-height: 1 !important;
+            margin: 1px !important;
+            cursor: pointer !important;
+            text-decoration: none !important;
+            box-shadow: none !important;
+
+            &:hover {
+                background-color: $blue-warm-vivid-10 !important;
+                color: $blue-warm-vivid-90 !important;
+                border-color: $blue-warm-vivid-70 !important;
+            }
+        }
+
+        &.active {
+            .page-link,
+            input.page-link,
+            input[type="button"].page-link {
+                background-color: $blue-warm-vivid-70 !important;
+                border-color: $blue-warm-vivid-70 !important;
+                color: $text-light !important;
+                font-weight: $font-weight-bold !important;
+            }
+        }
+    }
+
+    .initialbarall {
+        .page-link,
+        input.page-link,
+        input[type="button"].page-link {
+            min-width: auto !important;
+            padding: 2px 8px !important;
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// Dropdowns Flutuantes de Busca e Filtro (Tertiary Navigation)
+// ---------------------------------------------------------
+.initialsdropdown {
+    min-width: 320px !important;
+    max-width: 560px !important;
+    padding: $spacing-md !important;
+    box-shadow: $shadow-dropdown !important;
+    border: $border-width-thin solid $border-default !important;
+    border-radius: $border-radius-default !important;
+    background-color: $bg-white !important;
+}
+
+.usersearchdropdown {
+    min-width: 320px !important;
+    max-width: 450px !important;
+    max-height: 380px !important;
+    overflow-y: auto !important;
+    box-shadow: $shadow-dropdown !important;
+    border: $border-width-thin solid $border-default !important;
+    border-radius: $border-radius-default !important;
+    background-color: $bg-white !important;
+}
+
+// ---------------------------------------------------------
+// Botão Conclusão Manual (toggle-manual-completion)
+// ---------------------------------------------------------
+button[data-action="toggle-manual-completion"][data-toggletype="manual:mark-done"],
+.btn-subtle-body[data-action="toggle-manual-completion"] {
+    @include transition-fast;
+
+    &:hover,
+    &:focus,
+    &:active {
+        background-color: $green-badge-bg !important;
+        color: $green-cool-vivid-60 !important;
+        border-color: $border-heavy !important;
+    }
+}
