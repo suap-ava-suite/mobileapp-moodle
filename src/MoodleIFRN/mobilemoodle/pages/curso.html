@@ -2,7 +2,7 @@
 <template id="tpl-curso">
     <div class="curso-page">
         <nav class="breadcrumb">
-            <a href="#/painel">Painel AVA</a>
+            <a href="#/painel" data-i18n="panel.title">Painel AVA</a>
             <span>/</span>
             <strong id="curso-breadcrumb-name"></strong>
         </nav>
@@ -11,13 +11,13 @@
             <ion-card-content>
                 <span class="env-chip">
                     <ion-icon name="folder-outline"></ion-icon>
-                    AVA Acadêmico
+                    <span data-i18n="academicava">AVA Acadêmico</span>
                 </span>
                 <h2 class="painel-card-title" id="curso-title"></h2>
                 <ul class="course-meta">
-                    <li><strong>Professor:</strong> <span id="curso-teacher"></span></li>
-                    <li><strong>Carga horária:</strong> <span id="curso-workload"></span></li>
-                    <li><strong>Progresso:</strong> <span id="curso-progress-text"></span></li>
+                    <li><strong data-i18n="teacher">Professor:</strong> <span id="curso-teacher"></span></li>
+                    <li><strong data-i18n="workload">Carga horária:</strong> <span id="curso-workload"></span></li>
+                    <li><strong data-i18n="progress">Progresso:</strong> <span id="curso-progress-text"></span></li>
                 </ul>
                 <div class="course-progress">
                     <ion-progress-bar id="curso-progress-bar" value="0"></ion-progress-bar>
@@ -26,11 +26,11 @@
             </ion-card-content>
         </ion-card>
 
-        <h2 class="section-title">Conteúdo do curso</h2>
+        <h2 class="section-title" data-i18n="coursecontent">Conteúdo do curso</h2>
         <div id="curso-sections"></div>
 
         <ion-button expand="block" href="#/painel" fill="outline" color="primary">
-            Voltar ao painel
+            <span data-i18n="backtopanel">Voltar ao painel</span>
         </ion-button>
     </div>
 </template>
@@ -40,7 +40,7 @@
         <span class="topic-index"></span>
         <div>
             <h3 class="topic-name"></h3>
-            <p>Tópico da sala virtual</p>
+            <p data-i18n="virtualtopic">Tópico da sala virtual</p>
         </div>
     </article>
 </template>

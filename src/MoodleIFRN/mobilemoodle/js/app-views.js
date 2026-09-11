@@ -10,7 +10,7 @@
 
     /** Atualiza avatar e nome no menu / toolbar (estilo AVA). */
     function setUser(dashboard) {
-        const nome = dashboard.nome || "Estudante";
+        const nome = dashboard.nome || App.t("student", "Estudante");
         const letter = App.initials(nome);
         const foto = dashboard.foto_url || dashboard.foto || dashboard.avatar_url || "";
 
@@ -41,7 +41,7 @@
 
                     img.id = "menu-user-avatar";
                     img.className = "profile-image";
-                    img.alt = "Imagem de perfil";
+                    img.alt = App.t("profileimage", "Imagem de perfil");
 
                     if (avatar) {
                         avatar.replaceWith(img);
@@ -98,10 +98,10 @@
 
         // Clique no card abre #/curso/{id}
         link.href = "#/curso/" + encodeURIComponent(String(course.id));
-        cardTitle.textContent = course.name || ("Curso " + course.id);
-        shortname.textContent = course.shortname || ("Curso " + course.id);
+        cardTitle.textContent = course.name || (App.t("course", "Curso") + " " + course.id);
+        shortname.textContent = course.shortname || (App.t("course", "Curso") + " " + course.id);
         bar.style.width = progress + "%";
-        label.textContent = progress + "% concluído";
+        label.textContent = progress + "% " + App.t("completed", "concluído");
 
         if (env && course.moodle) {
             env.textContent = course.moodle;
@@ -112,11 +112,13 @@
 
     /** Desenha a lista de cursos do dashboard. */
     function renderPainel(dashboard) {
-        App.title.textContent = "Painel AVA";
+        App.title.textContent = App.t("panel.title", "Painel AVA");
         setUser(dashboard);
 
         const total = dashboard.total_courses || 0;
-        const label = total === 1 ? "curso matriculado" : "cursos matriculados";
+        const label = total === 1
+            ? App.t("enrolledcourse", "curso matriculado")
+            : App.t("enrolledcourses", "cursos matriculados");
         const courses = dashboard.courses || [];
         const page = App.cloneTemplate("tpl-painel");
 
@@ -129,7 +131,7 @@
 
         if (intro) {
             intro.innerHTML =
-                "Você possui <strong>" + total + "</strong> " + label + " no AVA IFRN.";
+                App.t("youhave", "Você possui <strong>{{total}}</strong> {{label}} no AVA IFRN.", { total: total, label: label });
         }
 
         if (badge) {
@@ -167,7 +169,7 @@
 
     /** Desenha a página de um curso (progresso + seções/tópicos). */
     function renderCurso(course, dashboard) {
-        App.title.textContent = course.name || "Curso";
+        App.title.textContent = course.name || App.t("course", "Curso");
         setUser(dashboard);
 
         const progress = Math.max(0, Math.min(100, Number(course.progress || 0)));
@@ -181,7 +183,7 @@
         document.getElementById("curso-teacher").textContent = course.teacher || "—";
         document.getElementById("curso-workload").textContent = course.workload || "—";
         document.getElementById("curso-progress-text").textContent = progress + "%";
-        document.getElementById("curso-progress-label").textContent = progress + "% concluído";
+        document.getElementById("curso-progress-label").textContent = progress + "% " + App.t("completed", "concluído");
 
         const progressBar = document.getElementById("curso-progress-bar");
 
@@ -194,7 +196,7 @@
         const sections = course.sections || [];
 
         if (!sections.length) {
-            sectionsHost.innerHTML = '<div class="empty-state"><p>Nenhuma seção disponível.</p></div>';
+            sectionsHost.innerHTML = '<div class="empty-state"><p>' + App.t("nosections", "Nenhuma seção disponível.") + "</p></div>";
 
             return;
         }
@@ -205,7 +207,7 @@
             const item = App.cloneTemplate("tpl-curso-section");
 
             item.querySelector(".topic-index").textContent = String(index + 1);
-            item.querySelector(".topic-name").textContent = section.name || ("Tópico " + (index + 1));
+            item.querySelector(".topic-name").textContent = section.name || (App.t("topic", "Tópico") + " " + (index + 1));
             batch.appendChild(item);
         });
         sectionsHost.appendChild(batch);

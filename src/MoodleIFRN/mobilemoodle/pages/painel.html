@@ -7,16 +7,16 @@
     <div class="painel-page">
         <div class="tabs-row" id="painel-tabs">
             <ion-chip color="primary" data-tab="cursos">
-                Meus cursos
+                <span data-i18n="mycourses">Meus cursos</span>
                 <ion-badge color="secondary" id="tab-badge-cursos">0</ion-badge>
             </ion-chip>
-            <ion-chip disabled data-tab="diarios">Diários</ion-chip>
-            <ion-chip disabled data-tab="autoinscricoes">Autoinscrição</ion-chip>
+            <ion-chip disabled data-tab="diarios" data-i18n="journals">Diários</ion-chip>
+            <ion-chip disabled data-tab="autoinscricoes" data-i18n="selfenrolment">Autoinscrição</ion-chip>
         </div>
 
         <section class="page-intro">
-            <h2>Meus cursos</h2>
-            <p id="painel-intro-text">Carregando...</p>
+            <h2 data-i18n="mycourses">Meus cursos</h2>
+            <p id="painel-intro-text" data-i18n="loading">Carregando...</p>
         </section>
 
         <div class="card-container" id="painel-cards"></div>
@@ -36,18 +36,18 @@
                     <div class="painel-progress-bar-container">
                         <div class="painel-progress-bar" style="width: 0%"></div>
                     </div>
-                    <span class="painel-progress-label">0% concluído</span>
+                    <span class="painel-progress-label">0% <span data-i18n="completed">concluído</span></span>
                 </div>
                 <div class="painel-card-details-info">
                     <div class="painel-card-info-icon">
                         <ion-icon name="school-outline"></ion-icon>
-                        <span class="painel-card-header-env">AVA Acadêmico</span>
+                        <span class="painel-card-header-env" data-i18n="academicava">AVA Acadêmico</span>
                     </div>
                     <div class="painel-card-details-info-published">
                         <ion-icon name="checkmark-circle-outline"></ion-icon>
-                        <span>Publicado</span>
+                        <span data-i18n="published">Publicado</span>
                     </div>
-                    <button type="button" class="painel-card-details-info-favourite" aria-label="Favorito">
+                    <button type="button" class="painel-card-details-info-favourite" aria-label="Favorito" data-i18n-aria-label="favourite">
                         <ion-icon name="star-outline"></ion-icon>
                     </button>
                 </div>
@@ -58,7 +58,7 @@
 
 <template id="tpl-empty-cursos">
     <div class="no-data">
-        <h3>Nenhum resultado encontrado nesta aba.</h3>
-        <p>É possível que a Secretaria Acadêmica ainda não tenha lhe inserido em diário algum; neste caso, aguarde.</p>
+        <h3 data-i18n="noresults">Nenhum resultado encontrado nesta aba.</h3>
+        <p data-i18n="nocourses">É possível que a Secretaria Acadêmica ainda não tenha lhe inserido em diário algum; neste caso, aguarde.</p>
     </div>
 </template>

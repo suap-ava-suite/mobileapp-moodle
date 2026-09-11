@@ -65,6 +65,7 @@
             App.fetchText(base + "pages/erros.html"),
         ]).then(function (parts) {
             App.templatesRoot.innerHTML = parts.join("\n");
+            App.translatePage(App.templatesRoot);
         }).catch(function (error) {
             templatesReady = null; // permite tentar de novo depois
             throw error;
@@ -109,15 +110,17 @@
             if (!window.MobileMoodleApi.getToken()) {
                 App.showStatusError({
                     status: 401,
-                    title: "Acesso não autorizado",
-                    message: "Token de acesso não encontrado. Faça login no aplicativo.",
+                    title: App.t("unauthorized", "Acesso não autorizado"),
+                    message: App.t("tokennotfound", "Token de acesso não encontrado. Faça login no aplicativo."),
                     retryable: false,
                 });
 
                 return;
             }
 
-            App.showLoading(route.name === "curso" ? "Carregando curso..." : "Carregando painel...");
+            App.showLoading(route.name === "curso"
+                ? App.t("loading.course", "Carregando curso...")
+                : App.t("loading.panel", "Carregando painel..."));
 
             // Rota de curso: busca dashboard (usuário) + curso em paralelo.
             if (route.name === "curso") {

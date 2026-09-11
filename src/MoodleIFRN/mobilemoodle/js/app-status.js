@@ -13,7 +13,7 @@
         App.content.innerHTML =
             '<div class="page-loading">' +
                 '<ion-spinner name="crescent" color="primary"></ion-spinner>' +
-                "<p>" + App.escapeHtml(message || "Carregando...") + "</p>" +
+                "<p>" + App.escapeHtml(message || App.t("loading", "Carregando...")) + "</p>" +
             "</div>";
     }
 
@@ -35,10 +35,10 @@
     function showErrorFallback(message, canRetry) {
         App.content.innerHTML =
             '<div class="page-error">' +
-                "<h3>Não foi possível abrir o painel</h3>" +
+                "<h3>" + App.escapeHtml(App.t("cannotopenpanel", "Não foi possível abrir o painel")) + "</h3>" +
                 "<p>" + App.escapeHtml(message) + "</p>" +
                 (canRetry
-                    ? '<ion-button id="retry-load" color="primary">Tentar novamente</ion-button>'
+                    ? '<ion-button id="retry-load" color="primary">' + App.t("retry", "Tentar novamente") + "</ion-button>"
                     : "") +
             "</div>";
 
@@ -47,12 +47,12 @@
 
     /** Página 404 (rota inválida ou recurso inexistente). */
     function showNotFound() {
-        App.title.textContent = "Não encontrada";
+        App.title.textContent = App.t("notfound", "Não encontrada");
 
         const page = App.cloneTemplate("tpl-not-found");
 
         if (!page) {
-            showErrorFallback("O endereço que você tentou abrir não existe ou foi removido.", false);
+            showErrorFallback(App.t("notfoundmessage", "O endereço que você tentou abrir não existe ou foi removido."), false);
 
             return;
         }
@@ -67,8 +67,8 @@
      */
     function showStatusError(error) {
         const status = error && typeof error.status === "number" ? error.status : 0;
-        const message = (error && error.message) || "Erro inesperado.";
-        const errorTitle = (error && error.title) || "Algo deu errado";
+        const message = (error && error.message) || App.t("unexpectederror", "Erro inesperado.");
+        const errorTitle = (error && error.title) || App.t("somethingwrong", "Algo deu errado");
         const canRetry = error && typeof error.retryable === "boolean"
             ? error.retryable
             : status === 0 || status === 408 || status >= 500;
@@ -119,7 +119,7 @@
 
                 retry.id = "retry-load";
                 retry.setAttribute("color", "primary");
-                retry.textContent = "Tentar novamente";
+                retry.textContent = App.t("retry", "Tentar novamente");
                 actionsEl.appendChild(retry);
                 bindRetry(retry);
             }
@@ -129,7 +129,7 @@
                 const hint = document.createElement("p");
 
                 hint.className = "status-page__hint";
-                hint.textContent = "Faça login novamente no aplicativo.";
+                hint.textContent = App.t("loginagain", "Faça login novamente no aplicativo.");
                 actionsEl.appendChild(hint);
             } else {
                 // Nos demais erros, oferece voltar ao painel.
@@ -138,7 +138,7 @@
                 home.setAttribute("fill", "clear");
                 home.setAttribute("color", "primary");
                 home.setAttribute("href", "#/painel");
-                home.textContent = "Voltar ao painel";
+                home.textContent = App.t("backtopanel", "Voltar ao painel");
                 actionsEl.appendChild(home);
             }
         }

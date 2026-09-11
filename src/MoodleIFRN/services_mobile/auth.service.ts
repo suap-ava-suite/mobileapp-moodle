@@ -14,6 +14,7 @@
 
 import { HttpBackend, HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { CoreLang } from '@services/lang';
 import { Observable, timeout } from 'rxjs';
 
 /* eslint-disable @typescript-eslint/naming-convention */
@@ -192,6 +193,11 @@ export class AuthService {
         const base = document.querySelector('base')?.getAttribute('href') || '/';
         const root = base.endsWith('/') ? base : `${base}/`;
         const url = new URL(`${root}mobilemoodle/index.html`, window.location.origin);
+
+        const language = CoreLang.getCurrentLanguageSync();
+        if (language) {
+            url.searchParams.set('lang', language);
+        }
 
         url.hash = targetHash.replace(/^#/, '');
 

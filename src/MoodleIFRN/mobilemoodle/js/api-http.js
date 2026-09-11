@@ -7,6 +7,7 @@
     "use strict";
 
     const MM = (window.MobileMoodle = window.MobileMoodle || {});
+    const App = (MM.App = MM.App || {});
     const DEFAULT_BASE_URL = "";
     const REQUEST_TIMEOUT_MS = 15000; // 15s — aborta se a API não responder
 
@@ -59,7 +60,7 @@
     /** Junta base + path (ex.: http://localhost:8000 + /dashboard/). */
     function joinUrl(path) {
         if (!isSafeApiPath(path)) {
-            throw new MM.ApiError(400, "Caminho de API inválido.");
+            throw new MM.ApiError(400, App.t("invalidapipath", "Caminho de API inválido."));
         }
 
         if (!baseUrl) {
@@ -104,7 +105,7 @@
         }
 
         if (!isSafeApiPath(path)) {
-            throw new MM.ApiError(400, "Caminho de API inválido.");
+            throw new MM.ApiError(400, App.t("invalidapipath", "Caminho de API inválido."));
         }
 
         // Timeout via AbortController (padrão do fetch).
@@ -136,7 +137,7 @@
             }
 
             // Sem rede, CORS, servidor offline, etc.
-            throw new MM.ApiError(0, "Falha de rede. Confira a conexão e tente novamente.");
+            throw new MM.ApiError(0, App.t("networkfailure", "Falha de rede. Confira a conexão e tente novamente."));
         } finally {
             window.clearTimeout(timeoutId);
         }
@@ -156,7 +157,7 @@
         const contentType = response.headers.get("content-type") || "";
 
         if (!contentType.includes("application/json")) {
-            throw new MM.ApiError(502, "Resposta inválida do servidor.");
+            throw new MM.ApiError(502, App.t("invalidserverresponse", "Resposta inválida do servidor."));
         }
 
         return response.json();

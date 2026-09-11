@@ -57,7 +57,10 @@
             return null;
         }
 
-        return tpl.content.cloneNode(true);
+        const fragment = tpl.content.cloneNode(true);
+        App.translatePage(fragment);
+
+        return fragment;
     }
 
     /** Baixa um arquivo de texto (partial HTML) com timeout curto. */
@@ -75,7 +78,7 @@
             });
 
             if (!response.ok) {
-                throw new Error("Falha ao carregar interface (" + response.status + ").");
+                throw new Error(App.t("cannotopenpanel", "Falha ao carregar interface (" + response.status + ")."));
             }
 
             return response.text();

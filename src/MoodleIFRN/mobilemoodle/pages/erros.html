@@ -11,13 +11,13 @@
 <template id="tpl-not-found">
     <div class="status-page status-page--notfound" role="alert">
         <p class="status-page__code">404</p>
-        <h2 class="status-page__title">Página não encontrada</h2>
+        <h2 class="status-page__title" data-i18n="notfound">Página não encontrada</h2>
         <p class="status-page__message">
-            O endereço que você tentou abrir não existe ou foi removido.
+            <span data-i18n="notfoundmessage">O endereço que você tentou abrir não existe ou foi removido.</span>
         </p>
         <div class="status-page__actions">
             <ion-button id="status-go-painel" color="primary" href="#/painel">
-                Voltar ao painel
+                <span data-i18n="backtopanel">Voltar ao painel</span>
             </ion-button>
         </div>
     </div>

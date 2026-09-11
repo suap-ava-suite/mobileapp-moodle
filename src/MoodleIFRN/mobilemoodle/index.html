@@ -8,7 +8,7 @@
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com data:; connect-src 'self' http://127.0.0.1:8000 http://localhost:8000; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'">
-    <title>Painel AVA · IFRN</title>
+    <title data-i18n="app.title">Painel AVA · IFRN</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -45,7 +45,7 @@
             <ion-content class="menu-content" scroll-y="true">
                 <div id="sidebar-container" class="sidebar-container">
                     <div class="sidebar-content-header">
-                        <h1 class="sidebar-title">Painel AVA</h1>
+                        <h1 class="sidebar-title" data-i18n="panel.title">Painel AVA</h1>
                         <ion-menu-toggle>
                             <button type="button" id="btn-toggle-sidebar" class="btn-toggle-sidebar" aria-label="Toggle Sidebar">
                                 <img src="static/theme/ifrn/img/sidebar-toggle.svg" alt="">
@@ -55,19 +55,19 @@
 
                     <div class="sidebar-content-body">
                         <div class="sidebar-user-content">
-                            <button type="button" class="sidebar-user-content-profile" id="btn-toggle-profile" aria-label="Perfil">
+                            <button type="button" class="sidebar-user-content-profile" id="btn-toggle-profile" aria-label="Perfil" data-i18n-aria-label="profile">
                                 <div class="profile-image profile-image--initials" id="menu-user-avatar" aria-hidden="true">U</div>
-                                <span id="sidebar-user-name">Estudante</span>
+                                <span id="sidebar-user-name" data-i18n="student">Estudante</span>
                             </button>
 
                             <div class="sidebar-user-content-options">
                                 <button type="button" class="sidebar-modal-button" id="btn-toggle-accessibility">
                                     <ion-icon name="accessibility" aria-hidden="true"></ion-icon>
-                                    <span>Acessibilidade</span>
+                                    <span data-i18n="accessibility">Acessibilidade</span>
                                 </button>
                                 <button type="button" class="sidebar-modal-button" id="btn-toggle-help">
                                     <ion-icon name="help-circle" aria-hidden="true"></ion-icon>
-                                    <span>Ajuda</span>
+                                    <span data-i18n="help">Ajuda</span>
                                 </button>
                             </div>
                         </div>
@@ -78,22 +78,22 @@
                             <div class="sidebar-course-content-filter-modal-button-area">
                                 <button type="button" class="sidebar-modal-button" id="btn-toggle-filter">
                                     <ion-icon name="filter" aria-hidden="true"></ion-icon>
-                                    <span class="sidebar-modal-button-text-contracted">FILTRO</span>
-                                    <span>Adicionar filtros</span>
+                                    <span class="sidebar-modal-button-text-contracted" data-i18n="filter">FILTRO</span>
+                                    <span data-i18n="addfilters">Adicionar filtros</span>
                                 </button>
                             </div>
 
                             <div class="sidebar-course-content-filters">
                                 <button type="button" class="sidebar-course-content-filter-title" id="btn-open-filter-label">
                                     <ion-icon name="options-outline" aria-hidden="true"></ion-icon>
-                                    <span>FILTRADO POR:</span>
+                                    <span data-i18n="filteredby">FILTRADO POR:</span>
                                 </button>
                                 <div class="sidebar-course-content-filters-list" id="sidebar-active-filters">
                                     <div class="sidebar-course-content-filters-list-item" data-filter="situacao">
                                         <div class="sidebar-course-content-filters-list-item-divider">
                                             <ion-icon name="book-outline" aria-hidden="true"></ion-icon>
                                             <span class="sidebar-course-content-filters-list-item-text" id="sidebar-filter-situacao">
-                                                Todos os diários (lento)
+                                                <span data-i18n="alljournals">Todos os diários (lento)</span>
                                             </span>
                                         </div>
                                     </div>
@@ -111,7 +111,7 @@
                     <ion-buttons slot="start">
                         <ion-menu-button auto-hide="false" color="primary" aria-label="Abrir menu"></ion-menu-button>
                     </ion-buttons>
-                    <ion-title id="page-title">Painel AVA</ion-title>
+                    <ion-title id="page-title" data-i18n="panel.title">Painel AVA</ion-title>
                     <ion-buttons slot="end">
                         <ion-avatar class="toolbar-avatar" id="toolbar-avatar" aria-hidden="true">M</ion-avatar>
                     </ion-buttons>
@@ -120,7 +120,7 @@
 
             <ion-content id="page-content">
                 <div class="boot-loading page-loading">
-                    <p>Carregando painel...</p>
+                    <p data-i18n="loading.panel">Carregando painel...</p>
                 </div>
             </ion-content>
         </div>
@@ -132,7 +132,7 @@
                 <div class="sidebar-modal__header">
                     <div class="sidebar-modal__header-title">
                         <ion-icon id="sidebar-modal-icon" name="person-circle-outline" aria-hidden="true"></ion-icon>
-                        <span id="sidebar-modal-title">Perfil</span>
+                        <span id="sidebar-modal-title" data-i18n="profile">Perfil</span>
                     </div>
                     <button type="button" class="sidebar-modal__close" id="sidebar-modal-close" aria-label="Fechar">
                         <ion-icon name="close" aria-hidden="true"></ion-icon>
@@ -153,42 +153,42 @@
                 <a class="modal-button-option" href="https://suap.ifrn.edu.br/comum/minha_conta/" target="_blank" rel="noopener noreferrer">Perfil no SUAP</a>
                 <a class="modal-button-option" href="https://aberto.ava.ifrn.edu.br" target="_blank" rel="noopener noreferrer">AVA Aberto</a>
             </div>
-            <button type="button" class="modal-button-option exit-button" id="modal-logout">Sair</button>
+            <button type="button" class="modal-button-option exit-button" id="modal-logout" data-i18n="logout">Sair</button>
         </div>
     </template>
 
     <template id="tpl-modal-help">
         <div class="ava-modal-body">
-            <a href="https://ajuda.ead.ifrn.edu.br/" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">Central de Ajuda</a>
+            <a href="https://ajuda.ead.ifrn.edu.br/" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link" data-i18n="helpcenter">Central de Ajuda</a>
             <a href="https://ead.ifrn.edu.br/acesso-a-informacao/ouvidoria/" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">Ouvidoria</a>
             <a href="https://ajuda.ead.ifrn.edu.br/agenda-telefonica-2022-campus-natal-zona-leste/" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">Contatos</a>
             <div class="modal-content-body-help-options">
-                <span class="modal-content-body-title">Centrais de Atendimento</span>
+                <span class="modal-content-body-title" data-i18n="supportcenters">Centrais de Atendimento</span>
                 <a href="https://bit.ly/41734xv" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">AVA (Moodle)</a>
-                <a href="https://bit.ly/3odPfis" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">Secretaria Acadêmica</a>
-                <a href="https://bit.ly/3KXiQEH" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">Central de serviço SUAP</a>
+                <a href="https://bit.ly/3odPfis" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link" data-i18n="academicsecretariat">Secretaria Acadêmica</a>
+                <a href="https://bit.ly/3KXiQEH" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link" data-i18n="suapservice">Central de serviço SUAP</a>
             </div>
         </div>
     </template>
 
     <template id="tpl-modal-accessibility">
         <div class="ava-modal-body">
-            <p class="ava-modal-body__hint">Ajuste rápido de leitura neste dispositivo.</p>
+            <p class="ava-modal-body__hint" data-i18n="quickreading">Ajuste rápido de leitura neste dispositivo.</p>
             <div class="ava-a11y-row">
-                <span>Tamanho do texto</span>
+                <span data-i18n="textsize">Tamanho do texto</span>
                 <div class="ava-a11y-actions">
-                    <button type="button" data-a11y="zoom-out" aria-label="Diminuir texto">A−</button>
-                    <button type="button" data-a11y="zoom-reset" aria-label="Texto padrão">A</button>
-                    <button type="button" data-a11y="zoom-in" aria-label="Aumentar texto">A+</button>
+                    <button type="button" data-a11y="zoom-out" aria-label="Diminuir texto" data-i18n-aria-label="decreasetext">A−</button>
+                    <button type="button" data-a11y="zoom-reset" aria-label="Texto padrão" data-i18n-aria-label="defaulttext">A</button>
+                    <button type="button" data-a11y="zoom-in" aria-label="Aumentar texto" data-i18n-aria-label="increasetext">A+</button>
                 </div>
             </div>
             <label class="ava-a11y-switch">
                 <input type="checkbox" id="a11y-contrast">
-                <span>Alto contraste</span>
+                <span data-i18n="highcontrast">Alto contraste</span>
             </label>
             <label class="ava-a11y-switch">
                 <input type="checkbox" id="a11y-underline">
-                <span>Destacar links</span>
+                <span data-i18n="highlightlinks">Destacar links</span>
             </label>
         </div>
     </template>
@@ -198,19 +198,21 @@
             <label class="filter-select-area" for="filter-situacao">
                 <ion-icon name="book-outline" aria-hidden="true"></ion-icon>
                 <select id="filter-situacao">
-                    <option value="inprogress">Em andamento</option>
-                    <option value="allincludinghidden">Todos os diários (lento)</option>
-                    <option value="favourites">Favoritos</option>
-                    <option value="hidden">Ocultos</option>
+                    <option value="inprogress" data-i18n="inprogress">Em andamento</option>
+                    <option value="allincludinghidden" data-i18n="alljournals">Todos os diários (lento)</option>
+                    <option value="favourites" data-i18n="favourites">Favoritos</option>
+                    <option value="hidden" data-i18n="hidden">Ocultos</option>
                 </select>
             </label>
-            <button type="button" class="modal-content-body-filter-button" id="filter-apply">Filtrar</button>
+            <button type="button" class="modal-content-body-filter-button" id="filter-apply" data-i18n="applyfilter">Filtrar</button>
             <button type="button" class="modal-content-body-filter-clear" id="filter-clear">
                 <ion-icon name="trash-outline" aria-hidden="true"></ion-icon>
-                <span>Limpar filtros</span>
+                <span data-i18n="clearfilters">Limpar filtros</span>
             </button>
         </div>
     </template>
+
+    <script src="js/i18n.js" defer></script>
 
     <!-- API -->
     <script src="js/api-errors.js" defer></script>

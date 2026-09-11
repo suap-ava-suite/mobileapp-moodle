@@ -5,19 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#098E95">
     <meta name="referrer" content="no-referrer">
-    <title>Página não encontrada · AVA IFRN</title>
+    <title data-i18n="notfound">Página não encontrada · AVA IFRN</title>
     <link rel="stylesheet" href="static/theme/ifrn/css/painel.css">
 </head>
 <body class="status-standalone">
     <main class="status-page status-page--notfound" role="alert">
         <p class="status-page__code">404</p>
-        <h1 class="status-page__title">Página não encontrada</h1>
+        <h1 class="status-page__title" data-i18n="notfound">Página não encontrada</h1>
         <p class="status-page__message">
-            O endereço que você tentou abrir não existe ou foi removido.
+            <span data-i18n="notfoundmessage">O endereço que você tentou abrir não existe ou foi removido.</span>
         </p>
         <div class="status-page__actions">
-            <a class="status-page__link" href="index.html#/painel">Voltar ao painel</a>
+            <a class="status-page__link" href="index.html#/painel" data-i18n="backtopanel">Voltar ao painel</a>
         </div>
     </main>
+    <script src="js/i18n.js"></script>
+    <script>document.documentElement.lang = MobileMoodle.App.language; MobileMoodle.App.translatePage(document);</script>
 </body>
 </html>

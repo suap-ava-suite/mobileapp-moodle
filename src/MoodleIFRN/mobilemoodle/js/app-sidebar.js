@@ -9,17 +9,17 @@
     const App = (MM.App = MM.App || {});
 
     const FILTER_LABELS = {
-        inprogress: "Em andamento",
-        allincludinghidden: "Todos os diários (lento)",
-        favourites: "Favoritos",
-        hidden: "Ocultos",
+        inprogress: App.t("inprogress", "Em andamento"),
+        allincludinghidden: App.t("alljournals", "Todos os diários (lento)"),
+        favourites: App.t("favourites", "Favoritos"),
+        hidden: App.t("hidden", "Ocultos"),
     };
 
     const MODAL_META = {
-        profile: { title: "Perfil", icon: "person-circle-outline", tpl: "tpl-modal-profile" },
-        help: { title: "Ajuda", icon: "help-circle-outline", tpl: "tpl-modal-help" },
-        accessibility: { title: "Acessibilidade", icon: "accessibility-outline", tpl: "tpl-modal-accessibility" },
-        filter: { title: "Filtros", icon: "filter-outline", tpl: "tpl-modal-filter" },
+        profile: { title: App.t("profile", "Perfil"), icon: "person-circle-outline", tpl: "tpl-modal-profile" },
+        help: { title: App.t("help", "Ajuda"), icon: "help-circle-outline", tpl: "tpl-modal-help" },
+        accessibility: { title: App.t("accessibility", "Acessibilidade"), icon: "accessibility-outline", tpl: "tpl-modal-accessibility" },
+        filter: { title: App.t("filter", "Filtros"), icon: "filter-outline", tpl: "tpl-modal-filter" },
     };
 
     const BUTTON_IDS = {
@@ -183,7 +183,7 @@
             const nameEl = $("modal-profile-name");
 
             if (nameEl) {
-                nameEl.textContent = App.sidebarUserName || "Estudante";
+                nameEl.textContent = App.sidebarUserName || App.t("student", "Estudante");
             }
 
             const logoutBtn = $("modal-logout");

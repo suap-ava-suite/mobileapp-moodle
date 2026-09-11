@@ -8,35 +8,36 @@
 
     // Namespace compartilhado entre todos os arquivos JS do mobilemoodle.
     const MM = (window.MobileMoodle = window.MobileMoodle || {});
+    const App = (MM.App = MM.App || {});
 
     /** Texto amigável exibido para o usuário conforme o código HTTP. */
     function messageForStatus(status, detail) {
         switch (status) {
             case 401:
             case 403:
-                return "Sessão expirada. Entre novamente.";
+                return App.t("status.401", "Sessão expirada. Entre novamente.");
             case 404:
-                return "O recurso solicitado não foi encontrado.";
+                return App.t("status.404", "O recurso solicitado não foi encontrado.");
             case 408:
-                return "A requisição demorou demais. Tente novamente.";
+                return App.t("status.408", "A requisição demorou demais. Tente novamente.");
             case 429:
-                return "Muitas tentativas. Aguarde e tente de novo.";
+                return App.t("status.429", "Muitas tentativas. Aguarde e tente de novo.");
             case 500:
-                return "Ocorreu um erro interno no servidor. Tente novamente em instantes.";
+                return App.t("status.500", "Ocorreu um erro interno no servidor. Tente novamente em instantes.");
             case 502:
-                return "O serviço está temporariamente indisponível (gateway). Verifique a conexão e tente de novo.";
+                return App.t("status.502", "O serviço está temporariamente indisponível (gateway). Verifique a conexão e tente de novo.");
             case 503:
-                return "O serviço está em manutenção ou sobrecarregado. Tente novamente em breve.";
+                return App.t("status.503", "O serviço está em manutenção ou sobrecarregado. Tente novamente em breve.");
             case 504:
-                return "Tempo esgotado no servidor. A conexão está lenta ou o serviço não respondeu.";
+                return App.t("status.504", "Tempo esgotado no servidor. A conexão está lenta ou o serviço não respondeu.");
             default:
                 // Qualquer outro 5xx genérico.
                 if (status >= 500) {
-                    return "Erro no servidor (" + status + "). Tente novamente em instantes.";
+                    return App.t("status.server", "Erro no servidor ({{status}}). Tente novamente em instantes.", { status: status });
                 }
 
                 // Se a API mandou um detail/message, usa; senão mensagem padrão.
-                return detail || "Não foi possível carregar os dados do painel.";
+                return detail || App.t("status.default", "Não foi possível carregar os dados do painel.");
         }
     }
 
@@ -45,29 +46,29 @@
         switch (status) {
             case 401:
             case 403:
-                return "Acesso não autorizado";
+                return App.t("unauthorized", "Acesso não autorizado");
             case 404:
-                return "Não encontrado";
+                return App.t("title.404", "Não encontrado");
             case 408:
             case 504:
-                return "Tempo esgotado";
+                return App.t("title.timeout", "Tempo esgotado");
             case 429:
-                return "Muitas tentativas";
+                return App.t("title.429", "Muitas tentativas");
             case 500:
-                return "Erro interno do servidor";
+                return App.t("title.500", "Erro interno do servidor");
             case 502:
-                return "Serviço indisponível";
+                return App.t("title.502", "Serviço indisponível");
             case 503:
-                return "Serviço em manutenção";
+                return App.t("title.503", "Serviço em manutenção");
             case 0:
                 // status 0 = falha de rede / CORS / servidor offline
-                return "Falha de conexão";
+                return App.t("title.network", "Falha de conexão");
             default:
                 if (status >= 500) {
-                    return "Erro no servidor";
+                    return App.t("title.server", "Erro no servidor");
                 }
 
-                return "Algo deu errado";
+                return App.t("somethingwrong", "Algo deu errado");
         }
     }
 

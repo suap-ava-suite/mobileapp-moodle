@@ -96,7 +96,7 @@
 
         // Só aceita IDs numéricos (protege path da URL).
         if (!/^\d+$/.test(id)) {
-            return Promise.reject(new MM.ApiError(404, "Identificador de curso inválido."));
+            return Promise.reject(new MM.ApiError(404, MM.App.t("invalidcourseid", "Identificador de curso inválido.")));
         }
 
         let entry = courseCache.get(id);

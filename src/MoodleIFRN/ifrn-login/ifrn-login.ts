@@ -19,6 +19,7 @@ import { AuthResponse, AuthService } from '@/MoodleIFRN/services_mobile/auth.ser
 import { BiometricService } from '@/MoodleIFRN/services_mobile/biometric.service';
 import { CoreAlerts } from '@services/overlays/alerts';
 import { CorePlatform } from '@services/platform';
+import { Translate } from '@singletons';
 import { TimeoutError, firstValueFrom } from 'rxjs';
 
 @Component({
@@ -72,13 +73,13 @@ export class IfrnLoginPage implements OnInit {
         const username = this.username.trim().replace(/[\u0000-\u001F\u007F]/g, '');
 
         if (!username || !this.password) {
-            void CoreAlerts.showError('Por favor, preencha todos os campos.');
+            void CoreAlerts.showError(Translate.instant('ifrn.login.fieldrequired'));
 
             return;
         }
 
         if (username.length > 120 || this.password.length > 200) {
-            void CoreAlerts.showError('Credenciais inválidas.');
+            void CoreAlerts.showError(Translate.instant('ifrn.login.invalidcredentials'));
 
             return;
         }
@@ -123,11 +124,11 @@ export class IfrnLoginPage implements OnInit {
                 this.biometricEnabled = false;
 
                 void CoreAlerts.showError(
-                    'Sua sessão biométrica expirou. Entre com IFRN-id e senha para ativá-la novamente.',
+                    Translate.instant('ifrn.login.biometricexpired'),
                 );
             } else {
                 void CoreAlerts.showError(
-                    'Não foi possível autenticar com a biometria. Tente novamente ou use sua senha.',
+                    Translate.instant('ifrn.login.biometricfailed'),
                 );
             }
         } finally {
@@ -150,7 +151,7 @@ export class IfrnLoginPage implements OnInit {
         } catch (error) {
             void CoreAlerts.showError(
                 error,
-                { default: 'N\u00e3o foi poss\u00edvel concluir o login.' },
+                { default: Translate.instant('ifrn.login.loginfailed') },
             );
         } finally {
             this.loading = false;
@@ -168,11 +169,11 @@ export class IfrnLoginPage implements OnInit {
         if (!shouldEnable) {
             try {
                 await CoreAlerts.confirm(
-                    'Deseja usar a biometria nos próximos acessos?',
+                    Translate.instant('ifrn.login.usebiometric'),
                     {
-                        header: 'Ativar biometria',
-                        okText: 'Ativar',
-                        cancelText: 'Agora não',
+                        header: Translate.instant('ifrn.login.activatebiometric'),
+                        okText: Translate.instant('ifrn.login.activate'),
+                        cancelText: Translate.instant('ifrn.login.later'),
                     },
                 );
                 shouldEnable = true;
@@ -186,7 +187,7 @@ export class IfrnLoginPage implements OnInit {
             this.biometricEnabled = true;
         } catch {
             void CoreAlerts.showError(
-                'O login foi concluído, mas não foi possível ativar a biometria.',
+                Translate.instant('ifrn.login.biometricactivationfailed'),
             );
         }
     }
@@ -201,7 +202,7 @@ export class IfrnLoginPage implements OnInit {
         }
 
         void CoreAlerts.showError(
-            'O acesso com Gov.br será liberado quando a integração oficial estiver ativa. Por enquanto, use IFRN-id e senha.',
+            Translate.instant('ifrn.login.govbrunavailable'),
         );
     }
 
@@ -221,7 +222,7 @@ export class IfrnLoginPage implements OnInit {
     forgotPassword(event: Event): void {
         event.preventDefault();
         void CoreAlerts.showError(
-            'A recuperação de senha é feita no SUAP/IFRN-id. Acesse o portal institucional pelo navegador.',
+            Translate.instant('ifrn.login.resetpasswordinfo'),
         );
     }
 
@@ -237,30 +238,30 @@ export class IfrnLoginPage implements OnInit {
 
     private messageForAuthError(error: HttpErrorResponse | TimeoutError): string {
         if (error instanceof TimeoutError || (error instanceof HttpErrorResponse && error.status === 0 && error.message?.includes('Timeout'))) {
-            return 'A autenticação demorou demais. Tente novamente.';
+            return Translate.instant('ifrn.login.timeout');
         }
 
         if (!(error instanceof HttpErrorResponse)) {
-            return 'Não foi possível conectar ao serviço de autenticação.';
+            return Translate.instant('ifrn.login.networkerror');
         }
 
         if (error.status === 0) {
-            return 'O serviço de autenticação está offline. Inicie a FastAPI na porta 8000.';
+            return Translate.instant('ifrn.login.offline', { port: 8000 });
         }
 
         if (error.status === 401) {
-            return 'Usuário ou senha inválidos.';
+            return Translate.instant('ifrn.login.invalidlogin');
         }
 
         if (error.status === 429) {
-            return 'Muitas tentativas. Aguarde um momento e tente de novo.';
+            return Translate.instant('ifrn.login.toomanyattempts');
         }
 
         if (error.status >= 500) {
-            return 'Serviço de autenticação indisponível. Tente novamente em instantes.';
+            return Translate.instant('ifrn.login.serverunavailable');
         }
 
-        return 'Não foi possível conectar ao serviço de autenticação.';
+        return Translate.instant('ifrn.login.networkerror');
     }
 
 }

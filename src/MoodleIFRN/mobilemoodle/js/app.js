@@ -26,8 +26,8 @@
         App.dashboardCache = null;
         App.showStatusError({
             status: 401,
-            title: "Sessão encerrada",
-            message: "Faça login novamente no aplicativo.",
+            title: App.t("sessionended", "Sessão encerrada"),
+            message: App.t("loginagain", "Faça login novamente no aplicativo."),
             retryable: false,
         });
     }
@@ -61,6 +61,9 @@
 
     // Arranque: configura API, menu e primeira rota.
     window.addEventListener("DOMContentLoaded", function () {
+        document.documentElement.lang = App.language;
+        App.translatePage(document);
+
         if (window.MobileMoodleApi && window.MobileMoodleApi.setApiBaseUrl) {
             window.MobileMoodleApi.setApiBaseUrl(resolveApiBase());
         }
