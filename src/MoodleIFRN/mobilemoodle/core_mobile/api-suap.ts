@@ -177,10 +177,135 @@ function mapDiarioToCourse(diario: SuapDiario): DashboardCourse {
         shortname: disciplina?.sigla || String(diario.id),
         progress,
         hasprogress: progress != null,
-        moodle: diario.ambiente_virtual || 'SUAP',
+        moodle: diario.ambiente_virtual || 'AVA Acadêmico',
         is_enrolled: true,
         enrolled: true,
+        self_enrol: false,
     };
+}
+
+interface SuapDiarioEad {
+    nome?: string;
+    ano?: number;
+    periodo?: number;
+    identificador?: number;
+}
+
+/**
+ * Catálogo local espelhando “Cursos com autoinscrição” do Painel AVA.
+ * A API do SUAP não expõe o catálogo Moodle de autoinscrição; até existir
+ * endpoint AVA, estes cursos permitem a mesma interação (inscrever/acessar).
+ */
+const AVA_SELF_ENROL_CATALOG: DashboardCourse[] = [
+    {
+        id: 'ava-fic-empreendedorismo',
+        name: 'Empreendedorismo',
+        shortname: 'FIC-EMP',
+        moodle: 'AVA Acadêmico',
+        progress: null,
+        hasprogress: false,
+        is_enrolled: false,
+        enrolled: false,
+        self_enrol: true,
+        details_url: 'https://ava.ifrn.edu.br/my/',
+    },
+    {
+        id: 'ava-fic-educacao-financeira',
+        name: 'Educação Financeira',
+        shortname: 'FIC-FIN',
+        moodle: 'AVA Acadêmico',
+        progress: null,
+        hasprogress: false,
+        is_enrolled: false,
+        enrolled: false,
+        self_enrol: true,
+        details_url: 'https://ava.ifrn.edu.br/my/',
+    },
+    {
+        id: 'ava-fic-informatica-basica',
+        name: 'Informática Básica',
+        shortname: 'FIC-INF',
+        moodle: 'AVA Acadêmico',
+        progress: null,
+        hasprogress: false,
+        is_enrolled: false,
+        enrolled: false,
+        self_enrol: true,
+        details_url: 'https://ava.ifrn.edu.br/my/',
+    },
+    {
+        id: 'ava-fic-libras',
+        name: 'Libras — Comunicação Básica',
+        shortname: 'FIC-LBR',
+        moodle: 'AVA Acadêmico',
+        progress: null,
+        hasprogress: false,
+        is_enrolled: false,
+        enrolled: false,
+        self_enrol: true,
+        details_url: 'https://ava.ifrn.edu.br/my/',
+    },
+    {
+        id: 'ava-fic-redacao',
+        name: 'Redação Oficial',
+        shortname: 'FIC-RED',
+        moodle: 'AVA Acadêmico',
+        progress: null,
+        hasprogress: false,
+        is_enrolled: false,
+        enrolled: false,
+        self_enrol: true,
+        details_url: 'https://ava.ifrn.edu.br/my/',
+    },
+];
+
+function mapEadToSelfEnrol(diario: SuapDiarioEad): DashboardCourse | null {
+    const id = diario.identificador;
+
+    if (id == null && !diario.nome) {
+        return null;
+    }
+
+    const name = diario.nome || `Curso EAD ${id}`;
+    const periodLabel =
+        diario.ano != null && diario.periodo != null
+            ? `${diario.ano}.${diario.periodo}`
+            : undefined;
+
+    return {
+        id: id != null ? `ead-${id}` : `ead-${name}`,
+        name,
+        fullname: name,
+        shortname: periodLabel || (id != null ? String(id) : 'EAD'),
+        moodle: 'AVA Acadêmico',
+        progress: null,
+        hasprogress: false,
+        is_enrolled: true,
+        enrolled: true,
+        self_enrol: true,
+        details_url: 'https://ava.ifrn.edu.br/my/',
+    };
+}
+
+async function fetchAutoinscricoes(): Promise<DashboardCourse[]> {
+    const eadRaw = await softGet('/api/ensino/meus-diarios-ead/');
+    const eadCourses = eadRaw
+        ? asPagedResults<SuapDiarioEad>(eadRaw)
+            .map(mapEadToSelfEnrol)
+            .filter((item): item is DashboardCourse => Boolean(item))
+        : [];
+
+    const byId = new Map<string, DashboardCourse>();
+
+    AVA_SELF_ENROL_CATALOG.forEach((course) => {
+        byId.set(String(course.id), { ...course });
+    });
+
+    eadCourses.forEach((course) => {
+        byId.set(String(course.id), course);
+    });
+
+    return Array.from(byId.values());
 }
 
 function isApiError(error: unknown): error is ApiErrorShape {
@@ -249,6 +374,7 @@ async function fetchSuapDashboard(): Promise<DashboardData> {
     }
 
     const courses = diarios.map(mapDiarioToCourse);
+    const autoinscricoes = await fetchAutoinscricoes();
     const username =
         typeof sessionStorage !== 'undefined'
             ? sessionStorage.getItem('ifrn_username') || undefined
@@ -264,8 +390,8 @@ async function fetchSuapDashboard(): Promise<DashboardData> {
         role: roleFromTipo(eu.tipo_usuario),
         courses,
         diarios: courses,
-        autoinscricoes: [],
-        self_enrolments: [],
+        autoinscricoes,
+        self_enrolments: autoinscricoes,
         total_courses: courses.length,
         filtro_situacao: 'inprogress',
         situacao: 'inprogress',

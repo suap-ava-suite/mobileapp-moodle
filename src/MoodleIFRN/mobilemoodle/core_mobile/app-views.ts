@@ -55,6 +55,187 @@ import { MM, App } from './namespace';
         autoinscricoes: DashboardCourse[];
     }
 
+    interface PainelPrefs {
+        favourites: string[];
+        hidden: string[];
+        enrolledSelf: string[];
+    }
+
+    const PREFS_KEY = 'ifrn_painel_prefs';
+
+    function readPrefs(): PainelPrefs {
+        try {
+            const raw = sessionStorage.getItem(PREFS_KEY);
+
+            if (!raw) {
+                return { favourites: [], hidden: [], enrolledSelf: [] };
+            }
+
+            const parsed = JSON.parse(raw) as Partial<PainelPrefs>;
+
+            return {
+                favourites: Array.isArray(parsed.favourites) ? parsed.favourites.map(String) : [],
+                hidden: Array.isArray(parsed.hidden) ? parsed.hidden.map(String) : [],
+                enrolledSelf: Array.isArray(parsed.enrolledSelf)
+                    ? parsed.enrolledSelf.map(String)
+                    : [],
+            };
+        } catch {
+            return { favourites: [], hidden: [], enrolledSelf: [] };
+        }
+    }
+
+    function writePrefs(prefs: PainelPrefs): void {
+        try {
+            sessionStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+        } catch {
+            /* ignore quota / private mode */
+        }
+    }
+
+    function courseKey(course: DashboardCourse): string {
+        return String(course.id);
+    }
+
+    function applyPrefsToLists(lists: PainelLists): PainelLists {
+        const prefs = readPrefs();
+
+        const diarios = lists.diarios.map((course) => {
+            const id = courseKey(course);
+
+            return {
+                ...course,
+                isfavourite: prefs.favourites.indexOf(id) !== -1,
+                favourite: prefs.favourites.indexOf(id) !== -1,
+                hidden: prefs.hidden.indexOf(id) !== -1,
+            };
+        });
+
+        const autoinscricoes = lists.autoinscricoes.map((course) => {
+            const id = courseKey(course);
+            const enrolledLocal = prefs.enrolledSelf.indexOf(id) !== -1;
+            const enrolled = Boolean(course.is_enrolled || course.enrolled || enrolledLocal);
+
+            return {
+                ...course,
+                is_enrolled: enrolled,
+                enrolled,
+                isfavourite: prefs.favourites.indexOf(id) !== -1,
+                favourite: prefs.favourites.indexOf(id) !== -1,
+                hidden: prefs.hidden.indexOf(id) !== -1,
+            };
+        });
+
+        return { diarios, autoinscricoes };
+    }
+
+    function filterDiarios(
+        diarios: DashboardCourse[],
+        situacao: string | undefined,
+    ): DashboardCourse[] {
+        const key = situacao || 'allincludinghidden';
+
+        if (key === 'favourites') {
+            return diarios.filter((item) => item.isfavourite || item.favourite);
+        }
+
+        if (key === 'hidden') {
+            return diarios.filter((item) => item.hidden);
+        }
+
+        if (key === 'inprogress') {
+            return diarios.filter((item) => !item.hidden);
+        }
+
+        // allincludinghidden
+        return diarios.slice();
+    }
+
+    function filteredLists(lists: PainelLists): PainelLists {
+        const situacao = App.activeFilter?.situacao;
+
+        return {
+            diarios: filterDiarios(lists.diarios, situacao),
+            autoinscricoes: lists.autoinscricoes.filter((item) => !item.hidden),
+        };
+    }
+
+    function refreshPainelCards(): void {
+        if (!App.painelLists) {
+            return;
+        }
+
+        const tab = App.activePainelTab === 'autoinscricoes' ? 'autoinscricoes' : 'diarios';
+
+        setActiveTab(tab, App.painelLists);
+    }
+
+    function toggleFavourite(course: DashboardCourse): void {
+        const prefs = readPrefs();
+        const id = courseKey(course);
+        const idx = prefs.favourites.indexOf(id);
+
+        if (idx === -1) {
+            prefs.favourites.push(id);
+        } else {
+            prefs.favourites.splice(idx, 1);
+        }
+
+        writePrefs(prefs);
+
+        if (App.painelLists) {
+            App.painelLists = applyPrefsToLists({
+                diarios: App.painelLists.diarios.map((item) =>
+                    courseKey(item) === id
+                        ? { ...item, isfavourite: idx === -1, favourite: idx === -1 }
+                        : item,
+                ),
+                autoinscricoes: App.painelLists.autoinscricoes,
+            });
+        }
+
+        refreshPainelCards();
+    }
+
+    function setSelfEnrolment(course: DashboardCourse, enrolled: boolean): void {
+        const prefs = readPrefs();
+        const id = courseKey(course);
+        const idx = prefs.enrolledSelf.indexOf(id);
+
+        if (enrolled && idx === -1) {
+            prefs.enrolledSelf.push(id);
+        }
+
+        if (!enrolled && idx !== -1) {
+            prefs.enrolledSelf.splice(idx, 1);
+        }
+
+        writePrefs(prefs);
+
+        if (App.painelLists) {
+            App.painelLists = {
+                diarios: App.painelLists.diarios,
+                autoinscricoes: App.painelLists.autoinscricoes.map((item) =>
+                    courseKey(item) === id
+                        ? { ...item, is_enrolled: enrolled, enrolled }
+                        : item,
+                ),
+            };
+        }
+
+        refreshPainelCards();
+    }
+
+    function openCourse(course: DashboardCourse): void {
+        if (course.details_url && course.self_enrol) {
+            window.open(course.details_url, '_blank', 'noopener,noreferrer');
+
+            return;
+        }
+
+        window.location.hash = '#/curso/' + encodeURIComponent(String(course.id));
+    }
+
     /** Atualiza avatar/nome no header e na sidebar a partir do dashboard. */
     function setUser(dashboard: DashboardData): void {
         const nome = dashboard.nome || 'Estudante';

@@ -25,9 +25,13 @@ interface DashboardCourse {
     ambiente?: { titulo?: string };
     isfavourite?: boolean;
     favourite?: boolean;
+    hidden?: boolean;
+    visible?: boolean;
     is_enrolled?: boolean;
     enrolled?: boolean;
     details_url?: string;
+    /** Curso do catálogo AVA de autoinscrição (não é diário SUAP). */
+    self_enrol?: boolean;
 }
 
 interface DashboardData {
@@ -139,6 +143,11 @@ interface MobileMoodleApp {
     dashboardPapel?: string;
     activePainelTab?: PainelTabKey;
     activeFilter?: ActiveFilter;
+    /** Listas atuais do painel (atualizadas ao filtrar / inscrever). */
+    painelLists?: {
+        diarios: DashboardCourse[];
+        autoinscricoes: DashboardCourse[];
+    };
     ASSET_BASE?: string;
     resolveLoginUrl?: () => string;
     A11y?: A11yModule;
