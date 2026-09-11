@@ -9,6 +9,9 @@
 .menu-content {
     --background: var(--primary);
     --color: #ffffff;
+
+    // A sidebar cobre a tela inteira, inclusive a área da barra de status.
+    --padding-top: var(--ifrn-safe-area-top, 0px);
 }
 
 .sidebar-container {

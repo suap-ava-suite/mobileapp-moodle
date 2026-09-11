@@ -61,6 +61,19 @@ body {
   box-sizing: border-box;
 }
 
+:root {
+  --ifrn-safe-area-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --ion-safe-area-top: var(--ifrn-safe-area-top);
+}
+
+html.plt-android.plt-mobile {
+  --ifrn-safe-area-top: max(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)), 24px);
+}
+
+ion-header ion-toolbar:first-of-type {
+  padding-top: var(--ifrn-safe-area-top);
+}
+
 .toolbar-avatar {
   width: 32px;
   height: 32px;
@@ -125,6 +138,7 @@ ion-menu-button {
 .menu-content {
   --background: var(--primary);
   --color: #ffffff;
+  --padding-top: var(--ifrn-safe-area-top, 0px);
 }
 
 .sidebar-container {
