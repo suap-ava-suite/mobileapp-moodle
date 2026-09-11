@@ -1,0 +1,1392 @@
+// ============================================================
+// [Grader Report & Gradebook] — Tema IFRN DS-GOV (v3.0)
+// Formato e mecânica estrutural baseada no Moodle Boost
+// com a identidade visual completa do Design System Gov.br
+// Otimizado para telas 1366x768 com grid fechado e sem hover
+// ============================================================
+
+.path-grade-report-grader {
+    // ---------------------------------------------------------
+    // 1. Pass / Fail — Padrão DS Gov.br
+    // ---------------------------------------------------------
+    .gradepass {
+        color: $green-cool-vivid-60 !important; // #2d8a45
+        font-weight: $font-weight-semibold !important;
+    }
+    .gradefail {
+        color: $color-error !important; // #d93514
+        font-weight: $font-weight-semibold !important;
+    }
+
+    // ---------------------------------------------------------
+    // 2. Layout da Região Principal (Boost)
+    // ---------------------------------------------------------
+    #region-main {
+        min-width: 100%;
+        width: auto;
+
+        & > .card {
+            width: auto;
+            overflow-x: initial;
+        }
+    }
+
+    [data-region="blocks-column"] {
+        width: 100%;
+        clear: both;
+    }
+
+    // ---------------------------------------------------------
+    // 3. Barra de Navegação Terciária (DS Gov.br — Alinhada com a Tabela)
+    // ---------------------------------------------------------
+    .tertiary-navigation {
+        display: block !important;
+        width: 100% !important;
+        padding: 4px 0 12px 0 !important;
+        margin: 0 0 $spacing-md 0 !important;
+        border-bottom: $border-width-thin solid $border-light !important;
+
+        > div,
+        .d-flex.flex-wrap,
+        .row,
+        [data-region="tertiary-navigation"] {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            flex-wrap: wrap !important;
+            gap: 16px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+
+        .navitem {
+            display: inline-flex !important;
+            align-items: center !important;
+            align-self: center !important;
+            height: 38px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            flex-direction: row !important;
+
+            &.align-self-center,
+            &.flex-column {
+                align-self: center !important;
+                flex-direction: row !important;
+                height: 38px !important;
+            }
+
+            &.ms-auto {
+                margin-left: auto !important;
+                display: inline-flex !important;
+                align-items: center !important;
+            }
+        }
+
+        .navitem-divider {
+            display: none !important;
+        }
+
+        // ---------------------------------------------------------
+        // Seletor Principal de Relatório ("Relatório de notas") — DS Gov.br
+        // ---------------------------------------------------------
+        .tertiary-navigation-selector,
+        .select-menu {
+            display: inline-flex !important;
+            align-items: center !important;
+            height: 38px !important;
+            margin: 0 !important;
+
+            .btn.dropdown-toggle {
+                display: inline-flex !important;
+                align-items: center !important;
+                height: 38px !important;
+                padding: 0 4px !important;
+                margin: 0 !important;
+                font-size: 1.2rem !important;
+                font-weight: $font-weight-bold !important;
+                color: $blue-warm-vivid-90 !important; // #071d41
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                line-height: 1 !important;
+
+                span,
+                span[role="heading"],
+                h2 {
+                    margin: 0 !important;
+                    line-height: 1 !important;
+                    font-size: 1.2rem !important;
+                    font-weight: $font-weight-bold !important;
+                    color: $blue-warm-vivid-90 !important;
+                    display: inline-flex !important;
+                    align-items: center !important;
+                }
+
+                &:hover,
+                &:focus {
+                    color: $blue-warm-vivid-70 !important; // #1351b4
+                }
+
+                &::after {
+                    margin-left: 6px !important;
+                    vertical-align: middle !important;
+                }
+            }
+
+            // Submenu Dropdown "Relatório de notas" — Design System Gov.br
+            .dropdown-menu {
+                border: $border-width-thin solid $border-default !important; // #cccccc
+                box-shadow: $shadow-dropdown !important; // Sombra DS Gov
+                border-radius: $border-radius-default !important; // 4px
+                padding: 8px 0 !important;
+                background-color: $bg-white !important;
+                min-width: 260px !important;
+                max-height: 480px !important;
+                overflow-y: auto !important;
+                z-index: $z-index-dropdown-page !important; // 1035 (Abaixo do cabeçalho fixo 1060)
+                list-style: none !important;
+
+                ul[role="group"] {
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    list-style: none !important;
+                }
+
+                // Cabeçalhos de Grupo (Visualizar, Configuração, etc.)
+                li[role="presentation"],
+                .dropdown-header {
+                    font-size: $font-size-xs !important; // 0.75rem
+                    font-weight: $font-weight-bold !important;
+                    color: $text-muted !important; // #666666
+                    text-transform: uppercase !important;
+                    letter-spacing: 0.5px !important;
+                    padding: 10px 16px 4px 16px !important;
+                    margin: 0 !important;
+                    list-style: none !important;
+                }
+
+                // Divisórias entre grupos
+                .dropdown-divider,
+                li[role="separator"] {
+                    border-top: $border-width-thin solid $border-inner !important; // #e6e6e6
+                    margin: 6px 0 !important;
+                    padding: 0 !important;
+                    list-style: none !important;
+                }
+
+                // Itens de Opção clicáveis
+                :is(.dropdown-item, li.dropdown-item, a.dropdown-item, [role="option"]) {
+                    display: flex !important;
+                    align-items: center !important;
+                    font-size: $font-size-sm !important;
+                    font-weight: $font-weight-normal !important;
+                    color: $text-dark !important;
+                    padding: 10px 20px 10px 24px !important; // Padding esquerdo aumentado para respiro do ícone
+                    gap: 12px !important; // Espaçamento entre ícone de selecionado e texto
+                    background-color: transparent !important;
+                    border: none !important;
+                    border-bottom: none !important;
+                    border-radius: 0 !important;
+                    text-decoration: none !important;
+                    cursor: pointer !important;
+                    transition: background-color $transition-fast, color $transition-fast !important;
+
+                    // Ícones de seleção / checkmark
+                    :is(.icon, i.icon, img.icon, svg, .fa, .filler, .selected-icon) {
+                        font-size: 16px !important;
+                        width: 16px !important;
+                        height: 16px !important;
+                        min-width: 16px !important;
+                        min-height: 16px !important;
+                        margin-right: 8px !important;
+                        margin-left: 0 !important;
+                        color: inherit !important;
+                        flex-shrink: 0 !important;
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        vertical-align: middle !important;
+                    }
+
+                    // Hover DS Gov: fundo suave #eaeff8, texto #071d41, SEM borda inferior
+                    &:hover,
+                    &:focus {
+                        background-color: $blue-warm-vivid-10 !important; // #eaeff8
+                        color: $blue-warm-vivid-90 !important; // #071d41
+                        text-decoration: none !important;
+                        border: none !important;
+                        border-bottom: none !important;
+                        outline: none !important;
+                    }
+
+                    // Item selecionado / ativo
+                    &.active,
+                    &[aria-current="true"],
+                    &[aria-selected="true"] {
+                        background-color: $blue-warm-vivid-10 !important;
+                        color: $blue-warm-vivid-70 !important; // #1351b4
+                        font-weight: $font-weight-bold !important;
+                        border: none !important;
+                        border-bottom: none !important;
+
+                        &:hover,
+                        &:focus {
+                            background-color: $blue-warm-vivid-10 !important;
+                            color: $blue-warm-vivid-90 !important;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Input de Busca de Usuários ("Pesquisar usuários")
+        .user-search,
+        .simplesearchform {
+            display: inline-flex !important;
+            align-items: center !important;
+            height: 38px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+
+            > .btn.dropdown-toggle {
+                display: inline-flex !important;
+                align-items: center !important;
+                height: 38px !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                border: none !important;
+                background: transparent !important;
+                box-shadow: none !important;
+
+                &::after {
+                    display: none !important;
+                }
+            }
+
+            .searchbar {
+                position: relative !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                width: 230px !important;
+                height: 38px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+
+                .form-control.withclear {
+                    height: 38px !important;
+                    padding: 6px 32px 6px 12px !important;
+                    font-size: $font-size-sm !important;
+                    border: $border-width-thin solid $border-default !important; // #cccccc
+                    border-radius: $border-radius-default !important; // 4px
+                    background-color: $bg-white !important;
+                    color: $text-dark !important;
+                    margin: 0 !important;
+                    box-sizing: border-box !important;
+                    line-height: 1.4 !important;
+
+                    &::placeholder {
+                        color: $text-muted !important;
+                        font-size: $font-size-sm !important;
+                    }
+
+                    &:focus {
+                        border-color: $blue-warm-vivid-70 !important;
+                        box-shadow: $focus-ring-blue !important;
+                    }
+                }
+
+                .btn-clear {
+                    position: absolute !important;
+                    right: 6px !important;
+                    top: 50% !important;
+                    transform: translateY(-50%) !important;
+                    background: transparent !important;
+                    border: none !important;
+                    padding: 4px !important;
+                    color: $text-muted !important;
+                    z-index: 5 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+
+                    &:hover {
+                        color: $blue-warm-vivid-70 !important;
+                    }
+                }
+            }
+        }
+
+        // ---------------------------------------------------------
+        // Botão de Colunas Contraídas e Comboboxes ("Filtrar por nome", "Colunas contraídas")
+        // ---------------------------------------------------------
+        .collapse-columns,
+        .comboboxsearch {
+            display: inline-flex !important;
+            align-items: center !important;
+            height: 38px !important;
+            margin: 0 !important;
+
+            .btn.dropdown-toggle,
+            [data-bs-toggle="dropdown"] {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                height: 38px !important;
+                gap: 6px !important;
+                font-size: 0.9rem !important;
+                font-weight: $font-weight-semibold !important;
+                color: $blue-warm-vivid-70 !important;
+                background-color: transparent !important;
+                border: none !important;
+                padding: 0 12px !important;
+                margin: 0 !important;
+                border-radius: $border-radius-pill !important; // DS Gov Pill
+                line-height: 1 !important;
+                box-shadow: none !important;
+
+                &:hover,
+                &:active,
+                &:focus {
+                    background-color: $blue-warm-vivid-10 !important; // #eaeff8
+                    color: $blue-warm-vivid-90 !important;
+                    text-decoration: none !important;
+                }
+
+                // O badge redondo azul com o número centralizado
+                .badge,
+                span.badge,
+                [data-collapse="count"],
+                .badge.rounded-pill {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    width: 20px !important;
+                    height: 20px !important;
+                    min-width: 20px !important;
+                    max-width: 20px !important;
+                    min-height: 20px !important;
+                    max-height: 20px !important;
+                    padding: 0 !important;
+                    margin: 0 0 0 4px !important;
+                    border-radius: 50% !important; // Círculo perfeito
+                    background-color: $blue-warm-vivid-70 !important; // #1351b4
+                    color: $text-light !important; // #ffffff
+                    font-size: 0.75rem !important;
+                    font-weight: $font-weight-bold !important;
+                    line-height: 20px !important;
+                    text-align: center !important;
+                    vertical-align: middle !important;
+                    align-self: center !important;
+                    box-sizing: border-box !important;
+                }
+
+                &::after {
+                    margin-left: 4px !important;
+                    vertical-align: middle !important;
+                }
+            }
+        }
+
+        // Task 5: Dropdown de colunas colapsadas ("Colunas contraídas") com padding generoso e organização DS Gov
+        .collapsecolumndropdown,
+        .collapse-columns .dropdown-menu,
+        .collapsedcolumns .dropdown-menu,
+        [data-region="collapse-columns-dropdown"] {
+            border: $border-width-thin solid $border-default !important;
+            box-shadow: $shadow-dropdown !important;
+            border-radius: $border-radius-default !important;
+            padding: 16px !important; // Padding interno generoso e organizado
+            background-color: $bg-white !important;
+            min-width: 320px !important;
+            max-width: 400px !important;
+            max-height: 520px !important;
+            overflow-y: auto !important;
+            margin-top: 8px !important;
+
+            .searchinput,
+            .searchbar,
+            .form-inline {
+                width: 100% !important;
+                margin-bottom: 12px !important;
+
+                .form-control,
+                input[type="text"],
+                input[type="search"] {
+                    width: 100% !important;
+                    height: 38px !important;
+                    padding: 6px 12px !important;
+                    font-size: $font-size-sm !important;
+                    border: $border-width-thin solid $border-default !important;
+                    border-radius: $border-radius-default !important;
+                    background-color: $bg-white !important;
+
+                    &:focus {
+                        border-color: $blue-warm-vivid-70 !important;
+                        box-shadow: $focus-ring-blue !important;
+                    }
+                }
+            }
+
+            .columnsdropdownform {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+
+                fieldset {
+                    border: none !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                }
+            }
+
+            .searchresultitemscontainer,
+            ul.list-group {
+                max-height: 220px !important;
+                overflow-y: auto !important;
+                padding: 4px 0 !important;
+                margin: 4px 0 12px 0 !important;
+                list-style: none !important;
+
+                li,
+                .list-group-item {
+                    display: flex !important;
+                    align-items: center !important;
+                    padding: 8px 12px !important;
+                    font-size: $font-size-sm !important;
+                    color: $text-dark !important;
+                    border: none !important;
+                    border-radius: $border-radius-default !important;
+                    margin-bottom: 2px !important;
+                    background-color: transparent !important;
+                    gap: 8px !important;
+
+                    &:hover,
+                    &:focus {
+                        background-color: $blue-warm-vivid-10 !important;
+                        color: $blue-warm-vivid-90 !important;
+                    }
+
+                    .form-check-input,
+                    input[type="checkbox"] {
+                        margin-top: 0 !important;
+                        margin-right: 8px !important;
+                        flex-shrink: 0 !important;
+                    }
+
+                    label {
+                        margin-bottom: 0 !important;
+                        cursor: pointer !important;
+                        font-weight: $font-weight-normal !important;
+                    }
+                }
+            }
+
+            // Rodapé do dropdown: Checkbox "Selecionar todos" e botões
+            .d-flex.mt-2,
+            .columnsdropdownform > div.d-flex {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                padding-top: 12px !important;
+                border-top: $border-width-thin solid $border-inner !important;
+                margin-top: 8px !important;
+                gap: 8px !important;
+
+                .form-check {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                    margin-bottom: 0 !important;
+                    padding-left: 0 !important;
+
+                    input[type="checkbox"] {
+                        margin-left: 0 !important;
+                        margin-right: 6px !important;
+                        float: none !important;
+                    }
+
+                    label {
+                        margin-bottom: 0 !important;
+                        font-size: $font-size-sm !important;
+                        color: $text-dark !important;
+                        cursor: pointer !important;
+                    }
+                }
+
+                .flex-row.ms-auto,
+                div:last-child {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+
+                    .btn {
+                        height: 34px !important;
+                        padding: 4px 14px !important;
+                        font-size: $font-size-sm !important;
+                        margin: 0 !important;
+                    }
+                }
+            }
+        }
+
+        // Task 5: Margem no dropdownmenu "Filtrar por nome" para não encostar nos elementos
+        .comboboxsearch,
+        .user-search {
+            .dropdown-menu,
+            .usersearchdropdown,
+            .initialsdropdown {
+                margin-top: 8px !important;
+                margin-bottom: 8px !important;
+            }
+        }
+
+        // Botão "Limpar tudo"
+        .navitem a.btn.btn-link {
+            display: inline-flex !important;
+            align-items: center !important;
+            height: 38px !important;
+            font-size: $font-size-sm !important;
+            color: $blue-warm-vivid-70 !important;
+            text-decoration: underline !important;
+            padding: 0 6px !important;
+            margin: 0 !important;
+        }
+    }
+
+    // ---------------------------------------------------------
+    // 4. Gradeparent — Tabela de Notas com Grid Fechado DS Gov.br
+    // ---------------------------------------------------------
+    .gradeparent {
+        position: relative !important;
+        overflow-x: auto !important;
+        margin: 0 0 $spacing-2xl 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+
+        // Tabela Principal — Contorno Fechado Completo com Borda Exterior Mais Grossa (2px #cccccc)
+        table.gradereport-grader-table,
+        table {
+            border: $border-width-medium solid $border-outer !important; // 2px solid #cccccc (Borda exterior conforme course/view)
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+            border-radius: $border-radius-default !important; // 4px
+            background-color: $bg-white !important;
+            font-family: $font-family-base !important;
+            font-size: $font-size-sm !important;
+            margin: 0 0 2rem 0 !important;
+            padding: 0 !important;
+            height: auto !important; // Neutraliza height: 100% herdado do styles.css
+            width: max-content !important;
+            min-width: 100% !important;
+
+            --bs-table-hover-bg: transparent !important;
+            --bs-table-accent-bg: transparent !important;
+
+            .clickable {
+                cursor: pointer;
+            }
+        }
+
+        // Reset de recuo e paddings herdados do Moodle core
+        .heading .gradeitemheader {
+            text-indent: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .header,
+        td.userfield div {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        // TODAS AS CÉLULAS DA TABELA (th e td) — Divisórias internas finas (1px #e6e6e6)
+        table th,
+        table td,
+        .cell {
+            height: auto !important; // Neutraliza height: 100% herdado do styles.css
+            min-height: 0 !important;
+            border-top: none !important;
+            border-left: none !important;
+            border-right: $border-width-thin solid $border-inner !important; // 1px solid #e6e6e6 Divisória vertical fina
+            border-bottom: $border-width-thin solid $border-inner !important; // 1px solid #e6e6e6 Divisória horizontal fina
+            padding: 8px 12px !important;
+            vertical-align: middle !important;
+            line-height: 1.4 !important;
+            font-size: $font-size-sm !important;
+            color: $text-dark !important;
+            background-color: $bg-white;
+            box-sizing: border-box !important;
+
+            &.gradecell {
+                .dropdown-menu.show {
+                    z-index: 10;
+                }
+            }
+        }
+
+        // Borda Superior Visível e Mais Grossa na Primeira Linha (2px solid #cccccc)
+        table tr:first-child > th,
+        table tr:first-child > td,
+        tr.heading_name_row > th,
+        tr.heading_name_row > td,
+        tr.heading_name_row:first-child > th,
+        tr.heading_name_row:first-child > td,
+        tr.heading:first-child > th,
+        tr.heading:first-child > td {
+            border-top: $border-width-medium solid $border-outer !important; // 2px solid #cccccc
+        }
+
+        // Neutralização de bordas no perímetro para eliminar duplicações
+        table tr > th:last-child,
+        table tr > td:last-child {
+            border-right: none !important; // A borda direita da tabela de 2px já fecha o contorno
+        }
+
+        table tr:last-child > th,
+        table tr:last-child > td,
+        tr.lastrow > th,
+        tr.lastrow > td {
+            border-bottom: none !important; // A borda inferior da tabela de 2px já fecha o contorno
+        }
+
+        // ---------------------------------------------------------
+        // LINHA 1: Nível de Categorias / Disciplina (tr.heading_name_row)
+        // ---------------------------------------------------------
+        tr.heading_name_row {
+            height: auto !important;
+
+            // Célula filler (espaço em branco no topo à esquerda sobre os dados dos alunos)
+            td.filler,
+            td.fillerfirst,
+            td.fillerlast {
+                background-color: $bg-light-gray !important; // #f7f9fa Fundo padronizado
+                border-right: $border-width-thin solid $border-inner !important;
+                border-bottom: $border-width-thin solid $border-default !important;
+                padding: 8px 12px !important;
+                height: auto !important;
+            }
+
+            // Célula de Categoria ("Desenvolvimento para Dispositivos Móveis")
+            th.category {
+                background-color: $bg-light-gray !important; // #f7f9fa
+                color: $blue-warm-vivid-90 !important; // #071d41
+                font-weight: $font-weight-bold !important;
+                font-size: $font-size-sm !important;
+                vertical-align: middle !important;
+                text-align: left !important;
+                border-right: $border-width-thin solid $border-inner !important;
+                border-bottom: $border-width-thin solid $border-default !important;
+                padding: 8px 12px !important;
+                height: auto !important;
+
+                a:not(.btn) {
+                    color: $blue-warm-vivid-90 !important;
+                    font-weight: $font-weight-bold !important;
+                    text-decoration: none !important;
+
+                    &:hover {
+                        color: $blue-warm-vivid-70 !important;
+                        text-decoration: underline !important;
+                    }
+                }
+            }
+        }
+
+        // ---------------------------------------------------------
+        // LINHA 2: Cabeçalho Principal (tr.heading — Nome, E-mail, Itens de Nota)
+        // ---------------------------------------------------------
+        tr.heading {
+            position: static !important;
+            height: auto !important;
+
+            > th,
+            > td,
+            .cell {
+                background-color: $bg-light-gray !important; // #f7f9fa
+                color: $blue-warm-vivid-90 !important; // #071d41
+                font-weight: $font-weight-bold !important;
+                font-size: $font-size-sm !important;
+                vertical-align: middle !important;
+                text-align: left !important;
+                padding: 8px 12px !important;
+                height: auto !important;
+                border-bottom: $border-width-medium solid $border-default !important; // 2px solid #cccccc
+                border-right: $border-width-thin solid $border-inner !important;
+
+                a:not(.btn) {
+                    color: $blue-warm-vivid-90 !important;
+                    font-weight: $font-weight-bold !important;
+                    text-decoration: none !important;
+
+                    &:hover {
+                        color: $blue-warm-vivid-70 !important;
+                        text-decoration: underline !important;
+                    }
+                }
+            }
+
+            // Célula "Nome / Sobrenome" (#studentheader)
+            th.header#studentheader {
+                background-color: $bg-light-gray !important;
+                border-bottom: $border-width-medium solid $border-default !important;
+                border-right: $border-width-thin solid $border-inner !important;
+                white-space: nowrap !important;
+                padding: 8px 12px !important;
+            }
+        }
+
+        // Estrutura do Título do Item de Nota (.gradeitemheader)
+        .gradeitemheader {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            text-indent: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 220px !important;
+            word-break: break-word !important;
+            vertical-align: middle !important;
+
+            a {
+                color: $blue-warm-vivid-90 !important;
+                font-weight: $font-weight-bold !important;
+                text-decoration: none !important;
+
+                &:hover {
+                    color: $blue-warm-vivid-70 !important;
+                    text-decoration: underline !important;
+                }
+            }
+
+            .itemicon {
+                display: inline-flex !important;
+                align-items: center !important;
+                flex-shrink: 0 !important;
+                margin-right: 2px !important;
+            }
+        }
+
+        // Ícones de Ordenação (Sort)
+        .sorticon {
+            display: inline-flex !important;
+            align-items: center !important;
+            vertical-align: middle !important;
+            margin-left: 4px !important;
+            color: $text-muted !important;
+
+            a {
+                color: $text-muted !important;
+
+                &:hover {
+                    color: $blue-warm-vivid-70 !important;
+                }
+            }
+
+            .icon {
+                font-size: 12px !important;
+                width: 14px !important;
+                height: 14px !important;
+                margin: 0 !important;
+            }
+        }
+
+        // ---------------------------------------------------------
+        // LINHAS DE DADOS DOS ALUNOS (tr.userrow) — Sem Hover
+        // ---------------------------------------------------------
+        tr.userrow {
+            height: auto !important;
+
+            > th,
+            > td,
+            .cell {
+                font-size: $font-size-sm !important;
+                color: $text-dark !important;
+                padding: 8px 12px !important;
+                height: auto !important;
+                background-color: $bg-white !important;
+                border-bottom: $border-width-thin solid $border-inner !important;
+                border-right: $border-width-thin solid $border-inner !important;
+            }
+
+            th.header,
+            th.cell.c0,
+            th.user {
+                background-color: $bg-white !important;
+                border-right: $border-width-thin solid $border-inner !important;
+            }
+        }
+
+        // Célula do Aluno (Avatar Circular + Nome)
+        .user.cell,
+        th.user {
+            white-space: nowrap !important;
+            vertical-align: middle !important;
+            min-width: 200px !important;
+
+            .userpicture,
+            img.userpicture {
+                width: 32px !important;
+                height: 32px !important;
+                min-width: 32px !important;
+                min-height: 32px !important;
+                border-radius: $border-radius-circle !important; // Circular 50%
+                margin-right: 8px !important;
+                vertical-align: middle !important;
+                object-fit: cover !important;
+                border: none !important;
+                display: inline-block !important;
+            }
+
+            .userinitials,
+            span.userinitials {
+                width: 32px !important;
+                height: 32px !important;
+                min-width: 32px !important;
+                min-height: 32px !important;
+                border-radius: $border-radius-circle !important;
+                margin-right: 8px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                font-size: 0.75rem !important;
+                font-weight: $font-weight-bold !important;
+                vertical-align: middle !important;
+            }
+
+            .username,
+            a:not(.btn) {
+                color: $blue-warm-vivid-70 !important; // #1351b4
+                font-weight: $font-weight-semibold !important;
+                text-decoration: none !important;
+                vertical-align: middle !important;
+                display: inline-block !important;
+
+                &:hover {
+                    color: $blue-warm-vivid-90 !important; // #071d41
+                    text-decoration: underline !important;
+                }
+            }
+        }
+
+        // Células de Valores de Nota (Grade Values)
+        td.grade_type_value,
+        td.gradecell {
+            text-align: right !important;
+            font-variant-numeric: tabular-nums !important;
+            padding-right: 14px !important;
+
+            .gradevalue {
+                display: inline-block !important;
+                font-variant-numeric: tabular-nums !important;
+            }
+        }
+
+        // Células de Totais de Categoria, Curso e Ranges
+        .cell.categoryitem,
+        .cell.courseitem,
+        .range .cell {
+            background-color: $bg-light-gray !important; // #f7f9fa
+            font-weight: $font-weight-semibold !important;
+            color: $blue-warm-vivid-90 !important;
+        }
+
+        // ---------------------------------------------------------
+        // LINHA DE MÉDIA GERAL (tr.lastrow / tr.avg)
+        // ---------------------------------------------------------
+        tr.lastrow,
+        tr.avg {
+            height: auto !important;
+
+            > td,
+            > th,
+            .cell {
+                border-top: $border-width-medium solid $border-default !important; // 2px solid #cccccc Acento de totalizador
+                background-color: $bg-light-gray !important;
+                font-weight: $font-weight-bold !important;
+                color: $blue-warm-vivid-90 !important;
+                border-bottom: none !important; // Fechado pela borda inferior de 2px da tabela
+                border-right: $border-width-thin solid $border-inner !important; // 1px solid #e6e6e6
+                padding: 8px 12px !important;
+                height: auto !important;
+
+                &:last-child {
+                    border-right: none !important;
+                }
+            }
+        }
+
+        // Estados de Célula: Sobrescrita (Amarelo Gov.br) e Excluída
+        td.overridden,
+        td.ajaxoverridden,
+        .cell.overridden,
+        .cell.ajaxoverridden,
+        tr:nth-child(n) td.ajaxoverridden:nth-child(n) {
+            background-color: #fff9e6 !important;
+            font-style: italic !important;
+            border-left: 2px solid $yellow-vivid-30 !important;
+        }
+
+        .cell.excluded,
+        td.excluded {
+            background-color: #fce8e6 !important;
+            text-decoration: line-through !important;
+            color: $text-muted !important;
+
+            .excludedfloater {
+                color: $color-error !important;
+                font-weight: $font-weight-bold !important;
+                font-size: 0.65rem !important;
+            }
+        }
+
+        // Colunas Ocultas / Colapsadas
+        .highlightable.cell.collapsed {
+            min-width: unset !important;
+            width: 36px !important;
+            max-width: 36px !important;
+            text-align: center !important;
+            padding: 4px !important;
+
+            [data-collapse="expandbutton"] {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 24px !important;
+                height: 24px !important;
+                padding: 0 !important;
+                border: none !important;
+                background: transparent !important;
+                color: $blue-warm-vivid-70 !important;
+                border-radius: $border-radius-circle !important;
+
+                &:hover {
+                    background-color: $blue-warm-vivid-10 !important;
+                    color: $blue-warm-vivid-90 !important;
+                }
+            }
+        }
+
+        // Ícones de Ação e Menus de Célula (.action-menu)
+        .action-menu {
+            display: inline-flex !important;
+            align-items: center !important;
+            vertical-align: middle !important;
+            margin-left: 4px !important;
+
+            .btn.dropdown-toggle,
+            .dropdown-toggle {
+                width: 26px !important;
+                height: 26px !important;
+                min-width: 26px !important;
+                min-height: 26px !important;
+                padding: 0 !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border: none !important;
+                background: transparent !important;
+                border-radius: $border-radius-circle !important;
+                color: $text-muted !important;
+                box-shadow: none !important;
+
+                &:hover,
+                &:focus {
+                    background-color: $blue-warm-vivid-10 !important;
+                    color: $blue-warm-vivid-70 !important;
+                }
+
+                &::after {
+                    display: none !important;
+                }
+
+                .icon {
+                    margin: 0 !important;
+                    font-size: 13px !important;
+                }
+            }
+
+            .dropdown-menu {
+                border: $border-width-thin solid $border-default !important;
+                box-shadow: $shadow-dropdown !important;
+                border-radius: $border-radius-default !important;
+                padding: 4px 0 !important;
+                background-color: $bg-white !important;
+
+                .dropdown-item {
+                    font-size: $font-size-sm !important;
+                    padding: 8px 16px !important;
+                    color: $text-dark !important;
+
+                    &:hover,
+                    &:focus {
+                        background-color: $blue-warm-vivid-10 !important;
+                        color: $blue-warm-vivid-90 !important;
+                    }
+                }
+            }
+        }
+
+        // Ícones de status de nota (.grade_icons)
+        .grade_icons,
+        .category_grade_icons {
+            white-space: nowrap !important;
+            margin-top: 4px !important;
+
+            .icon {
+                margin-right: 6px !important;
+                font-size: 14px !important;
+                width: 16px !important;
+                color: $text-muted !important;
+
+                &:last-child {
+                    margin-right: 0 !important;
+                }
+            }
+        }
+
+        // Campos de Edição Rápida (Quick Grading)
+        input[name^="grade"],
+        input[name^="feedback"],
+        input.text {
+            height: 30px !important;
+            min-height: 30px !important;
+            width: 80px !important;
+            padding: 3px 8px !important;
+            font-size: $font-size-sm !important;
+            border: $border-width-thin solid $border-default !important;
+            border-radius: $border-radius-default !important;
+            background-color: $bg-white !important;
+            color: $text-dark !important;
+            text-align: right !important;
+            font-variant-numeric: tabular-nums !important;
+            box-sizing: border-box !important;
+            display: inline-block !important;
+
+            &:focus {
+                border-color: $blue-warm-vivid-70 !important;
+                box-shadow: $focus-ring-blue !important;
+                outline: none !important;
+            }
+        }
+
+        select {
+            height: 30px !important;
+            min-height: 30px !important;
+            font-size: $font-size-sm !important;
+            border: $border-width-thin solid $border-default !important;
+            border-radius: $border-radius-default !important;
+            background-color: $bg-white !important;
+            color: $text-dark !important;
+            padding: 2px 8px !important;
+
+            &:focus {
+                border-color: $blue-warm-vivid-70 !important;
+                box-shadow: $focus-ring-blue !important;
+                outline: none !important;
+            }
+        }
+
+        td.noborder {
+            border-right: transparent !important;
+        }
+    }
+
+    // Suporte a Sticky Footer
+    &.hasstickyfooter {
+        .gradeparent {
+            tr.lastrow {
+                bottom: -1px;
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// Inputs de edição de nota (Quick Grading) — escopo global
+// ---------------------------------------------------------
+.gradereport-grader-table {
+    input[name^="grade"] {
+        width: 80px !important;
+        height: 30px !important;
+        display: inline-block !important;
+        text-align: right !important;
+        font-variant-numeric: tabular-nums !important;
+        padding: 3px 8px !important;
+        border: $border-width-thin solid $border-default !important;
+        border-radius: $border-radius-default !important;
+        background-color: $bg-white !important;
+
+        &:focus {
+            border-color: $blue-warm-vivid-70 !important;
+            box-shadow: $focus-ring-blue !important;
+            outline: none !important;
+        }
+    }
+
+    .dropdown-toggle::after {
+        display: none !important;
+    }
+}
+
+// ============================================================
+// Relatório do Usuário (User Report — .path-grade-report-user)
+// ============================================================
+.path-grade-report-user {
+    .gradepass {
+        color: $green-cool-vivid-60 !important;
+        font-weight: $font-weight-semibold !important;
+    }
+
+    .gradefail {
+        color: $color-error !important;
+        font-weight: $font-weight-semibold !important;
+    }
+
+    .user-grade {
+        width: 100% !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        border: $border-width-thin solid $border-outer !important;
+        background-color: $bg-white !important;
+        margin-bottom: 2rem !important;
+
+        thead th {
+            background-color: $bg-light-gray !important;
+            color: $blue-warm-vivid-90 !important;
+            font-weight: $font-weight-bold !important;
+            font-size: $font-size-sm !important;
+            padding: 10px 12px !important;
+            border-bottom: $border-width-medium solid $border-outer !important;
+            border-top: none !important;
+            border-left: none !important;
+            border-right: none !important;
+        }
+
+        tbody {
+            td,
+            th {
+                font-size: $font-size-sm !important;
+                padding: 8px 12px !important;
+                vertical-align: middle !important;
+                border-top: none !important;
+                border-bottom: $border-width-thin solid $border-inner !important;
+                border-left: none !important;
+                border-right: none !important;
+                color: $text-dark !important;
+
+                a:not(.btn) {
+                    color: $blue-warm-vivid-70 !important;
+                    font-weight: $font-weight-semibold !important;
+                    text-decoration: none !important;
+
+                    &:hover {
+                        color: $blue-warm-vivid-90 !important;
+                        text-decoration: underline !important;
+                    }
+                }
+            }
+
+            .levelodd {
+                background-color: $bg-white !important;
+            }
+
+            .leveleven {
+                background-color: $bg-gray !important; // Zebrado DS Gov #f6f6f6
+            }
+
+            .baggt,
+            .bagg {
+                font-weight: $font-weight-bold !important;
+                background-color: $bg-light-gray !important;
+                color: $blue-warm-vivid-90 !important;
+            }
+
+            tr:last-child {
+                td,
+                th {
+                    border-bottom: none !important;
+                }
+            }
+        }
+
+        .column-grade,
+        .column-range,
+        .column-percentage,
+        .column-weight,
+        .column-contributiontocoursetotal {
+            text-align: right !important;
+            font-variant-numeric: tabular-nums !important;
+            /*rtl:ignore*/
+            direction: ltr !important;
+        }
+
+        .column-itemname {
+            font-weight: $font-weight-medium !important;
+
+            .itemicon {
+                margin-right: 6px !important;
+                vertical-align: middle !important;
+            }
+        }
+    }
+}
+
+// ============================================================
+// Visão Única (Single View — .path-grade-report-singleview)
+// ============================================================
+.path-grade-report-singleview {
+    .reporttable {
+        width: 100% !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        border: $border-width-thin solid $border-outer !important;
+        background-color: $bg-white !important;
+        margin-bottom: 2rem !important;
+
+        thead th {
+            background-color: $bg-light-gray !important;
+            color: $blue-warm-vivid-90 !important;
+            font-weight: $font-weight-bold !important;
+            font-size: $font-size-sm !important;
+            padding: 10px 12px !important;
+            border-bottom: $border-width-medium solid $border-outer !important;
+        }
+
+        tbody td,
+        tbody th {
+            font-size: $font-size-sm !important;
+            padding: 8px 12px !important;
+            vertical-align: middle !important;
+            border-bottom: $border-width-thin solid $border-inner !important;
+            color: $text-dark !important;
+        }
+
+        input[name^="finalgrade"] {
+            width: 80px !important;
+            height: 30px !important;
+            display: inline-block !important;
+            text-align: right !important;
+            font-variant-numeric: tabular-nums !important;
+            padding: 3px 8px !important;
+            border: $border-width-thin solid $border-default !important;
+            border-radius: $border-radius-default !important;
+
+            &:focus {
+                border-color: $blue-warm-vivid-70 !important;
+                box-shadow: $focus-ring-blue !important;
+                outline: none !important;
+            }
+        }
+
+        .action-menu {
+            display: inline-block !important;
+            margin-left: 0.5rem !important;
+            float: right !important;
+        }
+
+        .dropdown-toggle::after {
+            display: none !important;
+        }
+    }
+}
+
+// ============================================================
+// Configuração do Livro de Notas (Gradebook Setup — .path-grade-edit-tree)
+// ============================================================
+.path-grade-edit-tree {
+    .gradetree-wrapper {
+        padding: 12px !important;
+        background-color: $bg-white !important;
+        border: $border-width-thin solid $border-outer !important;
+        border-radius: $border-radius-none !important; // Task 2: Bordas retas
+        margin-bottom: 2rem !important;
+
+        .setup-grades.table,
+        table {
+            border: none !important;
+            border-collapse: collapse !important;
+            border-spacing: 0 !important;
+            border-radius: 0 !important;
+            margin-bottom: 0 !important;
+
+            tr {
+                background-color: transparent !important;
+                border: none !important;
+
+                td, th {
+                    border-radius: 0 !important;
+                }
+            }
+
+            tr.category td {
+                background-color: $bg-light-gray !important;
+                border-top: $border-width-thin solid $border-default !important;
+                border-bottom: $border-width-thin solid $border-default !important;
+                font-weight: $font-weight-bold !important;
+                color: $blue-warm-vivid-90 !important;
+            }
+
+            tr.item td {
+                background-color: $bg-white !important;
+                border-top: $border-width-thin solid $border-inner !important;
+                border-bottom: none !important;
+            }
+
+            tr.item.categoryitem td,
+            tr.item.courseitem td {
+                background-color: $bg-light-gray !important;
+                font-weight: $font-weight-bold !important;
+            }
+
+            td.column-name a {
+                color: $blue-warm-vivid-70 !important;
+                font-weight: $font-weight-semibold !important;
+                text-decoration: none !important;
+
+                &:hover {
+                    color: $blue-warm-vivid-90 !important;
+                    text-decoration: underline !important;
+                }
+            }
+
+            .toggle-category {
+                color: $blue-warm-vivid-70 !important;
+
+                i {
+                    color: $blue-warm-vivid-70 !important;
+                }
+            }
+
+            // Task 2: Eliminar linhas vazias que causam linha branca na tabela
+            tr.spacer,
+            tr.emptyrow,
+            tr.empty-row {
+                display: none !important;
+            }
+        }
+    }
+}
+
+// ============================================================
+// Importação e Exportação de Notas (Tasks 6 e 7: Alinhamento de labels)
+// ============================================================
+:is(.path-grade-import, .path-grade-export, [class*="path-grade-import"], [class*="path-grade-export"]) {
+    .mform {
+        .fitem,
+        .form-group.row {
+            align-items: center !important;
+            margin-bottom: $spacing-md !important;
+        }
+
+        .col-form-label,
+        .form-label,
+        label {
+            align-self: center !important;
+            margin-bottom: 0 !important;
+            padding-top: 0 !important;
+        }
+    }
+}

@@ -1,0 +1,147 @@
+<ion-content class="ifrn-login">
+
+    <header class="ifrn-login__header">
+        @if (canGoBack) {
+
+        }
+        <img class="ifrn-login__logo" src="assets/img/Gov.br_logo.svg.webp" alt="gov.br">
+    </header>
+
+
+    <main class="ifrn-login__content">
+
+        <section class="ifrn-login__card" aria-labelledby="ifrn-login-title">
+
+
+            <h1 id="ifrn-login-title">
+                Entrar com SUAP
+            </h1>
+
+            <p class="ifrn-login__subtitle">
+                Use o mesmo IFRN-id e senha do SUAP.
+            </p>
+
+
+
+            <form class="ifrn-login__form" (submit)="$event.preventDefault(); login()">
+
+
+
+                <!-- Campo IFRN-id -->
+                <div class="ifrn-login__field">
+
+                    <label for="ifrn-login-username">
+                        {{ 'ifrn.login.username' | translate }}
+                    </label>
+
+
+                    <div class="ifrn-login__input">
+
+                        <input id="ifrn-login-username" name="username" type="text" [(ngModel)]="username" autocomplete="username"
+                            [placeholder]="'ifrn.login.usernameplaceholder' | translate">
+
+                    </div>
+
+
+                    <p>
+                        {{ 'ifrn.login.usernamehelp' | translate }}
+                    </p>
+
+                </div>
+
+                <!-- Campo senha -->
+                <div class="ifrn-login__field">
+
+                    <label for="ifrn-login-password">
+                        {{ 'ifrn.login.password' | translate }}
+                    </label>
+
+
+
+                    <div class="ifrn-login__input">
+
+
+                        <input id="ifrn-login-password" name="password" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password"
+                            autocomplete="current-password" [placeholder]="'ifrn.login.currentpassword' | translate">
+
+
+
+                        <button type="button" class="ifrn-login__icon" (click)="togglePassword()"
+                            [attr.aria-label]="'ifrn.login.passwordvisibility' | translate">
+
+
+                            <ion-icon [name]="showPassword ?
+                                'eye-off-outline' :
+                                'eye-outline'">
+                            </ion-icon>
+
+
+                        </button>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- Botão entrar -->
+                <button class="ifrn-login__button ifrn-login__button--primary" type="submit" [disabled]="loading">
+
+                    {{ (loading ? 'ifrn.login.loggingin' : 'ifrn.login.login') | translate }}
+
+                </button>
+
+                <button class="ifrn-login__button ifrn-login__button--govbr" type="button"
+                    [disabled]="loading" (click)="loginWithGovBr()">
+
+                    {{ 'ifrn.login.enterwithgovbr' | translate }} <span class="ifrn-login__govbr-mark">Gov.BR</span>
+
+                </button>
+
+                @if (biometricEnabled) {
+                    <button class="ifrn-login__button ifrn-login__button--secondary" type="button"
+                        [disabled]="loading" (click)="loginWithBiometrics()">
+
+                        {{ 'ifrn.login.biometriclogin' | translate }}
+
+                    </button>
+                }
+
+
+
+                <!-- Botão cancelar -->
+                <button class="ifrn-login__button ifrn-login__button--secondary" type="button" (click)="clear()">
+
+                    {{ 'ifrn.login.cancel' | translate }}
+
+                </button>
+
+
+            </form>
+
+
+            <!-- Recuperar senha -->
+            <a class="ifrn-login__link ifrn-login__link--forgot" href="" (click)="forgotPassword($event)">
+
+                {{ 'ifrn.login.forgotpassword' | translate }}
+
+            </a>
+
+
+        </section>
+
+        <!-- Ajuda -->
+        <a class="ifrn-login__link ifrn-login__link--help" href="" (click)="help($event)">
+
+            {{ 'ifrn.login.help' | translate }}
+
+        </a>
+
+
+
+    </main>
+
+
+</ion-content>

@@ -31,6 +31,7 @@ import { IonicRouteStrategy, IonicModule } from '@ionic/angular';
 import { RouteReuseStrategy } from '@angular/router';
 import { coreInterceptorFn } from '@classes/interceptor';
 import { MoodleTranslateLoader } from '@classes/lang-loader';
+import { FingerprintAIO } from '@awesome-cordova-plugins/fingerprint-aio/ngx';
 
 if (CoreConstants.BUILD.isProduction) {
     enableProdMode();
@@ -52,6 +53,7 @@ bootstrapApplication(AppComponent, {
             TestingModule,
         ),
         { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
+        FingerprintAIO,
         provideAppInitializer(() => {
             CoreCronDelegate.register(CoreSiteInfoCronHandler.instance);
         }),

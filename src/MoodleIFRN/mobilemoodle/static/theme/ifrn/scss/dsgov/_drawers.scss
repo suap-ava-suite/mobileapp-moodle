@@ -1,0 +1,208 @@
+// ==================================================
+// Drawers — Tema IFRN DS-GOV (v3.0)
+// ==================================================
+// DRAWERS — Layout principal do #page
+#page.drawers {
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+    width: 100% !important;
+    background-color: $bg-white !important;
+    
+    .main-inner {
+        max-width: $container-max-width !important;
+        margin: 0 auto !important;
+        background-color: $bg-white !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 15px !important;
+        transition: margin-left $transition-base, width $transition-base;
+    }
+}
+
+// ==================================================
+// DRAWERS — Painéis Laterais (Posicionamento exato abaixo do Header e sobre o Rodapé)
+// ==================================================
+.drawer,
+#theme_boost-drawers-courseindex,
+#theme_boost-drawers-blocks,
+#theme_ifrn_dsgov-drawers-primary,
+.drawer-left,
+.drawer-right {
+    top: $header-height !important; // 80px — Começa logo abaixo do header global fixo
+    height: calc(100vh - #{$header-height}) !important; // 100vh - 80px (se estende até a base da tela por cima do rodapé)
+    z-index: 1045 !important; // Por cima do rodapé global (10) e abaixo do cabeçalho (1060)
+    background-color: $bg-white !important;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15) !important;
+}
+
+#theme_ifrn_dsgov-drawers-primary {
+    .drawerheader {
+        display: none !important;
+    }
+
+    .drawercontent {
+        padding: 0 !important;
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+// ==================================================
+// DRAWERS — Footer (posicionamento e z-index neutro)
+// ==================================================
+.br-footer {
+    position: relative;
+    z-index: 10 !important;
+}
+
+// ==================================================
+// DRAWERS — Botões de Acionamento (Drawer Toggles)
+// Posição ajustada ~12px abaixo do header global e bordas estilizadas DS Gov
+// ==================================================
+.drawer-toggles {
+    .drawer-toggler {
+        position: fixed !important;
+        top: calc(#{$header-height} + 12px) !important; // ~12px abaixo do header fixo (80px)
+        z-index: 1040 !important;
+
+        .btn {
+            background-color: $bg-white !important;
+            border: $border-width-thin solid $border-default !important;
+            box-shadow: $shadow-card !important;
+            color: $blue-warm-vivid-70 !important;
+            padding: 10px 14px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: background-color $transition-fast, color $transition-fast !important;
+
+            &:hover,
+            &:focus {
+                background-color: $blue-warm-vivid-10 !important;
+                color: $blue-warm-vivid-90 !important;
+            }
+
+            .icon {
+                color: inherit !important;
+                font-size: 16px !important;
+            }
+        }
+    }
+
+    // Botão da esquerda: reto na esquerda, curvado na direita
+    .drawer-left-toggle {
+        left: 0 !important;
+
+        .btn {
+            border-top-left-radius: 0 !important;
+            border-bottom-left-radius: 0 !important;
+            border-top-right-radius: $border-radius-pill-sm !important; // 20px
+            border-bottom-right-radius: $border-radius-pill-sm !important;
+            border-left: none !important;
+            padding-right: 14px !important;
+            padding-left: 10px !important;
+        }
+    }
+
+    // Botão da direita: curvado na esquerda, reto na direita
+    .drawer-right-toggle {
+        right: 0 !important;
+
+        .btn {
+            border-top-right-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+            border-top-left-radius: $border-radius-pill-sm !important;
+            border-bottom-left-radius: $border-radius-pill-sm !important;
+            border-right: none !important;
+            padding-left: 14px !important;
+            padding-right: 10px !important;
+        }
+    }
+}
+
+// ==================================================
+// DRAWERS — Páginas de Notas (grade/) e Relatórios
+// Centralização padronizada do conteúdo principal (1300px)
+// ==================================================
+:is(body[class*="path-grade"], body.path-grade, body.path-grade-report, body.path-grade-edit, body.path-grade-import, body.path-grade-export) {
+    #page {
+        min-height: auto !important;
+        padding-bottom: $spacing-2xl !important;
+
+        .main-inner,
+        #topofscroll {
+            max-width: $container-max-width !important; // 1300px padronizado
+            width: 100% !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            padding: 0 15px $spacing-2xl 15px !important;
+        }
+    }
+
+    #page-content,
+    #region-main-box {
+        width: 100% !important;
+        max-width: $container-max-width !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        overflow-x: visible !important;
+    }
+
+    #region-main {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    #page-content {
+        padding-bottom: $spacing-2xl !important;
+    }
+
+    .gradeparent,
+    .grading-report,
+    .gradetreebox,
+    .user-grade,
+    .grade-report-grader {
+        margin-bottom: $spacing-2xl !important;
+        overflow-x: auto !important;
+    }
+
+    // Suporte para páginas com barra de ações adesiva no rodapé (sticky footer do Moodle)
+    &.hasstickyfooter,
+    .hasstickyfooter {
+        #page-content {
+            padding-bottom: 120px !important;
+        }
+
+        .gradeparent {
+            margin-bottom: 100px !important;
+        }
+    }
+}
+
+// ==================================================
+// STICKY FOOTER — Barra de Ações Fixa no Rodapé
+// Posicionamento prioritário com z-index 1060 (acima do rodapé e cabeçalho fixo)
+// ==================================================
+.stickyfooter {
+    z-index: $z-index-sticky-footer !important; // 1060 (acima de todo o rodapé)
+    background-color: $bg-white !important;
+    border-top: $border-width-thin solid $border-outer !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12) !important;
+
+    .sticky-footer-content {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        max-width: $container-max-width !important;
+        margin: 0 auto !important;
+        padding: 0.5rem 1rem !important;
+    }
+
+    ul.pagination {
+        margin-bottom: 0 !important;
+    }
+}

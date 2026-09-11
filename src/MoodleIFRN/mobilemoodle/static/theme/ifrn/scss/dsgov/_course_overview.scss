@@ -1,0 +1,439 @@
+// ============================================================
+// Course Overview & Collapsable Sections — Tema IFRN DS-GOV (v3.0)
+// ============================================================
+// Estilização da tela de visão geral de atividades (/course/overview.php),
+// tabelas de atividades, relatórios colapsáveis e seções colapsáveis globais.
+
+// ---------------------------------------------------------
+// 1. Container Geral da Página de Visão Geral (/course/overview.php)
+// ---------------------------------------------------------
+#page-course-overview,
+.path-course-overview {
+    #page-header {
+        margin-bottom: $spacing-md !important;
+
+        .page-header-headings {
+            h1, h2, h3, h4 {
+                font-family: $font-family-rawline !important;
+                color: $blue-warm-vivid-90 !important;
+                font-weight: $font-weight-bold !important;
+            }
+        }
+    }
+
+    #region-main {
+        h4 {
+            font-family: $font-family-rawline !important;
+            color: $blue-warm-vivid-90 !important;
+            font-weight: $font-weight-bold !important;
+            margin-bottom: $spacing-xs !important;
+        }
+
+        p {
+            color: $text-muted !important;
+            font-size: $font-size-base !important;
+            margin-bottom: $spacing-lg !important;
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// 2. Seções Colapsáveis (.collapsable-section / #course-overview-page)
+// Padrão Gov.br v3.0: borda #CCCCCC, raio 4px, fundo branco
+// ---------------------------------------------------------
+.collapsable-section,
+#course-overview-page .collapsable-section,
+.defaultactivitycompletion-item.collapsable-section {
+    background-color: $bg-white !important;
+    border: $border-width-thin solid $border-outer !important; // #CCCCCC
+    border-radius: $border-radius-default !important; // 4px
+    margin-bottom: $spacing-md !important;
+    padding: $spacing-md !important;
+    box-shadow: none !important;
+    transition: background-color $transition-fast !important;
+
+    // Neutraliza classes utilitárias do Bootstrap inseridas pelos templates padrão
+    &.border,
+    &.border-1,
+    &.border-secondary,
+    &.rounded-3,
+    &.rounded {
+        border: $border-width-thin solid $border-outer !important;
+        border-radius: $border-radius-default !important;
+    }
+
+    &:hover {
+        box-shadow: none !important;
+    }
+
+    &:active {
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    @include focus-visible-ring;
+
+    // Cabeçalho da Seção Colapsável
+    > .d-flex {
+        align-items: center !important;
+
+        > .d-flex {
+            align-items: center !important;
+            width: 100% !important;
+        }
+    }
+
+    // Título da Seção Colapsável (h3)
+    h3,
+    [id$="_title"] {
+        font-family: $font-family-rawline !important;
+        font-size: $font-size-lg !important;
+        font-weight: $font-weight-semibold !important;
+        color: $blue-warm-vivid-70 !important;
+        margin-bottom: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+
+        a {
+            color: $blue-warm-vivid-70 !important;
+            text-decoration: none !important;
+
+            &:hover,
+            &:active {
+                color: $blue-warm-vivid-90 !important;
+                text-decoration: none !important;
+                box-shadow: none !important;
+                outline: none !important;
+            }
+            @include focus-visible-ring;
+        }
+
+        // Ícone da Atividade / Módulo no cabeçalho
+        .icon,
+        i.icon,
+        img.icon,
+        .activityicon {
+            width: $icon-size-md !important;
+            height: $icon-size-md !important;
+            min-width: $icon-size-md !important;
+            min-height: $icon-size-md !important;
+            margin-right: $spacing-sm !important;
+            margin-left: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            vertical-align: middle !important;
+        }
+
+        .activityname {
+            color: $blue-warm-vivid-70 !important;
+            font-weight: $font-weight-semibold !important;
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Botão de Recolher / Expandir Seção (Collapse Button)
+    // Sem cor de fundo no hover, cor azul primário Gov.br
+    // ---------------------------------------------------------
+    .icons-collapse-expand,
+    .btn-icon.icons-collapse-expand,
+    a.icons-collapse-expand,
+    button.icons-collapse-expand {
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
+        padding: 0 !important;
+        border-radius: $border-radius-circle !important;
+        @include flex-center;
+        line-height: 1 !important;
+        flex-shrink: 0 !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+        color: $blue-warm-vivid-70 !important;
+        transition: color $transition-fast !important;
+
+        &:hover,
+        &:active {
+            background-color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+            color: $blue-warm-vivid-90 !important;
+        }
+
+        &:focus,
+        &:focus-visible {
+            background-color: transparent !important;
+            color: $blue-warm-vivid-90 !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        @include focus-visible-ring;
+
+        .expanded-icon,
+        .collapsed-icon {
+            padding: 0 !important;
+            margin: 0 !important;
+            background-color: transparent !important;
+            border: none !important;
+            color: inherit !important;
+        }
+
+        .expanded-icon {
+            @include flex-center;
+        }
+
+        .collapsed-icon {
+            display: none !important;
+        }
+
+        &.collapsed {
+            .expanded-icon {
+                display: none !important;
+            }
+            .collapsed-icon {
+                @include flex-center;
+            }
+        }
+    }
+
+    // Conteúdo colapsável interno
+    .content.collapse {
+        margin-top: $spacing-sm !important;
+        padding-top: $spacing-sm !important;
+    }
+}
+
+// ---------------------------------------------------------
+// 3. Container da Tabela e Tabela da Visão Geral (.course-overview)
+// ---------------------------------------------------------
+.course-overview {
+    border: none !important;
+    border-radius: 0 !important;
+    padding-top: 0 !important;
+    margin-top: $spacing-sm !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+
+    // Neutraliza bordas e arredondamentos de classes utilitárias do Boost
+    &.border,
+    &.border-secondary,
+    &.border-1,
+    &.rounded {
+        border: none !important;
+        border-radius: 0 !important;
+    }
+}
+
+// Estilização da Tabela de Visão Geral (.course-overview-table)
+table.course-overview-table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    background-color: $bg-white !important;
+    border: $border-width-thin solid $border-outer !important; // #CCCCCC
+    border-radius: $border-radius-none !important; // Bordas retas
+    margin-bottom: 0 !important;
+
+    --bs-table-hover-bg: transparent !important;
+    --bs-table-accent-bg: transparent !important;
+
+    // Cabeçalho da Tabela
+    thead {
+        background-color: $bg-light-gray !important;
+        border-bottom: $border-width-medium solid $border-outer !important;
+        border-radius: 0 !important;
+
+        tr th {
+            font-family: $font-family-rawline !important;
+            font-size: $font-size-sm !important;
+            font-weight: $font-weight-bold !important;
+            color: $blue-warm-vivid-90 !important;
+            padding: 12px $spacing-md !important;
+            vertical-align: middle !important;
+            border-top: none !important;
+            border-bottom: $border-width-medium solid $border-outer !important;
+            border-left: none !important;
+            border-right: none !important;
+            border-radius: 0 !important;
+            text-transform: none !important;
+            white-space: nowrap !important;
+        }
+    }
+
+    // Corpo da Tabela Zebrada (#f6f6f6 / #ffffff)
+    tbody {
+        tr {
+            --bs-table-hover-bg: transparent !important;
+            --bs-table-accent-bg: transparent !important;
+
+            // Linhas ímpares (Cinza #f6f6f6)
+            &:nth-of-type(odd) {
+                background-color: $bg-gray !important;
+                > td, > th {
+                    background-color: $bg-gray !important;
+                }
+            }
+
+            // Linhas pares (Branco #ffffff)
+            &:nth-of-type(even) {
+                background-color: $bg-white !important;
+                > td, > th {
+                    background-color: $bg-white !important;
+                }
+            }
+
+            // Linhas com erro ou alerta
+            &.bg-danger-subtle {
+                background-color: #fdf2f2 !important;
+                border-left: 3px solid $color-error !important;
+
+                > td, > th {
+                    background-color: #fdf2f2 !important;
+                }
+            }
+
+            td, th {
+                font-family: $font-family-rawline !important;
+                font-size: $font-size-sm !important;
+                color: $text-dark !important;
+                padding: 10px $spacing-md !important;
+                vertical-align: middle !important;
+                border-top: none !important;
+                border-bottom: $border-width-thin solid $border-inner !important; // #e6e6e6
+                border-left: none !important;
+                border-right: none !important;
+
+                a:not(.btn) {
+                    color: $blue-warm-vivid-70 !important;
+                    font-weight: $font-weight-semibold !important;
+                    text-decoration: none !important;
+
+                    &:hover {
+                        color: $blue-warm-vivid-90 !important;
+                        text-decoration: underline !important;
+                    }
+                }
+            }
+
+            // Última linha sem borda inferior
+            &:last-child {
+                td, th {
+                    border-bottom: none !important;
+                }
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// 4. Badges, Alertas e Contadores no Padrão Gov.br
+// ---------------------------------------------------------
+[data-mdl-overview-alertcount],
+.course-overview [class*="badge"] {
+    font-family: $font-family-rawline !important;
+    font-weight: $font-weight-semibold !important;
+    border-radius: $border-radius-pill-sm !important;
+    padding: 3px 8px !important;
+    font-size: 0.75rem !important;
+}
+
+// Task 16: Badge e botão de "Mensagens" / contadores na visão geral (.btn-subtle-body)
+.path-course-overview,
+#page-course-overview,
+.course-overview {
+    .btn-subtle-body,
+    button.btn-subtle-body,
+    .btn.btn-subtle-body {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-width: 32px !important;
+        width: auto !important;
+        height: 28px !important;
+        min-height: 28px !important;
+        max-height: 28px !important;
+        padding: 2px 10px !important; // Espaço compacto e bem enquadrado
+        font-size: $font-size-sm !important;
+        font-weight: $font-weight-semibold !important;
+        line-height: 1 !important;
+        border-radius: $border-radius-pill !important; // Pill compacto
+        border: $border-width-thin solid $border-default !important;
+        background-color: $bg-white !important;
+        color: $blue-warm-vivid-70 !important;
+        box-shadow: none !important;
+        margin: 0 auto !important;
+        text-align: center !important;
+
+        &:hover,
+        &:focus {
+            background-color: $blue-warm-vivid-10 !important;
+            color: $blue-warm-vivid-90 !important;
+            border-color: $blue-warm-vivid-70 !important;
+        }
+
+        &::after {
+            display: none !important;
+        }
+    }
+}
+
+.popover-region-toggle .count-container,
+[data-region="popover-region-messages"] .count-container,
+.message-drawer-toggle-count,
+#message-drawer-toggle .count-container,
+.course-overview [data-region="message-count"],
+[data-region="popover-region-count"] {
+    background-color: $blue-warm-vivid-70 !important; // #1351b4
+    color: $text-light !important;
+    border-radius: $border-radius-pill !important; // 24px pill
+    min-width: 22px !important;
+    height: 22px !important;
+    padding: 0 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: $font-size-xs !important;
+    font-weight: $font-weight-bold !important;
+    line-height: 1 !important;
+    box-sizing: border-box !important;
+}
+
+// ---------------------------------------------------------
+// 5. Diálogos Informativos e Popovers (core/local/dropdown/dialog)
+// ---------------------------------------------------------
+.course-overview,
+.collapsable-section {
+    .popover,
+    [data-region="dialog"] {
+        background-color: $bg-white !important;
+        border: $border-width-thin solid $border-outer !important;
+        border-radius: $border-radius-default !important;
+        box-shadow: $shadow-popover !important;
+        font-family: $font-family-rawline !important;
+
+        .popover-header,
+        .dialog-header {
+            background-color: $bg-light-gray !important;
+            border-bottom: $border-width-thin solid $border-inner !important;
+            font-weight: $font-weight-bold !important;
+            color: $blue-warm-vivid-90 !important;
+        }
+
+        .popover-body,
+        .dialog-content {
+            color: $text-dark !important;
+            font-size: $font-size-sm !important;
+
+            .fw-bold {
+                color: $blue-warm-vivid-90 !important;
+            }
+
+            ul {
+                padding-left: 1.25rem !important;
+            }
+        }
+    }
+}

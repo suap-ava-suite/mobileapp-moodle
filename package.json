@@ -41,7 +41,9 @@
         "postinstall": "patch-package && cd cordova-plugin-moodleapp && npm install",
         "lang:update-langpacks": "./scripts/update_langpacks.sh",
         "lang:detect-langpacks": "./scripts/update_langpacks.sh detect",
-        "lang:create-langindex": "./scripts/create_langindex.sh"
+        "lang:create-langindex": "./scripts/create_langindex.sh",
+        "patch:ifrn": "node src/MoodleIFRN/patch-moodle-ifrn.js",
+        "build:mobilemoodle": "node src/MoodleIFRN/mobilemoodle/build.mjs"
     },
     "dependencies": {
         "@angular/animations": "20.3.18",
@@ -59,6 +61,7 @@
         "@awesome-cordova-plugins/device": "9.1.2",
         "@awesome-cordova-plugins/file": "9.1.2",
         "@awesome-cordova-plugins/file-opener": "9.1.2",
+        "@awesome-cordova-plugins/fingerprint-aio": "^9.1.2",
         "@awesome-cordova-plugins/http": "9.1.2",
         "@awesome-cordova-plugins/in-app-browser": "9.1.2",
         "@awesome-cordova-plugins/ionic-webview": "9.1.2",
@@ -146,8 +149,9 @@
         "angular-eslint": "20.7.0",
         "circular-dependency-plugin": "5.2.2",
         "concurrently": "9.2.1",
+        "cordova-plugin-fingerprint-aio": "^6.0.1",
         "cordova-plugin-moodleapp": "file:cordova-plugin-moodleapp",
-        "cross-env": "10.1.0",
+        "cross-env": "^10.1.0",
         "es-check": "9.6.2",
         "es6-promise-plugin": "4.2.2",
         "eslint": "9.39.4",
@@ -231,7 +235,10 @@
             "cordova-plugin-wkuserscript": {},
             "cordova-plugin-wkwebview-cookies": {},
             "cordova-sqlite-storage": {},
-            "nl.kingsquare.cordova.background-audio": {}
+            "nl.kingsquare.cordova.background-audio": {},
+            "cordova-plugin-fingerprint-aio": {
+                "FACEID_USAGE_DESCRIPTION": "Use o Face ID para entrar com segurança no aplicativo."
+            }
         }
     }
 }
