@@ -1,10 +1,50 @@
+/*!
+ * mobilemoodle.js — bundle do Painel AVA (IFRN)
+ * ----------------------------------------------------------------------------
+ * IMPORTANTE: este é o único JS que o index.html carrega no navegador.
+ * Sem ele o painel não autentica, não busca diários no SUAP e não renderiza UI.
+ *
+ * Origem: compilação de mobilemoodle.ts + core_mobile/*.ts (esbuild IIFE).
+ * NÃO edite a lógica aqui — altere os .ts e rode: npm run build:mobilemoodle
+ *
+ * Ordem dos módulos no bundle:
+ *   namespace → api-errors → api-auth → api-http → api-suap → api
+ *   → app-utils → app-status → app-views → app-router
+ *   → app-accessibility → app-sidebar → app-keyboard → app (bootstrap)
+ *
+ * Globais expostas:
+ *   window.MobileMoodle     — namespace interno (MM / App)
+ *   window.MobileMoodleApi  — fachada pública (token, dashboard, curso)
+ */
 "use strict";
 (() => {
   // src/MoodleIFRN/mobilemoodle/core_mobile/namespace.ts
+  /*!
+   * namespace.ts
+   * ----------------------------------------------------------------------------
+   * Cria (ou reutiliza) o objeto global compartilhado entre todos os módulos:
+   *
+   *   window.MobileMoodle  →  MM   (funções de API + helpers)
+   *   window.MobileMoodle.App → App (DOM, render, sidebar, rotas…)
+   *
+   * Cada arquivo .ts importa MM/App daqui e “pendura” suas funções nesses objetos.
+   * Assim o bundle IIFE funciona sem classes/DI do Angular.
+   */
   var MM = window.MobileMoodle = window.MobileMoodle || {};
   var App = MM.App = MM.App || {};
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/api-errors.ts
+  /*!
+   * api-errors.ts
+   * ----------------------------------------------------------------------------
+   * Padroniza falhas da API para a UI.
+   *
+   * - messageForStatus / titleForStatus → textos amigáveis por código HTTP
+   * - isRetryable → decide se mostra botão “Tentar novamente”
+   * - ApiError → construtor estilo Error com status, title, message, retryable
+   *
+   * Exposto em MM para os outros módulos (api-http, app-status…).
+   */
   function messageForStatus(status, detail) {
     switch (status) {
       case 401:
@@ -77,6 +117,18 @@
   MM.ApiError = ApiError;
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/api-auth.ts
+  /*!
+   * api-auth.ts
+   * ----------------------------------------------------------------------------
+   * Sessão JWT do painel.
+   *
+   * Fluxo típico após o login IFRN:
+   *   1. App abre mobilemoodle/index.html (token pode vir em ?token= uma vez)
+   *   2. getToken() valida, salva em sessionStorage e remove o token da URL
+   *   3. Demais requests usam Authorization: Bearer …
+   *
+   * Segurança: formato JWT, tamanho máximo, exp se existir; token inválido é apagado.
+   */
   var TOKEN_KEY = "ifrn_access_token";
   var JWT_SHAPE = /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/;
   function readJwtPayload(token) {
@@ -155,6 +207,17 @@
   MM.clearToken = clearToken;
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/api-http.ts
+  /*!
+   * api-http.ts
+   * ----------------------------------------------------------------------------
+   * Cliente HTTP do painel.
+   *
+   * - Exige JWT (MM.getToken)
+   * - Timeout 15s via AbortController
+   * - 401/403 limpam a sessão
+   * - Só aceita base URL da mesma origem (ou localhost em dev)
+   * - Paths devem ser relativos seguros ("/dashboard/", não "//evil…")
+   */
   var DEFAULT_BASE_URL = "";
   var REQUEST_TIMEOUT_MS = 15e3;
   var baseUrl = DEFAULT_BASE_URL;
@@ -270,6 +333,15 @@
   MM.request = request;
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/api-suap.ts
+  /*!
+   * api-suap.ts
+   * ----------------------------------------------------------------------------
+   * Adapta endpoints oficiais do SUAP para o formato interno do painel
+   * (DashboardData / CourseData).
+   *
+   * Autenticação: Bearer JWT de POST /api/token/pair
+   * Docs: https://suap.ifrn.edu.br/api/docs/
+   */
   function asPagedResults(data) {
     if (Array.isArray(data)) {
       return data;
@@ -522,6 +594,24 @@
   MM.fetchSuapCourse = fetchSuapCourse;
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/api.ts
+  /*!
+   * api.ts
+   * ----------------------------------------------------------------------------
+   * Fachada de dados do painel + cache em memória.
+   *
+   * Fonte: API oficial do SUAP (JWT do login IFRN).
+   *   GET /api/rh/eu/ + diários  → getDashboard()
+   *   GET turma/diário            → getCourse(id)
+   *
+   * Cache:
+   *   - TTL 60s
+   *   - inFlight evita requests duplicados em paralelo
+   *   - cursos: Map com no máximo 40 entradas (FIFO simples)
+   *
+   * Também monta window.MobileMoodleApi (API pública para o app Ionic / login).
+   *
+   * DEMO_FORCE_500: deixe false em produção; true só para testar tela de erro.
+   */
   var CACHE_TTL_MS = 60 * 1e3;
   var MAX_COURSE_CACHE = 40;
   var DEMO_FORCE_500 = false;
@@ -614,6 +704,16 @@
   };
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/app-utils.ts
+  /*!
+   * app-utils.ts
+   * ----------------------------------------------------------------------------
+   * Utilitários de UI compartilhados pelo App:
+   * - descobrir pasta dos assets (logo, pages/*.html)
+   * - escapeHtml / iniciais do nome
+   * - clonar <template id="tpl-…">
+   * - fetchText de partials HTML
+   * - URL de volta ao login IFRN
+   */
   function resolveAssetBase() {
     const scripts = document.getElementsByTagName("script");
     for (let i = scripts.length - 1; i >= 0; i -= 1) {
@@ -678,6 +778,14 @@
   App.fetchText = fetchText;
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/app-status.ts
+  /*!
+   * app-status.ts
+   * ----------------------------------------------------------------------------
+   * Estados visuais enquanto a rota carrega ou falha:
+   * - splash / loading (mínimo ~3s na 1ª carga para não “piscar”)
+   * - not found (hash inválido)
+   * - erro HTTP / rede (template tpl-error-page ou fallback simples)
+   */
   var SPLASH_GAUGE_SVG = '<div class="ava-splash__gauge" aria-hidden="true"><svg class="ava-splash__gauge-svg" viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="ava-splash-gauge-grad" gradientUnits="userSpaceOnUse" x1="60" y1="6" x2="60" y2="114"><stop offset="0%" stop-color="#61c924"></stop><stop offset="55%" stop-color="#098e95"></stop><stop offset="100%" stop-color="#0b6064"></stop></linearGradient></defs><circle class="ava-splash__gauge-track" cx="60" cy="60" r="54"></circle><circle class="ava-splash__gauge-arc" cx="60" cy="60" r="54"></circle></svg></div>';
   var LOADING_MIN_MS = 3e3;
   var loadingStartedAt = 0;
@@ -818,6 +926,16 @@
   App.showStatusError = showStatusError;
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/app-views.ts
+  /*!
+   * app-views.ts
+   * ----------------------------------------------------------------------------
+   * Monta o HTML das telas principais a partir dos <template>:
+   *
+   *   renderPainel(dashboard) → abas Diários / Autoinscrição + cards
+   *   renderCurso(course, dashboard) → cabeçalho + seções expansíveis + atividades
+   *
+   * Também atualiza header (título/subtítulo) e dados do usuário na sidebar.
+   */
   var ACTIVITY_ICONS = {
     assign: "create-outline",
     forum: "chatbubbles-outline",
@@ -1308,6 +1426,24 @@
   App.renderCurso = renderCurso;
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/app-router.ts
+  /*!
+   * app-router.ts
+   * ----------------------------------------------------------------------------
+   * Roteamento por hash (SPA leve, sem Angular Router).
+   *
+   * Rotas:
+   *   #/painel          → lista de diários / autoinscrição
+   *   #/curso/123       → detalhe do curso
+   *   qualquer outra    → not found
+   *
+   * loadRoute():
+   *   1. Garante templates HTML carregados
+   *   2. Checa token
+   *   3. Mostra splash → busca API → renderPainel / renderCurso
+   *
+   * routeSeq evita race: se o usuário mudar o hash no meio do await,
+   * a resposta antiga é ignorada.
+   */
   var templatesReady = null;
   var routeSeq = 0;
   function parseRoute() {
@@ -1409,6 +1545,15 @@
   App.loadRoute = loadRoute;
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/app-accessibility.ts
+  /*!
+   * app-accessibility.ts
+   * ----------------------------------------------------------------------------
+   * Preferências de acessibilidade espelhando o Painel AVA / theme_ifrn25.
+   *
+   * Estado em localStorage (chave ifrn_a11y_prefs).
+   * applyToBody() aplica classes CSS no <body> (ex.: color_mode_high_contrast).
+   * VLibras é carregado sob demanda quando vlibras_active = true.
+   */
   var STORAGE_KEY = "ifrn_a11y_prefs";
   var BOOL_KEYS = [
     "dyslexia_friendly",
@@ -1641,6 +1786,14 @@
   };
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/app-sidebar.ts
+  /*!
+   * app-sidebar.ts
+   * ----------------------------------------------------------------------------
+   * Menu lateral estilo AVA + modais (perfil, ajuda, acessibilidade, filtros).
+   *
+   * openModal(type) clona o template correspondente (tpl-modal-*) e preenche
+   * o painel #sidebar-modal. bindSidebar() liga os botões uma vez no boot.
+   */
   var FILTER_LABELS = {
     inprogress: "Em andamento",
     allincludinghidden: "Todos os di\xE1rios (lento)",
@@ -1822,6 +1975,20 @@
   App.FILTER_LABELS = FILTER_LABELS;
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/app-keyboard.ts
+  /*!
+   * app-keyboard.ts
+   * ----------------------------------------------------------------------------
+   * Dois papéis:
+   *   1) Safe-area (status bar / notch) → CSS vars --ion-safe-area-*
+   *   2) Altura do teclado virtual → --keyboard-height + classe .keyboard-is-open
+   *
+   * Android nativo (Cordova):
+   *   - Preferência: cordova-plugin-insets (window.totalpave.Inset), igual ao core Moodle
+   *   - Fallback: ~24px só se Cordova existir e o inset vier 0
+   *
+   * Browser / DevTools (“console mobile”):
+   *   - NÃO força padding no topo (não há status bar sobrepondo o WebView)
+   */
   var KEYBOARD_THRESHOLD = 80;
   var ANDROID_STATUS_BAR_FALLBACK_PX = 24;
   var INSET_MASK_SYSTEM_AND_CUTOUT = 64 | 2;
@@ -1985,6 +2152,20 @@
   }
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/app.ts
+  /*!
+   * app.ts
+   * ----------------------------------------------------------------------------
+   * Bootstrap do painel (roda por último na ordem de imports).
+   *
+   * No DOMContentLoaded:
+   *   1. Safe-area / teclado (app-keyboard)
+   *   2. Base URL da API
+   *   3. Preferências de acessibilidade
+   *   4. Sidebar
+   *   5. loadRoute() conforme o hash (#/painel, #/curso/…)
+   *
+   * hashchange → navega sem recarregar a página.
+   */
   App.content = document.getElementById("page-content");
   App.title = document.getElementById("page-title");
   App.subtitle = document.getElementById("page-subtitle");
@@ -2031,4 +2212,10 @@
     }
     App.loadRoute?.(false);
   });
+
+  // src/MoodleIFRN/mobilemoodle/mobilemoodle.ts
+  /*!
+   * Ponto de entrada do painel mobilemoodle.
+   * Ordem de inicialização dos módulos (namespace window.MobileMoodle).
+   */
 })();

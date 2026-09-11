@@ -1,4 +1,4 @@
-/**
+/*!
  * app-accessibility.ts
  * ----------------------------------------------------------------------------
  * Preferências de acessibilidade espelhando o Painel AVA / theme_ifrn25.

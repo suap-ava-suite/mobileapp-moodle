@@ -1,4 +1,4 @@
-/**
+/*!
  * app.ts
  * ----------------------------------------------------------------------------
  * Bootstrap do painel (roda por último na ordem de imports).

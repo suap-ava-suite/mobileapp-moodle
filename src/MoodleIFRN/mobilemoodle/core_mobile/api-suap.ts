@@ -1,4 +1,4 @@
-/**
+/*!
  * api-suap.ts
  * ----------------------------------------------------------------------------
  * Adapta endpoints oficiais do SUAP para o formato interno do painel

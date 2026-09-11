@@ -1,4 +1,4 @@
-/**
+/*!
  * Ponto de entrada do painel mobilemoodle.
  * Ordem de inicialização dos módulos (namespace window.MobileMoodle).
  */

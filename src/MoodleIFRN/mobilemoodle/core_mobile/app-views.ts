@@ -1,4 +1,4 @@
-/**
+/*!
  * app-views.ts
  * ----------------------------------------------------------------------------
  * Monta o HTML das telas principais a partir dos <template>:

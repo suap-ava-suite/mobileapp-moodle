@@ -1,4 +1,4 @@
-/**
+/*!
  * app-sidebar.ts
  * ----------------------------------------------------------------------------
  * Menu lateral estilo AVA + modais (perfil, ajuda, acessibilidade, filtros).

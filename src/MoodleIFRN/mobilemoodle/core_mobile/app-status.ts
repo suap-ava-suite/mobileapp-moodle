@@ -1,4 +1,4 @@
-/**
+/*!
  * app-status.ts
  * ----------------------------------------------------------------------------
  * Estados visuais enquanto a rota carrega ou falha:

@@ -1,4 +1,4 @@
-/**
+/*!
  * app-router.ts
  * ----------------------------------------------------------------------------
  * Roteamento por hash (SPA leve, sem Angular Router).

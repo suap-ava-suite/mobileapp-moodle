@@ -1,4 +1,4 @@
-/**
+/*!
  * namespace.ts
  * ----------------------------------------------------------------------------
  * Cria (ou reutiliza) o objeto global compartilhado entre todos os módulos:

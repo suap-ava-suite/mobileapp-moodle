@@ -1,4 +1,4 @@
-/**
+/*!
  * app-utils.ts
  * ----------------------------------------------------------------------------
  * Utilitários de UI compartilhados pelo App:
