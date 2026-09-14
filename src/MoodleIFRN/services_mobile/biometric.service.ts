@@ -14,7 +14,6 @@
 
 import { FingerprintAIO } from '@awesome-cordova-plugins/fingerprint-aio/ngx';
 import { inject, Injectable } from '@angular/core';
-import { Translate } from '@singletons';
 
 const BIOMETRIC_ENABLED_KEY = 'ifrn_biometric_login_enabled';
 const JWT_SHAPE = /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/;
@@ -44,13 +43,13 @@ export class BiometricService {
 
     async enable(refreshToken: string): Promise<void> {
         if (!this.isValidSecret(refreshToken)) {
-            throw new Error(Translate.instant('ifrn.login.biometricinvalidcredential'));
+            throw new Error('Credencial biométrica inválida.');
         }
 
         await this.fingerprint.registerBiometricSecret({
-            title: Translate.instant('ifrn.login.activatebiometric'),
-            description: Translate.instant('ifrn.login.biometricdescription'),
-            cancelButtonTitle: Translate.instant('ifrn.login.cancel'),
+            title: 'Ativar acesso biométrico',
+            description: 'Confirme sua identidade para ativar o acesso biométrico.',
+            cancelButtonTitle: 'Cancelar',
             disableBackup: true,
             invalidateOnEnrollment: true,
             secret: this.encodeSecret(refreshToken),
@@ -61,9 +60,9 @@ export class BiometricService {
 
     async authenticate(): Promise<string> {
         const encodedToken = await this.fingerprint.loadBiometricSecret({
-            title: Translate.instant('ifrn.login.biometriclogin'),
-            description: Translate.instant('ifrn.login.biometriclogindescription'),
-            cancelButtonTitle: Translate.instant('ifrn.login.cancel'),
+            title: 'Entrar com biometria',
+            description: 'Confirme sua identidade para entrar.',
+            cancelButtonTitle: 'Cancelar',
             disableBackup: true,
         });
 
@@ -71,7 +70,7 @@ export class BiometricService {
 
         if (!this.isValidSecret(refreshToken)) {
             this.disable();
-            throw new Error(Translate.instant('ifrn.login.biometricinvalidcredential'));
+            throw new Error('Credencial biométrica inválida.');
         }
 
         return refreshToken;
@@ -95,7 +94,7 @@ export class BiometricService {
 
     private decodeSecret(value: string): string {
         if (!/^(?:[0-9a-f]{2})+$/i.test(value) || value.length > MAX_SECRET_LENGTH * 2) {
-            throw new Error(Translate.instant('ifrn.login.biometricinvalidcredential'));
+            throw new Error('Credencial biométrica inválida.');
         }
 
         const bytes = value.match(/.{2}/g)?.map(byte => Number.parseInt(byte, 16)) ?? [];

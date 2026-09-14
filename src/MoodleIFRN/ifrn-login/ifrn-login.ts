@@ -21,7 +21,6 @@ import { AuthResponse, AuthService } from '@/MoodleIFRN/services_mobile/auth.ser
 import { BiometricService } from '@/MoodleIFRN/services_mobile/biometric.service';
 import { CoreAlerts } from '@services/overlays/alerts';
 import { CorePlatform } from '@services/platform';
-import { Translate } from '@singletons';
 import { TimeoutError, firstValueFrom } from 'rxjs';
 
 @Component({
@@ -47,6 +46,9 @@ export class IfrnLoginPage implements OnInit {
     /** Mensagem curta de status (sessão / biometria / login). */
     statusMessage = '';
 
+    /** Erro de validação ou autenticação (inline, mobile-friendly). */
+    formError = '';
+
     biometricAvailable = false;
     biometricEnabled = false;
 
@@ -55,10 +57,27 @@ export class IfrnLoginPage implements OnInit {
     private lastLoginAt = 0;
 
     /**
-     * Volta para a tela anterior, que normalmente é o Marketplace IFRN.
+     * Volta para a página inicial IFRN (marketplace).
      */
     goBack(): void {
-        this.router.navigate(['/welcome']);
+        if (this.loading) {
+            return;
+        }
+
+        void this.router.navigate(['/login/marketplace-ifrn']);
+    }
+
+    /**
+     * Enter no IFRN-id → foca o campo senha (teclado mobile).
+     */
+    onUsernameEnter(event: Event): void {
+        event.preventDefault();
+
+        const passwordInput = document.getElementById(
+            'ifrn-login-password',
+        ) as HTMLInputElement | null;
+
+        passwordInput?.focus();
     }
 
     /**
@@ -156,23 +175,21 @@ export class IfrnLoginPage implements OnInit {
             return;
         }
 
+        this.formError = '';
+
         const username = this.username
             .trim()
             .replace(/[\u0000-\u001F\u007F]/g, '');
 
         if (!username || !this.password) {
-            void CoreAlerts.showError(
-                'Por favor, preencha todos os campos.',
-            );
+            this.showFormError('Por favor, preencha todos os campos.');
 
             return;
         }
 
         // Limites alinhados ao schema do SUAP (/api/token/pair).
         if (username.length > 150 || this.password.length > 128) {
-            void CoreAlerts.showError(
-                'Credenciais inválidas.',
-            );
+            this.showFormError('Credenciais inválidas.');
 
             return;
         }
@@ -194,10 +211,7 @@ export class IfrnLoginPage implements OnInit {
             error: (error: HttpErrorResponse | TimeoutError) => {
                 this.loading = false;
                 this.statusMessage = '';
-
-                void CoreAlerts.showError(
-                    this.messageForAuthError(error),
-                );
+                this.showFormError(this.messageForAuthError(error));
             },
         });
     }
@@ -214,6 +228,7 @@ export class IfrnLoginPage implements OnInit {
             return;
         }
 
+        this.formError = '';
         this.loading = true;
         this.statusMessage = options.auto
             ? 'Aguardando biometria…'
@@ -237,19 +252,17 @@ export class IfrnLoginPage implements OnInit {
                 this.biometricService.disable();
                 this.biometricEnabled = false;
 
-                void CoreAlerts.showError(
-                    Translate.instant('ifrn.login.biometricexpired'),
+                this.showFormError(
+                    'Sua sessão biométrica expirou. Entre com IFRN-id e senha para ativá-la novamente.',
                 );
             } else if (
                 error instanceof HttpErrorResponse ||
                 error instanceof TimeoutError
             ) {
-                void CoreAlerts.showError(
-                    this.messageForAuthError(error),
-                );
+                this.showFormError(this.messageForAuthError(error));
             } else if (!options.auto) {
-                void CoreAlerts.showError(
-                    Translate.instant('ifrn.login.biometricfailed'),
+                this.showFormError(
+                    'Não foi possível autenticar com biometria. Tente novamente ou use a senha.',
                 );
             }
         } finally {
@@ -275,6 +288,7 @@ export class IfrnLoginPage implements OnInit {
             );
 
             this.password = '';
+            this.formError = '';
             this.statusMessage = 'Preparando acesso…';
 
             await this.offerBiometricActivation(
@@ -311,11 +325,11 @@ export class IfrnLoginPage implements OnInit {
         if (!shouldEnable) {
             try {
                 await CoreAlerts.confirm(
-                    Translate.instant('ifrn.login.usebiometric'),
+                    'Deseja usar biometria nos próximos acessos?',
                     {
-                        header: Translate.instant('ifrn.login.activatebiometric'),
-                        okText: Translate.instant('ifrn.login.activate'),
-                        cancelText: Translate.instant('ifrn.login.later'),
+                        header: 'Ativar acesso biométrico',
+                        okText: 'Ativar',
+                        cancelText: 'Agora não',
                     },
                 );
 
@@ -333,30 +347,34 @@ export class IfrnLoginPage implements OnInit {
             this.biometricEnabled = true;
         } catch {
             void CoreAlerts.showError(
-                Translate.instant('ifrn.login.biometricactivationfailed'),
+                'Você entrou, mas não foi possível ativar a biometria.',
             );
         }
     }
 
     /**
-     * Login Gov.br depende de integração OAuth no backend.
-     */
-    loginWithGovBr(): void {
-        if (this.loading) {
-            return;
-        }
-
-        void CoreAlerts.showError(
-            Translate.instant('ifrn.login.govbrunavailable'),
-        );
-    }
-
-    /**
-     * Limpa as credenciais informadas.
+     * Limpa as credenciais e o erro do formulário.
      */
     clear(): void {
         this.username = '';
         this.password = '';
+        this.formError = '';
+        this.showPassword = false;
+    }
+
+    /**
+     * Exibe erro inline e foca o primeiro campo útil.
+     */
+    private showFormError(message: string): void {
+        this.formError = message;
+
+        const targetId = this.password
+            ? 'ifrn-login-password'
+            : 'ifrn-login-username';
+
+        queueMicrotask(() => {
+            document.getElementById(targetId)?.focus();
+        });
     }
 
     /**
@@ -415,7 +433,7 @@ export class IfrnLoginPage implements OnInit {
         }
 
         if (error.status === 429) {
-            return Translate.instant('ifrn.login.toomanyattempts');
+            return 'Muitas tentativas. Aguarde um momento e tente novamente.';
         }
 
         if (error.status >= 500) {

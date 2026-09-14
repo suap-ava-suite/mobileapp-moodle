@@ -23,11 +23,6 @@
     font-family: var(--ava-font);
     line-height: 1.5;
 
-    ion-grid {
-        --ion-grid-padding: 0;
-        padding: 0;
-    }
-
     ion-button {
         letter-spacing: normal;
         margin: 0;
@@ -59,34 +54,26 @@
         display: flex;
         flex: 1;
         justify-content: center;
+        min-height: 0;
     }
 
+    /* No mobile o painel institucional não compete com o CTA. */
     .panel--ifrn {
-        background: var(--ava-bg);
-        border-top: 1px solid var(--ava-border);
-        flex-shrink: 0;
-        min-height: clamp(120px, 20vh, 180px);
+        display: none;
     }
 
     .panel__inner {
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         margin: 0 auto;
         max-width: 360px;
         padding:
-            calc(20px + var(--ion-safe-area-top, 0px))
+            calc(24px + var(--ion-safe-area-top, env(safe-area-inset-top, 0px)))
             24px
-            calc(20px + var(--ion-safe-area-bottom, 0px));
+            calc(24px + var(--ion-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
         width: 100%;
-
-        ion-row,
-        ion-col {
-            width: 100%;
-        }
-
-        ion-col {
-            align-items: center;
-            display: flex;
-            flex-direction: column;
-        }
     }
 
     .ifrn-logo {
@@ -107,9 +94,9 @@
         align-items: center;
         display: flex;
         flex-direction: column;
-        gap: 0.6rem;
+        gap: 0.5rem;
         justify-content: center;
-        margin-bottom: 1.75rem;
+        margin-bottom: 1.5rem;
         text-align: center;
     }
 
@@ -138,7 +125,7 @@
         align-items: center;
         display: flex;
         flex-direction: column;
-        margin: 0 auto 1.75rem;
+        margin: 0 auto;
         max-width: 320px;
         width: 100%;
     }
@@ -149,7 +136,7 @@
         font-weight: 700;
         letter-spacing: -0.02em;
         line-height: 1.1;
-        margin: 0 0 0.4rem;
+        margin: 0 0 0.35rem;
     }
 
     .hero__title span {
@@ -160,15 +147,36 @@
         color: var(--ava-muted);
         font-size: 0.9rem;
         font-weight: 500;
-        margin: 0 0 0.75rem;
+        margin: 0 0 0.5rem;
     }
 
     .hero__text {
         color: var(--ava-muted);
         font-size: 0.875rem;
-        line-height: 1.6;
-        margin: 0 auto 1.5rem;
-        max-width: 30ch;
+        line-height: 1.5;
+        margin: 0 auto 1.25rem;
+        max-width: 28ch;
+    }
+
+    .hero__actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin: 0 auto;
+        max-width: 280px;
+        width: 100%;
+    }
+
+    ion-button.btn-enter,
+    ion-button.btn-continue {
+        --border-radius: 10px;
+        --box-shadow: none;
+        --padding-bottom: 14px;
+        --padding-top: 14px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        min-height: 48px;
+        width: 100%;
     }
 
     ion-button.btn-enter {
@@ -176,48 +184,44 @@
         --background-activated: var(--ava-green-hover);
         --background-focused: var(--ava-green-hover);
         --background-hover: var(--ava-green-hover);
-        --border-radius: 10px;
-        --box-shadow: none;
         --color: #ffffff;
-        --padding-bottom: 14px;
-        --padding-top: 14px;
-        font-size: 0.95rem;
-        font-weight: 600;
-        margin: 0 auto;
-        max-width: 280px;
-        min-height: 48px;
-        width: 100%;
+    }
+
+    ion-button.btn-continue {
+        --background: transparent;
+        --background-activated: rgba(9, 142, 149, 0.08);
+        --background-focused: rgba(9, 142, 149, 0.08);
+        --background-hover: rgba(9, 142, 149, 0.06);
+        --border-color: var(--ava-primary);
+        --border-style: solid;
+        --border-width: 1.5px;
+        --color: var(--ava-primary-dark);
     }
 
     ion-button.help-link {
         --color: var(--ava-primary);
         font-size: 0.85rem;
         font-weight: 500;
-        margin: 0.25rem auto 0;
-        max-width: 280px;
-        min-height: 40px;
+        min-height: 44px;
         width: 100%;
     }
 
     .features {
         border-top: 1px solid var(--ava-border);
-        margin: 0 auto;
+        display: flex;
+        gap: 0.5rem;
+        justify-content: space-between;
+        list-style: none;
+        margin: 1.5rem auto 0;
         max-width: 320px;
         padding: 1.25rem 0 0;
         width: 100%;
     }
 
-    .features ion-row {
-        margin: 0 -6px;
-    }
-
-    .features ion-col {
-        padding: 0 6px;
-    }
-
     .features__item {
         align-items: center;
         display: flex;
+        flex: 1;
         flex-direction: column;
         gap: 0.35rem;
         text-align: center;
@@ -272,6 +276,48 @@
     }
 }
 
+/* Telas baixas: só marca + CTA acima da dobra. */
+@media (max-height: 700px) {
+    .marketplace-ifrn {
+        .brand {
+            margin-bottom: 1rem;
+        }
+
+        .hero__text,
+        .features {
+            display: none;
+        }
+
+        .hero__subtitle {
+            margin-bottom: 1rem;
+        }
+
+        .copyright {
+            margin-top: 1rem;
+        }
+    }
+}
+
+@media (max-height: 560px) {
+    .marketplace-ifrn {
+        .brand__text {
+            display: none;
+        }
+
+        .ifrn-logo {
+            height: 32px;
+        }
+
+        .hero__title {
+            font-size: 1.65rem;
+        }
+
+        .copyright {
+            display: none;
+        }
+    }
+}
+
 @media (min-width: 768px) {
     .marketplace-ifrn {
         .page {
@@ -285,8 +331,9 @@
         }
 
         .panel--ifrn {
+            background: var(--ava-bg);
             border-left: 1px solid var(--ava-border);
-            border-top: none;
+            display: flex;
             min-height: 100%;
             order: 1;
         }
@@ -295,28 +342,22 @@
             order: 2;
         }
 
-        .panel--login {
-            align-items: center;
-            justify-content: center;
-        }
-
         .panel__inner {
             max-width: 400px;
-            min-height: auto;
             padding:
-                calc(2.5rem + var(--ion-safe-area-top, 0px))
+                calc(2.5rem + var(--ion-safe-area-top, env(safe-area-inset-top, 0px)))
                 32px
-                calc(2.5rem + var(--ion-safe-area-bottom, 0px));
+                calc(2.5rem + var(--ion-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
         }
 
         .hero,
         .features,
-        .copyright {
+        .copyright,
+        .hero__actions {
             max-width: 340px;
         }
 
-        ion-button.btn-enter,
-        ion-button.help-link {
+        .hero__actions {
             max-width: 300px;
         }
 
@@ -326,33 +367,10 @@
     }
 }
 
-@media (max-height: 700px) {
-    .marketplace-ifrn {
-        .panel--ifrn {
-            min-height: 100px;
-        }
-
-        .brand {
-            margin-bottom: 1.25rem;
-        }
-
-        .hero {
-            margin-bottom: 1.25rem;
-        }
-
-        .hero__text {
-            margin-bottom: 1rem;
-        }
-
-        .ifrn-logo--large {
-            height: 44px;
-        }
-    }
-}
-
 @media (prefers-reduced-motion: reduce) {
     .marketplace-ifrn {
-        ion-button.btn-enter {
+        ion-button.btn-enter,
+        ion-button.btn-continue {
             transition: none;
         }
     }
