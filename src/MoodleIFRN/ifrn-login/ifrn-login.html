@@ -21,7 +21,11 @@
                 Use o mesmo IFRN-id e senha do SUAP.
             </p>
 
-
+            @if (statusMessage) {
+                <p class="ifrn-login__status" role="status" aria-live="polite">
+                    {{ statusMessage }}
+                </p>
+            }
 
             <form class="ifrn-login__form" (submit)="$event.preventDefault(); login()">
 
@@ -38,7 +42,8 @@
                     <div class="ifrn-login__input">
 
                         <input id="ifrn-login-username" name="username" type="text" [(ngModel)]="username" autocomplete="username"
-                            [placeholder]="'ifrn.login.usernameplaceholder' | translate">
+                            [placeholder]="'ifrn.login.usernameplaceholder' | translate"
+                            [disabled]="loading">
 
                     </div>
 
@@ -62,11 +67,13 @@
 
 
                         <input id="ifrn-login-password" name="password" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password"
-                            autocomplete="current-password" [placeholder]="'ifrn.login.currentpassword' | translate">
+                            autocomplete="current-password" [placeholder]="'ifrn.login.currentpassword' | translate"
+                            [disabled]="loading">
 
 
 
                         <button type="button" class="ifrn-login__icon" (click)="togglePassword()"
+                            [disabled]="loading"
                             [attr.aria-label]="'ifrn.login.passwordvisibility' | translate">
 
 
@@ -112,7 +119,8 @@
 
 
                 <!-- Botão cancelar -->
-                <button class="ifrn-login__button ifrn-login__button--secondary" type="button" (click)="clear()">
+                <button class="ifrn-login__button ifrn-login__button--secondary" type="button"
+                    [disabled]="loading" (click)="clear()">
 
                     {{ 'ifrn.login.cancel' | translate }}
 

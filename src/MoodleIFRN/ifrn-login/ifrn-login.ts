@@ -44,6 +44,9 @@ export class IfrnLoginPage implements OnInit {
     showPassword = false;
     loading = false;
 
+    /** Mensagem curta de status (sessão / biometria / login). */
+    statusMessage = '';
+
     biometricAvailable = false;
     biometricEnabled = false;
 
@@ -59,7 +62,7 @@ export class IfrnLoginPage implements OnInit {
     }
 
     /**
-     * Inicializa os recursos da página.
+     * Inicializa biometria e tenta retomar a sessão sem pedir senha.
      */
     async ngOnInit(): Promise<void> {
         await CorePlatform.ready();
@@ -69,6 +72,69 @@ export class IfrnLoginPage implements OnInit {
         this.biometricEnabled =
             this.biometricAvailable &&
             this.biometricService.isEnabled();
+
+        const savedUsername = this.authService.getUsername();
+        if (savedUsername) {
+            this.username = savedUsername;
+        }
+
+        await this.resumeSession();
+    }
+
+    /**
+     * 1) Access token válido → painel.
+     * 2) Senão, biometria ativa → prompt automático.
+     * 3) Senão → formulário de senha.
+     */
+    private async resumeSession(): Promise<void> {
+        if (await this.enterWithValidAccessToken()) {
+            return;
+        }
+
+        if (this.biometricEnabled) {
+            await this.loginWithBiometrics({ auto: true });
+        }
+    }
+
+    /**
+     * Entra no painel se o access token local ainda for válido.
+     * Confere no SUAP quando houver rede; offline com token ok também entra.
+     *
+     * @returns true se navegou para o painel.
+     */
+    private async enterWithValidAccessToken(): Promise<boolean> {
+        const token = this.authService.getToken();
+
+        if (!token) {
+            return false;
+        }
+
+        this.loading = true;
+        this.statusMessage = 'Verificando sessão…';
+
+        try {
+            await firstValueFrom(this.authService.verify(token));
+            this.authService.openMobileMoodle('/painel');
+
+            return true;
+        } catch (error) {
+            if (
+                error instanceof HttpErrorResponse &&
+                error.status === 401
+            ) {
+                this.authService.logout();
+                this.statusMessage = '';
+
+                return false;
+            }
+
+            // Rede/SUAP indisponível: exp local ainda ok → segue para o painel.
+            this.authService.openMobileMoodle('/painel');
+
+            return true;
+        } finally {
+            this.loading = false;
+        }
     }
 
     /**
@@ -117,6 +183,7 @@ export class IfrnLoginPage implements OnInit {
         };
 
         this.loading = true;
+        this.statusMessage = 'Entrando…';
         this.lastLoginAt = Date.now();
 
         this.authService.login(credentials).subscribe({
@@ -126,6 +193,7 @@ export class IfrnLoginPage implements OnInit {
 
             error: (error: HttpErrorResponse | TimeoutError) => {
                 this.loading = false;
+                this.statusMessage = '';
 
                 void CoreAlerts.showError(
                     this.messageForAuthError(error),
@@ -136,13 +204,20 @@ export class IfrnLoginPage implements OnInit {
 
     /**
      * Autentica utilizando a biometria do aparelho.
+     *
+     * @param options.auto Se true (abertura da tela), cancelar/falha fica silencioso.
      */
-    async loginWithBiometrics(): Promise<void> {
+    async loginWithBiometrics(
+        options: { auto?: boolean } = {},
+    ): Promise<void> {
         if (this.loading || !this.biometricEnabled) {
             return;
         }
 
         this.loading = true;
+        this.statusMessage = options.auto
+            ? 'Aguardando biometria…'
+            : 'Entrando…';
 
         try {
             const refreshToken = await this.biometricService.authenticate();
@@ -165,13 +240,21 @@ export class IfrnLoginPage implements OnInit {
                 void CoreAlerts.showError(
                     Translate.instant('ifrn.login.biometricexpired'),
                 );
-            } else {
+            } else if (
+                error instanceof HttpErrorResponse ||
+                error instanceof TimeoutError
+            ) {
+                void CoreAlerts.showError(
+                    this.messageForAuthError(error),
+                );
+            } else if (!options.auto) {
                 void CoreAlerts.showError(
                     Translate.instant('ifrn.login.biometricfailed'),
                 );
             }
         } finally {
             this.loading = false;
+            this.statusMessage = '';
         }
     }
 
@@ -192,6 +275,7 @@ export class IfrnLoginPage implements OnInit {
             );
 
             this.password = '';
+            this.statusMessage = 'Preparando acesso…';
 
             await this.offerBiometricActivation(
                 response.refresh_token,
@@ -207,6 +291,7 @@ export class IfrnLoginPage implements OnInit {
             );
         } finally {
             this.loading = false;
+            this.statusMessage = '';
         }
     }
 
