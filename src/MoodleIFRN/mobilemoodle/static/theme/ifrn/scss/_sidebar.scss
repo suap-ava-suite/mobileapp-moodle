@@ -343,30 +343,30 @@ $sidebar-menu-container-radius: 20px;
 }
 
 .sidebar-modal__close {
+    box-sizing: border-box;
     width: 32px;
     height: 32px;
     border: 1px solid rgba(255, 255, 255, 0.35);
     border-radius: 8px;
     background: var(--primary-dark);
     color: var(--dsgov-text-light);
-    display: grid;
-    place-items: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     padding: 0;
+    margin: 0;
+    line-height: 0;
     flex-shrink: 0;
 
     ion-icon {
-        font-size: 18px;
+        display: block;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
         color: inherit;
+        pointer-events: none;
     }
-}
-
-.sidebar-modal__close-icon {
-    display: block;
-    font-size: 1.5rem;
-    font-weight: 400;
-    line-height: 1;
-    color: inherit;
 }
 
 .sidebar-modal__body {
