@@ -325,7 +325,11 @@ import { MM, App } from './namespace';
 
     function updateIntro(tabKey: PainelTabKey): void {
         const titleEl = document.getElementById('painel-intro-title');
+        const staleIntro = document.getElementById('painel-intro-text');
         const meta = TAB_META[tabKey] || TAB_META.diarios;
+
+        // Remove o parágrafo legado "Carregando..." (id antigo), se ainda vier de cache.
+        staleIntro?.remove();
 
         if (titleEl) {
             titleEl.textContent = meta.title;

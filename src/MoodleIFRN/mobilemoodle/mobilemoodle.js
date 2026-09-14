@@ -750,7 +750,7 @@
     try {
       const response = await fetch(url, {
         credentials: "omit",
-        cache: "force-cache",
+        cache: "no-cache",
         signal: controller.signal
       });
       if (!response.ok) {
@@ -1172,7 +1172,9 @@
   }
   function updateIntro(tabKey) {
     const titleEl = document.getElementById("painel-intro-title");
+    const staleIntro = document.getElementById("painel-intro-text");
     const meta = TAB_META[tabKey] || TAB_META.diarios;
+    staleIntro?.remove();
     if (titleEl) {
       titleEl.textContent = meta.title;
     }

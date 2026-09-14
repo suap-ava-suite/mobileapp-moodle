@@ -69,7 +69,7 @@ import { MM, App } from './namespace';
         try {
             const response = await fetch(url, {
                 credentials: 'omit',
-                cache: 'force-cache',
+                cache: 'no-cache',
                 signal: controller.signal,
             });
 

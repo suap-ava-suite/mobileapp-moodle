@@ -116,22 +116,19 @@
         setUser(dashboard);
 
         const total = dashboard.total_courses || 0;
-        const label = total === 1
-            ? App.t("enrolledcourse", "curso matriculado")
-            : App.t("enrolledcourses", "cursos matriculados");
         const courses = dashboard.courses || [];
         const page = App.cloneTemplate("tpl-painel");
 
         App.content.innerHTML = "";
         App.content.appendChild(page);
 
-        const intro = document.getElementById("painel-intro-text");
+        const staleIntro = document.getElementById("painel-intro-text");
         const badge = document.getElementById("tab-badge-cursos");
         const cardsHost = document.getElementById("painel-cards");
 
-        if (intro) {
-            intro.innerHTML =
-                App.t("youhave", "Você possui <strong>{{total}}</strong> {{label}} no AVA IFRN.", { total: total, label: label });
+        // Remove o parágrafo legado "Carregando..." (id antigo), se ainda vier de cache.
+        if (staleIntro) {
+            staleIntro.remove();
         }
 
         if (badge) {
