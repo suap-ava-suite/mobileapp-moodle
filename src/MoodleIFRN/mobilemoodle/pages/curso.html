@@ -1,0 +1,80 @@
+<!-- Partial Ionic · Detalhe do curso / seções / atividades -->
+<template id="tpl-curso">
+    <div class="curso-page detail-content">
+        <nav class="breadcrumb">
+            <a href="#/painel">Painel AVA</a>
+            <span>/</span>
+            <strong id="curso-breadcrumb-name"></strong>
+        </nav>
+
+        <div class="enrol-header">
+            <div class="course-header">
+                <span class="enrol-header-tag" id="curso-env-tag">AVA Acadêmico</span>
+                <h1 class="painel-card-title" id="curso-title"></h1>
+                <div class="enrol-header-topics">
+                    <div class="topic-item">
+                        <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
+                        <span id="curso-teacher">—</span>
+                    </div>
+                    <div class="topic-item">
+                        <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
+                        <span>Carga horária: <span id="curso-workload">—</span></span>
+                    </div>
+                    <div class="topic-item">
+                        <ion-icon name="checkmark-circle-outline" aria-hidden="true"></ion-icon>
+                        <span id="curso-progress-text">0%</span>
+                    </div>
+                </div>
+                <div class="course-progress" style="margin-top: 1rem;">
+                    <ion-progress-bar id="curso-progress-bar" value="0"></ion-progress-bar>
+                    <span id="curso-progress-label">0% concluído</span>
+                </div>
+            </div>
+            <div class="course-actions">
+                <ion-button href="#/painel" fill="outline" color="primary">
+                    <ion-icon slot="start" name="arrow-back-outline"></ion-icon>
+                    Voltar ao painel
+                </ion-button>
+            </div>
+        </div>
+
+        <section class="course-summary" id="curso-summary-block" hidden>
+            <h2>Visão geral</h2>
+            <div class="course-summary-content" id="curso-summary"></div>
+        </section>
+
+        <h2 class="section-title">Conteúdo do curso</h2>
+        <div class="course-sections" id="curso-sections"></div>
+    </div>
+</template>
+
+<template id="tpl-curso-section">
+    <article class="topic-card">
+        <button type="button" class="topic-card__header" aria-expanded="false">
+            <span class="topic-index"></span>
+            <div class="topic-card__meta">
+                <h3 class="topic-name"></h3>
+                <p class="topic-card__count">Tópico da sala virtual</p>
+            </div>
+            <ion-icon class="topic-card__chevron" name="chevron-down-outline" aria-hidden="true"></ion-icon>
+        </button>
+        <div class="topic-card__body">
+            <ul class="activity-list"></ul>
+        </div>
+    </article>
+</template>
+
+<template id="tpl-curso-activity">
+    <li>
+        <div class="activity-item" role="listitem">
+            <div class="activity-item__icon">
+                <ion-icon name="document-text-outline" aria-hidden="true"></ion-icon>
+            </div>
+            <div class="activity-item__body">
+                <p class="activity-item__name"></p>
+                <p class="activity-item__mod"></p>
+                <span class="activity-item__status" hidden></span>
+            </div>
+        </div>
+    </li>
+</template>
