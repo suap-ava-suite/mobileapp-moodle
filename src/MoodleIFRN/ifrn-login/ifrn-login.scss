@@ -95,6 +95,17 @@
         padding: 10px 12px;
     }
 
+    &__notice {
+        background: #e8f0fe;
+        border: 1px solid #b6cdf5;
+        border-radius: 6px;
+        color: #123b75;
+        font-size: 13px;
+        line-height: 1.45;
+        margin: -12px 0 18px;
+        padding: 10px 12px;
+    }
+
     &__form {
         display: flex;
         flex-direction: column;
@@ -224,20 +235,28 @@
     }
 
     &__button--govbr {
-        background: #e6e6e6;
-        border: 1px solid #e6e6e6;
-        color: #6c757d;
-        font-weight: 600;
+        background: #ffffff;
+        border: 2px solid #1351b4;
+        color: #1351b4;
+        font-weight: 700;
         gap: 6px;
     }
 
-    &__button--govbr:disabled {
-        opacity: 1;
+    &__button--govbr:not(:disabled):active {
+        background: #e8f0fe;
     }
 
     &__govbr-mark {
         font-weight: 800;
         letter-spacing: -0.02em;
+    }
+
+    &__govbr-help {
+        color: #555555;
+        font-size: 12px;
+        line-height: 1.4;
+        margin: 7px 8px 0;
+        text-align: center;
     }
 
     &__link {

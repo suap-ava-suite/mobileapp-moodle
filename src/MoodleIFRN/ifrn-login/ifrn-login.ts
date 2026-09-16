@@ -19,6 +19,10 @@ import { Router } from '@angular/router';
 import { CoreSharedModule } from '@/core/shared.module';
 import { AuthResponse, AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
 import { BiometricService } from '@/MoodleIFRN/services_mobile/biometric.service';
+import {
+    GovBrAuthError,
+    GovBrAuthService,
+} from '@/MoodleIFRN/services_mobile/govbr-auth.service';
 import { CoreAlerts } from '@services/overlays/alerts';
 import { CorePlatform } from '@services/platform';
 import { TimeoutError, firstValueFrom } from 'rxjs';
@@ -35,6 +39,7 @@ export class IfrnLoginPage implements OnInit {
 
     private readonly authService = inject(AuthService);
     private readonly biometricService = inject(BiometricService);
+    private readonly govBrAuthService = inject(GovBrAuthService);
     private readonly router = inject(Router);
 
     username = '';
@@ -49,8 +54,12 @@ export class IfrnLoginPage implements OnInit {
     /** Erro de validação ou autenticação (inline, mobile-friendly). */
     formError = '';
 
+    /** Orientação exibida quando o GOV.BR abre o SUAP em modo consulta. */
+    govBrNotice = '';
+
     biometricAvailable = false;
     biometricEnabled = false;
+    govBrIntegrated = false;
 
     canGoBack = true;
 
@@ -87,6 +96,7 @@ export class IfrnLoginPage implements OnInit {
         await CorePlatform.ready();
 
         this.biometricAvailable = await this.biometricService.isAvailable();
+        this.govBrIntegrated = this.govBrAuthService.isIntegratedLoginConfigured();
 
         this.biometricEnabled =
             this.biometricAvailable &&
@@ -97,7 +107,76 @@ export class IfrnLoginPage implements OnInit {
             this.username = savedUsername;
         }
 
+        if (await this.handleGovBrCallback()) {
+            return;
+        }
+
         await this.resumeSession();
+    }
+
+    /**
+     * Finaliza o retorno do GOV.BR antes de tentar retomar outra sessão.
+     */
+    private async handleGovBrCallback(): Promise<boolean> {
+        try {
+            const response = await this.govBrAuthService.finishLoginFromCallback();
+
+            if (!response) {
+                return false;
+            }
+
+            this.loading = true;
+            this.statusMessage = 'Concluindo acesso pelo GOV.BR…';
+            await this.completeLogin(response);
+
+            return true;
+        } catch (error) {
+            this.loading = false;
+            this.statusMessage = '';
+            this.showFormError(
+                error instanceof GovBrAuthError
+                    ? error.message
+                    : 'Não foi possível concluir o acesso pelo GOV.BR.',
+            );
+
+            return true;
+        }
+    }
+
+    /**
+     * Inicia o acesso GOV.BR. Sem broker IFRN configurado, abre o fluxo
+     * oficial do SUAP para o aluno consultar a conta/matrícula.
+     */
+    async loginWithGovBr(): Promise<void> {
+        if (this.loading) {
+            return;
+        }
+
+        this.formError = '';
+        this.govBrNotice = '';
+        this.loading = true;
+        this.statusMessage = this.govBrIntegrated
+            ? 'Abrindo o GOV.BR…'
+            : 'Abrindo o acesso oficial do SUAP…';
+
+        try {
+            const integrated = await this.govBrAuthService.startLogin();
+
+            if (!integrated) {
+                this.statusMessage = '';
+                this.govBrNotice =
+                    'O SUAP foi aberto no navegador. Entre com GOV.BR para consultar sua conta e matrícula.';
+            }
+        } catch (error) {
+            this.statusMessage = '';
+            this.showFormError(
+                error instanceof GovBrAuthError
+                    ? error.message
+                    : 'Não foi possível abrir o acesso GOV.BR.',
+            );
+        } finally {
+            this.loading = false;
+        }
     }
 
     /**
@@ -359,6 +438,7 @@ export class IfrnLoginPage implements OnInit {
         this.username = '';
         this.password = '';
         this.formError = '';
+        this.govBrNotice = '';
         this.showPassword = false;
     }
 

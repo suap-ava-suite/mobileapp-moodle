@@ -39,6 +39,12 @@
                 </p>
             }
 
+            @if (govBrNotice) {
+                <p class="ifrn-login__notice" role="status">
+                    {{ govBrNotice }}
+                </p>
+            }
+
             <form class="ifrn-login__form" (submit)="$event.preventDefault(); login()">
 
                 <div class="ifrn-login__field">
@@ -116,11 +122,18 @@
                 <button
                     class="ifrn-login__button ifrn-login__button--govbr"
                     type="button"
-                    disabled
-                    aria-disabled="true"
-                    title="Integração Gov.br ainda não disponível">
-                    Gov.BR — em breve
+                    [disabled]="loading"
+                    (click)="loginWithGovBr()">
+                    Entrar com GOV.BR
                 </button>
+
+                <p class="ifrn-login__govbr-help">
+                    @if (govBrIntegrated) {
+                        Use seu CPF no GOV.BR. Sua matrícula será localizada pelo SUAP.
+                    } @else {
+                        Abre o acesso oficial do SUAP para você consultar sua conta e matrícula.
+                    }
+                </p>
 
                 @if (biometricEnabled) {
                     <button

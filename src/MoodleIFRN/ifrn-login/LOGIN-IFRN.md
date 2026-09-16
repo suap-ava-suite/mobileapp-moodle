@@ -35,7 +35,11 @@ Rota no app: `/login/ifrn-login`
 
 ### Gov.br
 
-Botão presente no layout. **Ainda não autenticado** — exibe aviso de que a integração oficial ainda não está ativa.
+O botão abre o acesso GOV.BR oficial do SUAP no modo de consulta. Quando o
+broker IFRN for configurado, usa Authorization Code + PKCE, recebe tokens SUAP
+e abre o painel sem exigir que o estudante saiba sua matricula.
+
+Configuração e contrato do backend: [GOVBR-AUTENTICACAO.md](../docs/GOVBR-AUTENTICACAO.md).
 
 ### Outros
 
