@@ -21,8 +21,8 @@ export class MarketplaceIfrnPage implements OnInit {
 
     readonly currentYear = new Date().getFullYear();
 
-    readonly ifrnSymbolSrc =
-        'mobilemoodle/static/theme/ifrn/img/ifrn-symbol.svg';
+    readonly welcomeImageSrc =
+        'mobilemoodle/static/theme/ifrn/img/alunos-ifrn-welcome.webp';
 
     /** Há sessão válida ou biometria para retomada rápida. */
     canContinue = false;

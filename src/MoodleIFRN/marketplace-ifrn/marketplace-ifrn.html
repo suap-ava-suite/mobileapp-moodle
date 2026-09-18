@@ -1,149 +1,80 @@
 <ion-content class="marketplace-ifrn" [fullscreen]="true" [scrollY]="true">
-    <div class="page">
+    <main class="welcome">
+        <div class="welcome__background" aria-hidden="true">
+            <img [src]="welcomeImageSrc" alt="" />
+        </div>
 
-        <section class="panel panel--login">
-            <div class="panel__inner">
-
-                <div
-                    class="brand"
-                    aria-label="Instituto Federal do Rio Grande do Norte">
-
-                    <img
-                        class="ifrn-logo"
-                        [src]="ifrnSymbolSrc"
-                        alt=""
-                        aria-hidden="true"
-                    />
-
-                    <span class="brand__text">
-                        <strong>INSTITUTO FEDERAL</strong>
-                        <small>Rio Grande do Norte</small>
+        <header class="welcome__header">
+            <div class="brand" aria-label="Instituto Federal do Rio Grande do Norte">
+                <span class="brand__symbol" aria-hidden="true">
+                    <span class="ifrn-mark">
+                        <i class="ifrn-mark__dot"></i>
+                        <i class="ifrn-mark__b1"></i>
+                        <i class="ifrn-mark__b2"></i>
+                        <i class="ifrn-mark__b3"></i>
+                        <i class="ifrn-mark__b4"></i>
+                        <i class="ifrn-mark__b5"></i>
+                        <i class="ifrn-mark__b6"></i>
+                        <i class="ifrn-mark__b7"></i>
+                        <i class="ifrn-mark__b8"></i>
+                        <i class="ifrn-mark__b9"></i>
                     </span>
-                </div>
-
-                <div class="hero ion-text-center">
-                    <h1 class="hero__title">
-                        AVA <span>IFRN</span>
-                    </h1>
-
-                    <p class="hero__subtitle">
-                        Ambiente Virtual de Aprendizagem
-                    </p>
-
-                    <p class="hero__text">
-                        Cursos, disciplinas e atividades do IFRN.
-                    </p>
-
-                    <div class="hero__actions">
-                        @if (canContinue) {
-                            <ion-button
-                                expand="block"
-                                fill="outline"
-                                class="btn-continue"
-                                (click)="continueSession()">
-
-                                <ion-icon
-                                    name="person-circle-outline"
-                                    slot="start"
-                                    aria-hidden="true">
-                                </ion-icon>
-
-                                {{ continueLabel }}
-                            </ion-button>
-                        }
-
-                        <ion-button
-                            expand="block"
-                            class="btn-enter"
-                            (click)="enterAva()">
-
-                            <ion-icon
-                                name="lock-closed-outline"
-                                slot="start"
-                                aria-hidden="true">
-                            </ion-icon>
-
-                            Entrar no AVA
-
-                            <ion-icon
-                                name="chevron-forward-outline"
-                                slot="end"
-                                aria-hidden="true">
-                            </ion-icon>
-                        </ion-button>
-
-                        <ion-button
-                            expand="block"
-                            fill="clear"
-                            class="help-link"
-                            (click)="openHelp()">
-
-                            <ion-icon
-                                name="help-circle-outline"
-                                slot="start"
-                                aria-hidden="true">
-                            </ion-icon>
-
-                            Precisa de ajuda?
-                        </ion-button>
-                    </div>
-                </div>
-
-                <ul class="features" aria-label="Destaques">
-                    <li class="features__item">
-                        <ion-icon
-                            class="features__icon"
-                            name="shield-checkmark-outline"
-                            aria-hidden="true">
-                        </ion-icon>
-                        <span class="features__copy">
-                            <strong>Seguro</strong>
-                            <small>Acesso via SUAP</small>
-                        </span>
-                    </li>
-                    <li class="features__item">
-                        <ion-icon
-                            class="features__icon"
-                            name="school-outline"
-                            aria-hidden="true">
-                        </ion-icon>
-                        <span class="features__copy">
-                            <strong>Acadêmico</strong>
-                            <small>Ambiente oficial</small>
-                        </span>
-                    </li>
-                    <li class="features__item">
-                        <ion-icon
-                            class="features__icon"
-                            name="git-network-outline"
-                            aria-hidden="true">
-                        </ion-icon>
-                        <span class="features__copy">
-                            <strong>Integrado</strong>
-                            <small>Sistemas IFRN</small>
-                        </span>
-                    </li>
-                </ul>
-
-                <p class="copyright ion-text-center">
-                    © {{ currentYear }} IFRN
-                </p>
-
+                </span>
+                <span class="brand__name">
+                    <strong>INSTITUTO FEDERAL</strong>
+                    <small>Rio Grande do Norte</small>
+                </span>
             </div>
+            <span class="ava-label">AVA IFRN</span>
+        </header>
+
+        <section class="welcome__content" aria-labelledby="welcome-title">
+            <p class="welcome__eyebrow">Ambiente Virtual de Aprendizagem</p>
+            <h1 id="welcome-title">
+                O IFRN sempre<br />
+                <span>com você.</span>
+            </h1>
+            <p class="welcome__description">
+                Acesse suas disciplinas, atividades e conteúdos acadêmicos
+                de onde estiver.
+            </p>
         </section>
 
-        <aside class="panel panel--ifrn" aria-hidden="true">
-            <div class="ifrn-panel">
-                <img
-                    class="ifrn-logo ifrn-logo--large"
-                    [src]="ifrnSymbolSrc"
-                    alt=""
-                />
-                <p class="ifrn-panel__tagline">
-                    Integrado ao SUAP
-                </p>
-            </div>
-        </aside>
+        <section class="welcome__actions" aria-label="Acesso ao AVA">
+            @if (canContinue) {
+                <ion-button
+                    expand="block"
+                    fill="outline"
+                    class="btn-continue"
+                    (click)="continueSession()">
+                    <ion-icon
+                        name="person-circle-outline"
+                        slot="start"
+                        aria-hidden="true">
+                    </ion-icon>
+                    {{ continueLabel }}
+                </ion-button>
+            }
 
-    </div>
+            <ion-button expand="block" class="btn-enter" (click)="enterAva()">
+                <span>Entrar no AVA</span>
+                <ion-icon
+                    name="arrow-forward-outline"
+                    slot="end"
+                    aria-hidden="true">
+                </ion-icon>
+            </ion-button>
+
+            <button type="button" class="help-link" (click)="openHelp()">
+                <ion-icon name="help-circle-outline" aria-hidden="true"></ion-icon>
+                Precisa de ajuda para acessar?
+            </button>
+        </section>
+
+        <footer class="welcome__footer">
+            <span>© {{ currentYear }} IFRN</span>
+            <span aria-hidden="true">•</span>
+            <span>Integrado ao SUAP</span>
+        </footer>
+    </main>
 </ion-content>
