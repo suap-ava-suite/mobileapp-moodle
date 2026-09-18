@@ -52,18 +52,22 @@
                         IFRN-id
                     </label>
 
-                    <div class="ifrn-login__input" [class.ifrn-login__input--error]="!!formError">
+                    <div
+                        class="ifrn-login__input"
+                        [class.ifrn-login__input--error]="!!formError"
+                        (mousedown)="onFieldShellMouseDown($event, 'ifrn-login-username')">
                         <input
                             id="ifrn-login-username"
                             name="username"
                             type="text"
+                            dir="ltr"
                             inputmode="text"
                             enterkeyhint="next"
                             autocapitalize="off"
                             autocorrect="off"
+                            autocomplete="username"
                             spellcheck="false"
                             [(ngModel)]="username"
-                            autocomplete="username"
                             placeholder="Digite seu IFRN-id"
                             [disabled]="loading"
                             [attr.aria-invalid]="formError ? true : null"
@@ -81,14 +85,19 @@
                         Senha
                     </label>
 
-                    <div class="ifrn-login__input" [class.ifrn-login__input--error]="!!formError">
+                    <div
+                        class="ifrn-login__input"
+                        [class.ifrn-login__input--error]="!!formError"
+                        (mousedown)="onFieldShellMouseDown($event, 'ifrn-login-password')">
                         <input
                             id="ifrn-login-password"
                             name="password"
+                            dir="ltr"
                             [type]="showPassword ? 'text' : 'password'"
                             enterkeyhint="go"
-                            [(ngModel)]="password"
                             autocomplete="current-password"
+                            spellcheck="false"
+                            [(ngModel)]="password"
                             placeholder="Digite sua senha"
                             [disabled]="loading"
                             [attr.aria-invalid]="formError ? true : null"
@@ -97,6 +106,7 @@
                         <button
                             type="button"
                             class="ifrn-login__icon"
+                            (mousedown)="$event.stopPropagation()"
                             (click)="togglePassword()"
                             [disabled]="loading"
                             aria-label="Mostrar ou ocultar senha"

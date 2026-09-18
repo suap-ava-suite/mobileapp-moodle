@@ -395,6 +395,18 @@ body.keyboard-is-open .sidebar-modal__body {
   color: var(--dark);
 }
 
+ion-menu.ava-menu:not(.show-menu) {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+ion-menu.ava-menu.show-menu {
+  display: block !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
 .ava-menu {
   --width: 255px;
   --border-radius: 20px;

@@ -33,6 +33,18 @@
         ion-app {
             height: calc(100% - var(--keyboard-height, 0px));
         }
+        /* ion-menu só ganha display:none no shadow CSS após hidratar —
+           sem isso o sidebar azul pisca no 1º paint (login / reload). */
+        ion-menu:not(.show-menu) {
+            display: none !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        ion-menu.show-menu {
+            display: block !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+        }
         .boot-loading.ava-splash {
             display: flex;
             flex-direction: column;

@@ -1,5 +1,6 @@
 .ifrn-login {
     --background: #f7f7f7;
+    --ifrn-login-field-height: 48px;
 
     color: #333333;
     font-family: Arial, Helvetica, sans-serif;
@@ -11,7 +12,7 @@
         display: flex;
         gap: 12px;
         height: calc(62px + var(--ion-safe-area-top, 0px));
-        padding: var(--ion-safe-area-top, 0px) 20px 0;
+        padding: var(--ion-safe-area-top, 0px) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
     }
 
     &__back {
@@ -47,22 +48,26 @@
     }
 
     &__content {
+        box-sizing: border-box;
         margin: 0 auto;
-        max-width: 400px;
+        max-width: min(440px, 100%);
         min-height: calc(100% - 62px - var(--ion-safe-area-top, 0px));
-        padding: 26px 28px 48px;
+        padding: 26px max(16px, env(safe-area-inset-right, 0px)) calc(48px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+        width: 100%;
     }
 
     &__card {
         background: #ffffff;
         border: 1px solid #e5e5e5;
         box-shadow: 0 2px 6px rgba(0, 0, 0, .14);
-        padding: 14px 10px 28px;
+        box-sizing: border-box;
+        padding: 18px 16px 28px;
+        width: 100%;
     }
 
     h1 {
         color: #333333;
-        font-size: 18px;
+        font-size: clamp(1.05rem, 0.95rem + 0.4vw, 1.25rem);
         font-weight: 700;
         line-height: 1.25;
         margin: 0 0 8px;
@@ -109,10 +114,12 @@
     &__form {
         display: flex;
         flex-direction: column;
+        width: 100%;
     }
 
     &__field {
         margin-bottom: 18px;
+        width: 100%;
     }
 
     &__field label {
@@ -131,35 +138,67 @@
         margin: 6px 6px 0;
     }
 
+    // Container do campo: altura fixa (não só min-height) para o caret/clique
+    // não “quebrarem” no WebView / desktop.
     &__input {
-        align-items: center;
+        align-items: stretch;
+        background: #ffffff;
         border: 1px solid #777777;
         border-radius: 4px;
+        box-sizing: border-box;
+        cursor: text;
         display: flex;
-        min-height: 48px;
-        overflow: hidden;
+        height: var(--ifrn-login-field-height);
+        min-height: var(--ifrn-login-field-height);
+        position: relative;
+        width: 100%;
+
+        &:focus-within {
+            border-color: #1351b4;
+            box-shadow: 0 0 0 2px rgba(19, 81, 180, 0.18);
+        }
     }
 
     &__input--error {
         border-color: #dc3545;
+
+        &:focus-within {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.18);
+        }
     }
 
     &__input input {
+        -webkit-appearance: none;
         appearance: none;
-        background: #ffffff;
+        background: transparent;
         border: 0;
+        border-radius: 0;
+        box-sizing: border-box;
         color: #333333;
-        flex: 1;
+        direction: ltr;
+        flex: 1 1 auto;
         font-size: 16px; /* evita zoom forçado no iOS */
         height: 100%;
+        line-height: normal;
+        margin: 0;
         min-width: 0;
         outline: 0;
-        padding: 0 14px 0 18px;
+        padding: 12px 14px 12px 16px;
+        pointer-events: auto;
+        text-align: left;
+        touch-action: manipulation;
+        unicode-bidi: plaintext;
+        width: 100%;
+        -webkit-user-select: text;
+        user-select: text;
+        caret-color: #1351b4;
     }
 
     &__input input:disabled {
         background: #f3f3f3;
         color: #666666;
+        cursor: not-allowed;
     }
 
     &__input input::placeholder {
@@ -175,26 +214,32 @@
         background: transparent;
         border: 0;
         color: #333333;
-        display: flex;
+        cursor: pointer;
+        display: inline-flex;
+        flex: 0 0 auto;
         height: 100%;
         justify-content: center;
         min-width: 48px;
         padding: 0 12px;
+        -webkit-tap-highlight-color: transparent;
     }
 
     &__input button:disabled,
     &__icon:disabled {
+        cursor: not-allowed;
         opacity: 0.45;
     }
 
     &__input ion-icon,
     &__icon ion-icon {
         font-size: 20px;
+        pointer-events: none;
     }
 
     &__button {
         align-items: center;
         border-radius: 999px;
+        box-sizing: border-box;
         cursor: pointer;
         display: flex;
         font-size: 15px;
@@ -279,14 +324,72 @@
     }
 }
 
-@media (max-width: 360px) {
+// Celulares estreitos
+@media (max-width: 480px) {
     .ifrn-login {
+        --ifrn-login-field-height: 48px;
+
         &__content {
-            padding: 22px 18px 42px;
+            padding-top: 20px;
+            padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
         }
 
         &__card {
-            padding: 14px 10px 26px;
+            padding: 16px 12px 24px;
+        }
+
+        &__subtitle {
+            margin-bottom: 22px;
+        }
+
+        &__field {
+            margin-bottom: 16px;
+        }
+    }
+}
+
+@media (max-width: 360px) {
+    .ifrn-login {
+        &__header {
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+        &__content {
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+        &__card {
+            padding: 14px 10px 22px;
+        }
+
+        &__field label {
+            font-size: 15px;
+        }
+    }
+}
+
+// Tablets / desktop: mais folga e campos confortáveis com mouse
+@media (min-width: 768px) {
+    .ifrn-login {
+        --ifrn-login-field-height: 52px;
+
+        &__content {
+            max-width: 460px;
+            padding: 40px 32px 64px;
+        }
+
+        &__card {
+            padding: 28px 28px 36px;
+        }
+
+        &__input input {
+            padding: 14px 16px 14px 18px;
+        }
+
+        &__button {
+            min-height: 52px;
         }
     }
 }

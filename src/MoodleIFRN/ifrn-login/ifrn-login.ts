@@ -90,6 +90,35 @@ export class IfrnLoginPage implements OnInit {
     }
 
     /**
+     * Clique na borda/área do campo (não no `<input>`) foca e coloca o caret
+     * no fim — evita o bug de cursor no início sem digitar no WebView/desktop.
+     */
+    onFieldShellMouseDown(event: MouseEvent, inputId: string): void {
+        const target = event.target as HTMLElement | null;
+
+        if (!target || target.closest('button') || target.tagName === 'INPUT') {
+            return;
+        }
+
+        const input = document.getElementById(inputId) as HTMLInputElement | null;
+
+        if (!input || input.disabled) {
+            return;
+        }
+
+        event.preventDefault();
+        input.focus();
+
+        const len = input.value.length;
+
+        try {
+            input.setSelectionRange(len, len);
+        } catch {
+            // Alguns browsers bloqueiam setSelectionRange em type=password.
+        }
+    }
+
+    /**
      * Inicializa biometria e tenta retomar a sessão sem pedir senha.
      */
     async ngOnInit(): Promise<void> {

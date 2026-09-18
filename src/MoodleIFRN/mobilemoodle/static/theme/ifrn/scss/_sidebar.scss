@@ -12,6 +12,20 @@ $sidebar-menu-container-radius: 20px;
     background: var(--light-lighter);
 }
 
+// Esconde o menu até estar aberto: evita FOUC azul antes da hidratação do Ionic
+// (o display:none do :host só existe no shadow CSS após o componente carregar).
+ion-menu.ava-menu:not(.show-menu) {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+ion-menu.ava-menu.show-menu {
+    display: block !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
 .ava-menu {
     --width: 255px;
     --border-radius: #{$sidebar-menu-container-radius};
