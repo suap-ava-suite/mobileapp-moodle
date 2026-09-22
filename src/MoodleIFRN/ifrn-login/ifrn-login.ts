@@ -23,7 +23,9 @@ import {
     GovBrAuthError,
     GovBrAuthService,
 } from '@/MoodleIFRN/services_mobile/govbr-auth.service';
+import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
 import { CoreAlerts } from '@services/overlays/alerts';
+import { CoreLogger } from '@static/logger';
 import { CorePlatform } from '@services/platform';
 import { TimeoutError, firstValueFrom } from 'rxjs';
 
@@ -40,7 +42,9 @@ export class IfrnLoginPage implements OnInit {
     private readonly authService = inject(AuthService);
     private readonly biometricService = inject(BiometricService);
     private readonly govBrAuthService = inject(GovBrAuthService);
+    private readonly painelAvaService = inject(PainelAvaService);
     private readonly router = inject(Router);
+    private readonly logger = CoreLogger.getInstance('IfrnLoginPage');
 
     username = '';
     password = '';
@@ -313,7 +317,7 @@ export class IfrnLoginPage implements OnInit {
 
         this.authService.login(credentials).subscribe({
             next: (response) => {
-                void this.completeLogin(response);
+                void this.completeLogin(response, credentials);
             },
 
             error: (error: HttpErrorResponse | TimeoutError) => {
@@ -380,12 +384,18 @@ export class IfrnLoginPage implements OnInit {
     }
 
     /**
-     * Salva os tokens do SUAP e abre o painel Mobile Moodle.
+     * Salva os tokens do SUAP, obtém JWT do Painel AVA (best-effort)
+     * e abre o painel Mobile Moodle.
+     *
+     * O login SUAP continua sendo a fonte da sessão do app.
+     * O Painel AVA só enriquece a lista de diários com courseid Moodle.
      *
      * @param response Tokens retornados por POST /api/token/pair.
+     * @param credentials Credenciais usadas no login (para /api/v1/authenticate/).
      */
     private async completeLogin(
         response: AuthResponse,
+        credentials?: { username: string; password: string },
     ): Promise<void> {
         try {
             this.authService.saveToken(
@@ -395,8 +405,14 @@ export class IfrnLoginPage implements OnInit {
                 response.username || this.username,
             );
 
-            this.password = '';
             this.formError = '';
+            this.statusMessage = 'Conectando ao Painel AVA…';
+
+            if (credentials?.username && credentials.password) {
+                await this.linkPainelAvaSession(credentials);
+            }
+
+            this.password = '';
             this.statusMessage = 'Preparando acesso…';
 
             await this.offerBiometricActivation(
@@ -414,6 +430,30 @@ export class IfrnLoginPage implements OnInit {
         } finally {
             this.loading = false;
             this.statusMessage = '';
+        }
+    }
+
+    /**
+     * Best-effort: JWT do Painel AVA para /api/v1/diarios/.
+     * Falha aqui NÃO impede o login SUAP / painel.
+     */
+    private async linkPainelAvaSession(
+        credentials: { username: string; password: string },
+    ): Promise<void> {
+        try {
+            const painel = await firstValueFrom(
+                this.painelAvaService.authenticate(credentials),
+            );
+
+            this.painelAvaService.saveToken(painel.token);
+            this.painelAvaService.saveProfile(painel.data);
+            this.logger.debug('[IFRN] Sessão Painel AVA vinculada.');
+        } catch (error) {
+            this.painelAvaService.clearSession();
+            this.logger.warn(
+                '[IFRN] Painel AVA indisponível — painel usará fallback SUAP.',
+                error,
+            );
         }
     }
 

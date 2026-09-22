@@ -75,6 +75,13 @@ export class MarketplaceIfrnPage implements OnInit {
     }
 
     /**
+     * PoC temporário: OAuth SUAP do Moodle → CoreSites → cursos nativos.
+     */
+    openMoodlePoc(): void {
+        void this.router.navigate(['/login/moodle-poc']);
+    }
+
+    /**
      * Abre a central de ajuda do AVA IFRN.
      */
     openHelp(): void {

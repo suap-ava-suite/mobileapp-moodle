@@ -1,9 +1,12 @@
 # Contrato da API
 
-O app usa **duas bases**:
+O app usa **três bases**:
 
-1. **Autenticação** — API oficial do SUAP (`https://suap.ifrn.edu.br`)
-2. **Painel (cursos/diários)** — ainda o backend de teste FastAPI (`localhost:8000`) até a API de produção do AVA
+1. **Autenticação SUAP** — `https://suap.ifrn.edu.br` (`/api/token/pair`)
+2. **Painel AVA (preferido)** — `https://painel.ead.ifrn.edu.br` (`/api/v1/authenticate/`, `/api/v1/diarios/`)
+3. **Fallback diários** — API SUAP ensino (`/api/ensino/…`) se o Painel estiver indisponível
+
+Detalhes da ponte: [`PONTE-PAINEL-MOODLE.md`](./PONTE-PAINEL-MOODLE.md).
 
 Este documento descreve o que o **cliente espera**.
 
@@ -11,19 +14,20 @@ Este documento descreve o que o **cliente espera**.
 
 ## Base URL
 
-| Ambiente | Autenticação | Painel |
-|----------|--------------|--------|
-| Produção / app | `https://suap.ifrn.edu.br` | mesma origem da página (ou backend AVA) |
-| Desenvolvimento do painel | `https://suap.ifrn.edu.br` | `http://localhost:8000` |
+| Ambiente | Autenticação | Diários (preferido) | Fallback |
+|----------|--------------|---------------------|----------|
+| Produção / app | `https://suap.ifrn.edu.br` | `https://painel.ead.ifrn.edu.br` | SUAP ensino |
 
 Docs SUAP: https://suap.ifrn.edu.br/api/docs/  
-OpenAPI: https://suap.ifrn.edu.br/api/openapi.json
+OpenAPI: https://suap.ifrn.edu.br/api/openapi.json  
+Painel AVA: https://github.com/suap-ava-suite/djangoapp-painel_ava
 
 ---
 
 ## Autenticação (SUAP)
 
 ### `POST /api/token/pair`
+
 
 **Body**
 

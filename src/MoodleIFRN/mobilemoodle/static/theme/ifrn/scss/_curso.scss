@@ -244,11 +244,29 @@
     text-decoration: none;
     color: inherit;
     transition: background 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
 
     &:active,
     &:focus-visible {
         background: var(--bg-green);
         outline: none;
+    }
+
+    &--link {
+        cursor: pointer;
+
+        &:hover {
+            background: var(--primary-light);
+        }
+
+        .activity-item__name {
+            color: var(--primary-dark);
+        }
+    }
+
+    &--static {
+        cursor: default;
+        opacity: 0.92;
     }
 }
 
@@ -298,6 +316,13 @@
 .activity-item__status--pending {
     background: var(--warning-light);
     color: var(--warning-dark);
+}
+
+.activity-item__chevron {
+    flex-shrink: 0;
+    align-self: center;
+    font-size: 1.1rem;
+    color: var(--primary);
 }
 
 .activity-empty {

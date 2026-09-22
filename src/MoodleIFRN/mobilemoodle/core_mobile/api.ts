@@ -3,9 +3,9 @@
  * ----------------------------------------------------------------------------
  * Fachada de dados do painel + cache em memória.
  *
- * Fonte: API oficial do SUAP (JWT do login IFRN).
- *   GET /api/rh/eu/ + diários  → getDashboard()
- *   GET turma/diário            → getCourse(id)
+ * Preferência:
+ *   1. Painel AVA (/api/v1/diarios/) — courseid Moodle real
+ *   2. Fallback SUAP (/api/ensino/…) — só metadados acadêmicos
  *
  * Cache:
  *   - TTL 60s
@@ -49,6 +49,22 @@ import { MM } from './namespace';
     }
 
     /**
+     * Painel AVA primeiro; se falhar ou não houver JWT do Painel, usa SUAP.
+     */
+    async function fetchDashboardPreferPainel(): Promise<DashboardData> {
+        if (typeof MM.hasPainelSession === 'function' && MM.hasPainelSession()) {
+            try {
+                return await MM.fetchPainelDashboard();
+            } catch (error) {
+                // eslint-disable-next-line no-console
+                console.warn('[Painel AVA] Falha ao listar diários; fallback SUAP.', error);
+            }
+        }
+
+        return MM.fetchSuapDashboard();
+    }
+
+    /**
      * @param force se true, ignora cache e refaz o GET (pull-to-refresh / retry).
      */
     function getDashboard(force = false): Promise<DashboardData> {
@@ -64,7 +80,7 @@ import { MM } from './namespace';
             return dashboardCache.inFlight;
         }
 
-        dashboardCache.inFlight = MM.fetchSuapDashboard()
+        dashboardCache.inFlight = fetchDashboardPreferPainel()
             .then((dashboard) => {
                 dashboardCache.value = dashboard;
                 dashboardCache.fetchedAt = Date.now();
@@ -91,6 +107,27 @@ import { MM } from './namespace';
         }
     }
 
+    function enrichCourseFromDashboard(course: CourseData, id: string): CourseData {
+        const dashboard = dashboardCache.value;
+        const fromList = (dashboard?.diarios || dashboard?.courses || [])
+            .find((item) => String(item.id) === id);
+
+        if (!fromList || fromList.source !== 'painel') {
+            return course;
+        }
+
+        return {
+            ...course,
+            id: fromList.id,
+            name: fromList.name || course.name,
+            moodle: fromList.moodle || course.moodle,
+            external_url: fromList.viewurl || fromList.details_url || course.external_url,
+            moodle_course_id: fromList.moodle_course_id,
+            moodle_site_url: fromList.moodle_site_url,
+            source: 'painel',
+        };
+    }
+
     function getCourse(courseId: string | number, force = false): Promise<CourseData> {
         const id = String(courseId);
 
@@ -115,12 +152,37 @@ import { MM } from './namespace';
             return entry.inFlight;
         }
 
+        // Card do Painel já tem courseid Moodle: monta detalhe mínimo sem SUAP.
+        const fromPainel = (dashboardCache.value?.diarios || dashboardCache.value?.courses || [])
+            .find((item) => String(item.id) === id && item.source === 'painel');
+
+        if (fromPainel) {
+            const course: CourseData = {
+                id: fromPainel.id,
+                name: fromPainel.name,
+                moodle: fromPainel.moodle,
+                progress: fromPainel.progress ?? undefined,
+                external_url: fromPainel.viewurl || fromPainel.details_url,
+                moodle_course_id: fromPainel.moodle_course_id,
+                moodle_site_url: fromPainel.moodle_site_url,
+                source: 'painel',
+                sections: [],
+                summary: 'Toque em “Abrir no Moodle” para o conteúdo nativo do AVA.',
+            };
+
+            entry.value = course;
+            entry.fetchedAt = Date.now();
+
+            return Promise.resolve(course);
+        }
+
         entry.inFlight = MM.fetchSuapCourse(id)
             .then((course) => {
-                entry!.value = course;
+                const enriched = enrichCourseFromDashboard(course, id);
+                entry!.value = enriched;
                 entry!.fetchedAt = Date.now();
 
-                return course;
+                return enriched;
             })
             .finally(() => {
                 entry!.inFlight = null;

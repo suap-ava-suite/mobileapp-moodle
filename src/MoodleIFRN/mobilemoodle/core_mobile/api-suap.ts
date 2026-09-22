@@ -54,9 +54,20 @@ interface SuapAula {
 }
 
 interface SuapMaterial {
-    url?: string;
+    id?: number;
+    url?: string | null;
     descricao?: string;
     data_vinculacao?: string;
+    data?: string;
+}
+
+interface SuapTrabalho {
+    id?: number;
+    titulo?: string;
+    descricao?: string;
+    url?: string | null;
+    data_limite?: string;
+    expirado?: boolean;
 }
 
 interface SuapTopico {
@@ -88,7 +99,7 @@ function asPagedResults<T>(data: unknown): T[] {
     return [];
 }
 
-function absoluteSuapUrl(pathOrUrl: string | undefined): string | undefined {
+function absoluteSuapUrl(pathOrUrl: string | undefined | null): string | undefined {
     if (!pathOrUrl) {
         return undefined;
     }
@@ -102,6 +113,56 @@ function absoluteSuapUrl(pathOrUrl: string | undefined): string | undefined {
     }
 
     return pathOrUrl;
+}
+
+/**
+ * ambiente_virtual às vezes é rótulo ("Moodle Acadêmico"), às vezes URL do AVA.
+ * Só devolve link quando for URL/caminho navegável.
+ */
+function resolveExternalLink(value: string | undefined | null): string | undefined {
+    if (!value) {
+        return undefined;
+    }
+
+    const trimmed = value.trim();
+
+    if (!trimmed) {
+        return undefined;
+    }
+
+    if (/^https?:\/\//i.test(trimmed)) {
+        return trimmed;
+    }
+
+    if (trimmed.startsWith('/')) {
+        return absoluteSuapUrl(trimmed);
+    }
+
+    return undefined;
+}
+
+function suapDiariosUrl(): string {
+    return 'https://suap.ifrn.edu.br/edu/meus_diarios/';
+}
+
+function activityFromMaterial(material: SuapMaterial): CourseActivity {
+    return {
+        id: material.id,
+        name: material.descricao || 'Material',
+        modname: 'resource',
+        completion: false,
+        url: absoluteSuapUrl(material.url),
+    };
+}
+
+function activityFromTrabalho(trabalho: SuapTrabalho): CourseActivity {
+    return {
+        id: trabalho.id,
+        name: trabalho.titulo || trabalho.descricao || 'Trabalho',
+        modname: 'assign',
+        completion: Boolean(trabalho.expirado) ? false : undefined,
+        url: absoluteSuapUrl(trabalho.url),
+    };
 }
 
 function displayName(eu: SuapEu): string {
@@ -178,6 +239,7 @@ function mapDiarioToCourse(diario: SuapDiario): DashboardCourse {
         progress,
         hasprogress: progress != null,
         moodle: diario.ambiente_virtual || 'SUAP',
+        details_url: resolveExternalLink(diario.ambiente_virtual),
         is_enrolled: true,
         enrolled: true,
     };
@@ -302,11 +364,7 @@ function sectionsFromTurma(turma: SuapTurmaVirtual): CourseSection[] {
     if (materiais.length) {
         sections.push({
             name: 'Materiais',
-            activities: materiais.map((material) => ({
-                name: material.descricao || 'Material',
-                modname: 'resource',
-                completion: false,
-            })),
+            activities: materiais.map(activityFromMaterial),
         });
     }
 
@@ -314,16 +372,18 @@ function sectionsFromTurma(turma: SuapTurmaVirtual): CourseSection[] {
 }
 
 async function sectionsFromDiarioEndpoints(diarioId: string): Promise<CourseSection[]> {
-    const [aulasRaw, materiaisRaw, topicosRaw] = await Promise.all([
+    const [aulasRaw, materiaisRaw, topicosRaw, trabalhosRaw] = await Promise.all([
         softGet(`/api/ensino/diarios/${encodeURIComponent(diarioId)}/aulas/`),
         softGet(`/api/ensino/diarios/${encodeURIComponent(diarioId)}/materiais/`),
         softGet(`/api/ensino/diarios/${encodeURIComponent(diarioId)}/topicos/`),
+        softGet(`/api/ensino/diarios/${encodeURIComponent(diarioId)}/trabalhos/`),
     ]);
 
     const sections: CourseSection[] = [];
     const aulas = asPagedResults<SuapAula>(aulasRaw);
     const materiais = asPagedResults<SuapMaterial>(materiaisRaw);
     const topicos = asPagedResults<SuapTopico>(topicosRaw);
+    const trabalhos = asPagedResults<SuapTrabalho>(trabalhosRaw);
 
     if (aulas.length) {
         sections.push({
@@ -339,11 +399,14 @@ async function sectionsFromDiarioEndpoints(diarioId: string): Promise<CourseSect
     if (materiais.length) {
         sections.push({
             name: 'Materiais',
-            activities: materiais.map((material) => ({
-                name: material.descricao || 'Material',
-                modname: 'resource',
-                completion: false,
-            })),
+            activities: materiais.map(activityFromMaterial),
+        });
+    }
+
+    if (trabalhos.length) {
+        sections.push({
+            name: 'Trabalhos',
+            activities: trabalhos.map(activityFromTrabalho),
         });
     }
 
@@ -379,6 +442,7 @@ async function fetchSuapCourse(courseId: string): Promise<CourseData> {
             workload: '',
             progress: 0,
             moodle: 'SUAP',
+            external_url: suapDiariosUrl(),
             summary: [
                 turma.ano_letivo && turma.periodo_letivo
                     ? `Período ${turma.ano_letivo}.${turma.periodo_letivo}`
@@ -405,6 +469,7 @@ async function fetchSuapCourse(courseId: string): Promise<CourseData> {
         workload: '',
         progress: 0,
         moodle: 'SUAP',
+        external_url: suapDiariosUrl(),
         summary: '',
         sections,
     };

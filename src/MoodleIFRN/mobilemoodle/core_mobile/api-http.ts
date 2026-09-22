@@ -27,8 +27,13 @@ import { MM } from './namespace';
                 return true;
             }
 
-            // API oficial do SUAP (login + diários).
+            // API oficial do SUAP (login + fallback de diários).
             if (parsed.origin === 'https://suap.ifrn.edu.br') {
+                return true;
+            }
+
+            // Painel AVA (diários com courseid Moodle).
+            if (parsed.origin === 'https://painel.ead.ifrn.edu.br') {
                 return true;
             }
 

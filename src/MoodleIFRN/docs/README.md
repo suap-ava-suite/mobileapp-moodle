@@ -9,6 +9,7 @@ Tudo que é específico do IFRN vive em `src/MoodleIFRN/` (login, serviços, pai
 | Documento | Conteúdo |
 |-----------|----------|
 | [VISAO-GERAL.md](./VISAO-GERAL.md) | Arquitetura, fluxo do usuário e status do projeto |
+| [PONTE-PAINEL-MOODLE.md](./PONTE-PAINEL-MOODLE.md) | SUAP → Painel AVA → sessão Moodle Mobile |
 | [PATCH-AO-ATUALIZAR.md](./PATCH-AO-ATUALIZAR.md) | Reaplicar o módulo após atualizar o Moodle Mobile |
 
 ## Login e autenticação

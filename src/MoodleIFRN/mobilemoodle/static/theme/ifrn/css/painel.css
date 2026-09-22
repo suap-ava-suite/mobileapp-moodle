@@ -1831,10 +1831,24 @@ body.stop_animations .ava-splash__gauge {
   text-decoration: none;
   color: inherit;
   transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 .activity-item:active, .activity-item:focus-visible {
   background: var(--bg-green);
   outline: none;
+}
+.activity-item--link {
+  cursor: pointer;
+}
+.activity-item--link:hover {
+  background: var(--primary-light);
+}
+.activity-item--link .activity-item__name {
+  color: var(--primary-dark);
+}
+.activity-item--static {
+  cursor: default;
+  opacity: 0.92;
 }
 
 .activity-item__icon {
@@ -1883,6 +1897,13 @@ body.stop_animations .ava-splash__gauge {
 .activity-item__status--pending {
   background: var(--warning-light);
   color: var(--warning-dark);
+}
+
+.activity-item__chevron {
+  flex-shrink: 0;
+  align-self: center;
+  font-size: 1.1rem;
+  color: var(--primary);
 }
 
 .activity-empty {

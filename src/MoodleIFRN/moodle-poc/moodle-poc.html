@@ -1,0 +1,96 @@
+<ion-content class="moodle-poc">
+    <header class="moodle-poc__header">
+        <ion-button
+            class="moodle-poc__back"
+            fill="clear"
+            (click)="goBack()"
+            [disabled]="loading"
+            aria-label="Voltar">
+            <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+        <h1 id="moodle-poc-title">PoC Moodle</h1>
+    </header>
+
+    <main class="moodle-poc__content" aria-labelledby="moodle-poc-title">
+        <section class="moodle-poc__card">
+            <p class="moodle-poc__eyebrow">Prova de conceito — temporária</p>
+            <h2>SUAP OAuth → CoreSites → cursos</h2>
+            <p class="moodle-poc__subtitle">
+                Site:
+                <code>{{ siteUrl }}</code>
+            </p>
+            <p class="moodle-poc__subtitle">
+                Curso preferido:
+                <code>{{ preferredCourseId }}</code>
+            </p>
+
+            @if (statusMessage) {
+                <p class="moodle-poc__status" role="status" aria-live="polite">
+                    {{ statusMessage }}
+                </p>
+            }
+
+            @if (formError) {
+                <p class="moodle-poc__error" role="alert">
+                    {{ formError }}
+                </p>
+            }
+
+            <div class="moodle-poc__actions">
+                <ion-button
+                    expand="block"
+                    class="moodle-poc__button"
+                    (click)="connectSuapOAuth()"
+                    [disabled]="loading">
+                    @if (loading) {
+                        <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+                    } @else {
+                        1. Conectar via SUAP OAuth
+                    }
+                </ion-button>
+
+                <ion-button
+                    expand="block"
+                    fill="outline"
+                    class="moodle-poc__button"
+                    (click)="listCourses()"
+                    [disabled]="loading">
+                    2. Listar cursos Moodle
+                </ion-button>
+
+                <ion-button
+                    expand="block"
+                    fill="outline"
+                    class="moodle-poc__button"
+                    (click)="openCourse()"
+                    [disabled]="loading || !summary?.courses?.length">
+                    3. Abrir curso nativo
+                </ion-button>
+            </div>
+
+            @if (summary) {
+                <section class="moodle-poc__summary" aria-label="Sessão Moodle">
+                    <h3>Sessão</h3>
+                    <ul>
+                        <li><strong>Usuário:</strong> {{ summary.userFullName }}</li>
+                        <li><strong>Login:</strong> {{ summary.username }}</li>
+                        <li><strong>Site:</strong> {{ summary.siteUrl }}</li>
+                        <li><strong>Cursos:</strong> {{ summary.courseCount }}</li>
+                    </ul>
+
+                    @if (summary.courses.length) {
+                        <h3>Cursos</h3>
+                        <ul class="moodle-poc__courses">
+                            @for (course of summary.courses; track course.id) {
+                                <li>
+                                    <code>{{ course.id }}</code>
+                                    — {{ course.name }}
+                                </li>
+                            }
+                        </ul>
+                    }
+                </section>
+            }
+        </section>
+    </main>
+</ion-content>

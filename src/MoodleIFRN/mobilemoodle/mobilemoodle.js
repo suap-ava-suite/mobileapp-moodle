@@ -196,6 +196,8 @@
   }
   function clearToken() {
     sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem("ifrn_painel_token");
+    sessionStorage.removeItem("ifrn_painel_profile");
     if (typeof MM.invalidateCache === "function") {
       MM.invalidateCache();
     }
@@ -229,6 +231,9 @@
         return true;
       }
       if (parsed.origin === "https://suap.ifrn.edu.br") {
+        return true;
+      }
+      if (parsed.origin === "https://painel.ead.ifrn.edu.br") {
         return true;
       }
       return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(parsed.origin);
@@ -363,6 +368,43 @@
     }
     return pathOrUrl;
   }
+  function resolveExternalLink(value) {
+    if (!value) {
+      return void 0;
+    }
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return void 0;
+    }
+    if (/^https?:\/\//i.test(trimmed)) {
+      return trimmed;
+    }
+    if (trimmed.startsWith("/")) {
+      return absoluteSuapUrl(trimmed);
+    }
+    return void 0;
+  }
+  function suapDiariosUrl() {
+    return "https://suap.ifrn.edu.br/edu/meus_diarios/";
+  }
+  function activityFromMaterial(material) {
+    return {
+      id: material.id,
+      name: material.descricao || "Material",
+      modname: "resource",
+      completion: false,
+      url: absoluteSuapUrl(material.url)
+    };
+  }
+  function activityFromTrabalho(trabalho) {
+    return {
+      id: trabalho.id,
+      name: trabalho.titulo || trabalho.descricao || "Trabalho",
+      modname: "assign",
+      completion: Boolean(trabalho.expirado) ? false : void 0,
+      url: absoluteSuapUrl(trabalho.url)
+    };
+  }
   function displayName(eu) {
     return eu.nome_social || eu.nome_usual || eu.nome || eu.identificacao || "Usu\xE1rio SUAP";
   }
@@ -410,6 +452,7 @@
       progress,
       hasprogress: progress != null,
       moodle: diario.ambiente_virtual || "SUAP",
+      details_url: resolveExternalLink(diario.ambiente_virtual),
       is_enrolled: true,
       enrolled: true
     };
@@ -501,25 +544,23 @@
     if (materiais.length) {
       sections.push({
         name: "Materiais",
-        activities: materiais.map((material) => ({
-          name: material.descricao || "Material",
-          modname: "resource",
-          completion: false
-        }))
+        activities: materiais.map(activityFromMaterial)
       });
     }
     return sections;
   }
   async function sectionsFromDiarioEndpoints(diarioId) {
-    const [aulasRaw, materiaisRaw, topicosRaw] = await Promise.all([
+    const [aulasRaw, materiaisRaw, topicosRaw, trabalhosRaw] = await Promise.all([
       softGet(`/api/ensino/diarios/${encodeURIComponent(diarioId)}/aulas/`),
       softGet(`/api/ensino/diarios/${encodeURIComponent(diarioId)}/materiais/`),
-      softGet(`/api/ensino/diarios/${encodeURIComponent(diarioId)}/topicos/`)
+      softGet(`/api/ensino/diarios/${encodeURIComponent(diarioId)}/topicos/`),
+      softGet(`/api/ensino/diarios/${encodeURIComponent(diarioId)}/trabalhos/`)
     ]);
     const sections = [];
     const aulas = asPagedResults(aulasRaw);
     const materiais = asPagedResults(materiaisRaw);
     const topicos = asPagedResults(topicosRaw);
+    const trabalhos = asPagedResults(trabalhosRaw);
     if (aulas.length) {
       sections.push({
         name: "Aulas",
@@ -533,11 +574,13 @@
     if (materiais.length) {
       sections.push({
         name: "Materiais",
-        activities: materiais.map((material) => ({
-          name: material.descricao || "Material",
-          modname: "resource",
-          completion: false
-        }))
+        activities: materiais.map(activityFromMaterial)
+      });
+    }
+    if (trabalhos.length) {
+      sections.push({
+        name: "Trabalhos",
+        activities: trabalhos.map(activityFromTrabalho)
       });
     }
     if (topicos.length) {
@@ -565,6 +608,7 @@
         workload: "",
         progress: 0,
         moodle: "SUAP",
+        external_url: suapDiariosUrl(),
         summary: [
           turma.ano_letivo && turma.periodo_letivo ? `Per\xEDodo ${turma.ano_letivo}.${turma.periodo_letivo}` : ""
         ].filter(Boolean).join(" \xB7 "),
@@ -586,6 +630,7 @@
       workload: "",
       progress: 0,
       moodle: "SUAP",
+      external_url: suapDiariosUrl(),
       summary: "",
       sections
     };
@@ -593,15 +638,177 @@
   MM.fetchSuapDashboard = fetchSuapDashboard;
   MM.fetchSuapCourse = fetchSuapCourse;
 
+  // src/MoodleIFRN/mobilemoodle/core_mobile/api-painel.ts
+  /*!
+   * api-painel.ts
+   * ----------------------------------------------------------------------------
+   * Consome o Painel AVA oficial (djangoapp-painel_ava):
+   *   GET https://painel.ead.ifrn.edu.br/api/v1/diarios/
+   *
+   * Autenticação: JWT do Painel (POST /api/v1/authenticate/), NÃO o JWT SUAP
+   * e NÃO wstoken Moodle.
+   *
+   * Cada diário traz courseid Moodle (`id`), viewurl e diario_id SUAP.
+   */
+  var PAINEL_BASE = "https://painel.ead.ifrn.edu.br";
+  var PAINEL_TOKEN_KEY = "ifrn_painel_token";
+  var PAINEL_PROFILE_KEY = "ifrn_painel_profile";
+  var REQUEST_TIMEOUT_MS2 = 15e3;
+  function getPainelToken() {
+    const stored = sessionStorage.getItem(PAINEL_TOKEN_KEY);
+    if (!stored) {
+      return null;
+    }
+    if (typeof MM.isValidToken === "function" && !MM.isValidToken(stored)) {
+      sessionStorage.removeItem(PAINEL_TOKEN_KEY);
+      return null;
+    }
+    return stored;
+  }
+  function readPainelProfile() {
+    const raw = sessionStorage.getItem(PAINEL_PROFILE_KEY);
+    if (!raw) {
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+  function extractSiteUrl(viewurl) {
+    if (!viewurl || !/^https?:\/\//i.test(viewurl)) {
+      return void 0;
+    }
+    try {
+      return new URL(viewurl).origin;
+    } catch {
+      return void 0;
+    }
+  }
+  function diarioSuapId(diario) {
+    if (typeof diario.id_diario_clean === "number") {
+      return diario.id_diario_clean;
+    }
+    if (diario.diario?.id_clean != null) {
+      return Number(diario.diario.id_clean);
+    }
+    const raw = diario.diario_id ?? diario.id_diario ?? diario.diario?.id;
+    if (raw == null) {
+      return void 0;
+    }
+    const asNum = Number(String(raw).replace(/^#/, ""));
+    return Number.isFinite(asNum) ? asNum : void 0;
+  }
+  function mapPainelDiario(diario) {
+    const courseId = Number(diario.id);
+    const name = diario.fullname || diario.disciplina?.descricao || diario.shortname || `Curso ${diario.id}`;
+    const viewurl = diario.viewurl || diario.url;
+    const ambienteTitulo = diario.ambiente?.titulo;
+    return {
+      id: Number.isFinite(courseId) ? courseId : diario.id || 0,
+      name,
+      fullname: name,
+      shortname: diario.shortname || diario.disciplina?.sigla || String(diario.id),
+      progress: diario.progress ?? null,
+      hasprogress: Boolean(diario.hasprogress),
+      moodle: ambienteTitulo || "AVA",
+      environment: ambienteTitulo,
+      ambiente: diario.ambiente,
+      isfavourite: Boolean(diario.isfavourite || diario.favourite),
+      favourite: Boolean(diario.isfavourite || diario.favourite),
+      is_enrolled: diario.is_enrolled !== false,
+      enrolled: diario.is_enrolled !== false,
+      details_url: viewurl || diario.details_url,
+      viewurl,
+      moodle_course_id: Number.isFinite(courseId) ? courseId : void 0,
+      moodle_site_url: extractSiteUrl(viewurl),
+      diario_id: diarioSuapId(diario),
+      source: "painel"
+    };
+  }
+  async function requestPainel(path) {
+    const token = getPainelToken();
+    if (!token) {
+      throw new MM.ApiError(401, "Sess\xE3o do Painel AVA ausente.");
+    }
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      controller.abort();
+    }, REQUEST_TIMEOUT_MS2);
+    let response;
+    try {
+      response = await fetch(PAINEL_BASE + path, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: "Bearer " + token
+        },
+        credentials: "omit",
+        cache: "no-store",
+        signal: controller.signal
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new MM.ApiError(408);
+      }
+      throw new MM.ApiError(0, "Falha de rede ao consultar o Painel AVA.");
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+    if (response.status === 401 || response.status === 403 || response.status === 428) {
+      throw new MM.ApiError(response.status, "Sess\xE3o do Painel AVA inv\xE1lida.");
+    }
+    if (!response.ok) {
+      throw new MM.ApiError(response.status);
+    }
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      throw new MM.ApiError(502, "Resposta inv\xE1lida do Painel AVA.");
+    }
+    return response.json();
+  }
+  function profileDisplayName(profile) {
+    if (!profile) {
+      return "Usu\xE1rio";
+    }
+    const nome = profile["nome"] || profile["nome_usual"] || profile["nome_registro"] || profile["nome_social"];
+    return typeof nome === "string" && nome.trim() ? nome.trim() : "Usu\xE1rio";
+  }
+  async function fetchPainelDashboard() {
+    const data = await requestPainel("/api/v1/diarios/?situacao=inprogress");
+    const profile = readPainelProfile();
+    const diarios = (data.diarios || []).map(mapPainelDiario);
+    const autoinscricoes = (data.autoinscricoes || []).map(mapPainelDiario);
+    return {
+      nome: profileDisplayName(profile),
+      username: typeof profile?.["matricula"] === "string" ? profile["matricula"] : typeof profile?.["username"] === "string" ? profile["username"] : void 0,
+      foto_url: typeof profile?.["url_foto_150x200"] === "string" ? profile["url_foto_150x200"] : typeof profile?.["foto"] === "string" ? profile["foto"] : void 0,
+      papel: "estudante",
+      total_courses: diarios.length,
+      courses: diarios,
+      diarios,
+      autoinscricoes,
+      source: "painel"
+    };
+  }
+  function hasPainelSession() {
+    return getPainelToken() !== null;
+  }
+  MM.fetchPainelDashboard = fetchPainelDashboard;
+  MM.hasPainelSession = hasPainelSession;
+  MM.getPainelToken = getPainelToken;
+
   // src/MoodleIFRN/mobilemoodle/core_mobile/api.ts
   /*!
    * api.ts
    * ----------------------------------------------------------------------------
    * Fachada de dados do painel + cache em memória.
    *
-   * Fonte: API oficial do SUAP (JWT do login IFRN).
-   *   GET /api/rh/eu/ + diários  → getDashboard()
-   *   GET turma/diário            → getCourse(id)
+   * Preferência:
+   *   1. Painel AVA (/api/v1/diarios/) — courseid Moodle real
+   *   2. Fallback SUAP (/api/ensino/…) — só metadados acadêmicos
    *
    * Cache:
    *   - TTL 60s
@@ -630,6 +837,16 @@
     dashboardCache.inFlight = null;
     courseCache.clear();
   }
+  async function fetchDashboardPreferPainel() {
+    if (typeof MM.hasPainelSession === "function" && MM.hasPainelSession()) {
+      try {
+        return await MM.fetchPainelDashboard();
+      } catch (error) {
+        console.warn("[Painel AVA] Falha ao listar di\xE1rios; fallback SUAP.", error);
+      }
+    }
+    return MM.fetchSuapDashboard();
+  }
   function getDashboard(force = false) {
     if (DEMO_FORCE_500) {
       return Promise.reject(new MM.ApiError(500));
@@ -640,7 +857,7 @@
     if (dashboardCache.inFlight && !force) {
       return dashboardCache.inFlight;
     }
-    dashboardCache.inFlight = MM.fetchSuapDashboard().then((dashboard) => {
+    dashboardCache.inFlight = fetchDashboardPreferPainel().then((dashboard) => {
       dashboardCache.value = dashboard;
       dashboardCache.fetchedAt = Date.now();
       return dashboard;
@@ -657,6 +874,23 @@
     if (oldest !== void 0) {
       courseCache.delete(oldest);
     }
+  }
+  function enrichCourseFromDashboard(course, id) {
+    const dashboard = dashboardCache.value;
+    const fromList = (dashboard?.diarios || dashboard?.courses || []).find((item) => String(item.id) === id);
+    if (!fromList || fromList.source !== "painel") {
+      return course;
+    }
+    return {
+      ...course,
+      id: fromList.id,
+      name: fromList.name || course.name,
+      moodle: fromList.moodle || course.moodle,
+      external_url: fromList.viewurl || fromList.details_url || course.external_url,
+      moodle_course_id: fromList.moodle_course_id,
+      moodle_site_url: fromList.moodle_site_url,
+      source: "painel"
+    };
   }
   function getCourse(courseId, force = false) {
     const id = String(courseId);
@@ -675,10 +909,29 @@
     if (entry.inFlight && !force) {
       return entry.inFlight;
     }
-    entry.inFlight = MM.fetchSuapCourse(id).then((course) => {
+    const fromPainel = (dashboardCache.value?.diarios || dashboardCache.value?.courses || []).find((item) => String(item.id) === id && item.source === "painel");
+    if (fromPainel) {
+      const course = {
+        id: fromPainel.id,
+        name: fromPainel.name,
+        moodle: fromPainel.moodle,
+        progress: fromPainel.progress ?? void 0,
+        external_url: fromPainel.viewurl || fromPainel.details_url,
+        moodle_course_id: fromPainel.moodle_course_id,
+        moodle_site_url: fromPainel.moodle_site_url,
+        source: "painel",
+        sections: [],
+        summary: "Toque em \u201CAbrir no Moodle\u201D para o conte\xFAdo nativo do AVA."
+      };
       entry.value = course;
       entry.fetchedAt = Date.now();
-      return course;
+      return Promise.resolve(course);
+    }
+    entry.inFlight = MM.fetchSuapCourse(id).then((course) => {
+      const enriched = enrichCourseFromDashboard(course, id);
+      entry.value = enriched;
+      entry.fetchedAt = Date.now();
+      return enriched;
     }).finally(() => {
       entry.inFlight = null;
     });
@@ -770,8 +1023,31 @@
       return "/#/login/ifrn-login";
     }
   }
+  function resolveMoodleOpenUrl(courseId, courseName) {
+    const id = Number(courseId);
+    if (Number.isFinite(id) && id > 0) {
+      try {
+        sessionStorage.setItem(
+          "ifrn_moodle_pending_open_course",
+          JSON.stringify({
+            courseId: id,
+            courseName: courseName || void 0
+          })
+        );
+      } catch {
+      }
+    }
+    try {
+      const appRoot = new URL("../", App.ASSET_BASE || window.location.href);
+      appRoot.hash = "/login/moodle-open-course";
+      return appRoot.toString();
+    } catch {
+      return "/#/login/moodle-open-course";
+    }
+  }
   App.ASSET_BASE = resolveAssetBase();
   App.resolveLoginUrl = resolveLoginUrl;
+  App.resolveMoodleOpenUrl = resolveMoodleOpenUrl;
   App.escapeHtml = escapeHtml;
   App.initials = initials;
   App.cloneTemplate = cloneTemplate;
@@ -1281,11 +1557,14 @@
     if (!fragment) {
       return document.createTextNode("");
     }
+    const item = fragment.querySelector(".activity-item");
     const icon = fragment.querySelector(".activity-item__icon ion-icon");
     const name = fragment.querySelector(".activity-item__name");
     const mod = fragment.querySelector(".activity-item__mod");
     const status = fragment.querySelector(".activity-item__status");
+    const chevron = fragment.querySelector(".activity-item__chevron");
     const modname = activity.modname || activity.module || activity.type || "";
+    const url = typeof activity.url === "string" ? activity.url.trim() : "";
     if (icon) {
       icon.setAttribute("name", activityIcon(modname));
     }
@@ -1299,6 +1578,28 @@
       status.hidden = false;
       status.textContent = activity.completion ? "Conclu\xEDda" : "Pendente";
       status.classList.toggle("activity-item__status--pending", !activity.completion);
+    }
+    if (item) {
+      if (url) {
+        item.href = url;
+        item.target = "_blank";
+        item.rel = "noopener noreferrer";
+        item.classList.add("activity-item--link");
+        item.setAttribute(
+          "aria-label",
+          (activity.name || activity.title || "Atividade") + " (abrir)"
+        );
+        if (chevron) {
+          chevron.hidden = false;
+        }
+      } else {
+        item.removeAttribute("href");
+        item.setAttribute("role", "listitem");
+        item.classList.add("activity-item--static");
+        item.addEventListener("click", (event) => {
+          event.preventDefault();
+        });
+      }
     }
     return fragment;
   }
@@ -1358,6 +1659,31 @@
     const envTag = document.getElementById("curso-env-tag");
     if (envTag && course.moodle) {
       envTag.textContent = course.moodle;
+    }
+    const courseId = course.id != null ? String(course.id) : "";
+    const dashboardCourse = (dashboard.courses || dashboard.diarios || []).find(
+      (item) => String(item.id) === courseId
+    );
+    const moodleCourseId = course.moodle_course_id ?? dashboardCourse?.moodle_course_id ?? (dashboardCourse?.source === "painel" || course.source === "painel" ? Number(courseId) : void 0);
+    const externalUrl = course.external_url || dashboardCourse?.viewurl || dashboardCourse?.details_url || "https://suap.ifrn.edu.br/edu/meus_diarios/";
+    const openMoodle = document.getElementById("curso-open-moodle");
+    if (openMoodle && moodleCourseId && Number.isFinite(moodleCourseId) && moodleCourseId > 0) {
+      openMoodle.hidden = false;
+      openMoodle.onclick = (event) => {
+        event.preventDefault();
+        const url = typeof App.resolveMoodleOpenUrl === "function" ? App.resolveMoodleOpenUrl(moodleCourseId, course.name || dashboardCourse?.name) : `/#/login/moodle-open-course?courseId=${moodleCourseId}`;
+        window.location.assign(url);
+      };
+    } else if (openMoodle) {
+      openMoodle.hidden = true;
+      openMoodle.onclick = null;
+    }
+    const openExternal = document.getElementById("curso-open-external");
+    if (openExternal && externalUrl) {
+      openExternal.hidden = false;
+      openExternal.setAttribute("href", externalUrl);
+      openExternal.setAttribute("target", "_blank");
+      openExternal.setAttribute("rel", "noopener noreferrer");
     }
     const summary = course.summary || course.description || "";
     const summaryBlock = document.getElementById("curso-summary-block");
@@ -1513,8 +1839,8 @@
       }
       App.showLoading?.(route.name === "curso" ? "Carregando curso..." : "Carregando painel...");
       if (route.name === "curso") {
-        const [dashboard2, course] = await Promise.all([
-          loadDashboard(force),
+        const dashboard2 = await loadDashboard(force);
+        const [course] = await Promise.all([
           window.MobileMoodleApi.getCourse(route.courseId, force),
           App.waitLoadingMinimum?.(force) ?? Promise.resolve()
         ]);

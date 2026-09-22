@@ -31,21 +31,34 @@ const appRoutes: Routes = [
     pathMatch: 'full',
     redirectTo: 'marketplace-ifrn',
 },
-
-{
-    path: 'marketplace-ifrn',
-    loadComponent: () =>
-        import('@/MoodleIFRN/marketplace-ifrn/marketplace-ifrn')
-            .then(m => m.MarketplaceIfrnPage),
-},
-
-{
-    path: 'ifrn-login',
-    loadComponent: () =>
-        import('@/MoodleIFRN/ifrn-login/ifrn-login')
-            .then(m => m.IfrnLoginPage),
-},
+            // BEGIN MoodleIFRN login routes
             {
+                path: 'marketplace-ifrn',
+                loadComponent: () =>
+                    import('@/MoodleIFRN/marketplace-ifrn/marketplace-ifrn')
+                        .then(m => m.MarketplaceIfrnPage),
+            },
+            {
+                path: 'ifrn-login',
+                loadComponent: () =>
+                    import('@/MoodleIFRN/ifrn-login/ifrn-login')
+                        .then(m => m.IfrnLoginPage),
+            },
+            {
+                path: 'moodle-poc',
+                loadComponent: () =>
+                    import('@/MoodleIFRN/moodle-poc/moodle-poc')
+                        .then(m => m.MoodlePocPage),
+            },
+            {
+                path: 'moodle-open-course',
+                loadComponent: () =>
+                    import('@/MoodleIFRN/moodle-open-course/moodle-open-course')
+                        .then(m => m.MoodleOpenCoursePage),
+            },
+            // END MoodleIFRN login routes
+
+{
                 path: 'site',
                 loadComponent: () => import('@features/login/pages/site/site'),
             },

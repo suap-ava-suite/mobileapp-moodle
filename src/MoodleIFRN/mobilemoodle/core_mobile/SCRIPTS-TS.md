@@ -27,8 +27,9 @@ node src/MoodleIFRN/mobilemoodle/build.mjs
 O ponto de entrada é `mobilemoodle.ts`, que importa os módulos nesta ordem:
 
 ```text
-namespace → api-errors → api-auth → api-http → api → app-utils → app-status
-→ app-views → app-router → app-accessibility → app-sidebar → app-keyboard → app
+namespace → api-errors → api-auth → api-http → api-suap → api-painel → api
+→ app-utils → app-status → app-views → app-router
+→ app-accessibility → app-sidebar → app-keyboard → app
 ```
 
 No `index.html`:
@@ -46,7 +47,9 @@ No `index.html`:
 | `api-errors.ts` | Construtor `ApiError` + títulos/mensagens por status HTTP |
 | `api-auth.ts` | JWT: ler, validar, salvar, limpar (`sessionStorage`) |
 | `api-http.ts` | `fetch` autenticado, timeout 15s, base URL segura |
-| `api.ts` | `getDashboard` / `getCourse` + cache em memória (TTL 1 min) |
+| `api-suap.ts` | Adaptador SUAP (fallback de diários / perfil) |
+| `api-painel.ts` | Painel AVA `/api/v1/diarios/` (courseid Moodle) |
+| `api.ts` | `getDashboard` / `getCourse` + cache (preferência Painel) |
 
 Tipos compartilhados: `core_mobile/global.d.ts` (só TypeScript — não vira JS).
 

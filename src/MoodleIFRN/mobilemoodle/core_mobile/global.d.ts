@@ -22,12 +22,22 @@ interface DashboardCourse {
     hasprogress?: boolean;
     moodle?: string;
     environment?: string;
-    ambiente?: { titulo?: string };
+    ambiente?: { titulo?: string; id?: number };
     isfavourite?: boolean;
     favourite?: boolean;
     is_enrolled?: boolean;
     enrolled?: boolean;
     details_url?: string;
+    /** URL Moodle do curso (course/view.php?id=…). */
+    viewurl?: string;
+    /** courseid Moodle (quando veio do Painel AVA). */
+    moodle_course_id?: number;
+    /** Origem do AVA (ex.: https://presencial.ava.ifrn.edu.br). */
+    moodle_site_url?: string;
+    /** ID do diário no SUAP, quando conhecido. */
+    diario_id?: number;
+    /** Fonte dos dados: painel (Moodle) ou suap. */
+    source?: 'painel' | 'suap';
 }
 
 interface DashboardData {
@@ -48,6 +58,7 @@ interface DashboardData {
     diarios?: DashboardCourse[];
     autoinscricoes?: DashboardCourse[];
     self_enrolments?: DashboardCourse[];
+    source?: 'painel' | 'suap';
 }
 
 interface CourseActivity {
@@ -57,6 +68,9 @@ interface CourseActivity {
     module?: string;
     type?: string;
     completion?: boolean;
+    /** URL absoluta para abrir o recurso (material/trabalho SUAP ou AVA). */
+    url?: string;
+    id?: number | string;
 }
 
 interface CourseSection {
@@ -76,6 +90,11 @@ interface CourseData {
     summary?: string;
     description?: string;
     sections?: CourseSection[];
+    /** Link externo (AVA/Moodle ou turma no SUAP) quando disponível. */
+    external_url?: string;
+    moodle_course_id?: number;
+    moodle_site_url?: string;
+    source?: 'painel' | 'suap';
 }
 
 type PainelTabKey = 'diarios' | 'autoinscricoes';
@@ -141,6 +160,7 @@ interface MobileMoodleApp {
     activeFilter?: ActiveFilter;
     ASSET_BASE?: string;
     resolveLoginUrl?: () => string;
+    resolveMoodleOpenUrl?: (courseId: number | string, courseName?: string) => string;
     A11y?: A11yModule;
     FILTER_LABELS?: Record<string, string>;
     logout?: () => void;
@@ -191,6 +211,9 @@ interface MobileMoodleNamespace {
     ) => Promise<unknown>;
     fetchSuapDashboard: () => Promise<DashboardData>;
     fetchSuapCourse: (courseId: string) => Promise<CourseData>;
+    fetchPainelDashboard: () => Promise<DashboardData>;
+    hasPainelSession: () => boolean;
+    getPainelToken: () => string | null;
     invalidateCache: () => void;
     getDashboard: (force?: boolean) => Promise<DashboardData>;
     getCourse: (courseId: string | number, force?: boolean) => Promise<CourseData>;

@@ -62,6 +62,7 @@ Detalhes: [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../mobilemoodle/core_mob
 |------|-----------|
 | Índice da pasta docs | [`README.md`](./README.md) |
 | Visão geral (este arquivo) | [`VISAO-GERAL.md`](./VISAO-GERAL.md) |
+| Ponte Painel AVA → Moodle Mobile | [`PONTE-PAINEL-MOODLE.md`](./PONTE-PAINEL-MOODLE.md) |
 | Login IFRN | [`../ifrn-login/LOGIN-IFRN.md`](../ifrn-login/LOGIN-IFRN.md) |
 | Auth + biometria | [`SERVICOS-AUTH-BIOMETRIA.md`](./SERVICOS-AUTH-BIOMETRIA.md) |
 | Painel de cursos | [`PAINEL-CURSOS.md`](./PAINEL-CURSOS.md) |

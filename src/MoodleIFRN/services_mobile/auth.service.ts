@@ -273,6 +273,9 @@ export class AuthService {
         this.accessToken = null;
         sessionStorage.removeItem(TOKEN_KEY);
         sessionStorage.removeItem(USERNAME_KEY);
+        // JWT do Painel AVA (não é wstoken Moodle).
+        sessionStorage.removeItem('ifrn_painel_token');
+        sessionStorage.removeItem('ifrn_painel_profile');
     }
 
     /**

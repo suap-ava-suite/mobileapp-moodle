@@ -469,7 +469,7 @@ import { MM, App } from './namespace';
         return map[key] || key;
     }
 
-    /** Uma atividade dentro de um tópico (ícone + nome + status de conclusão). */
+    /** Uma atividade dentro de um tópico (ícone + nome + status; link se houver URL). */
     function buildActivity(activity: CourseActivity): Node {
         const fragment = App.cloneTemplate!('tpl-curso-activity');
 
@@ -477,11 +477,14 @@ import { MM, App } from './namespace';
             return document.createTextNode('');
         }
 
+        const item = fragment.querySelector('.activity-item') as HTMLAnchorElement | null;
         const icon = fragment.querySelector('.activity-item__icon ion-icon');
         const name = fragment.querySelector('.activity-item__name');
         const mod = fragment.querySelector('.activity-item__mod');
         const status = fragment.querySelector('.activity-item__status') as HTMLElement | null;
+        const chevron = fragment.querySelector('.activity-item__chevron') as HTMLElement | null;
         const modname = activity.modname || activity.module || activity.type || '';
+        const url = typeof activity.url === 'string' ? activity.url.trim() : '';
 
         if (icon) {
             icon.setAttribute('name', activityIcon(modname));
@@ -499,6 +502,30 @@ import { MM, App } from './namespace';
             status.hidden = false;
             status.textContent = activity.completion ? 'Concluída' : 'Pendente';
             status.classList.toggle('activity-item__status--pending', !activity.completion);
+        }
+
+        if (item) {
+            if (url) {
+                item.href = url;
+                item.target = '_blank';
+                item.rel = 'noopener noreferrer';
+                item.classList.add('activity-item--link');
+                item.setAttribute(
+                    'aria-label',
+                    (activity.name || activity.title || 'Atividade') + ' (abrir)',
+                );
+
+                if (chevron) {
+                    chevron.hidden = false;
+                }
+            } else {
+                item.removeAttribute('href');
+                item.setAttribute('role', 'listitem');
+                item.classList.add('activity-item--static');
+                item.addEventListener('click', (event) => {
+                    event.preventDefault();
+                });
+            }
         }
 
         return fragment;
@@ -584,6 +611,48 @@ import { MM, App } from './namespace';
 
         if (envTag && course.moodle) {
             envTag.textContent = course.moodle;
+        }
+
+        const courseId = course.id != null ? String(course.id) : '';
+        const dashboardCourse = (dashboard.courses || dashboard.diarios || []).find(
+            (item) => String(item.id) === courseId,
+        );
+        const moodleCourseId = course.moodle_course_id
+            ?? dashboardCourse?.moodle_course_id
+            ?? (dashboardCourse?.source === 'painel' || course.source === 'painel'
+                ? Number(courseId)
+                : undefined);
+        const externalUrl =
+            course.external_url ||
+            dashboardCourse?.viewurl ||
+            dashboardCourse?.details_url ||
+            'https://suap.ifrn.edu.br/edu/meus_diarios/';
+
+        const openMoodle = document.getElementById('curso-open-moodle');
+
+        if (openMoodle && moodleCourseId && Number.isFinite(moodleCourseId) && moodleCourseId > 0) {
+            openMoodle.hidden = false;
+            openMoodle.onclick = (event) => {
+                event.preventDefault();
+
+                const url = typeof App.resolveMoodleOpenUrl === 'function'
+                    ? App.resolveMoodleOpenUrl(moodleCourseId, course.name || dashboardCourse?.name)
+                    : `/#/login/moodle-open-course?courseId=${moodleCourseId}`;
+
+                window.location.assign(url);
+            };
+        } else if (openMoodle) {
+            openMoodle.hidden = true;
+            openMoodle.onclick = null;
+        }
+
+        const openExternal = document.getElementById('curso-open-external');
+
+        if (openExternal && externalUrl) {
+            openExternal.hidden = false;
+            openExternal.setAttribute('href', externalUrl);
+            openExternal.setAttribute('target', '_blank');
+            openExternal.setAttribute('rel', 'noopener noreferrer');
         }
 
         const summary = course.summary || course.description || '';

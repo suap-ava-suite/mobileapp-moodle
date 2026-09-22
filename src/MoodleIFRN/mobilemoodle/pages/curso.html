@@ -31,7 +31,15 @@
                 </div>
             </div>
             <div class="course-actions">
-                <ion-button href="#/painel" fill="outline" color="primary">
+                <ion-button id="curso-open-moodle" fill="solid" color="primary" hidden>
+                    <ion-icon slot="start" name="school-outline"></ion-icon>
+                    Abrir no Moodle
+                </ion-button>
+                <ion-button id="curso-open-external" fill="outline" color="primary" hidden>
+                    <ion-icon slot="start" name="open-outline"></ion-icon>
+                    Abrir no navegador
+                </ion-button>
+                <ion-button href="#/painel" fill="outline" color="medium">
                     <ion-icon slot="start" name="arrow-back-outline"></ion-icon>
                     Voltar ao painel
                 </ion-button>
@@ -66,7 +74,7 @@
 
 <template id="tpl-curso-activity">
     <li>
-        <div class="activity-item" role="listitem">
+        <a class="activity-item" role="listitem">
             <div class="activity-item__icon">
                 <ion-icon name="document-text-outline" aria-hidden="true"></ion-icon>
             </div>
@@ -75,6 +83,7 @@
                 <p class="activity-item__mod"></p>
                 <span class="activity-item__status" hidden></span>
             </div>
-        </div>
+            <ion-icon class="activity-item__chevron" name="open-outline" aria-hidden="true" hidden></ion-icon>
+        </a>
     </li>
 </template>

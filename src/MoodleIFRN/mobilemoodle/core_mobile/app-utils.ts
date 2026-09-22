@@ -96,8 +96,41 @@ import { MM, App } from './namespace';
         }
     }
 
+    /**
+     * Abre a rota Ionic que estabelece sessão Moodle e abre o courseid nativo.
+     * O courseId vai em sessionStorage (hash do Ionic não propaga query de forma confiável).
+     */
+    function resolveMoodleOpenUrl(courseId: number | string, courseName?: string): string {
+        const id = Number(courseId);
+
+        if (Number.isFinite(id) && id > 0) {
+            try {
+                sessionStorage.setItem(
+                    'ifrn_moodle_pending_open_course',
+                    JSON.stringify({
+                        courseId: id,
+                        courseName: courseName || undefined,
+                    }),
+                );
+            } catch {
+                // ignore quota
+            }
+        }
+
+        try {
+            const appRoot = new URL('../', App.ASSET_BASE || window.location.href);
+
+            appRoot.hash = '/login/moodle-open-course';
+
+            return appRoot.toString();
+        } catch {
+            return '/#/login/moodle-open-course';
+        }
+    }
+
     App.ASSET_BASE = resolveAssetBase();
     App.resolveLoginUrl = resolveLoginUrl;
+    App.resolveMoodleOpenUrl = resolveMoodleOpenUrl;
     App.escapeHtml = escapeHtml;
     App.initials = initials;
     App.cloneTemplate = cloneTemplate;

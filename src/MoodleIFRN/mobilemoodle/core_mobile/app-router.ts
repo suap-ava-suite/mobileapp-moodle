@@ -122,8 +122,9 @@ import { MM, App } from './namespace';
             App.showLoading?.(route.name === 'curso' ? 'Carregando curso...' : 'Carregando painel...');
 
             if (route.name === 'curso') {
-                const [dashboard, course] = await Promise.all([
-                    loadDashboard(force),
+                // Dashboard primeiro: define se o id é courseid Moodle (Painel) ou diário SUAP.
+                const dashboard = await loadDashboard(force);
+                const [course] = await Promise.all([
                     window.MobileMoodleApi.getCourse(route.courseId, force),
                     App.waitLoadingMinimum?.(force) ?? Promise.resolve(),
                 ]);
