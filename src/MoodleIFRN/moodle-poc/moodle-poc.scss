@@ -115,7 +115,54 @@
     }
 
     .moodle-poc__courses {
-        max-height: 220px;
+        max-height: 280px;
         overflow: auto;
+    }
+
+    .moodle-poc__form {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 16px;
+    }
+
+    .moodle-poc__label {
+        color: var(--moodle-poc-muted);
+        font-size: 0.78rem;
+        font-weight: 600;
+        margin-top: 6px;
+    }
+
+    .moodle-poc__input {
+        border: 1px solid #cfd8d3;
+        border-radius: 10px;
+        font-size: 1rem;
+        padding: 10px 12px;
+        width: 100%;
+    }
+
+    .moodle-poc__password-row {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+    }
+
+    .moodle-poc__password-row .moodle-poc__input {
+        flex: 1;
+    }
+
+    .moodle-poc__toggle {
+        background: transparent;
+        border: 0;
+        color: var(--moodle-poc-accent);
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 8px 4px;
+        white-space: nowrap;
+    }
+
+    .moodle-poc__url {
+        color: var(--moodle-poc-muted);
+        word-break: break-all;
     }
 }

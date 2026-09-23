@@ -15,19 +15,24 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { CoreSharedModule } from '@/core/shared.module';
+import { PAINEL_AVA_CONFIG } from '@/MoodleIFRN/services_mobile/painel-ava.config';
 import {
-    IFRN_MOODLE_POC_COURSE_ID,
-    IFRN_MOODLE_PRESENCIAL_URL,
-    MoodlePocSessionSummary,
-    MoodleSiteService,
-} from '@/MoodleIFRN/services_mobile/moodle-site.service';
-import { CoreNavigator } from '@services/navigator';
+    PainelAvaService,
+    PainelAvaV1PocResult,
+} from '@/MoodleIFRN/services_mobile/painel-ava.service';
 import { CoreAlerts } from '@services/overlays/alerts';
 import { CoreLoadings } from '@services/overlays/loadings';
 import { CorePlatform } from '@services/platform';
+import { firstValueFrom } from 'rxjs';
 
 /**
- * PoC temporário: OAuth SUAP do Moodle → CoreSites → cursos → abertura nativa.
+ * PoC temporário: Painel AVA API v1 (produção)
+ *   POST /api/v1/authenticate/
+ *   GET  /api/v1/diarios/?situacao=inprogress
+ *
+ * Só inspeciona a resposta real. Não abre curso, não usa OAuth Moodle,
+ * não chama CoreSites / CoreCourseHelper.
+ *
  * Rota: /login/moodle-poc
  */
 @Component({
@@ -40,41 +45,30 @@ import { CorePlatform } from '@services/platform';
 })
 export class MoodlePocPage implements OnInit {
 
-    private readonly moodleSite = inject(MoodleSiteService);
+    private readonly painelAva = inject(PainelAvaService);
     private readonly router = inject(Router);
 
-    readonly siteUrl = IFRN_MOODLE_PRESENCIAL_URL;
-    readonly preferredCourseId = IFRN_MOODLE_POC_COURSE_ID;
+    readonly baseUrl = PAINEL_AVA_CONFIG.baseUrl;
+    readonly authenticatePath = PAINEL_AVA_CONFIG.authenticatePath;
+    readonly diariosPath = PAINEL_AVA_CONFIG.diariosPath;
+    readonly diariosQuery = PAINEL_AVA_CONFIG.diariosQuery;
+
+    username = '';
+    password = '';
+    showPassword = false;
 
     loading = false;
     statusMessage = '';
     formError = '';
-    hasSession = false;
-    summary: MoodlePocSessionSummary | null = null;
+    result: PainelAvaV1PocResult | null = null;
 
     async ngOnInit(): Promise<void> {
         await CorePlatform.ready();
 
-        this.moodleSite.ensureLoginObserver();
-        this.refreshFromService();
-
-        // Retorno do switch-account (mesmo padrão do Add site oficial).
-        const startOAuth = CoreNavigator.getRouteBooleanParam('startOAuth')
-            || this.moodleSite.shouldResumeOAuthAfterSiteSwitch();
-
-        if (startOAuth) {
-            await this.connectSuapOAuth({ resumeAfterSwitch: true });
-
-            return;
-        }
-
-        // Sessão restaurada pelo CoreSites ≠ OAuth do PoC. Só informa;
-        // "Conectar" sempre inicia autenticação explícita.
-        if (this.hasSession && !this.summary) {
+        if (this.painelAva.hasValidToken()) {
             this.statusMessage =
-                'Sessão Moodle já armazenada no app. '
-                + 'Use "Conectar via SUAP OAuth" para autenticar outra conta, '
-                + 'ou "Listar cursos" para inspecionar a sessão atual.';
+                'JWT do Painel (v1) já está no sessionStorage. '
+                + 'Rode o PoC de novo ou limpe a sessão.';
         }
     }
 
@@ -86,100 +80,50 @@ export class MoodlePocPage implements OnInit {
         void this.router.navigate(['/login/marketplace-ifrn']);
     }
 
-    /**
-     * Abre o navegador no OAuth SUAP do AVA-Presencial.
-     * Não reutiliza silenciosamente a sessão Moodle já restaurada.
-     */
-    async connectSuapOAuth(options: { resumeAfterSwitch?: boolean } = {}): Promise<void> {
-        if (this.loading) {
-            return;
-        }
-
-        this.formError = '';
-        this.loading = true;
-        this.statusMessage = options.resumeAfterSwitch
-            ? 'Sessão anterior deixada (switch-account). Abrindo OAuth SUAP…'
-            : 'Abrindo autenticação SUAP no Moodle…';
-
-        try {
-            const result = await this.moodleSite.startSuapOAuthLogin(options);
-
-            this.statusMessage = result === 'switched'
-                ? 'Saindo da sessão Moodle atual (conta permanece salva) para autenticar outra…'
-                : 'Complete o login SUAP no navegador. Ao voltar, a sessão Moodle será inspecionada.';
-        } catch (error) {
-            this.statusMessage = '';
-            this.formError = error instanceof Error
-                ? error.message
-                : 'Não foi possível iniciar o OAuth SUAP.';
-            void CoreAlerts.showError(error, {
-                default: 'Não foi possível iniciar o OAuth SUAP.',
-            });
-        } finally {
-            this.loading = false;
-        }
+    togglePassword(): void {
+        this.showPassword = !this.showPassword;
     }
 
     /**
-     * Lista cursos com CoreCourses.getUserCourses() e loga no console.
+     * Executa authenticate + GET diarios e loga a estrutura real no console.
      */
-    async listCourses(): Promise<void> {
+    async runPoc(): Promise<void> {
         if (this.loading) {
             return;
         }
 
-        this.formError = '';
-        this.loading = true;
-        this.statusMessage = 'Buscando cursos Moodle…';
+        const username = this.username.trim();
+        const password = this.password;
 
-        const modal = await CoreLoadings.show('Buscando cursos…');
+        if (!username || !password) {
+            this.formError = 'Informe IFRN-id e senha SUAP.';
 
-        try {
-            this.summary = await this.moodleSite.inspectSessionAndCourses();
-            this.hasSession = true;
-            this.statusMessage =
-                `${this.summary.courseCount} curso(s) encontrados. Detalhes no console.`;
-        } catch (error) {
-            this.statusMessage = '';
-            this.formError = error instanceof Error
-                ? error.message
-                : 'Falha ao listar cursos.';
-            void CoreAlerts.showError(error, {
-                default: 'Falha ao listar cursos Moodle.',
-            });
-        } finally {
-            modal.dismiss();
-            this.loading = false;
-        }
-    }
-
-    /**
-     * Abre o curso 2836 (se inscrito) ou o primeiro da lista.
-     */
-    async openCourse(): Promise<void> {
-        if (this.loading) {
             return;
         }
 
         this.formError = '';
+        this.result = null;
         this.loading = true;
-        this.statusMessage = 'Abrindo curso no Moodle Mobile…';
+        this.statusMessage = 'POST /api/v1/authenticate/ …';
 
-        const modal = await CoreLoadings.show('Abrindo curso…');
+        const modal = await CoreLoadings.show('Testando API v1…');
 
         try {
-            const courseId = await this.moodleSite.openTestCourse(
-                this.preferredCourseId,
+            this.result = await firstValueFrom(
+                this.painelAva.runApiV1Poc({ username, password }),
             );
-            this.summary = this.moodleSite.lastSummary;
-            this.statusMessage = `Curso ${courseId} aberto via CoreCourseHelper.`;
+
+            this.password = '';
+            this.statusMessage =
+                `OK — ${this.result.diariosCount} diário(s). `
+                + 'Veja o console: chaves reais + id/courseid/fullname/viewurl/…';
         } catch (error) {
             this.statusMessage = '';
             this.formError = error instanceof Error
                 ? error.message
-                : 'Falha ao abrir o curso.';
+                : 'Falha no PoC da API v1.';
             void CoreAlerts.showError(error, {
-                default: 'Falha ao abrir o curso Moodle.',
+                default: 'Falha no PoC da API v1 do Painel AVA.',
             });
         } finally {
             modal.dismiss();
@@ -187,18 +131,30 @@ export class MoodlePocPage implements OnInit {
         }
     }
 
-    private refreshFromService(): void {
-        this.hasSession = this.moodleSite.hasPresencialSession();
-        this.summary = this.moodleSite.lastSummary;
-        this.formError = this.moodleSite.lastError || '';
+    clearSession(): void {
+        this.painelAva.clearSession();
+        this.result = null;
+        this.statusMessage = 'Sessão Painel AVA (token/perfil) limpa.';
+        this.formError = '';
+    }
 
-        if (this.summary) {
-            this.statusMessage =
-                `Sessão ativa: ${this.summary.userFullName} — ${this.summary.courseCount} curso(s).`;
-        } else if (this.hasSession) {
-            this.statusMessage =
-                'Sessão Moodle detectada (restaurada pelo app). '
-                + 'Não é o resultado do botão Conectar — use OAuth para outra conta.';
+    displayValue(value: unknown): string {
+        if (value === undefined) {
+            return '(ausente)';
+        }
+
+        if (value === null) {
+            return 'null';
+        }
+
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+            return String(value);
+        }
+
+        try {
+            return JSON.stringify(value);
+        } catch {
+            return String(value);
         }
     }
 

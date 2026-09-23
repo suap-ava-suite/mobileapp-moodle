@@ -13,10 +13,12 @@
 // limitations under the License.
 
 /**
- * Configuração do Painel AVA oficial (djangoapp-painel_ava).
+ * Configuração do Painel AVA oficial (djangoapp-painel_ava) — API v1 (produção).
  *
  * Produção IFRN: https://painel.ead.ifrn.edu.br
  * Fonte: helm/values.yaml do repositório suap-ava-suite/djangoapp-painel_ava
+ *
+ * A API v2 ainda não está disponível em produção — não usar neste host.
  */
 export const PAINEL_AVA_CONFIG = {
     /** Base URL do Painel AVA (sem barra final). */
@@ -25,6 +27,9 @@ export const PAINEL_AVA_CONFIG = {
     /** Autenticação mobile do Painel (credenciais SUAP → JWT do Painel). */
     authenticatePath: '/api/v1/authenticate/',
 
-    /** Lista de diários/cursos Moodle agregados. */
+    /** Lista de diários/cursos agregados pelo tool_painelava. */
     diariosPath: '/api/v1/diarios/',
+
+    /** Query usada pelo painel mobile (diários em andamento). */
+    diariosQuery: 'situacao=inprogress',
 } as const;

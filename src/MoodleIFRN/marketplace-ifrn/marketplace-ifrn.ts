@@ -75,7 +75,7 @@ export class MarketplaceIfrnPage implements OnInit {
     }
 
     /**
-     * PoC temporário: OAuth SUAP do Moodle → CoreSites → cursos nativos.
+     * PoC temporário: Painel AVA API v1 (authenticate + /api/v1/diarios/).
      */
     openMoodlePoc(): void {
         void this.router.navigate(['/login/moodle-poc']);

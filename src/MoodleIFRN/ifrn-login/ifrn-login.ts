@@ -23,7 +23,10 @@ import {
     GovBrAuthError,
     GovBrAuthService,
 } from '@/MoodleIFRN/services_mobile/govbr-auth.service';
-import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
+import {
+    PainelAvaService,
+} from '@/MoodleIFRN/services_mobile/painel-ava.service';
+import { PAINEL_AVA_CONFIG } from '@/MoodleIFRN/services_mobile/painel-ava.config';
 import { CoreAlerts } from '@services/overlays/alerts';
 import { CoreLogger } from '@static/logger';
 import { CorePlatform } from '@services/platform';
@@ -384,13 +387,13 @@ export class IfrnLoginPage implements OnInit {
     }
 
     /**
-     * Salva os tokens do SUAP, obtém JWT do Painel AVA (best-effort)
-     * e abre o painel Mobile Moodle.
+     * Salva os tokens do SUAP, vincula JWT do Painel AVA API v1
+     * (best-effort) e abre o painel Mobile Moodle.
      *
      * O login SUAP continua sendo a fonte da sessão do app.
-     * O Painel AVA só enriquece a lista de diários com courseid Moodle.
+     * O Painel AVA v1 enriquece a lista de diários (GET /api/v1/diarios/).
      *
-     * @param response Tokens retornados por POST /api/token/pair.
+     * @param response Tokens retornados por POST /api/token/pair (SUAP).
      * @param credentials Credenciais usadas no login (para /api/v1/authenticate/).
      */
     private async completeLogin(
@@ -435,7 +438,8 @@ export class IfrnLoginPage implements OnInit {
 
     /**
      * Best-effort: JWT do Painel AVA para /api/v1/diarios/.
-     * Falha aqui NÃO impede o login SUAP / painel.
+     * Falha aqui NÃO impede o login SUAP / painel (fallback SUAP).
+     * Não executa o PoC de listagem aqui — isso fica em /login/moodle-poc.
      */
     private async linkPainelAvaSession(
         credentials: { username: string; password: string },
@@ -447,11 +451,13 @@ export class IfrnLoginPage implements OnInit {
 
             this.painelAvaService.saveToken(painel.token);
             this.painelAvaService.saveProfile(painel.data);
-            this.logger.debug('[IFRN] Sessão Painel AVA vinculada.');
+            this.logger.debug(
+                `[IFRN] Sessão Painel AVA v1 vinculada (${PAINEL_AVA_CONFIG.baseUrl}).`,
+            );
         } catch (error) {
             this.painelAvaService.clearSession();
             this.logger.warn(
-                '[IFRN] Painel AVA indisponível — painel usará fallback SUAP.',
+                '[IFRN] Painel AVA v1 indisponível — painel usará fallback SUAP.',
                 error,
             );
         }
