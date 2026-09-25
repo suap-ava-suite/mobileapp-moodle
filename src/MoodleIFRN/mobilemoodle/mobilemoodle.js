@@ -682,7 +682,12 @@
       return void 0;
     }
     try {
-      return new URL(viewurl).origin;
+      const origin = new URL(viewurl).origin;
+      const host = new URL(origin).hostname.toLowerCase();
+      if (host === "localhost" || host === "127.0.0.1" || host === "10.0.2.2" || host.endsWith(".local") || host.endsWith(".localhost")) {
+        return void 0;
+      }
+      return origin;
     } catch {
       return void 0;
     }
@@ -1014,14 +1019,19 @@
       window.clearTimeout(timer);
     }
   }
-  function resolveLoginUrl() {
+  function resolveIonicAppUrl(routePath) {
+    const path = routePath.startsWith("/") ? routePath : `/${routePath}`;
     try {
-      const appRoot = new URL("../", App.ASSET_BASE || window.location.href);
-      appRoot.hash = "/login/ifrn-login";
-      return appRoot.toString();
+      const url = new URL(`..${path}`, App.ASSET_BASE || window.location.href);
+      url.hash = "";
+      url.search = "";
+      return url.toString();
     } catch {
-      return "/#/login/ifrn-login";
+      return path;
     }
+  }
+  function resolveLoginUrl() {
+    return resolveIonicAppUrl("/login/ifrn-login");
   }
   function resolveMoodleOpenUrl(courseId, courseName, siteUrl) {
     const id = Number(courseId);
@@ -1038,13 +1048,7 @@
       } catch {
       }
     }
-    try {
-      const appRoot = new URL("../", App.ASSET_BASE || window.location.href);
-      appRoot.hash = "/login/moodle-open-course";
-      return appRoot.toString();
-    } catch {
-      return "/#/login/moodle-open-course";
-    }
+    return resolveIonicAppUrl("/login/moodle-open-course");
   }
   App.ASSET_BASE = resolveAssetBase();
   App.resolveLoginUrl = resolveLoginUrl;
@@ -1182,7 +1186,7 @@
           if (typeof App.logout === "function") {
             App.logout();
           } else {
-            window.location.replace("/#/login/ifrn-login");
+            window.location.replace("/login/ifrn-login");
           }
         });
         actionsEl.appendChild(login);
@@ -1676,7 +1680,7 @@
           moodleCourseId,
           course.name || dashboardCourse?.name,
           course.moodle_site_url || dashboardCourse?.moodle_site_url
-        ) : `/#/login/moodle-open-course?courseId=${moodleCourseId}`;
+        ) : "/login/moodle-open-course";
         window.location.assign(url);
       };
     } else if (openMoodle) {
@@ -2511,7 +2515,7 @@
       window.MobileMoodleApi.clearToken();
     }
     App.dashboardCache = null;
-    const loginUrl = typeof App.resolveLoginUrl === "function" ? App.resolveLoginUrl() : "/#/login/ifrn-login";
+    const loginUrl = typeof App.resolveLoginUrl === "function" ? App.resolveLoginUrl() : "/login/ifrn-login";
     window.location.replace(loginUrl);
   }
   App.logout = logout;

@@ -207,7 +207,7 @@ import { MM, App } from './namespace';
                     if (typeof App.logout === 'function') {
                         App.logout();
                     } else {
-                        window.location.replace('/#/login/ifrn-login');
+                        window.location.replace('/login/ifrn-login');
                     }
                 });
                 actionsEl.appendChild(login);

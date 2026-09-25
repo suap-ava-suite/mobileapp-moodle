@@ -641,7 +641,7 @@ import { MM, App } from './namespace';
                         course.name || dashboardCourse?.name,
                         course.moodle_site_url || dashboardCourse?.moodle_site_url,
                     )
-                    : `/#/login/moodle-open-course?courseId=${moodleCourseId}`;
+                    : '/login/moodle-open-course';
 
                 window.location.assign(url);
             };

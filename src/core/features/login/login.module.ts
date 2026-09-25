@@ -27,10 +27,10 @@ const appRoutes: Routes = [
         path: 'login',
         loadChildren: () => [
             {
-    path: '',
-    pathMatch: 'full',
-    redirectTo: 'marketplace-ifrn',
-},
+                path: '',
+                pathMatch: 'full',
+                redirectTo: 'marketplace-ifrn',
+            },
             // BEGIN MoodleIFRN login routes
             {
                 path: 'marketplace-ifrn',
@@ -57,8 +57,7 @@ const appRoutes: Routes = [
                         .then(m => m.MoodleOpenCoursePage),
             },
             // END MoodleIFRN login routes
-
-{
+            {
                 path: 'site',
                 loadComponent: () => import('@features/login/pages/site/site'),
             },

@@ -89,7 +89,21 @@ function extractSiteUrl(viewurl: string | undefined): string | undefined {
     }
 
     try {
-        return new URL(viewurl).origin;
+        const origin = new URL(viewurl).origin;
+        const host = new URL(origin).hostname.toLowerCase();
+
+        // Mock / ambiente local NÃO é Moodle Mobile (sem public config / wstoken).
+        if (
+            host === 'localhost'
+            || host === '127.0.0.1'
+            || host === '10.0.2.2'
+            || host.endsWith('.local')
+            || host.endsWith('.localhost')
+        ) {
+            return undefined;
+        }
+
+        return origin;
     } catch {
         return undefined;
     }

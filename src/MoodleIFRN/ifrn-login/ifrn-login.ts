@@ -451,6 +451,18 @@ export class IfrnLoginPage implements OnInit {
 
             this.painelAvaService.saveToken(painel.token);
             this.painelAvaService.saveProfile(painel.data);
+
+            // Preferir matrícula SUAP como identidade canônica do app (alinha ao username Moodle).
+            // Login pode ter sido com CPF; o perfil autenticado traz a matrícula da mesma pessoa.
+            const profile = painel.data;
+            const matricula = profile && typeof profile['matricula'] === 'string'
+                ? profile['matricula'].trim()
+                : '';
+
+            if (matricula) {
+                this.authService.saveUsername(matricula);
+            }
+
             this.logger.debug(
                 `[IFRN] Sessão Painel AVA v1 vinculada (${PAINEL_AVA_CONFIG.baseUrl}).`,
             );

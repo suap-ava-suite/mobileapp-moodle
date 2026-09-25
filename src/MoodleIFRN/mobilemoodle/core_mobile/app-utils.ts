@@ -83,22 +83,34 @@ import { MM, App } from './namespace';
         }
     }
 
+    /**
+     * URL do app Ionic (PathLocationStrategy).
+     * O painel mobilemoodle usa hash (#/painel); o Moodle Mobile/Ionic NÃO —
+     * rotas Ionic são path reais: /login/..., não /#/login/...
+     */
+    function resolveIonicAppUrl(routePath: string): string {
+        const path = routePath.startsWith('/') ? routePath : `/${routePath}`;
+
+        try {
+            const url = new URL(`..${path}`, App.ASSET_BASE || window.location.href);
+
+            url.hash = '';
+            url.search = '';
+
+            return url.toString();
+        } catch {
+            return path;
+        }
+    }
+
     /** Volta um nível (www/) e abre a rota Angular do login IFRN. */
     function resolveLoginUrl(): string {
-        try {
-            const appRoot = new URL('../', App.ASSET_BASE || window.location.href);
-
-            appRoot.hash = '/login/ifrn-login';
-
-            return appRoot.toString();
-        } catch {
-            return '/#/login/ifrn-login';
-        }
+        return resolveIonicAppUrl('/login/ifrn-login');
     }
 
     /**
      * Abre a rota Ionic que estabelece sessão Moodle e abre o courseid nativo.
-     * O courseId vai em sessionStorage (hash do Ionic não propaga query de forma confiável).
+     * courseId fica em sessionStorage (mesma origem) para sobreviver ao reload.
      */
     function resolveMoodleOpenUrl(courseId: number | string, courseName?: string, siteUrl?: string): string {
         const id = Number(courseId);
@@ -118,15 +130,7 @@ import { MM, App } from './namespace';
             }
         }
 
-        try {
-            const appRoot = new URL('../', App.ASSET_BASE || window.location.href);
-
-            appRoot.hash = '/login/moodle-open-course';
-
-            return appRoot.toString();
-        } catch {
-            return '/#/login/moodle-open-course';
-        }
+        return resolveIonicAppUrl('/login/moodle-open-course');
     }
 
     App.ASSET_BASE = resolveAssetBase();

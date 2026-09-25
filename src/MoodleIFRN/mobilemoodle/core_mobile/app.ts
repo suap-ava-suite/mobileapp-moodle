@@ -34,7 +34,7 @@ import { MM, App } from './namespace';
 
         const loginUrl = typeof App.resolveLoginUrl === 'function'
             ? App.resolveLoginUrl()
-            : '/#/login/ifrn-login';
+            : '/login/ifrn-login';
 
         window.location.replace(loginUrl);
     }

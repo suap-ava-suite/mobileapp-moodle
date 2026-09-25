@@ -17,6 +17,7 @@ import { CoreSharedModule } from '@/core/shared.module';
 import {
     IFRN_MOODLE_PRESENCIAL_URL,
     MoodleSiteService,
+    resolveMoodleSiteUrl,
 } from '@/MoodleIFRN/services_mobile/moodle-site.service';
 import { CoreNavigator } from '@services/navigator';
 import { CoreAlerts } from '@services/overlays/alerts';
@@ -26,7 +27,10 @@ import { CorePlatform } from '@services/platform';
 /**
  * Abre um courseid Moodle via CoreSites (OAuth SUAP do Moodle se necessário).
  * Entrada típica: clique em diário no painel mobilemoodle.
- * Rota: /login/moodle-open-course?courseId=123
+ * Rota: /login/moodle-open-course
+ *
+ * Só reutiliza sessão Moodle se a identidade coincidir com o login do Painel.
+ * Fase atual: prioriza teste de identidade (sem CoreCourses se identidade=false).
  */
 @Component({
     selector: 'page-moodle-open-course',
@@ -40,14 +44,18 @@ export class MoodleOpenCoursePage implements OnInit {
 
     private readonly moodleSite = inject(MoodleSiteService);
 
-    readonly siteUrl = IFRN_MOODLE_PRESENCIAL_URL;
+    readonly defaultSiteUrl = IFRN_MOODLE_PRESENCIAL_URL;
 
     loading = false;
     statusMessage = '';
     formError = '';
     courseId = 0;
     courseName = '';
-    moodleSiteUrl = '';
+    /** Site Moodle realmente usado no CoreSites (nunca mock localhost). */
+    moodleSiteUrl = IFRN_MOODLE_PRESENCIAL_URL;
+
+    /** Evita segundo ngOnInit disparar OAuth na mesma instância. */
+    private initStarted = false;
 
     async ngOnInit(): Promise<void> {
         await CorePlatform.ready();
@@ -64,18 +72,48 @@ export class MoodleOpenCoursePage implements OnInit {
             this.courseName = pending.courseName || this.courseName;
         }
 
-        this.moodleSiteUrl = pending?.siteUrl || this.siteUrl;
+        this.moodleSiteUrl = resolveMoodleSiteUrl(pending?.siteUrl);
 
-        // Diagnóstico temporário do fluxo Painel -> Moodle.
-        // Não registra tokens nem credenciais.
+        const hasUrlSession = this.moodleSite.hasPresencialSession(this.moodleSiteUrl);
+        const hasMatchingSession = this.moodleSite.hasMatchingPresencialSession(this.moodleSiteUrl);
+        const identityOnly = CoreNavigator.getRouteBooleanParam('identityOnly');
+        const identityOk = CoreNavigator.getRouteBooleanParam('identityOk');
+
         // eslint-disable-next-line no-console
-        console.log('[IFRN-OPEN] courseId =', this.courseId);
+        console.log('[IFRN-SITE] MoodleOpenCoursePage.init', {
+            courseId: this.courseId,
+            pendingSiteUrl: pending?.siteUrl || null,
+            resolvedSiteUrl: this.moodleSiteUrl,
+            hasPresencialSession: hasUrlSession,
+            hasMatchingPresencialSession: hasMatchingSession,
+            identityOnly,
+            identityOk,
+            identityMismatchPending: this.moodleSite.identityMismatchPending,
+            initStarted: this.initStarted,
+        });
         // eslint-disable-next-line no-console
-        console.log('[IFRN-OPEN] courseName =', this.courseName);
-        // eslint-disable-next-line no-console
-        console.log('[IFRN-OPEN] siteUrl =', this.moodleSiteUrl);
-        // eslint-disable-next-line no-console
-        console.log('[IFRN-OPEN] pending =', pending);
+        console.log('[IFRN-IDENTITY] MoodleOpenCoursePage.init', JSON.stringify({
+            hasUrlSession,
+            hasMatchingSession,
+            willReuse: hasMatchingSession,
+            skipAuto: identityOnly
+                || this.moodleSite.identityMismatchPending
+                || !!this.moodleSite.lastError
+                || this.initStarted,
+        }));
+
+        if (this.moodleSite.lastError) {
+            this.formError = this.moodleSite.lastError;
+        }
+
+        if (identityOk) {
+            this.statusMessage =
+                'Identidade Moodle = conta do Painel. Pronto para o próximo passo (cursos).';
+            this.formError = '';
+            this.moodleSite.identityMismatchPending = false;
+
+            return;
+        }
 
         if (!this.courseId) {
             this.formError = 'Nenhum curso Moodle informado.';
@@ -83,7 +121,22 @@ export class MoodleOpenCoursePage implements OnInit {
             return;
         }
 
-        // Retorno do switch-account / OAuth.
+        // Retorno pós-OAuth / mismatch: NÃO auto-iniciar outro OAuth.
+        // O usuário toca em “Tentar novamente” se quiser.
+        if (
+            identityOnly
+            || this.moodleSite.identityMismatchPending
+            || this.initStarted
+        ) {
+            // eslint-disable-next-line no-console
+            console.log('[IFRN-IDENTITY] auto-OAuth bloqueado (retorno / reentrância)');
+
+            return;
+        }
+
+        this.initStarted = true;
+
+        // Retorno do switch-account (logout oficial → redirect com startOAuth).
         const startOAuth = CoreNavigator.getRouteBooleanParam('startOAuth')
             || this.moodleSite.shouldResumeOAuthAfterSiteSwitch();
 
@@ -112,28 +165,17 @@ export class MoodleOpenCoursePage implements OnInit {
             return;
         }
 
-        // eslint-disable-next-line no-console
-        console.log('[IFRN-OPEN] connectAndOpen iniciado');
-        // eslint-disable-next-line no-console
-        console.log(
-            '[IFRN-OPEN] hasSession =',
-            this.moodleSite.hasPresencialSession(this.moodleSiteUrl),
-        );
-
         this.formError = '';
+        this.moodleSite.lastError = '';
+        this.moodleSite.identityMismatchPending = false;
         this.loading = true;
-        this.statusMessage = this.moodleSite.hasPresencialSession(this.moodleSiteUrl)
-            ? `Abrindo curso ${this.courseId}…`
-            : 'Conectando ao Moodle via SUAP OAuth…';
 
-        const modal = await CoreLoadings.show(
-            this.moodleSite.hasPresencialSession(this.moodleSiteUrl)
-                ? 'Abrindo curso…'
-                : 'Autenticando no Moodle…',
-        );
+        const modal = await CoreLoadings.show('Preparando sessão Moodle…');
 
         try {
-            if (options.resumeAfterSwitch || !this.moodleSite.hasPresencialSession(this.moodleSiteUrl)) {
+            // Retorno do switch-account: OAuth direto.
+            if (options.resumeAfterSwitch) {
+                this.statusMessage = 'Abrindo autenticação Moodle (SUAP)…';
                 this.moodleSite.setPendingOpenCourse({
                     courseId: this.courseId,
                     courseName: this.courseName,
@@ -141,20 +183,50 @@ export class MoodleOpenCoursePage implements OnInit {
                 });
 
                 const result = await this.moodleSite.startSuapOAuthLogin({
-                    resumeAfterSwitch: options.resumeAfterSwitch,
+                    resumeAfterSwitch: true,
                 });
 
-                this.statusMessage = result === 'switched'
-                    ? 'Trocando conta Moodle…'
-                    : 'Complete o login SUAP no navegador. O curso abrirá ao voltar.';
+                this.statusMessage = this.statusForOAuthResult(result);
 
                 return;
             }
 
-            await this.moodleSite.openCourseById(this.courseId);
-            this.moodleSite.clearPendingOpenCourse();
-            this.statusMessage = `Curso ${this.courseId} aberto.`;
+            const identityResult = await this.moodleSite.ensureMatchingMoodleSession(
+                this.moodleSiteUrl,
+            );
+
+            if (identityResult === 'matched-current' || identityResult === 'loaded-stored') {
+                // Fase identidade: não abre curso / não chama CoreCourses.
+                this.statusMessage =
+                    'Identidade Moodle = conta do Painel (sessão existente). '
+                    + 'Pronto para o próximo passo (cursos).';
+                // eslint-disable-next-line no-console
+                console.log(
+                    '[IFRN-IDENTITY] teste identidade OK — CoreCourses adiado',
+                    JSON.stringify({ source: identityResult }),
+                );
+
+                return;
+            }
+
+            this.statusMessage = 'Abrindo navegador para login SUAP no Moodle…';
+            this.moodleSite.setPendingOpenCourse({
+                courseId: this.courseId,
+                courseName: this.courseName,
+                siteUrl: this.moodleSiteUrl,
+            });
+
+            const result = await this.moodleSite.startSuapOAuthLogin();
+
+            this.statusMessage = this.statusForOAuthResult(result);
         } catch (error) {
+            // eslint-disable-next-line no-console
+            console.error('[IFRN-SITE] connectAndOpen erro', {
+                message: error instanceof Error ? error.message : String(error),
+                siteUrl: this.moodleSiteUrl,
+                courseId: this.courseId,
+            });
+
             this.statusMessage = '';
             this.formError = error instanceof Error
                 ? error.message
@@ -165,7 +237,25 @@ export class MoodleOpenCoursePage implements OnInit {
         } finally {
             modal.dismiss();
             this.loading = false;
+
+            if (this.moodleSite.lastError && !this.formError) {
+                this.formError = this.moodleSite.lastError;
+            }
         }
+    }
+
+    private statusForOAuthResult(
+        result: 'switched' | 'opened' | 'already-active',
+    ): string {
+        if (result === 'switched') {
+            return 'Trocando conta Moodle…';
+        }
+
+        if (result === 'already-active') {
+            return 'Autenticação Moodle já em andamento no navegador.';
+        }
+
+        return 'Complete o login SUAP (identity provider) no navegador. Depois o app reabre sozinho.';
     }
 
 }
