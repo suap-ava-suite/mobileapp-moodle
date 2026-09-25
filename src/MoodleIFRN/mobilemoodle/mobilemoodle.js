@@ -1037,6 +1037,7 @@
     const id = Number(courseId);
     if (Number.isFinite(id) && id > 0) {
       try {
+        console.log("[IFRN-COURSE] courseId recebido do Painel =", id);
         sessionStorage.setItem(
           "ifrn_moodle_pending_open_course",
           JSON.stringify({
@@ -1670,16 +1671,19 @@
       (item) => String(item.id) === courseId
     );
     const moodleCourseId = course.moodle_course_id ?? dashboardCourse?.moodle_course_id ?? (dashboardCourse?.source === "painel" || course.source === "painel" ? Number(courseId) : void 0);
+    const moodleSiteUrl = course.moodle_site_url || dashboardCourse?.moodle_site_url;
     const externalUrl = course.external_url || dashboardCourse?.viewurl || dashboardCourse?.details_url || "https://suap.ifrn.edu.br/edu/meus_diarios/";
     const openMoodle = document.getElementById("curso-open-moodle");
-    if (openMoodle && moodleCourseId && Number.isFinite(moodleCourseId) && moodleCourseId > 0) {
+    const canOpenNative = !!moodleCourseId && Number.isFinite(moodleCourseId) && moodleCourseId > 0 && !!moodleSiteUrl;
+    if (openMoodle && canOpenNative) {
       openMoodle.hidden = false;
       openMoodle.onclick = (event) => {
         event.preventDefault();
+        console.log("[IFRN-COURSE] courseId recebido do Painel =", moodleCourseId);
         const url = typeof App.resolveMoodleOpenUrl === "function" ? App.resolveMoodleOpenUrl(
           moodleCourseId,
           course.name || dashboardCourse?.name,
-          course.moodle_site_url || dashboardCourse?.moodle_site_url
+          moodleSiteUrl
         ) : "/login/moodle-open-course";
         window.location.assign(url);
       };

@@ -110,13 +110,19 @@ import { MM, App } from './namespace';
 
     /**
      * Abre a rota Ionic que estabelece sessão Moodle e abre o courseid nativo.
-     * courseId fica em sessionStorage (mesma origem) para sobreviver ao reload.
+     * courseId/siteUrl/courseName ficam em sessionStorage (mesma origem) para
+     * sobreviver ao OAuth / reload — o usuário não precisa clicar de novo.
+     *
+     * siteUrl deve ser a origem real do viewurl (nunca mock 127.0.0.1:8002).
      */
     function resolveMoodleOpenUrl(courseId: number | string, courseName?: string, siteUrl?: string): string {
         const id = Number(courseId);
 
         if (Number.isFinite(id) && id > 0) {
             try {
+                // eslint-disable-next-line no-console
+                console.log('[IFRN-COURSE] courseId recebido do Painel =', id);
+
                 sessionStorage.setItem(
                     'ifrn_moodle_pending_open_course',
                     JSON.stringify({

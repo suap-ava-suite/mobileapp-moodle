@@ -622,6 +622,8 @@ import { MM, App } from './namespace';
             ?? (dashboardCourse?.source === 'painel' || course.source === 'painel'
                 ? Number(courseId)
                 : undefined);
+        const moodleSiteUrl =
+            course.moodle_site_url || dashboardCourse?.moodle_site_url;
         const externalUrl =
             course.external_url ||
             dashboardCourse?.viewurl ||
@@ -630,16 +632,27 @@ import { MM, App } from './namespace';
 
         const openMoodle = document.getElementById('curso-open-moodle');
 
-        if (openMoodle && moodleCourseId && Number.isFinite(moodleCourseId) && moodleCourseId > 0) {
+        // Produção: só abre nativo com courseid Moodle + site real (viewurl HTTPS).
+        // Mock local (viewurl 127.0.0.1:8002) não define moodle_site_url → botão oculto.
+        const canOpenNative =
+            !!moodleCourseId
+            && Number.isFinite(moodleCourseId)
+            && moodleCourseId > 0
+            && !!moodleSiteUrl;
+
+        if (openMoodle && canOpenNative) {
             openMoodle.hidden = false;
             openMoodle.onclick = (event) => {
                 event.preventDefault();
+
+                // eslint-disable-next-line no-console
+                console.log('[IFRN-COURSE] courseId recebido do Painel =', moodleCourseId);
 
                 const url = typeof App.resolveMoodleOpenUrl === 'function'
                     ? App.resolveMoodleOpenUrl(
                         moodleCourseId,
                         course.name || dashboardCourse?.name,
-                        course.moodle_site_url || dashboardCourse?.moodle_site_url,
+                        moodleSiteUrl,
                     )
                     : '/login/moodle-open-course';
 

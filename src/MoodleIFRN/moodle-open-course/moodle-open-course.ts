@@ -25,12 +25,12 @@ import { CoreLoadings } from '@services/overlays/loadings';
 import { CorePlatform } from '@services/platform';
 
 /**
- * Abre um courseid Moodle via CoreSites (OAuth SUAP do Moodle se necessário).
- * Entrada típica: clique em diário no painel mobilemoodle.
- * Rota: /login/moodle-open-course
+ * Produção: abre diario.id (Moodle courseid) via CoreSites + CoreCourseHelper.
+ * Entrada: clique “Abrir no Moodle” no painel mobilemoodle.
+ * Rota: /login/moodle-open-course (PathLocationStrategy, sem #).
  *
- * Só reutiliza sessão Moodle se a identidade coincidir com o login do Painel.
- * Fase atual: prioriza teste de identidade (sem CoreCourses se identidade=false).
+ * Equivalente ao Painel web (viewurl), mas nativo:
+ *   diário.id → pending → identidade → getUserCourses → getAndOpenCourse(id)
  */
 @Component({
     selector: 'page-moodle-open-course',
@@ -77,7 +77,6 @@ export class MoodleOpenCoursePage implements OnInit {
         const hasUrlSession = this.moodleSite.hasPresencialSession(this.moodleSiteUrl);
         const hasMatchingSession = this.moodleSite.hasMatchingPresencialSession(this.moodleSiteUrl);
         const identityOnly = CoreNavigator.getRouteBooleanParam('identityOnly');
-        const identityOk = CoreNavigator.getRouteBooleanParam('identityOk');
 
         // eslint-disable-next-line no-console
         console.log('[IFRN-SITE] MoodleOpenCoursePage.init', {
@@ -87,42 +86,23 @@ export class MoodleOpenCoursePage implements OnInit {
             hasPresencialSession: hasUrlSession,
             hasMatchingPresencialSession: hasMatchingSession,
             identityOnly,
-            identityOk,
             identityMismatchPending: this.moodleSite.identityMismatchPending,
             initStarted: this.initStarted,
         });
         // eslint-disable-next-line no-console
-        console.log('[IFRN-IDENTITY] MoodleOpenCoursePage.init', JSON.stringify({
-            hasUrlSession,
-            hasMatchingSession,
-            willReuse: hasMatchingSession,
-            skipAuto: identityOnly
-                || this.moodleSite.identityMismatchPending
-                || !!this.moodleSite.lastError
-                || this.initStarted,
-        }));
+        console.log('[IFRN-COURSE] courseId recebido do Painel =', this.courseId || null);
 
         if (this.moodleSite.lastError) {
             this.formError = this.moodleSite.lastError;
         }
 
-        if (identityOk) {
-            this.statusMessage =
-                'Identidade Moodle = conta do Painel. Pronto para o próximo passo (cursos).';
-            this.formError = '';
-            this.moodleSite.identityMismatchPending = false;
-
-            return;
-        }
-
         if (!this.courseId) {
-            this.formError = 'Nenhum curso Moodle informado.';
+            this.formError = this.formError || 'Nenhum curso Moodle informado pelo Painel.';
 
             return;
         }
 
-        // Retorno pós-OAuth / mismatch: NÃO auto-iniciar outro OAuth.
-        // O usuário toca em “Tentar novamente” se quiser.
+        // Retorno pós-OAuth com erro / mismatch: NÃO auto-iniciar outro OAuth.
         if (
             identityOnly
             || this.moodleSite.identityMismatchPending
@@ -170,10 +150,10 @@ export class MoodleOpenCoursePage implements OnInit {
         this.moodleSite.identityMismatchPending = false;
         this.loading = true;
 
-        const modal = await CoreLoadings.show('Preparando sessão Moodle…');
+        const modal = await CoreLoadings.show('Abrindo curso Moodle…');
 
         try {
-            // Retorno do switch-account: OAuth direto.
+            // Retorno do switch-account: OAuth direto (pending já deve existir).
             if (options.resumeAfterSwitch) {
                 this.statusMessage = 'Abrindo autenticação Moodle (SUAP)…';
                 this.moodleSite.setPendingOpenCourse({
@@ -191,34 +171,23 @@ export class MoodleOpenCoursePage implements OnInit {
                 return;
             }
 
-            const identityResult = await this.moodleSite.ensureMatchingMoodleSession(
+            this.statusMessage = 'Verificando sessão Moodle…';
+
+            const result = await this.moodleSite.ensureSessionAndOpenCourse(
+                this.courseId,
                 this.moodleSiteUrl,
+                this.courseName,
             );
 
-            if (identityResult === 'matched-current' || identityResult === 'loaded-stored') {
-                // Fase identidade: não abre curso / não chama CoreCourses.
-                this.statusMessage =
-                    'Identidade Moodle = conta do Painel (sessão existente). '
-                    + 'Pronto para o próximo passo (cursos).';
-                // eslint-disable-next-line no-console
-                console.log(
-                    '[IFRN-IDENTITY] teste identidade OK — CoreCourses adiado',
-                    JSON.stringify({ source: identityResult }),
-                );
+            if (result === 'opened') {
+                this.statusMessage = 'Curso aberto.';
 
                 return;
             }
 
-            this.statusMessage = 'Abrindo navegador para login SUAP no Moodle…';
-            this.moodleSite.setPendingOpenCourse({
-                courseId: this.courseId,
-                courseName: this.courseName,
-                siteUrl: this.moodleSiteUrl,
-            });
-
-            const result = await this.moodleSite.startSuapOAuthLogin();
-
-            this.statusMessage = this.statusForOAuthResult(result);
+            this.statusMessage = this.statusForOAuthResult(
+                result === 'browser-opened' ? 'opened' : result,
+            );
         } catch (error) {
             // eslint-disable-next-line no-console
             console.error('[IFRN-SITE] connectAndOpen erro', {
@@ -255,7 +224,7 @@ export class MoodleOpenCoursePage implements OnInit {
             return 'Autenticação Moodle já em andamento no navegador.';
         }
 
-        return 'Complete o login SUAP (identity provider) no navegador. Depois o app reabre sozinho.';
+        return 'Complete o login SUAP (identity provider) no navegador. Depois o app reabre e abre o curso sozinho.';
     }
 
 }

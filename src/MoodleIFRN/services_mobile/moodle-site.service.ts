@@ -273,8 +273,22 @@ export type MoodleIdentityMatchResult = {
 };
 
 /**
- * True se o username Moodle coincide com QUALQUER identificador da sessão Painel/SUAP.
- * Evita falso negativo CPF (login) × matrícula (Moodle) da mesma pessoa.
+ * Chaves "fortes": identidade de conta SUAP/Painel (matrícula etc.).
+ * CPF é fraco: a mesma pessoa pode ter conta ALUNO e ESTAGIÁRIO com o mesmo CPF
+ * e Moodle usernames diferentes — CPF-only geraria falso positivo na conta errada.
+ */
+const STRONG_IDENTITY_KEYS = new Set([
+    'perfil.matricula',
+    'perfil.username',
+    'perfil.identificacao',
+    'suap-auth.ifrn_username',
+]);
+
+/**
+ * True se o username Moodle coincide com a identidade da sessão Painel/SUAP.
+ *
+ * Preferência: matrícula / username / identificação / ifrn_username.
+ * CPF só entra se NÃO houver matrícula no perfil (ex.: login só com CPF).
  */
 function matchMoodleAgainstCandidates(
     moodleUsername: string | null | undefined,
@@ -289,7 +303,33 @@ function matchMoodleAgainstCandidates(
         };
     }
 
-    for (const candidate of candidates) {
+    const strong = candidates.filter((c) => STRONG_IDENTITY_KEYS.has(c.key));
+    const weak = candidates.filter((c) => !STRONG_IDENTITY_KEYS.has(c.key));
+    const hasMatricula = strong.some((c) => c.key === 'perfil.matricula');
+
+    for (const candidate of strong) {
+        if (identitiesMatch(candidate.value, moodleUsername)) {
+            return {
+                matches: true,
+                matchedVia: candidate.key,
+                candidateCount: candidates.length,
+                hasExpected: true,
+            };
+        }
+    }
+
+    // Matrícula presente e nenhum id forte bateu → NÃO aceitar só CPF
+    // (evita ALUNO no Painel + sessão Moodle ESTAGIÁRIO pelo CPF compartilhado).
+    if (hasMatricula) {
+        return {
+            matches: false,
+            matchedVia: null,
+            candidateCount: candidates.length,
+            hasExpected: true,
+        };
+    }
+
+    for (const candidate of weak) {
         if (identitiesMatch(candidate.value, moodleUsername)) {
             return {
                 matches: true,
@@ -487,14 +527,22 @@ export class MoodleSiteService {
     }
 
     /**
-     * Garante sessão Moodle e abre o courseid (fluxo “clicar no diário”).
+     * Fluxo de produção: diário.id → sessão Moodle correta → abrir courseid nativo.
      * Só reutiliza sessão se a identidade Painel ↔ Moodle coincidir.
+     * Pending (courseId/siteUrl/courseName) sobrevive ao OAuth em sessionStorage.
      */
-    async ensureSessionAndOpenCourse(courseId: number, siteUrl?: string): Promise<'opened' | 'oauth'> {
+    async ensureSessionAndOpenCourse(
+        courseId: number,
+        siteUrl?: string,
+        courseName?: string,
+    ): Promise<'opened' | 'switched' | 'browser-opened' | 'already-active'> {
         this.ensureLoginObserver();
         this.lastError = '';
 
-        this.setPendingOpenCourse({ courseId, siteUrl });
+        // eslint-disable-next-line no-console
+        console.log(COURSE_LOG, 'courseId recebido do Painel =', courseId);
+
+        this.setPendingOpenCourse({ courseId, siteUrl, courseName });
 
         const identityResult = await this.ensureMatchingMoodleSession(siteUrl);
 
@@ -505,9 +553,17 @@ export class MoodleSiteService {
             return 'opened';
         }
 
-        await this.startSuapOAuthLogin();
+        const oauthResult = await this.startSuapOAuthLogin();
 
-        return 'oauth';
+        if (oauthResult === 'switched') {
+            return 'switched';
+        }
+
+        if (oauthResult === 'already-active') {
+            return 'already-active';
+        }
+
+        return 'browser-opened';
     }
 
     /**
@@ -615,7 +671,7 @@ export class MoodleSiteService {
             moodleShape: moodle.shape,
             moodleUserIdPresent: typeof info?.userid === 'number' && info.userid > 0,
             normalizacao: 'trim+toLowerCase',
-            matchMode: 'any-candidate-exact',
+            matchMode: 'strong-first-no-cpf-if-matricula',
             candidateKeys: candidates.map((c) => c.key),
             candidateCount: candidates.length,
             corresponde: match.matches,
@@ -625,6 +681,9 @@ export class MoodleSiteService {
             )?.matchesMoodle ?? null,
             matriculaWouldMatch: candidateVsMoodle.find(
                 (c) => c.key === 'perfil.matricula',
+            )?.matchesMoodle ?? null,
+            cpfWouldMatchButIgnoredIfMatricula: candidateVsMoodle.find(
+                (c) => c.key === 'perfil.cpf',
             )?.matchesMoodle ?? null,
             candidateVsMoodle,
         });
@@ -660,6 +719,8 @@ export class MoodleSiteService {
         const hasSession = this.hasPresencialSession(resolved);
         const match = this.matchCurrentMoodleIdentity();
 
+        const storedCount = (await CoreSites.getSiteIdsFromUrl(resolved)).length;
+
         identityLog('sessão Moodle existente', {
             hasSession,
             isLoggedIn: CoreSites.isLoggedIn(),
@@ -667,9 +728,17 @@ export class MoodleSiteService {
             siteIdPresent: !!current?.getId(),
             hasExpected: match.hasExpected,
             candidateCount: match.candidateCount,
-            storedSitesForUrl: (await CoreSites.getSiteIdsFromUrl(resolved)).length,
+            storedSitesForUrl: storedCount,
         });
         identityLog(`sessão existente corresponde = ${hasSession && match.matches}`);
+
+        // Caso A = CoreSites já logado com OUTRA conta no mesmo siteUrl.
+        // Caso B = sem sessão útil; OAuth vai ao browser (cookies SUAP podem forçar outra conta).
+        identityLog('diagnóstico origem', {
+            caseA_storedWrongAccount: !!(hasSession && match.hasExpected && !match.matches),
+            caseB_needsBrowserOAuth: !(hasSession && match.matches),
+            multiAccountSitesForUrl: storedCount,
+        });
 
         this.logIdentityDiagnostics('ensureMatchingMoodleSession');
 
@@ -683,9 +752,9 @@ export class MoodleSiteService {
         }
 
         if (hasSession && !match.matches) {
-            identityLog('sessão rejeitada', {
+            identityLog('sessão rejeitada por identidade diferente', {
                 source: 'CoreSites-current',
-                caseHint: match.hasExpected ? 'identity-mismatch-or-format' : 'sem-expected',
+                caseHint: match.hasExpected ? 'A-CoreSites-wrong-account' : 'sem-expected',
                 hasExpected: match.hasExpected,
             });
         }
@@ -754,22 +823,22 @@ export class MoodleSiteService {
 
     /**
      * Abre um courseid específico com CoreCourseHelper.getAndOpenCourse.
-     * Só abre se o ID existir em CoreCourses.getUserCourses() (matriculado).
-     * IDs de mock (ex.: 123) são rejeitados explicitamente.
+     * Só abre se course.id === courseId em CoreCourses.getUserCourses().
+     * Nunca escolhe outro curso por nome/aproximação.
      */
     async openCourseById(courseId: number): Promise<number> {
         this.lastError = '';
 
-        // eslint-disable-next-line no-console
-        console.log(COURSE_LOG, 'sessão OK', JSON.stringify({
-            isLoggedIn: CoreSites.isLoggedIn(),
-            siteUrl: CoreSites.getCurrentSite()?.getURL() || null,
-            identityMatches: this.matchCurrentMoodleIdentity().matches,
-            matchedVia: this.matchCurrentMoodleIdentity().matchedVia,
-        }));
+        const match = this.matchCurrentMoodleIdentity();
 
         if (!CoreSites.isLoggedIn()) {
             throw new Error('Não há sessão Moodle ativa.');
+        }
+
+        if (!match.matches) {
+            throw new Error(
+                'Sessão Moodle não corresponde à conta do Painel — não é seguro abrir o curso.',
+            );
         }
 
         if (!Number.isFinite(courseId) || courseId <= 0) {
@@ -777,10 +846,13 @@ export class MoodleSiteService {
         }
 
         // eslint-disable-next-line no-console
-        console.log(COURSE_LOG, 'courseId solicitado =', courseId);
-
+        console.log(COURSE_LOG, 'courseId recebido do Painel =', courseId);
         // eslint-disable-next-line no-console
-        console.log(COURSE_LOG, 'buscando cursos (CoreCourses.getUserCourses)');
+        console.log(COURSE_LOG, 'sessão/identidade OK', JSON.stringify({
+            isLoggedIn: true,
+            matchedVia: match.matchedVia,
+            siteUrl: CoreSites.getCurrentSite()?.getURL() || null,
+        }));
 
         let courses: MoodlePocCourseSummary[];
 
@@ -799,12 +871,7 @@ export class MoodleSiteService {
         }
 
         // eslint-disable-next-line no-console
-        console.log(COURSE_LOG, 'cursos recebidos', { count: courses.length });
-
-        for (const course of courses) {
-            // eslint-disable-next-line no-console
-            console.log(COURSE_LOG, `curso [${course.id}] ${course.name}`);
-        }
+        console.log(COURSE_LOG, 'quantidade de cursos Moodle =', courses.length);
 
         const found = courses.some((course) => course.id === courseId);
 
@@ -812,16 +879,13 @@ export class MoodleSiteService {
         console.log(COURSE_LOG, 'courseId encontrado =', found);
 
         if (!found) {
-            const list = courses.length
-                ? courses.map((c) => `[${c.id}] ${c.name}`).join('; ')
-                : '(nenhum curso matriculado)';
-
             const message =
-                `courseId ${courseId} não está entre os cursos matriculados no Moodle Presencial `
-                + `(possivelmente ID do mock). Cursos reais: ${list}`;
+                `O curso ${courseId} não está entre os cursos matriculados nesta conta Moodle `
+                + `(${courses.length} curso(s) encontrados). `
+                + 'Nenhum outro curso foi aberto.';
 
             // eslint-disable-next-line no-console
-            console.warn(COURSE_LOG, 'ID do mock/painel não corresponde a curso real', {
+            console.warn(COURSE_LOG, 'courseId não matriculado — abertura cancelada', {
                 requested: courseId,
                 enrolledCount: courses.length,
             });
@@ -831,7 +895,7 @@ export class MoodleSiteService {
         }
 
         // eslint-disable-next-line no-console
-        console.log(COURSE_LOG, 'getAndOpenCourse iniciado', { courseId });
+        console.log(COURSE_LOG, 'chamando getAndOpenCourse', { courseId });
 
         try {
             await CoreCourseHelper.getAndOpenCourse(courseId);
@@ -846,10 +910,20 @@ export class MoodleSiteService {
         }
 
         // eslint-disable-next-line no-console
-        console.log(COURSE_LOG, 'getAndOpenCourse sucesso', { courseId });
+        console.log(COURSE_LOG, 'curso aberto', { courseId });
 
         if (this.lastSummary) {
             this.lastSummary.openedCourseId = courseId;
+        } else {
+            this.lastSummary = {
+                userFullName: '',
+                username: '',
+                siteUrl: CoreSites.getCurrentSite()?.getURL() || '',
+                siteName: '',
+                courseCount: courses.length,
+                courses,
+                openedCourseId: courseId,
+            };
         }
 
         return courseId;
@@ -1174,8 +1248,8 @@ export class MoodleSiteService {
     }
 
     /**
-     * Após OAuth: confirma identidade Painel↔Moodle.
-     * Fase atual: SOMENTE identidade — não chama CoreCourses / openCourse.
+     * Após OAuth: valida identidade e abre automaticamente o courseId pendente.
+     * O usuário NÃO precisa voltar ao Painel e clicar de novo.
      * NÃO abre URLs de logout (ex.: SUAP/Gov.br).
      */
     private async afterOAuthLogin(): Promise<void> {
@@ -1197,23 +1271,21 @@ export class MoodleSiteService {
             candidateCount: match.candidateCount,
             caseHint: match.matches
                 ? 'ok'
-                : (match.hasExpected ? 'B-or-still-format-gap' : 'sem-expected'),
+                : (match.hasExpected ? 'B-browser-SUAP-cookie-or-format' : 'sem-expected'),
         });
 
         this.logIdentityDiagnostics('afterOAuthLogin');
 
-        // Nenhum identificador da sessão Painel/SUAP bate com Moodle username.
-        // Pode ser SSO do browser (outra conta) OU perfil sem matrícula (só CPF no auth).
+        // Tipicamente Caso B: cookie SUAP no Chrome ainda na conta errada.
         if (match.hasExpected && !match.matches) {
             this.identityMismatchPending = true;
             this.lastError =
                 'A sessão Moodle não corresponde à conta do Painel. '
-                + 'Confirme o login SUAP da mesma conta (ALUNO) no navegador e tente novamente.';
+                + 'No navegador, saia do SUAP da outra conta e entre com a mesma conta do Painel (ALUNO).';
 
             identityLog('nova sessão corresponde = false', {
-                caseHint: 'no-candidate-matched',
+                caseHint: 'B-browser-SUAP-cookie-or-format',
                 action: 'reject-no-external-logout',
-                authAloneWouldDifferFromMatricula: true,
             });
 
             await CoreNavigator.navigate('/login/moodle-open-course', {
@@ -1228,27 +1300,63 @@ export class MoodleSiteService {
             return;
         }
 
-        if (match.matches) {
-            identityLog('sessão correta definida como current', {
-                source: 'oauth-newSite',
-                matchedVia: match.matchedVia,
+        if (!match.matches) {
+            this.lastError = 'Não foi possível confirmar a identidade Moodle após o login.';
+
+            await CoreNavigator.navigate('/login/moodle-open-course', {
+                animated: false,
+                params: {
+                    courseId: pending?.courseId,
+                    courseName: pending?.courseName,
+                    identityOnly: true,
+                },
             });
-            this.identityMismatchPending = false;
-            this.lastError = '';
+
+            return;
         }
 
-        // Fase identidade: não lista cursos nem abre courseId.
-        identityLog('teste identidade OK — CoreCourses adiado');
-
-        await CoreNavigator.navigate('/login/moodle-open-course', {
-            animated: false,
-            params: {
-                courseId: pending?.courseId,
-                courseName: pending?.courseName,
-                identityOnly: true,
-                identityOk: true,
-            },
+        identityLog('nova sessão corresponde = true');
+        identityLog('sessão correta definida como current', {
+            source: 'oauth-newSite',
+            matchedVia: match.matchedVia,
         });
+        this.identityMismatchPending = false;
+        this.lastError = '';
+
+        if (!pending?.courseId) {
+            this.lastError = 'Login Moodle OK, mas nenhum courseId pendente do Painel.';
+
+            await CoreNavigator.navigate('/login/moodle-open-course', {
+                animated: false,
+                params: { identityOnly: true },
+            });
+
+            return;
+        }
+
+        try {
+            await this.openCourseById(pending.courseId);
+            this.clearPendingOpenCourse();
+            // getAndOpenCourse já navega para o curso nativo.
+        } catch (error) {
+            // eslint-disable-next-line no-console
+            console.error(COURSE_LOG, 'abrir curso pendente após OAuth falhou', {
+                courseId: pending.courseId,
+                message: error instanceof Error ? error.message : String(error),
+            });
+            this.lastError = error instanceof Error
+                ? error.message
+                : 'Falha ao abrir o curso Moodle após autenticação.';
+
+            await CoreNavigator.navigate('/login/moodle-open-course', {
+                animated: false,
+                params: {
+                    courseId: pending.courseId,
+                    courseName: pending.courseName,
+                    identityOnly: true,
+                },
+            });
+        }
     }
 
     private toCourseSummary(course: CoreEnrolledCourseData): MoodlePocCourseSummary {
