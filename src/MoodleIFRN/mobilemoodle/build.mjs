@@ -1,15 +1,18 @@
 #!/usr/bin/env node
 /**
  * Compila o painel mobilemoodle: mobilemoodle.ts + core_mobile/ → mobilemoodle.js.
+ *
+ * Usa a API JS do esbuild (e não o binário via npx): no Windows o `npx` é
+ * `npx.cmd` e o spawnSync sem shell falha em silêncio com status null.
  */
-import { spawnSync } from 'child_process';
+import { createRequire } from 'module';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const root = dirname(fileURLToPath(import.meta.url));
+const projectRoot = join(root, '../../..');
 const entry = join(root, 'mobilemoodle.ts');
 const outfile = join(root, 'mobilemoodle.js');
-const cwd = join(root, '../../..');
 
 const banner = `/*!
  * mobilemoodle.js — bundle do Painel AVA (IFRN)
@@ -30,25 +33,35 @@ const banner = `/*!
  *   window.MobileMoodleApi  — fachada pública (token, dashboard, curso)
  */`;
 
-const result = spawnSync(
-    'npx',
-    [
-        '--yes',
-        'esbuild',
-        entry,
-        '--bundle',
-        `--outfile=${outfile}`,
-        '--format=iife',
-        '--target=es2020',
-        '--log-level=warning',
-        '--legal-comments=inline',
-        `--banner:js=${banner}`,
-    ],
-    { stdio: 'inherit', cwd },
-);
+let esbuild;
 
-if (result.status !== 0) {
-    process.exit(result.status ?? 1);
+try {
+    // Resolve a partir da raiz do projeto, onde o esbuild está instalado.
+    const require = createRequire(join(projectRoot, 'package.json'));
+
+    esbuild = require('esbuild');
+} catch {
+    console.error(
+        'esbuild não encontrado em node_modules. Rode "npm install" (ou "npm i -D esbuild") e tente de novo.',
+    );
+    process.exit(1);
+}
+
+try {
+    await esbuild.build({
+        entryPoints: [entry],
+        outfile,
+        bundle: true,
+        format: 'iife',
+        target: 'es2020',
+        logLevel: 'warning',
+        legalComments: 'inline',
+        absWorkingDir: projectRoot,
+        banner: { js: banner },
+    });
+} catch {
+    // O esbuild já imprimiu os erros de compilação.
+    process.exit(1);
 }
 
 console.log('✔ mobilemoodle compilado → mobilemoodle.js');
