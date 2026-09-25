@@ -1,0 +1,118 @@
+// Tokens CSS do Design System Gov.br (theme_ifrn_dsgov v3.0)
+// Fonte canônica: src/MoodleIFRN/ifrn_dsgov/scss/_variables.scss
+// Cópia compilada: scss/dsgov/_variables.scss
+
+@use "dsgov/variables" as ds;
+
+:root {
+    // Cores institucionais Gov.br
+    --dsgov-blue-90: #{ds.$blue-warm-vivid-90};
+    --dsgov-blue-80: #{ds.$blue-warm-vivid-80};
+    --dsgov-blue-70: #{ds.$blue-warm-vivid-70};
+    --dsgov-blue-60: #{ds.$blue-warm-vivid-60};
+    --dsgov-blue-20: #{ds.$blue-warm-vivid-20};
+    --dsgov-blue-10: #{ds.$blue-warm-vivid-10};
+    --dsgov-blue-darkest: #{ds.$blue-darkest};
+
+    --dsgov-green-60: #{ds.$green-cool-vivid-60};
+    --dsgov-green-hover: #{ds.$green-cool-hover};
+    --dsgov-green-badge-bg: #{ds.$green-badge-bg};
+
+    --dsgov-yellow-30: #{ds.$yellow-vivid-30};
+    --dsgov-yellow-20: #{ds.$yellow-vivid-20};
+
+    --dsgov-error: #{ds.$color-error};
+    --dsgov-error-hover: #{ds.$color-error-hover};
+    --dsgov-blue-badge-bg: #{ds.$blue-badge-bg};
+
+    // Neutros e texto
+    --dsgov-text-darkest: #{ds.$text-darkest};
+    --dsgov-text-dark: #{ds.$text-dark};
+    --dsgov-text-secondary: #{ds.$text-secondary};
+    --dsgov-text-medium: #{ds.$text-medium};
+    --dsgov-text-muted: #{ds.$text-muted};
+    --dsgov-text-light: #{ds.$text-light};
+
+    --dsgov-bg-white: #{ds.$bg-white};
+    --dsgov-bg-gray: #{ds.$bg-gray};
+    --dsgov-bg-gray-hover: #{ds.$bg-gray-hover};
+    --dsgov-bg-light-gray: #{ds.$bg-light-gray};
+    --dsgov-bg-hover: #{ds.$bg-hover};
+    --dsgov-bg-blue-light: #{ds.$bg-blue-light};
+    --dsgov-bg-disabled: #{ds.$bg-disabled};
+    --dsgov-bg-progress-track: #{ds.$bg-progress-track};
+    --dsgov-bg-progress-zero: #{ds.$bg-progress-zero};
+
+    // Bordas
+    --dsgov-border-outer: #{ds.$border-outer};
+    --dsgov-border-inner: #{ds.$border-inner};
+    --dsgov-border-light: #{ds.$border-light};
+    --dsgov-border-divider: #{ds.$border-divider};
+    --dsgov-border-default: #{ds.$border-default};
+    --dsgov-border-medium: #{ds.$border-medium};
+    --dsgov-border-heavy: #{ds.$border-heavy};
+
+    // Sombras
+    --dsgov-shadow-header: #{ds.$shadow-header};
+    --dsgov-shadow-popover: #{ds.$shadow-popover};
+    --dsgov-shadow-card: #{ds.$shadow-card};
+    --dsgov-shadow-login-card: #{ds.$shadow-login-card};
+    --dsgov-shadow-dropdown: #{ds.$shadow-dropdown};
+
+    --dsgov-focus-ring-blue: #{ds.$focus-ring-blue};
+    --dsgov-focus-ring-error: #{ds.$focus-ring-error};
+
+    // Tipografia
+    --dsgov-font-family: #{ds.$font-family-base};
+
+    // Dimensões
+    --dsgov-header-height: #{ds.$header-height};
+    --dsgov-tab-nav-height: #{ds.$tab-nav-height};
+    --dsgov-container-max-width: #{ds.$container-max-width};
+    --dsgov-login-card-max-width: #{ds.$login-card-max-width};
+
+    // Raios
+    --dsgov-radius-none: #{ds.$border-radius-none};
+    --dsgov-radius-default: #{ds.$border-radius-default};
+    --dsgov-radius-sm: #{ds.$border-radius-sm};
+    --dsgov-radius-md: #{ds.$border-radius-md};
+    --dsgov-radius-pill-sm: #{ds.$border-radius-pill-sm};
+    --dsgov-radius-pill: #{ds.$border-radius-pill};
+    --dsgov-radius-pill-lg: #{ds.$border-radius-pill-lg};
+    --dsgov-radius-circle: #{ds.$border-radius-circle};
+
+    // Espaçamento
+    --dsgov-spacing-xs: #{ds.$spacing-xs};
+    --dsgov-spacing-sm: #{ds.$spacing-sm};
+    --dsgov-spacing-md: #{ds.$spacing-md};
+    --dsgov-spacing-lg: #{ds.$spacing-lg};
+    --dsgov-spacing-xl: #{ds.$spacing-xl};
+    --dsgov-spacing-2xl: #{ds.$spacing-2xl};
+
+    // Tipografia escalada
+    --dsgov-font-size-xs: #{ds.$font-size-xs};
+    --dsgov-font-size-sm: #{ds.$font-size-sm};
+    --dsgov-font-size-base: #{ds.$font-size-base};
+    --dsgov-font-size-md: #{ds.$font-size-md};
+    --dsgov-font-size-lg: #{ds.$font-size-lg};
+    --dsgov-font-size-xl: #{ds.$font-size-xl};
+    --dsgov-font-size-2xl: #{ds.$font-size-2xl};
+
+    --dsgov-font-weight-normal: #{ds.$font-weight-normal};
+    --dsgov-font-weight-medium: #{ds.$font-weight-medium};
+    --dsgov-font-weight-semibold: #{ds.$font-weight-semibold};
+    --dsgov-font-weight-bold: #{ds.$font-weight-bold};
+
+    // Transições
+    --dsgov-transition-fast: #{ds.$transition-fast};
+    --dsgov-transition-base: #{ds.$transition-base};
+
+    // Aliases usados pelo app mobile (login + painel)
+    --gov-primary: var(--dsgov-blue-70);
+    --gov-primary-dark: var(--dsgov-blue-90);
+    --gov-primary-light: var(--dsgov-blue-10);
+    --gov-success: var(--dsgov-green-60);
+    --gov-error: var(--dsgov-error);
+    --gov-surface: var(--dsgov-bg-white);
+    --gov-page-bg: var(--dsgov-bg-gray);
+}

@@ -1,0 +1,169 @@
+<ion-content class="moodle-poc">
+    <header class="moodle-poc__header">
+        <ion-button
+            class="moodle-poc__back"
+            fill="clear"
+            (click)="goBack()"
+            [disabled]="loading"
+            aria-label="Voltar">
+            <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+        <h1 id="moodle-poc-title">PoC API v1</h1>
+    </header>
+
+    <main class="moodle-poc__content" aria-labelledby="moodle-poc-title">
+        <section class="moodle-poc__card">
+            <p class="moodle-poc__eyebrow">Prova de conceito — somente leitura</p>
+            <h2>Painel AVA · API v1</h2>
+            <p class="moodle-poc__subtitle">
+                Base:
+                <code>{{ baseUrl }}</code>
+            </p>
+            <p class="moodle-poc__subtitle">
+                Auth:
+                <code>POST {{ authenticatePath }}</code>
+            </p>
+            <p class="moodle-poc__subtitle">
+                Diários:
+                <code>GET {{ diariosPath }}?{{ diariosQuery }}</code>
+            </p>
+            <p class="moodle-poc__subtitle">
+                Não abre curso · não usa OAuth Moodle · JWT não é exibido.
+            </p>
+
+            <div class="moodle-poc__form">
+                <label class="moodle-poc__label" for="poc-v1-username">IFRN-id</label>
+                <input
+                    id="poc-v1-username"
+                    class="moodle-poc__input"
+                    type="text"
+                    name="username"
+                    autocomplete="username"
+                    inputmode="numeric"
+                    [(ngModel)]="username"
+                    [disabled]="loading"
+                    placeholder="Matrícula ou CPF" />
+
+                <label class="moodle-poc__label" for="poc-v1-password">Senha SUAP</label>
+                <div class="moodle-poc__password-row">
+                    <input
+                        id="poc-v1-password"
+                        class="moodle-poc__input"
+                        [type]="showPassword ? 'text' : 'password'"
+                        name="password"
+                        autocomplete="current-password"
+                        [(ngModel)]="password"
+                        [disabled]="loading"
+                        placeholder="Senha"
+                        (keyup.enter)="runPoc()" />
+                    <button
+                        type="button"
+                        class="moodle-poc__toggle"
+                        (click)="togglePassword()"
+                        [disabled]="loading">
+                        {{ showPassword ? 'Ocultar' : 'Mostrar' }}
+                    </button>
+                </div>
+            </div>
+
+            @if (statusMessage) {
+                <p class="moodle-poc__status" role="status" aria-live="polite">
+                    {{ statusMessage }}
+                </p>
+            }
+
+            @if (formError) {
+                <p class="moodle-poc__error" role="alert">
+                    {{ formError }}
+                </p>
+            }
+
+            <div class="moodle-poc__actions">
+                <ion-button
+                    expand="block"
+                    class="moodle-poc__button"
+                    (click)="runPoc()"
+                    [disabled]="loading">
+                    @if (loading) {
+                        <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+                    } @else {
+                        Autenticar v1 + listar /api/v1/diarios/
+                    }
+                </ion-button>
+
+                <ion-button
+                    expand="block"
+                    fill="outline"
+                    class="moodle-poc__button"
+                    (click)="clearSession()"
+                    [disabled]="loading">
+                    Limpar token Painel
+                </ion-button>
+            </div>
+
+            @if (result) {
+                <section class="moodle-poc__summary" aria-label="Resultado API v1">
+                    <h3>Resumo</h3>
+                    <ul>
+                        <li>
+                            <strong>Usuário:</strong>
+                            {{ result.usernameHint }}
+                        </li>
+                        <li>
+                            <strong>Token gravado:</strong>
+                            {{ result.tokenStored ? 'sim (não exibido)' : 'não' }}
+                        </li>
+                        <li>
+                            <strong>Chaves do envelope:</strong>
+                            {{ result.responseTopKeys.join(', ') || '—' }}
+                        </li>
+                        <li>
+                            <strong>Diários:</strong>
+                            {{ result.diariosCount }}
+                        </li>
+                        <li>
+                            <strong>Props vistas nos diários:</strong>
+                            {{ result.diarioPropertyUnion.join(', ') || '—' }}
+                        </li>
+                    </ul>
+
+                    @if (result.diariosResumo.length) {
+                        <h3>Diários (campos presentes)</h3>
+                        <ul class="moodle-poc__courses">
+                            @for (diario of result.diariosResumo; track diario._index) {
+                                <li>
+                                    <code>#{{ diario._index }}</code>
+                                    —
+                                    {{ displayValue(diario['fullname'] ?? diario['shortname'] ?? diario['id']) }}
+                                    <br />
+                                    <small>
+                                        keys: {{ displayValue(diario['_keys']) }}
+                                    </small>
+                                    <br />
+                                    <small>
+                                        id={{ displayValue(diario['id']) }}
+                                        · courseid={{ displayValue(diario['courseid']) }}
+                                        · idnumber={{ displayValue(diario['idnumber']) }}
+                                        · diario_id={{ displayValue(diario['diario_id']) }}
+                                    </small>
+                                    @if (diario['viewurl'] || diario['url']) {
+                                        <br />
+                                        <small class="moodle-poc__url">
+                                            {{ displayValue(diario['viewurl'] ?? diario['url']) }}
+                                        </small>
+                                    }
+                                    @if (diario['ambiente']) {
+                                        <br />
+                                        <small>
+                                            ambiente={{ displayValue(diario['ambiente']) }}
+                                        </small>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                </section>
+            }
+        </section>
+    </main>
+</ion-content>

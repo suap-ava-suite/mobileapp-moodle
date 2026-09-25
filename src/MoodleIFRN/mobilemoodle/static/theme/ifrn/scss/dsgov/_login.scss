@@ -1,0 +1,100 @@
+// ==================================================
+// Login — Tema IFRN DS-GOV (v3.0)
+// ==================================================
+body.path-login {
+    background-color: $bg-white !important;
+
+    #page-wrapper {
+        background-color: $bg-white !important;
+    }
+
+    #page {
+        margin-top: 0 !important;
+        padding-top: 120px !important;
+        min-height: calc(100vh - 120px);
+        display: block !important;
+        background-color: transparent !important;
+    }
+
+    .main-inner {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+
+    #region-main {
+        background: $bg-white !important;
+        border-radius: $border-radius-md !important;
+        box-shadow: $shadow-login-card !important;
+        padding: $spacing-2xl !important;
+        width: 100% !important;
+        max-width: $login-card-max-width !important;
+        border: $border-width-thin solid $border-medium !important;
+        border-top: $border-width-login solid $blue-warm-vivid-70 !important;
+        margin: $spacing-2xl auto !important;
+
+        .loginform {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        .login-heading {
+            color: $blue-warm-vivid-90 !important;
+            font-weight: $font-weight-bold !important;
+            font-size: $font-size-2xl !important;
+            margin-bottom: $spacing-lg !important;
+            text-align: center !important;
+        }
+
+        .form-control {
+            border-radius: $border-radius-sm !important;
+            border: $border-width-thin solid $border-default !important;
+            padding: 12px 15px !important;
+            font-size: $font-size-md !important;
+            &:focus, &:active, &:focus-visible {
+                border-color: $border-default !important;
+                @include focus-visible-ring;
+            }
+        }
+
+        .btn-primary {
+            background-color: $blue-warm-vivid-70 !important;
+            border-color: $blue-warm-vivid-70 !important;
+            border-radius: $border-radius-pill !important;
+            padding: 10px !important;
+            font-size: $font-size-lg !important;
+            font-weight: $font-weight-semibold !important;
+            width: 100% !important;
+            margin-top: $spacing-md !important;
+            @include transition-base;
+            &:hover, &:active, &:focus {
+                background-color: $blue-warm-vivid-90 !important;
+                border-color: $blue-warm-vivid-90 !important;
+            }
+            &:focus, &:focus-visible {
+                @include focus-visible-ring;
+            }
+        }
+
+        .btn-secondary {
+            border-radius: $border-radius-pill !important;
+            padding: 10px !important;
+            font-size: $font-size-lg !important;
+            font-weight: $font-weight-semibold !important;
+            width: 100% !important;
+            margin-top: $spacing-sm + $spacing-2xs !important;
+        }
+
+        .login-divider {
+            margin-top: $spacing-md + $spacing-xs !important;
+            margin-bottom: $spacing-md + $spacing-xs !important;
+            border-top: $border-width-thin solid $border-medium !important;
+        }
+    }
+}

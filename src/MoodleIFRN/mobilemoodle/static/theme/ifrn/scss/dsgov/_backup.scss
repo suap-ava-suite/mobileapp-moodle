@@ -1,0 +1,713 @@
+// ============================================================
+// [Backup & Restauração] — Tema IFRN DS-GOV (v3.0)
+// Estilização completa do fluxo de Backup, Restauração e Importação
+// ============================================================
+
+// ------------------------------------------------------------
+// 1. Barra de Progresso do Assistente (.backup_progress)
+// ------------------------------------------------------------
+.path-backup .backup_progress {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 8px !important;
+    background-color: $bg-white !important;
+    border: $border-width-thin solid $border-default !important;
+    border-radius: $border-radius-sm !important;
+    padding: 12px 20px !important;
+    margin-top: 0 !important;
+    margin-bottom: 1.5rem !important;
+    font-size: $font-size-sm !important;
+    font-family: $font-family-rawline !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+
+    .backup_stage {
+        color: $text-muted !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        font-weight: $font-weight-medium !important;
+        padding: 6px 14px !important;
+        border-radius: $border-radius-pill !important;
+        transition: background-color $transition-fast, color $transition-fast !important;
+
+        // Etapa atual ativa
+        &.backup_stage_current {
+            background-color: $blue-warm-vivid-70 !important; // #1351b4
+            color: $text-light !important;
+            font-weight: $font-weight-bold !important;
+        }
+
+        // Etapas anteriores concluídas
+        &.backup_stage_complete {
+            color: $blue-warm-vivid-90 !important;
+            font-weight: $font-weight-semibold !important;
+        }
+    }
+
+    // Separador (► ou similar)
+    .sep,
+    span:not(.backup_stage) {
+        color: $text-muted !important;
+        margin: 0 2px !important;
+        font-size: $font-size-xs !important;
+    }
+}
+
+// ------------------------------------------------------------
+// 2. Seções de Card (.backup-section, .settings-section, .backup-restore)
+// ------------------------------------------------------------
+.path-backup {
+    .backup-section,
+    .bcs-new-course,
+    .bcs-current-course,
+    .bcs-existing-course,
+    .ics-existing-course {
+        background-color: $bg-white !important;
+        border: $border-width-thin solid $border-outer !important; // #cccccc
+        border-radius: $border-radius-sm !important;
+        padding: 24px !important;
+        margin-bottom: 1.5rem !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+
+        h2.header,
+        h2,
+        .header {
+            font-family: $font-family-rawline !important;
+            font-size: 1.35rem !important;
+            font-weight: $font-weight-bold !important;
+            color: $blue-warm-vivid-90 !important;
+            margin-top: 0 !important;
+            margin-bottom: 1.25rem !important;
+            padding-bottom: 0.75rem !important;
+            border-bottom: 1px solid $border-inner !important;
+            width: 100% !important;
+        }
+
+        .backup-sub-section {
+            margin-top: 1.5rem !important;
+            padding-top: 1rem !important;
+            border-top: 1px solid $border-inner !important;
+
+            h3.subheader,
+            h3 {
+                font-size: 1.1rem !important;
+                font-weight: $font-weight-semibold !important;
+                color: $blue-warm-vivid-80 !important;
+                margin-bottom: 1rem !important;
+            }
+        }
+    }
+}
+
+// ------------------------------------------------------------
+// 3. Pares de Chave-Valor (Detalhes e Opções / .detail-pair)
+// ------------------------------------------------------------
+.path-backup {
+    // Opções de rádio (Ex: Restaurar como novo curso / Mesclar conteúdo)
+    .detail-pair:has(input[type="radio"]:only-child) {
+        display: flex !important;
+        flex-direction: row-reverse !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        gap: 10px !important;
+        padding: 8px 0 !important;
+        border-bottom: none !important;
+        width: 100% !important;
+
+        .detail-pair-value {
+            flex: 0 0 auto !important;
+            max-width: none !important;
+            width: auto !important;
+            padding: 0 !important;
+            float: none !important;
+
+            input[type="radio"] {
+                width: 18px !important;
+                height: 18px !important;
+                margin: 0 !important;
+                accent-color: $blue-warm-vivid-70 !important;
+                cursor: pointer !important;
+            }
+        }
+
+        .detail-pair-label {
+            flex: 0 0 auto !important;
+            max-width: none !important;
+            width: auto !important;
+            padding: 0 !important;
+            float: none !important;
+
+            label {
+                font-size: $font-size-base !important;
+                font-weight: $font-weight-medium !important;
+                color: $text-dark !important;
+                cursor: pointer !important;
+                margin-bottom: 0 !important;
+            }
+        }
+    }
+
+    // Pares normais de detalhes Chave-Valor (Etapas 1 e 5)
+    .detail-pair:not(:has(input[type="radio"]:only-child)):not(:has(.restore-course-search)):not(:has(.import-course-search)):not(:has(input[type="submit"])):not(:has(.btn)) {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: flex-start !important;
+        padding: 10px 0 !important;
+        border-bottom: 1px solid #f0f0f0 !important;
+        width: 100% !important;
+
+        &:last-child {
+            border-bottom: none !important;
+        }
+
+        .detail-pair-label {
+            flex: 0 0 35% !important;
+            max-width: 35% !important;
+            width: 35% !important;
+            float: none !important;
+            font-weight: $font-weight-semibold !important;
+            color: $text-dark !important;
+            padding-right: 16px !important;
+            margin-bottom: 0 !important;
+            line-height: 1.5 !important;
+            font-size: $font-size-sm !important;
+        }
+
+        .detail-pair-value {
+            flex: 0 0 65% !important;
+            max-width: 65% !important;
+            width: 65% !important;
+            float: none !important;
+            padding-left: 0 !important;
+            color: $text-medium !important;
+            line-height: 1.5 !important;
+            font-size: $font-size-sm !important;
+        }
+    }
+
+    // Quando o valor contém uma tabela de pesquisa de curso/categoria (Etapa 2)
+    .detail-pair:has(.restore-course-search),
+    .detail-pair:has(.import-course-search) {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        width: 100% !important;
+        margin-top: 1rem !important;
+        padding: 0 !important;
+        border-bottom: none !important;
+
+        .detail-pair-label {
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            font-size: 1rem !important;
+            font-weight: $font-weight-semibold !important;
+            color: $blue-warm-vivid-90 !important;
+            margin-bottom: 0.75rem !important;
+            padding: 0 !important;
+            float: none !important;
+        }
+
+        .detail-pair-value {
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            padding: 0 !important;
+            float: none !important;
+        }
+    }
+
+    // Botão Continuar isolado em detail-pair
+    .detail-pair:has(input[type="submit"]),
+    .detail-pair:has(.btn) {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        width: 100% !important;
+        margin-top: 1.25rem !important;
+        padding: 0 !important;
+        border-bottom: none !important;
+
+        .detail-pair-label {
+            display: none !important;
+        }
+
+        .detail-pair-value {
+            flex: 0 0 auto !important;
+            max-width: none !important;
+            width: auto !important;
+            padding: 0 !important;
+            margin-left: auto !important;
+            float: none !important;
+
+            input[type="submit"],
+            .btn-primary {
+                border-radius: $border-radius-pill !important;
+                padding: 8px 24px !important;
+                font-weight: $font-weight-semibold !important;
+                background-color: $blue-warm-vivid-70 !important;
+                border-color: $blue-warm-vivid-70 !important;
+                color: $text-light !important;
+
+                &:hover {
+                    background-color: $blue-warm-vivid-90 !important;
+                    border-color: $blue-warm-vivid-90 !important;
+                }
+            }
+        }
+    }
+}
+
+// ------------------------------------------------------------
+// 4. Etapa 2: Seleção de Categoria e Curso (.restore-course-search)
+// ------------------------------------------------------------
+.path-backup {
+    .restore-course-search,
+    .import-course-search {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+
+        .rcs-results,
+        .ics-results {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow-x: auto !important;
+
+            .table-responsive {
+                width: 100% !important;
+            }
+
+            table.table,
+            table.generictable {
+                width: 100% !important;
+                margin-bottom: 0 !important;
+                border-collapse: separate !important;
+                border-spacing: 0 !important;
+                border: $border-width-thin solid $border-outer !important;
+                border-radius: 4px !important;
+                background-color: $bg-white !important;
+
+                thead {
+                    background-color: $bg-light-gray !important;
+
+                    tr {
+                        background-color: $bg-light-gray !important;
+                    }
+
+                    :is(th, td, .header) {
+                        background-color: $bg-light-gray !important;
+                        color: $blue-warm-vivid-90 !important;
+                        font-weight: $font-weight-bold !important;
+                        font-size: $font-size-sm !important;
+                        padding: 12px 16px !important;
+                        border-top: none !important;
+                        border-bottom: 2px solid $border-outer !important;
+                        border-left: none !important;
+                        border-right: none !important;
+                        vertical-align: middle !important;
+                    }
+                }
+
+                tbody {
+                    tr {
+                        background-color: $bg-white !important;
+                        transition: background-color $transition-fast !important;
+
+                        &:hover {
+                            background-color: rgba($blue-warm-vivid-10, 0.6) !important;
+                        }
+
+                        td {
+                            padding: 12px 16px !important;
+                            vertical-align: middle !important;
+                            border-top: none !important;
+                            border-bottom: 1px solid $border-inner !important;
+                            border-left: none !important;
+                            border-right: none !important;
+                            background-color: transparent !important;
+                            color: $text-dark !important;
+                            font-size: $font-size-sm !important;
+                        }
+
+                        // Coluna de seleção por radio
+                        td.c0,
+                        td:first-child:has(input[type="radio"]) {
+                            width: 48px !important;
+                            min-width: 48px !important;
+                            max-width: 48px !important;
+                            text-align: center !important;
+                            padding: 12px 8px !important;
+
+                            input[type="radio"] {
+                                width: 18px !important;
+                                height: 18px !important;
+                                margin: 0 auto !important;
+                                display: inline-block !important;
+                                vertical-align: middle !important;
+                                accent-color: $blue-warm-vivid-70 !important;
+                                cursor: pointer !important;
+                            }
+                        }
+                    }
+
+                    tr:last-child td {
+                        border-bottom: none !important;
+                    }
+                }
+            }
+        }
+
+        // Barra de pesquisa dentro da etapa de destino
+        .rcs-search,
+        .ics-search,
+        .simplesearchform {
+            width: 100% !important;
+            max-width: 320px !important;
+            margin-top: 0.25rem !important;
+
+            .input-group {
+                display: flex !important;
+                align-items: center !important;
+                width: 100% !important;
+
+                input.form-control {
+                    border: $border-width-thin solid $border-default !important;
+                    border-radius: $border-radius-default 0 0 $border-radius-default !important;
+                    height: 38px !important;
+                    padding: 6px 12px !important;
+                    font-size: $font-size-sm !important;
+
+                    &:focus {
+                        border-color: $blue-warm-vivid-70 !important;
+                        box-shadow: $focus-ring-blue !important;
+                    }
+                }
+
+                button.btn,
+                .btn-submit {
+                    border: $border-width-thin solid $border-default !important;
+                    border-left: none !important;
+                    border-radius: 0 $border-radius-default $border-radius-default 0 !important;
+                    background-color: $bg-light-gray !important;
+                    height: 38px !important;
+                    padding: 0 12px !important;
+                    color: $text-medium !important;
+                    cursor: pointer !important;
+
+                    &:hover {
+                        background-color: $blue-warm-vivid-10 !important;
+                        color: $blue-warm-vivid-70 !important;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ------------------------------------------------------------
+// 5. Etapas 3 e 4: Formulários de Configuração e Esquema (mform)
+// Alinhamento harmonioso com ícone/checkbox à esquerda e rótulo na coluna
+// ------------------------------------------------------------
+.path-backup .mform {
+    fieldset {
+        border: $border-width-thin solid $border-outer !important;
+        border-radius: $border-radius-sm !important;
+        padding: 20px 24px !important;
+        background-color: $bg-white !important;
+        margin-bottom: 1.5rem !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+
+        legend.ftoggler,
+        legend {
+            font-family: $font-family-rawline !important;
+            font-size: 1.25rem !important;
+            font-weight: $font-weight-bold !important;
+            color: $blue-warm-vivid-90 !important;
+            padding: 0 8px !important;
+            border-bottom: none !important;
+            width: auto !important;
+            float: none !important;
+        }
+    }
+
+    .fcontainer {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0 !important;
+
+        .root_setting,
+        .grouped_settings {
+            width: 100% !important;
+
+            .fitem {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                padding: 8px 12px !important;
+                margin: 0 !important;
+                border-bottom: 1px solid #f0f0f0 !important;
+                min-height: 42px !important;
+                transition: background-color $transition-fast !important;
+
+                &:hover {
+                    background-color: rgba($blue-warm-vivid-10, 0.4) !important;
+                }
+
+                // 1. Itens estáticos (ex: Configuração bloqueada com X vermelho)
+                &:has(.felement[data-fieldtype="static"]) {
+                    .col-md-9.felement {
+                        order: 1 !important;
+                        flex: 0 0 28px !important;
+                        max-width: 28px !important;
+                        width: 28px !important;
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        margin-right: 8px !important;
+                        padding: 0 !important;
+
+                        .icon,
+                        .fa-times,
+                        .fa-xmark,
+                        .text-danger,
+                        img.icon {
+                            color: $color-error !important;
+                            font-size: 15px !important;
+                        }
+
+                        .fa-check,
+                        .text-success {
+                            color: $green-cool-vivid-60 !important;
+                            font-size: 15px !important;
+                        }
+
+                        .lockedicon {
+                            color: $text-muted !important;
+                            font-size: 13px !important;
+                            margin-left: 4px !important;
+                        }
+                    }
+
+                    .col-md-3.col-form-label {
+                        order: 2 !important;
+                        flex: 1 1 auto !important;
+                        max-width: calc(100% - 36px) !important;
+                        width: auto !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+
+                        label {
+                            font-size: $font-size-sm !important;
+                            font-weight: $font-weight-medium !important;
+                            color: $text-dark !important;
+                            margin-bottom: 0 !important;
+                        }
+                    }
+                }
+
+                // 2. Itens Checkbox ([✓] Rótulo)
+                &:has(input[type="checkbox"]) {
+                    .col-md-3.col-form-label {
+                        display: none !important;
+                    }
+
+                    .col-md-9.felement {
+                        order: 1 !important;
+                        flex: 1 1 100% !important;
+                        max-width: 100% !important;
+                        width: 100% !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+
+                        .form-check {
+                            display: inline-flex !important;
+                            align-items: center !important;
+                            gap: 12px !important;
+                            margin: 0 !important;
+                            padding-left: 4px !important;
+
+                            input[type="checkbox"] {
+                                width: 18px !important;
+                                height: 18px !important;
+                                margin: 0 !important;
+                                flex-shrink: 0 !important;
+                                accent-color: $blue-warm-vivid-70 !important;
+                                cursor: pointer !important;
+                            }
+
+                            label.form-check-label {
+                                font-size: $font-size-sm !important;
+                                font-weight: $font-weight-medium !important;
+                                color: $text-dark !important;
+                                margin-bottom: 0 !important;
+                                cursor: pointer !important;
+                                line-height: 1.4 !important;
+                            }
+                        }
+                    }
+                }
+
+                // 3. Itens Select (Dropdown alinhado com o texto)
+                &:has(select) {
+                    justify-content: space-between !important;
+
+                    .col-md-3.col-form-label {
+                        order: 1 !important;
+                        flex: 0 0 auto !important;
+                        max-width: 70% !important;
+                        padding: 0 0 0 32px !important; // Mesmo recuo para alinhar o texto com os outros
+                        margin: 0 !important;
+
+                        label {
+                            font-size: $font-size-sm !important;
+                            font-weight: $font-weight-medium !important;
+                            color: $text-dark !important;
+                            margin-bottom: 0 !important;
+                        }
+                    }
+
+                    .col-md-9.felement {
+                        order: 2 !important;
+                        flex: 0 0 auto !important;
+                        margin-left: auto !important;
+                        padding: 0 !important;
+
+                        select {
+                            height: 36px !important;
+                            font-size: $font-size-sm !important;
+                            border-radius: $border-radius-default !important;
+                            border: $border-width-thin solid $border-default !important;
+                            padding: 4px 28px 4px 10px !important;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Seções de Atividades (Etapa 4 - Esquema)
+        .grouped_settings.section_level {
+            background-color: $bg-white !important;
+            border: $border-width-thin solid $border-default !important;
+            border-radius: $border-radius-sm !important;
+            margin-bottom: 1.5rem !important;
+            padding: 16px 20px !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+
+            > .include_setting {
+                font-weight: $font-weight-bold !important;
+                font-size: 1.05rem !important;
+                color: $blue-warm-vivid-90 !important;
+                padding-bottom: 10px !important;
+                margin-bottom: 8px !important;
+                border-bottom: 2px solid $blue-warm-vivid-20 !important;
+            }
+        }
+
+        .grouped_settings.activity_level {
+            background-color: $bg-gray !important;
+            border-left: 3px solid $blue-warm-vivid-70 !important;
+            margin: 4px 0 !important;
+            border-radius: $border-radius-none !important;
+
+            &:hover {
+                background-color: rgba($blue-warm-vivid-10, 0.7) !important;
+            }
+        }
+    }
+}
+
+// ------------------------------------------------------------
+// 6. Botões de Ação do Rodapé de Backup e Restauração
+// ------------------------------------------------------------
+.path-backup {
+    #fgroup_id_buttonar,
+    .fitem_actionbuttons,
+    div[id^="fgroup_id_button"],
+    .form-buttons,
+    .backup-restore .singlebutton,
+    .continuebutton {
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        gap: 12px !important;
+        margin-top: 1.5rem !important;
+        padding-top: 1rem !important;
+        border-top: none !important;
+
+        .col-md-3 {
+            display: none !important;
+        }
+
+        .col-md-9,
+        .felement {
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            display: flex !important;
+            justify-content: flex-end !important;
+            align-items: center !important;
+            gap: 12px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .felement > div {
+            display: flex !important;
+            justify-content: flex-end !important;
+            align-items: center !important;
+            gap: 12px !important;
+            margin-left: auto !important;
+        }
+
+        input[type="submit"],
+        input[type="button"],
+        button,
+        a.btn {
+            border-radius: $border-radius-pill !important;
+            font-weight: $font-weight-semibold !important;
+            padding: 8px 24px !important;
+            font-size: $font-size-base !important;
+            height: auto !important;
+            margin: 0 !important;
+            transition: background-color $transition-fast, border-color $transition-fast, color $transition-fast !important;
+        }
+
+        // Botão Cancelar / Voltar
+        input[name="cancel"],
+        button[name="cancel"],
+        input[name="previous"],
+        button[name="previous"],
+        .btn-secondary {
+            background-color: transparent !important;
+            border: $border-width-medium solid $blue-warm-vivid-70 !important;
+            color: $blue-warm-vivid-70 !important;
+
+            &:hover,
+            &:focus {
+                background-color: $blue-warm-vivid-10 !important;
+                color: $blue-warm-vivid-90 !important;
+                border-color: $blue-warm-vivid-90 !important;
+            }
+        }
+
+        // Botão Avançar / Concluir / Próximo
+        input[name="submitbutton"],
+        input[name="oneclickbackup"],
+        .btn-primary,
+        .proceedbutton {
+            background-color: $blue-warm-vivid-70 !important;
+            border: $border-width-medium solid $blue-warm-vivid-70 !important;
+            color: $text-light !important;
+
+            &:hover,
+            &:focus {
+                background-color: $blue-warm-vivid-90 !important;
+                border-color: $blue-warm-vivid-90 !important;
+            }
+        }
+    }
+}

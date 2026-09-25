@@ -1,0 +1,256 @@
+/** Tipos compartilhados do painel mobilemoodle (só TypeScript — não vira JS).
+ *
+ * Declara shapes usados em vários módulos:
+ *   DashboardData, CourseData, MobileMoodleApp, MobileMoodleApi…
+ *
+ * O runtime usa window.MobileMoodle / window.MobileMoodleApi (ver namespace.ts e api.ts).
+ */
+
+interface ApiErrorShape {
+    status: number;
+    title: string;
+    message: string;
+    retryable: boolean;
+}
+
+interface DashboardCourse {
+    id: number | string;
+    name?: string;
+    fullname?: string;
+    shortname?: string;
+    progress?: number | null;
+    hasprogress?: boolean;
+    moodle?: string;
+    environment?: string;
+    ambiente?: { titulo?: string; id?: number };
+    isfavourite?: boolean;
+    favourite?: boolean;
+    is_enrolled?: boolean;
+    enrolled?: boolean;
+    details_url?: string;
+    /** URL Moodle do curso (course/view.php?id=…). */
+    viewurl?: string;
+    /** courseid Moodle (quando veio do Painel AVA). */
+    moodle_course_id?: number;
+    /** Origem do AVA (ex.: https://presencial.ava.ifrn.edu.br). */
+    moodle_site_url?: string;
+    /** ID do diário no SUAP, quando conhecido. */
+    diario_id?: number;
+    /** Fonte dos dados: painel (Moodle) ou suap. */
+    source?: 'painel' | 'suap';
+}
+
+interface DashboardData {
+    nome?: string;
+    username?: string;
+    foto_url?: string;
+    foto?: string;
+    avatar_url?: string;
+    papel?: string;
+    role?: string;
+    filtro_situacao?: string;
+    situacao?: string;
+    filter_situacao?: string;
+    filtro_label?: string;
+    situacao_label?: string;
+    total_courses?: number;
+    courses?: DashboardCourse[];
+    diarios?: DashboardCourse[];
+    autoinscricoes?: DashboardCourse[];
+    self_enrolments?: DashboardCourse[];
+    source?: 'painel' | 'suap';
+}
+
+interface CourseActivity {
+    name?: string;
+    title?: string;
+    modname?: string;
+    module?: string;
+    type?: string;
+    completion?: boolean;
+    /** URL absoluta para abrir o recurso (material/trabalho SUAP ou AVA). */
+    url?: string;
+    id?: number | string;
+}
+
+interface CourseSection {
+    name?: string;
+    activities?: CourseActivity[];
+    modules?: CourseActivity[];
+    cms?: CourseActivity[];
+}
+
+interface CourseData {
+    id?: number | string;
+    name?: string;
+    teacher?: string;
+    workload?: string;
+    progress?: number;
+    moodle?: string;
+    summary?: string;
+    description?: string;
+    sections?: CourseSection[];
+    /** Link externo (AVA/Moodle ou turma no SUAP) quando disponível. */
+    external_url?: string;
+    moodle_course_id?: number;
+    moodle_site_url?: string;
+    source?: 'painel' | 'suap';
+}
+
+type PainelTabKey = 'diarios' | 'autoinscricoes';
+
+type RouteInfo =
+    | { name: 'painel' }
+    | { name: 'curso'; courseId: number }
+    | { name: 'notfound' };
+
+type FilterSituacao = 'inprogress' | 'allincludinghidden' | 'favourites' | 'hidden';
+
+interface ActiveFilter {
+    situacao: FilterSituacao | string;
+    label: string;
+}
+
+type SidebarModalType = 'profile' | 'help' | 'accessibility' | 'filter';
+
+type A11yBoolKey =
+    | 'dyslexia_friendly'
+    | 'remove_justify'
+    | 'highlight_links'
+    | 'stop_animations'
+    | 'hidden_illustrative_image'
+    | 'big_cursor'
+    | 'vlibras_active'
+    | 'high_line_height';
+
+type ColorMode = 'default' | 'high_contrast' | 'low_contrast' | 'colorblind' | 'grayscale';
+
+interface A11yState {
+    dyslexia_friendly: boolean;
+    remove_justify: boolean;
+    highlight_links: boolean;
+    stop_animations: boolean;
+    hidden_illustrative_image: boolean;
+    big_cursor: boolean;
+    vlibras_active: boolean;
+    high_line_height: boolean;
+    zoom_level: number;
+    color_mode: ColorMode;
+}
+
+interface A11yModule {
+    init: () => void;
+    bindPanel: () => void;
+    syncPanel: () => void;
+    getState: () => A11yState;
+    COLOR_MODE_LABELS: Record<ColorMode, string>;
+}
+
+interface MobileMoodleApp {
+    content: HTMLElement | null;
+    title: HTMLElement | null;
+    subtitle: HTMLElement | null;
+    menuUserInfo: HTMLElement | null;
+    toolbarAvatar: HTMLElement | null;
+    templatesRoot: HTMLElement | null;
+    dashboardCache: DashboardData | null;
+    sidebarUserName?: string;
+    dashboardPapel?: string;
+    activePainelTab?: PainelTabKey;
+    activeFilter?: ActiveFilter;
+    ASSET_BASE?: string;
+    resolveLoginUrl?: () => string;
+    resolveMoodleOpenUrl?: (courseId: number | string, courseName?: string, siteUrl?: string) => string;
+    A11y?: A11yModule;
+    FILTER_LABELS?: Record<string, string>;
+    logout?: () => void;
+    bindSidebar?: () => void;
+    escapeHtml?: (value: unknown) => string;
+    initials?: (name: unknown) => string;
+    cloneTemplate?: (id: string) => DocumentFragment | null;
+    fetchText?: (url: string) => Promise<string>;
+    showLoading?: (message?: string) => void;
+    markLoadingStart?: () => void;
+    waitLoadingMinimum?: (force?: boolean) => Promise<void>;
+    showNotFound?: () => void;
+    showStatusError?: (error: ApiErrorShape | Error | unknown) => void;
+    loadRoute?: (force: boolean) => Promise<void>;
+    parseRoute?: () => RouteInfo;
+    setUser?: (dashboard: DashboardData) => void;
+    renderPainel?: (dashboard: DashboardData) => void;
+    renderCurso?: (course: CourseData, dashboard: DashboardData) => void;
+    closeSidebarModal?: () => void;
+    openSidebarModal?: (type: SidebarModalType) => void;
+    applyUserFilter?: (dashboard: DashboardData) => void;
+    updateFilterChip?: () => void;
+    onFilterChange?: (filter: ActiveFilter) => void;
+}
+
+interface CourseCacheEntry {
+    value: CourseData | null;
+    fetchedAt: number;
+    inFlight: Promise<CourseData> | null;
+}
+
+interface MobileMoodleNamespace {
+    App: MobileMoodleApp;
+    ApiError: new (status: number, detail?: string) => ApiErrorShape & Error;
+    messageForStatus: (status: number, detail?: string) => string;
+    titleForStatus: (status: number) => string;
+    isRetryable: (status: number) => boolean;
+    TOKEN_KEY: string;
+    isValidToken: (token: string) => boolean;
+    getToken: () => string | null;
+    setToken: (token: string) => boolean;
+    clearToken: () => void;
+    setApiBaseUrl: (url: string) => void;
+    joinUrl: (path: string) => string;
+    request: (
+        path: string,
+        options?: RequestInit & { softAuth?: boolean },
+    ) => Promise<unknown>;
+    fetchSuapDashboard: () => Promise<DashboardData>;
+    fetchSuapCourse: (courseId: string) => Promise<CourseData>;
+    fetchPainelDashboard: () => Promise<DashboardData>;
+    hasPainelSession: () => boolean;
+    getPainelToken: () => string | null;
+    invalidateCache: () => void;
+    getDashboard: (force?: boolean) => Promise<DashboardData>;
+    getCourse: (courseId: string | number, force?: boolean) => Promise<CourseData>;
+    getCoursesList: () => Promise<DashboardCourse[]>;
+}
+
+interface MobileMoodleApiPublic {
+    setApiBaseUrl: (url: string) => void;
+    getToken: () => string | null;
+    setToken: (token: string) => boolean;
+    clearToken: () => void;
+    invalidateCache: () => void;
+    getCoursesList: () => Promise<DashboardCourse[]>;
+    getDashboard: (force?: boolean) => Promise<DashboardData>;
+    getCourse: (courseId: string | number, force?: boolean) => Promise<CourseData>;
+}
+
+interface Window {
+    MobileMoodle: MobileMoodleNamespace;
+    MobileMoodleApi: MobileMoodleApiPublic;
+    totalpave?: {
+        Inset: {
+            create: (config: {
+                mask: number;
+                includeRoundedCorners?: boolean;
+            }) => Promise<{
+                getInset: () => { top: number; right: number; bottom: number; left: number };
+                addListener: (callback: (inset: {
+                    top: number;
+                    right: number;
+                    bottom: number;
+                    left: number;
+                }) => void) => void;
+            }>;
+        };
+    };
+    VLibras?: {
+        Widget: new (url: string) => unknown;
+    };
+}
