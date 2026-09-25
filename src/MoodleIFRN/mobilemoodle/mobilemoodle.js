@@ -650,7 +650,7 @@
    *
    * Cada diário traz courseid Moodle (`id`), viewurl e diario_id SUAP.
    */
-  var PAINEL_BASE = "https://painel.ead.ifrn.edu.br";
+  var PAINEL_BASE = "http://127.0.0.1:8000";
   var PAINEL_TOKEN_KEY = "ifrn_painel_token";
   var PAINEL_PROFILE_KEY = "ifrn_painel_profile";
   var REQUEST_TIMEOUT_MS2 = 15e3;
@@ -1023,7 +1023,7 @@
       return "/#/login/ifrn-login";
     }
   }
-  function resolveMoodleOpenUrl(courseId, courseName) {
+  function resolveMoodleOpenUrl(courseId, courseName, siteUrl) {
     const id = Number(courseId);
     if (Number.isFinite(id) && id > 0) {
       try {
@@ -1031,7 +1031,8 @@
           "ifrn_moodle_pending_open_course",
           JSON.stringify({
             courseId: id,
-            courseName: courseName || void 0
+            courseName: courseName || void 0,
+            siteUrl: siteUrl || void 0
           })
         );
       } catch {
@@ -1671,7 +1672,11 @@
       openMoodle.hidden = false;
       openMoodle.onclick = (event) => {
         event.preventDefault();
-        const url = typeof App.resolveMoodleOpenUrl === "function" ? App.resolveMoodleOpenUrl(moodleCourseId, course.name || dashboardCourse?.name) : `/#/login/moodle-open-course?courseId=${moodleCourseId}`;
+        const url = typeof App.resolveMoodleOpenUrl === "function" ? App.resolveMoodleOpenUrl(
+          moodleCourseId,
+          course.name || dashboardCourse?.name,
+          course.moodle_site_url || dashboardCourse?.moodle_site_url
+        ) : `/#/login/moodle-open-course?courseId=${moodleCourseId}`;
         window.location.assign(url);
       };
     } else if (openMoodle) {

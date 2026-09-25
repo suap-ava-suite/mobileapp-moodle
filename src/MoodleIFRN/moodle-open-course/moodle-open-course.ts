@@ -47,6 +47,7 @@ export class MoodleOpenCoursePage implements OnInit {
     formError = '';
     courseId = 0;
     courseName = '';
+    moodleSiteUrl = '';
 
     async ngOnInit(): Promise<void> {
         await CorePlatform.ready();
@@ -62,6 +63,19 @@ export class MoodleOpenCoursePage implements OnInit {
             this.courseId = pending.courseId;
             this.courseName = pending.courseName || this.courseName;
         }
+
+        this.moodleSiteUrl = pending?.siteUrl || this.siteUrl;
+
+        // Diagnóstico temporário do fluxo Painel -> Moodle.
+        // Não registra tokens nem credenciais.
+        // eslint-disable-next-line no-console
+        console.log('[IFRN-OPEN] courseId =', this.courseId);
+        // eslint-disable-next-line no-console
+        console.log('[IFRN-OPEN] courseName =', this.courseName);
+        // eslint-disable-next-line no-console
+        console.log('[IFRN-OPEN] siteUrl =', this.moodleSiteUrl);
+        // eslint-disable-next-line no-console
+        console.log('[IFRN-OPEN] pending =', pending);
 
         if (!this.courseId) {
             this.formError = 'Nenhum curso Moodle informado.';
@@ -98,23 +112,32 @@ export class MoodleOpenCoursePage implements OnInit {
             return;
         }
 
+        // eslint-disable-next-line no-console
+        console.log('[IFRN-OPEN] connectAndOpen iniciado');
+        // eslint-disable-next-line no-console
+        console.log(
+            '[IFRN-OPEN] hasSession =',
+            this.moodleSite.hasPresencialSession(this.moodleSiteUrl),
+        );
+
         this.formError = '';
         this.loading = true;
-        this.statusMessage = this.moodleSite.hasPresencialSession()
+        this.statusMessage = this.moodleSite.hasPresencialSession(this.moodleSiteUrl)
             ? `Abrindo curso ${this.courseId}…`
             : 'Conectando ao Moodle via SUAP OAuth…';
 
         const modal = await CoreLoadings.show(
-            this.moodleSite.hasPresencialSession()
+            this.moodleSite.hasPresencialSession(this.moodleSiteUrl)
                 ? 'Abrindo curso…'
                 : 'Autenticando no Moodle…',
         );
 
         try {
-            if (options.resumeAfterSwitch || !this.moodleSite.hasPresencialSession()) {
+            if (options.resumeAfterSwitch || !this.moodleSite.hasPresencialSession(this.moodleSiteUrl)) {
                 this.moodleSite.setPendingOpenCourse({
                     courseId: this.courseId,
                     courseName: this.courseName,
+                    siteUrl: this.moodleSiteUrl,
                 });
 
                 const result = await this.moodleSite.startSuapOAuthLogin({

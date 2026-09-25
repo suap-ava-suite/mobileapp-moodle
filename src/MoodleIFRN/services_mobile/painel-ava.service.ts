@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { HttpBackend, HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, map, switchMap, timeout, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { CoreWS } from '@services/ws';
+import { Observable, catchError, from, map, switchMap, timeout, throwError } from 'rxjs';
 
 import { PAINEL_AVA_CONFIG } from './painel-ava.config';
 
@@ -91,18 +92,6 @@ const DIARIO_INTEREST_KEYS = [
     'turma',
 ] as const;
 
-function jsonHeaders(): HttpHeaders {
-    return new HttpHeaders()
-        .set('Content-Type', 'application/json')
-        .set('Accept', 'application/json');
-}
-
-function bearerHeaders(access: string): HttpHeaders {
-    return new HttpHeaders()
-        .set('Accept', 'application/json')
-        .set('Authorization', `Bearer ${access}`);
-}
-
 function readJwtPayload(token: string): Record<string, unknown> | null {
     try {
         const part = token.split('.')[1];
@@ -153,6 +142,37 @@ function describeHttpError(error: unknown, fallback: string): Error {
         return new Error(detail || `${fallback} (HTTP ${error.status}).`);
     }
 
+    // NativeHttp rejeita com um objeto de resposta, não com HttpErrorResponse.
+    if (isPlainObject(error) && typeof error['status'] === 'number') {
+        const status = error['status'];
+        const raw = error['error'];
+        let payload: Record<string, unknown> | null = isPlainObject(raw) ? raw : null;
+
+        if (!payload && typeof raw === 'string') {
+            try {
+                const parsed: unknown = JSON.parse(raw);
+                payload = isPlainObject(parsed) ? parsed : null;
+            } catch {
+                // Corpo não-JSON: usa apenas status/fallback.
+            }
+        }
+
+        const detail = payload && (
+            (typeof payload['detail'] === 'string' && payload['detail'])
+            || (typeof payload['message'] === 'string' && payload['message'])
+        );
+
+        if (status === 401 || status === 403 || status === 428) {
+            return new Error(detail || 'Sessão/credenciais inválidas no Painel AVA (v1).');
+        }
+
+        if (status <= 0) {
+            return new Error('Falha de rede ao falar com o Painel AVA.');
+        }
+
+        return new Error(detail || `${fallback} (HTTP ${status}).`);
+    }
+
     if (error instanceof Error) {
         return error;
     }
@@ -162,6 +182,45 @@ function describeHttpError(error: unknown, fallback: string): Error {
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
     return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+/**
+ * Gera um diagnóstico seguro do erro HTTP para o log temporário do APK.
+ * Remove campos sensíveis e limita o tamanho do corpo retornado pelo servidor.
+ */
+function getSafeHttpErrorDiagnostic(error: unknown): { status: number | string; body: string } {
+    let status: number | string = 'desconhecido';
+    let raw: unknown = null;
+
+    if (error instanceof HttpErrorResponse) {
+        status = error.status;
+        raw = error.error;
+    } else if (isPlainObject(error)) {
+        status = typeof error['status'] === 'number' ? error['status'] : 'desconhecido';
+        raw = error['error'] ?? error['data'] ?? null;
+    }
+
+    let body: string;
+
+    try {
+        body = typeof raw === 'string' ? raw : JSON.stringify(raw);
+    } catch {
+        body = '[corpo não serializável]';
+    }
+
+    if (!body) {
+        body = '[sem corpo de resposta]';
+    }
+
+    // Evita que credenciais/tokens eventualmente ecoados pelo backend apareçam no adb logcat.
+    body = body
+        .replace(/(\"?(?:password|senha|token|access_token|refresh_token|authorization)\"?\s*[:=]\s*\"?)[^\",}\s]+/gi, '$1[REDACTED]')
+        .replace(/Bearer\s+[A-Za-z0-9._~+\/-]+/gi, 'Bearer [REDACTED]');
+
+    return {
+        status,
+        body: body.slice(0, 4000),
+    };
 }
 
 function collectUrlFields(
@@ -275,8 +334,6 @@ function profileUsernameHint(profile: Record<string, unknown> | null, fallback: 
 })
 export class PainelAvaService {
 
-    private readonly http = new HttpClient(inject(HttpBackend));
-
     /**
      * Troca IFRN-id/senha por JWT do Painel (valida no SUAP no servidor).
      * Endpoint: POST /api/v1/authenticate/
@@ -287,25 +344,50 @@ export class PainelAvaService {
     }): Observable<PainelAvaAuthResponse> {
         const url = `${PAINEL_AVA_CONFIG.baseUrl}${PAINEL_AVA_CONFIG.authenticatePath}`;
 
-        return this.http.post<PainelAvaAuthResponse>(
-            url,
-            {
+        // Diagnóstico temporário para APK production. Não imprime senha, token ou Authorization.
+        // eslint-disable-next-line no-console
+        console.log('[IFRN-TEST] Iniciando autenticação Painel AVA v1');
+
+        return from(CoreWS.sendHTTPRequest<PainelAvaAuthResponse>(url, {
+            method: 'post',
+            data: {
                 username: credentials.username.trim(),
                 password: credentials.password,
             },
-            { headers: jsonHeaders() },
-        ).pipe(
-            map((response) => {
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
+            serializer: 'json',
+            responseType: 'json',
+            timeout: REQUEST_TIMEOUT_MS / 1000,
+        })).pipe(
+            map((httpResponse) => {
+                const response = httpResponse.body;
+
                 if (!response?.token || !isValidPainelToken(response.token)) {
                     throw new Error('Painel AVA v1 não retornou token válido.');
                 }
 
+                // eslint-disable-next-line no-console
+                console.log('[IFRN-TEST] Painel AVA autenticado com sucesso');
+
                 return response;
             }),
-            catchError((error) => throwError(() => describeHttpError(
-                error,
-                'Falha em POST /api/v1/authenticate/',
-            ))),
+            catchError((error) => {
+                const diagnostic = getSafeHttpErrorDiagnostic(error);
+                const safeError = describeHttpError(error, 'Falha em POST /api/v1/authenticate/');
+
+                // Diagnóstico temporário: status e corpo retornado pelo servidor, sem credenciais/tokens.
+                // eslint-disable-next-line no-console
+                console.log('[IFRN-TEST] POST authenticate status:', diagnostic.status);
+                // eslint-disable-next-line no-console
+                console.log('[IFRN-TEST] POST authenticate resposta:', diagnostic.body);
+                // eslint-disable-next-line no-console
+                console.log('[IFRN-TEST] Falha na autenticação Painel AVA:', safeError.message);
+
+                return throwError(() => safeError);
+            }),
             timeout(REQUEST_TIMEOUT_MS),
         );
     }
@@ -330,11 +412,29 @@ export class PainelAvaService {
             : '';
         const url = `${PAINEL_AVA_CONFIG.baseUrl}${PAINEL_AVA_CONFIG.diariosPath}${query}`;
 
-        return this.http.get<unknown>(url, {
-            headers: bearerHeaders(access),
-        }).pipe(
-            map((raw) => {
+        // eslint-disable-next-line no-console
+        console.log('[IFRN-TEST] Consultando /api/v1/diarios/');
+
+        return from(CoreWS.sendHTTPRequest<unknown>(url, {
+            method: 'get',
+            headers: {
+                Accept: 'application/json',
+                Authorization: `Bearer ${access}`,
+            },
+            responseType: 'json',
+            timeout: REQUEST_TIMEOUT_MS / 1000,
+        })).pipe(
+            map((httpResponse) => {
+                const raw = httpResponse.body;
                 const extracted = extractDiariosList(raw);
+
+                // eslint-disable-next-line no-console
+                console.log('[IFRN-TEST] Quantidade de diários:', extracted.diarios.length);
+                extracted.diarios.forEach((diario, index) => {
+                    // Somente campos úteis para mapear diário -> curso Moodle.
+                    // eslint-disable-next-line no-console
+                    console.log(`[IFRN-TEST] Diário ${index}:`, pickExistingInterest(diario));
+                });
 
                 return {
                     raw,
@@ -342,11 +442,60 @@ export class PainelAvaService {
                     diarios: extracted.diarios,
                 };
             }),
-            catchError((error) => throwError(() => describeHttpError(
-                error,
-                'Falha em GET /api/v1/diarios/',
-            ))),
+            catchError((error) => {
+                const safeError = describeHttpError(error, 'Falha em GET /api/v1/diarios/');
+                // eslint-disable-next-line no-console
+                console.log('[IFRN-TEST] Falha ao consultar diários:', safeError.message);
+
+                return throwError(() => safeError);
+            }),
             timeout(REQUEST_TIMEOUT_MS),
+        );
+    }
+
+    /**
+     * Inspeciona os diários usando a sessão Painel AVA já autenticada.
+     * Não faz novo login e nunca registra o JWT no console.
+     */
+    inspectDiarios(accessToken?: string): Observable<PainelAvaV1PocResult> {
+        const profile = this.getProfile();
+
+        return this.getDiarios(accessToken).pipe(
+            map((payload) => {
+                const propertyUnion = new Set<string>();
+
+                for (const diario of payload.diarios) {
+                    Object.keys(diario).forEach((key) => propertyUnion.add(key));
+                }
+
+                const diariosResumo = payload.diarios.map((diario, index) => ({
+                    _index: index,
+                    _keys: Object.keys(diario),
+                    ...pickExistingInterest(diario),
+                }));
+
+                const result: PainelAvaV1PocResult = {
+                    baseUrl: PAINEL_AVA_CONFIG.baseUrl,
+                    authenticatePath: PAINEL_AVA_CONFIG.authenticatePath,
+                    diariosUrl:
+                        `${PAINEL_AVA_CONFIG.baseUrl}${PAINEL_AVA_CONFIG.diariosPath}`
+                        + (PAINEL_AVA_CONFIG.diariosQuery
+                            ? `?${PAINEL_AVA_CONFIG.diariosQuery}`
+                            : ''),
+                    usernameHint: profileUsernameHint(profile, '(sessão existente)'),
+                    tokenStored: this.hasValidToken(),
+                    profileKeys: profile ? Object.keys(profile) : [],
+                    responseTopKeys: payload.topKeys,
+                    diariosCount: payload.diarios.length,
+                    diarioPropertyUnion: Array.from(propertyUnion).sort(),
+                    diarios: payload.diarios,
+                    diariosResumo,
+                };
+
+                this.logDiariosToConsole(result, payload.raw);
+
+                return result;
+            }),
         );
     }
 

@@ -11,7 +11,7 @@
  */
 import { MM } from './namespace';
 
-const PAINEL_BASE = 'https://painel.ead.ifrn.edu.br';
+const PAINEL_BASE = 'http://127.0.0.1:8000';
 const PAINEL_TOKEN_KEY = 'ifrn_painel_token';
 const PAINEL_PROFILE_KEY = 'ifrn_painel_profile';
 const REQUEST_TIMEOUT_MS = 15000;

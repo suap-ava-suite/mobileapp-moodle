@@ -283,6 +283,9 @@ export class AuthService {
      * Token fica só no sessionStorage (mesma origem) — não vai na URL.
      */
     openMobileMoodle(hash = '/painel'): void {
+        console.log('[IFRN-NAV] openMobileMoodle chamado');
+        console.log('[IFRN-NAV] hash =', hash);
+        console.trace('[IFRN-NAV] origem do openMobileMoodle');
         const token = this.getToken();
 
         if (!token) {

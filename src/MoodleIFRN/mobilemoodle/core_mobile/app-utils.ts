@@ -100,7 +100,7 @@ import { MM, App } from './namespace';
      * Abre a rota Ionic que estabelece sessão Moodle e abre o courseid nativo.
      * O courseId vai em sessionStorage (hash do Ionic não propaga query de forma confiável).
      */
-    function resolveMoodleOpenUrl(courseId: number | string, courseName?: string): string {
+    function resolveMoodleOpenUrl(courseId: number | string, courseName?: string, siteUrl?: string): string {
         const id = Number(courseId);
 
         if (Number.isFinite(id) && id > 0) {
@@ -110,6 +110,7 @@ import { MM, App } from './namespace';
                     JSON.stringify({
                         courseId: id,
                         courseName: courseName || undefined,
+                        siteUrl: siteUrl || undefined,
                     }),
                 );
             } catch {

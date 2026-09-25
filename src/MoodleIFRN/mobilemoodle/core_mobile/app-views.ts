@@ -636,7 +636,11 @@ import { MM, App } from './namespace';
                 event.preventDefault();
 
                 const url = typeof App.resolveMoodleOpenUrl === 'function'
-                    ? App.resolveMoodleOpenUrl(moodleCourseId, course.name || dashboardCourse?.name)
+                    ? App.resolveMoodleOpenUrl(
+                        moodleCourseId,
+                        course.name || dashboardCourse?.name,
+                        course.moodle_site_url || dashboardCourse?.moodle_site_url,
+                    )
                     : `/#/login/moodle-open-course?courseId=${moodleCourseId}`;
 
                 window.location.assign(url);

@@ -454,6 +454,23 @@ export class IfrnLoginPage implements OnInit {
             this.logger.debug(
                 `[IFRN] Sessão Painel AVA v1 vinculada (${PAINEL_AVA_CONFIG.baseUrl}).`,
             );
+
+            // Usa a sessão recém-criada para validar /api/v1/diarios/ sem
+            // pedir IFRN-id/senha novamente. É diagnóstico best-effort:
+            // uma falha na listagem não deve bloquear o login principal.
+            try {
+                const diarios = await firstValueFrom(
+                    this.painelAvaService.inspectDiarios(painel.token),
+                );
+                this.logger.debug(
+                    `[IFRN] Painel AVA v1: ${diarios.diariosCount} diário(s) retornado(s).`,
+                );
+            } catch (error) {
+                this.logger.warn(
+                    '[IFRN] Sessão Painel AVA criada, mas /api/v1/diarios/ falhou; seguindo com o login.',
+                    error,
+                );
+            }
         } catch (error) {
             this.painelAvaService.clearSession();
             this.logger.warn(

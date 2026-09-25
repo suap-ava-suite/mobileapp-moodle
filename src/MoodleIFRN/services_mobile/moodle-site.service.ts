@@ -146,7 +146,7 @@ export class MoodleSiteService {
 
         this.setPendingOpenCourse({ courseId, siteUrl });
 
-        if (this.hasPresencialSession()) {
+        if (this.hasPresencialSession(siteUrl)) {
             await this.openCourseById(courseId);
             this.clearPendingOpenCourse();
 
@@ -187,15 +187,14 @@ export class MoodleSiteService {
      * Há sessão Moodle ativa no site presencial?
      * (sessão restaurada pelo CoreSites — não implica OAuth do PoC).
      */
-    hasPresencialSession(): boolean {
+    hasPresencialSession(siteUrl = IFRN_MOODLE_PRESENCIAL_URL): boolean {
         const site = CoreSites.getCurrentSite();
 
         if (!site || !CoreSites.isLoggedIn() || site.isLoggedOut()) {
             return false;
         }
 
-        return CoreUrl.sameDomainAndPath(site.getURL(), IFRN_MOODLE_PRESENCIAL_URL)
-            || site.getURL().includes('presencial.ava.ifrn.edu.br');
+        return CoreUrl.sameDomainAndPath(site.getURL(), siteUrl);
     }
 
     /**
@@ -254,7 +253,8 @@ export class MoodleSiteService {
 
         sessionStorage.removeItem(POC_RESUME_OAUTH_KEY);
 
-        const siteCheck = await this.checkPresencialSite();
+        const targetSiteUrl = this.getPendingOpenCourse()?.siteUrl || IFRN_MOODLE_PRESENCIAL_URL;
+        const siteCheck = await this.checkPresencialSite(targetSiteUrl);
         const provider = await this.findSuapProvider(siteCheck);
 
         if (!provider) {
@@ -364,9 +364,9 @@ export class MoodleSiteService {
     /**
      * checkSite no AVA-Presencial (public config + typeoflogin).
      */
-    async checkPresencialSite(): Promise<CoreSiteCheckResponse> {
+    async checkPresencialSite(siteUrl = IFRN_MOODLE_PRESENCIAL_URL): Promise<CoreSiteCheckResponse> {
         return CoreSites.checkSite(
-            IFRN_MOODLE_PRESENCIAL_URL,
+            siteUrl,
             'https://',
             'IFRN Moodle PoC',
         );
