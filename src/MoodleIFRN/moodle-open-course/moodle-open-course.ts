@@ -23,14 +23,15 @@ import { CoreNavigator } from '@services/navigator';
 import { CoreAlerts } from '@services/overlays/alerts';
 import { CoreLoadings } from '@services/overlays/loadings';
 import { CorePlatform } from '@services/platform';
+import { CorePromiseUtils } from '@static/promise-utils';
 
 /**
- * Produção: abre diario.id (Moodle courseid) via CoreSites + CoreCourseHelper.
- * Entrada: clique “Abrir no Moodle” no painel mobilemoodle.
- * Rota: /login/moodle-open-course (PathLocationStrategy, sem #).
+ * Ponte mínima IFRN → Moodle Mobile nativo.
  *
- * Equivalente ao Painel web (viewurl), mas nativo:
- *   diário.id → pending → identidade → getUserCourses → getAndOpenCourse(id)
+ * Responsabilidade: identidade + courseId → handoff ao core.
+ * Depois disso o Moodle App assume (seções, módulos, handlers nativos).
+ *
+ * Rota: /login/moodle-open-course (intermediária; sai com reset ao abrir).
  */
 @Component({
     selector: 'page-moodle-open-course',
@@ -116,7 +117,6 @@ export class MoodleOpenCoursePage implements OnInit {
 
         this.initStarted = true;
 
-        // Retorno do switch-account (logout oficial → redirect com startOAuth).
         const startOAuth = CoreNavigator.getRouteBooleanParam('startOAuth')
             || this.moodleSite.shouldResumeOAuthAfterSiteSwitch();
 
@@ -134,7 +134,6 @@ export class MoodleOpenCoursePage implements OnInit {
             return;
         }
 
-        // Volta ao painel HTML (mesma origem).
         const base = document.querySelector('base')?.getAttribute('href') || '/';
         const root = base.endsWith('/') ? base : `${base}/`;
         window.location.assign(`${root}mobilemoodle/index.html#/painel`);
@@ -153,7 +152,6 @@ export class MoodleOpenCoursePage implements OnInit {
         const modal = await CoreLoadings.show('Abrindo curso Moodle…');
 
         try {
-            // Retorno do switch-account: OAuth direto (pending já deve existir).
             if (options.resumeAfterSwitch) {
                 this.statusMessage = 'Abrindo autenticação Moodle (SUAP)…';
                 this.moodleSite.setPendingOpenCourse({
@@ -171,7 +169,11 @@ export class MoodleOpenCoursePage implements OnInit {
                 return;
             }
 
-            this.statusMessage = 'Verificando sessão Moodle…';
+            this.statusMessage = 'Preparando sessão Moodle…';
+
+            // Fecha o loading da ponte ANTES do handoff nativo (evita overlay
+            // cobrindo seções/módulos se a página ainda estiver no stack).
+            await modal.dismiss();
 
             const result = await this.moodleSite.ensureSessionAndOpenCourse(
                 this.courseId,
@@ -180,7 +182,7 @@ export class MoodleOpenCoursePage implements OnInit {
             );
 
             if (result === 'opened') {
-                this.statusMessage = 'Curso aberto.';
+                this.statusMessage = 'Curso aberto no Moodle Mobile.';
 
                 return;
             }
@@ -204,7 +206,7 @@ export class MoodleOpenCoursePage implements OnInit {
                 default: 'Não foi possível abrir o curso Moodle.',
             });
         } finally {
-            modal.dismiss();
+            await CorePromiseUtils.ignoreErrors(Promise.resolve(modal.dismiss()));
             this.loading = false;
 
             if (this.moodleSite.lastError && !this.formError) {
@@ -224,7 +226,7 @@ export class MoodleOpenCoursePage implements OnInit {
             return 'Autenticação Moodle já em andamento no navegador.';
         }
 
-        return 'Complete o login SUAP (identity provider) no navegador. Depois o app reabre e abre o curso sozinho.';
+        return 'Complete o login SUAP no navegador. O app reabre e entrega o curso ao Moodle Mobile.';
     }
 
 }

@@ -822,9 +822,14 @@ export class MoodleSiteService {
     }
 
     /**
-     * Abre um courseid específico com CoreCourseHelper.getAndOpenCourse.
-     * Só abre se course.id === courseId em CoreCourses.getUserCourses().
-     * Nunca escolhe outro curso por nome/aproximação.
+     * Abre um courseid específico entregando ao Moodle Mobile nativo.
+     *
+     * Fora do main menu (ex.: /login/moodle-open-course), usa o mesmo padrão
+     * do deep link oficial: navigateToSitePath + reset → /main → getAndOpenCourse.
+     * Assim a página intermediária NÃO fica na stack cobrindo a UI nativa.
+     *
+     * Dentro do main menu: CoreCourseHelper.getAndOpenCourse (igual “Meus cursos”).
+     * Só abre se course.id === courseId em getUserCourses(). Sem aproximação por nome.
      */
     async openCourseById(courseId: number): Promise<number> {
         this.lastError = '';
@@ -852,6 +857,7 @@ export class MoodleSiteService {
             isLoggedIn: true,
             matchedVia: match.matchedVia,
             siteUrl: CoreSites.getCurrentSite()?.getURL() || null,
+            siteIdPresent: !!CoreSites.getCurrentSiteId(),
         }));
 
         let courses: MoodlePocCourseSummary[];
@@ -894,11 +900,28 @@ export class MoodleSiteService {
             throw new Error(message);
         }
 
+        const siteId = CoreSites.getCurrentSiteId();
+        const onMainMenu = !!CoreNavigator.getCurrentMainMenuTab();
+
         // eslint-disable-next-line no-console
-        console.log(COURSE_LOG, 'chamando getAndOpenCourse', { courseId });
+        console.log(COURSE_LOG, 'chamando getAndOpenCourse', JSON.stringify({
+            courseId,
+            siteIdPresent: !!siteId,
+            onMainMenu,
+            handoff: onMainMenu ? 'getAndOpenCourse' : 'navigateToSitePath-reset',
+        }));
 
         try {
-            await CoreCourseHelper.getAndOpenCourse(courseId);
+            if (!onMainMenu) {
+                // Sai de /login/*, limpa stack (MoodleOpenCoursePage/overlays) e
+                // deixa o MainMenuDeepLinkManager chamar getAndOpenCourse nativo.
+                await CoreNavigator.navigateToSitePath(`course/${courseId}`, {
+                    reset: true,
+                    animated: false,
+                });
+            } else {
+                await CoreCourseHelper.getAndOpenCourse(courseId, {}, siteId);
+            }
         } catch (error) {
             // eslint-disable-next-line no-console
             console.error(COURSE_LOG, 'getAndOpenCourse erro', {

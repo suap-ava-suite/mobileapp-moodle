@@ -926,7 +926,7 @@
         moodle_site_url: fromPainel.moodle_site_url,
         source: "painel",
         sections: [],
-        summary: "Toque em \u201CAbrir no Moodle\u201D para o conte\xFAdo nativo do AVA."
+        summary: "Toque no card do curso para abrir o conte\xFAdo nativo do Moodle Mobile."
       };
       entry.value = course;
       entry.fetchedAt = Date.now();
@@ -1334,7 +1334,7 @@
     const favBtn = fragment.querySelector(".painel-card-details-info-favourite");
     const progressBlock = fragment.querySelector(".painel-card-details-progress");
     if (link) {
-      link.href = "#/curso/" + encodeURIComponent(String(course.id));
+      wireCourseCardOpen(link, course);
     }
     if (cardTitle) {
       cardTitle.textContent = itemName(course);
@@ -1366,6 +1366,28 @@
       }
     }
     return fragment;
+  }
+  function wireCourseCardOpen(link, course) {
+    const moodleCourseId = course.moodle_course_id ?? (course.source === "painel" ? Number(course.id) : NaN);
+    const moodleSiteUrl = course.moodle_site_url;
+    const canOpenNative = Number.isFinite(moodleCourseId) && moodleCourseId > 0 && !!moodleSiteUrl;
+    if (canOpenNative && typeof App.resolveMoodleOpenUrl === "function") {
+      link.href = "#";
+      link.setAttribute("role", "button");
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        console.log("[IFRN-COURSE] courseId recebido do Painel =", moodleCourseId);
+        window.location.assign(
+          App.resolveMoodleOpenUrl(
+            moodleCourseId,
+            course.name || course.fullname,
+            moodleSiteUrl
+          )
+        );
+      });
+      return;
+    }
+    link.href = "#/curso/" + encodeURIComponent(String(course.id));
   }
   function buildAutoinscricaoCard(course) {
     const fragment = App.cloneTemplate("tpl-painel-card-autoinscricao");
@@ -1670,27 +1692,7 @@
     const dashboardCourse = (dashboard.courses || dashboard.diarios || []).find(
       (item) => String(item.id) === courseId
     );
-    const moodleCourseId = course.moodle_course_id ?? dashboardCourse?.moodle_course_id ?? (dashboardCourse?.source === "painel" || course.source === "painel" ? Number(courseId) : void 0);
-    const moodleSiteUrl = course.moodle_site_url || dashboardCourse?.moodle_site_url;
     const externalUrl = course.external_url || dashboardCourse?.viewurl || dashboardCourse?.details_url || "https://suap.ifrn.edu.br/edu/meus_diarios/";
-    const openMoodle = document.getElementById("curso-open-moodle");
-    const canOpenNative = !!moodleCourseId && Number.isFinite(moodleCourseId) && moodleCourseId > 0 && !!moodleSiteUrl;
-    if (openMoodle && canOpenNative) {
-      openMoodle.hidden = false;
-      openMoodle.onclick = (event) => {
-        event.preventDefault();
-        console.log("[IFRN-COURSE] courseId recebido do Painel =", moodleCourseId);
-        const url = typeof App.resolveMoodleOpenUrl === "function" ? App.resolveMoodleOpenUrl(
-          moodleCourseId,
-          course.name || dashboardCourse?.name,
-          moodleSiteUrl
-        ) : "/login/moodle-open-course";
-        window.location.assign(url);
-      };
-    } else if (openMoodle) {
-      openMoodle.hidden = true;
-      openMoodle.onclick = null;
-    }
     const openExternal = document.getElementById("curso-open-external");
     if (openExternal && externalUrl) {
       openExternal.hidden = false;

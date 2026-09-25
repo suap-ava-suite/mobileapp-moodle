@@ -167,7 +167,7 @@ import { MM } from './namespace';
                 moodle_site_url: fromPainel.moodle_site_url,
                 source: 'painel',
                 sections: [],
-                summary: 'Toque em “Abrir no Moodle” para o conteúdo nativo do AVA.',
+                summary: 'Toque no card do curso para abrir o conteúdo nativo do Moodle Mobile.',
             };
 
             entry.value = course;
