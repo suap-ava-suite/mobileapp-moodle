@@ -354,11 +354,14 @@ export class PainelAvaService {
                 username: credentials.username.trim(),
                 password: credentials.password,
             },
+            // O endpoint v1 do Painel recebe credenciais como formulário.
+            // Não usar JSON aqui: no backend Django isso pode deixar request.POST vazio
+            // e resultar em HTTP 500 antes mesmo da validação no SUAP.
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
                 Accept: 'application/json',
             },
-            serializer: 'json',
+            serializer: 'urlencoded',
             responseType: 'json',
             timeout: REQUEST_TIMEOUT_MS / 1000,
         })).pipe(

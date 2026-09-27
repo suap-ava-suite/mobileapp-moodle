@@ -11,24 +11,7 @@ const entry = join(root, 'mobilemoodle.ts');
 const outfile = join(root, 'mobilemoodle.js');
 const cwd = join(root, '../../..');
 
-const banner = `/*!
- * mobilemoodle.js — bundle do Painel AVA (IFRN)
- * ----------------------------------------------------------------------------
- * IMPORTANTE: este é o único JS que o index.html carrega no navegador.
- * Sem ele o painel não autentica, não busca diários no SUAP e não renderiza UI.
- *
- * Origem: compilação de mobilemoodle.ts + core_mobile/*.ts (esbuild IIFE).
- * NÃO edite a lógica aqui — altere os .ts e rode: npm run build:mobilemoodle
- *
- * Ordem dos módulos no bundle:
- *   namespace → api-errors → api-auth → api-http → api-suap → api
- *   → app-utils → app-status → app-views → app-router
- *   → app-accessibility → app-sidebar → app-keyboard → app (bootstrap)
- *
- * Globais expostas:
- *   window.MobileMoodle     — namespace interno (MM / App)
- *   window.MobileMoodleApi  — fachada pública (token, dashboard, curso)
- */`;
+const banner = '/* mobilemoodle.js - bundle gerado do Painel AVA (IFRN). Edite os arquivos .ts e rode npm run build:mobilemoodle. */';
 
 const result = spawnSync(
     'npx',
