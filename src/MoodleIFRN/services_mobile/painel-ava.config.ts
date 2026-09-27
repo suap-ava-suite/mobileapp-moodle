@@ -22,7 +22,7 @@
  */
 export const PAINEL_AVA_CONFIG = {
     /** Base URL do Painel AVA (sem barra final). */
-    baseUrl: 'http://127.0.0.1:8000',
+    baseUrl: 'https://painel.ead.ifrn.edu.br',
 
     /** Autenticação mobile do Painel (credenciais SUAP → JWT do Painel). */
     authenticatePath: '/api/v1/authenticate/',

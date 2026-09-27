@@ -3,9 +3,9 @@
  * ----------------------------------------------------------------------------
  * Fachada de dados do painel + cache em memória.
  *
- * Preferência:
- *   1. Painel AVA (/api/v1/diarios/) — courseid Moodle real
- *   2. Fallback SUAP (/api/ensino/…) — só metadados acadêmicos
+ * Fonte do painel:
+ *   Painel AVA (/api/v1/diarios/) — courseid Moodle real.
+ *   Não usa fallback SUAP para cards: sem sessão Painel, mostra erro em vez de curso falso.
  *
  * Cache:
  *   - TTL 60s
@@ -49,19 +49,20 @@ import { MM } from './namespace';
     }
 
     /**
-     * Painel AVA primeiro; se falhar ou não houver JWT do Painel, usa SUAP.
+     * Cards de curso vêm exclusivamente do Painel AVA, porque somente esse
+     * contrato fornece o courseid/viewurl reais do Moodle.
+     * Não mascarar falha com diários SUAP (IDs acadêmicos != courseid Moodle).
      */
     async function fetchDashboardPreferPainel(): Promise<DashboardData> {
-        if (typeof MM.hasPainelSession === 'function' && MM.hasPainelSession()) {
-            try {
-                return await MM.fetchPainelDashboard();
-            } catch (error) {
-                // eslint-disable-next-line no-console
-                console.warn('[Painel AVA] Falha ao listar diários; fallback SUAP.', error);
-            }
+        if (typeof MM.hasPainelSession !== 'function' || !MM.hasPainelSession()) {
+            // eslint-disable-next-line no-console
+            console.error('[IFRN-PANEL] sessão Painel AVA ausente — fallback SUAP desativado');
+            throw new MM.ApiError(401, 'Sessão do Painel AVA ausente. Entre novamente para carregar os cursos reais do Moodle.');
         }
 
-        return MM.fetchSuapDashboard();
+        // eslint-disable-next-line no-console
+        console.log('[IFRN-PANEL] buscando diarios no Painel AVA');
+        return MM.fetchPainelDashboard();
     }
 
     /**

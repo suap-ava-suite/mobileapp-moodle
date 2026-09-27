@@ -211,41 +211,76 @@ import { MM, App } from './namespace';
     }
 
     /**
-     * Toque no card → ponte Moodle nativo quando há courseid + site reais.
-     * Sem botão “Abrir no Moodle”; sem montar UI própria de conteúdo.
+     * Origem do site a partir do viewurl do diário (se houver).
+     * Localhost/mock: ainda passa a origem — o Ionic resolveMoodleSiteUrl
+     * troca para o AVA real; não bloquear o handoff aqui.
+     */
+    function siteUrlFromCourse(course: DashboardCourse): string | undefined {
+        if (course.moodle_site_url) {
+            return course.moodle_site_url;
+        }
+
+        const viewurl = course.viewurl || course.details_url;
+
+        if (!viewurl || !/^https?:\/\//i.test(viewurl)) {
+            return undefined;
+        }
+
+        try {
+            return new URL(viewurl).origin;
+        } catch {
+            return undefined;
+        }
+    }
+
+    /**
+     * Toque no card → SEMPRE handoff Moodle Mobile nativo.
+     * Nunca navega para #/curso/… (tela customizada de conteúdo é caminho errado).
      */
     function wireCourseCardOpen(link: HTMLAnchorElement, course: DashboardCourse): void {
         const moodleCourseId = course.moodle_course_id
             ?? (course.source === 'painel' ? Number(course.id) : NaN);
-        const moodleSiteUrl = course.moodle_site_url;
-        const canOpenNative =
-            Number.isFinite(moodleCourseId)
-            && moodleCourseId > 0
-            && !!moodleSiteUrl;
+        const moodleSiteUrl = siteUrlFromCourse(course);
 
-        if (canOpenNative && typeof App.resolveMoodleOpenUrl === 'function') {
-            link.href = '#';
-            link.setAttribute('role', 'button');
-            link.addEventListener('click', (event) => {
-                event.preventDefault();
+        link.href = '#';
+        link.setAttribute('role', 'button');
+        link.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
 
+            // eslint-disable-next-line no-console
+            console.log('[IFRN-COURSE] card-click');
+
+            if (!Number.isFinite(moodleCourseId) || moodleCourseId <= 0) {
                 // eslint-disable-next-line no-console
-                console.log('[IFRN-COURSE] courseId recebido do Painel =', moodleCourseId);
-
-                window.location.assign(
-                    App.resolveMoodleOpenUrl!(
-                        moodleCourseId,
-                        course.name || course.fullname,
-                        moodleSiteUrl,
-                    ),
+                console.warn(
+                    '[IFRN-COURSE] card sem moodle_course_id — não abre detalhe SPA',
+                    { id: course.id, source: course.source },
                 );
-            });
 
-            return;
-        }
+                return;
+            }
 
-        // Fallback (ex.: só SUAP sem viewurl Moodle): detalhe local legado.
-        link.href = '#/curso/' + encodeURIComponent(String(course.id));
+            if (typeof App.resolveMoodleOpenUrl !== 'function') {
+                // eslint-disable-next-line no-console
+                console.warn('[IFRN-COURSE] resolveMoodleOpenUrl ausente no bundle');
+
+                return;
+            }
+
+            // eslint-disable-next-line no-console
+            console.log('[IFRN-COURSE] courseId recebido do Painel =', moodleCourseId);
+            // eslint-disable-next-line no-console
+            console.log('[IFRN-COURSE] leaving-mobilemoodle');
+
+            window.location.assign(
+                App.resolveMoodleOpenUrl!(
+                    moodleCourseId,
+                    course.name || course.fullname,
+                    moodleSiteUrl,
+                ),
+            );
+        });
     }
 
     /** Card de autoinscrição (botões matricula/acesso — API ainda mockada com alert). */
@@ -265,12 +300,9 @@ import { MM, App } from './namespace';
         const btnEnroll = fragment.querySelector('.btn-enroll') as HTMLElement | null;
         const btnAccess = fragment.querySelector('.btn-access') as HTMLElement | null;
         const btnUnenroll = fragment.querySelector('.btn-unenroll') as HTMLElement | null;
-        const courseId = course.id;
 
         if (link) {
-            link.href = course.details_url
-                ? course.details_url
-                : '#/curso/' + encodeURIComponent(String(courseId));
+            wireCourseCardOpen(link, course);
         }
 
         if (cardTitle) {
@@ -300,10 +332,35 @@ import { MM, App } from './namespace';
 
         if (btnAccess) {
             btnAccess.hidden = !enrolled;
-            btnAccess.setAttribute(
-                'href',
-                '#/curso/' + encodeURIComponent(String(courseId)),
-            );
+            btnAccess.removeAttribute('href');
+            btnAccess.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                // eslint-disable-next-line no-console
+                console.log('[IFRN-COURSE] card-click');
+
+                const moodleCourseId = course.moodle_course_id
+                    ?? (course.source === 'painel' ? Number(course.id) : NaN);
+
+                if (
+                    !Number.isFinite(moodleCourseId)
+                    || moodleCourseId <= 0
+                    || typeof App.resolveMoodleOpenUrl !== 'function'
+                ) {
+                    return;
+                }
+
+                // eslint-disable-next-line no-console
+                console.log('[IFRN-COURSE] leaving-mobilemoodle');
+                window.location.assign(
+                    App.resolveMoodleOpenUrl!(
+                        moodleCourseId,
+                        course.name || course.fullname,
+                        siteUrlFromCourse(course),
+                    ),
+                );
+            });
         }
 
         if (btnUnenroll) {

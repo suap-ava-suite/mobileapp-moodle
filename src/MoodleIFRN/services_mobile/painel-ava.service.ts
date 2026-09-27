@@ -347,6 +347,8 @@ export class PainelAvaService {
         // Diagnóstico temporário para APK production. Não imprime senha, token ou Authorization.
         // eslint-disable-next-line no-console
         console.log('[IFRN-TEST] Iniciando autenticação Painel AVA v1');
+        // eslint-disable-next-line no-console
+        console.log('[IFRN-TEST] destino authenticate:', url);
 
         return from(CoreWS.sendHTTPRequest<PainelAvaAuthResponse>(url, {
             method: 'post',

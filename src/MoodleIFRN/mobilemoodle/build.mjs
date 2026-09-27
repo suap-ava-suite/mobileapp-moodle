@@ -11,8 +11,6 @@ const entry = join(root, 'mobilemoodle.ts');
 const outfile = join(root, 'mobilemoodle.js');
 const cwd = join(root, '../../..');
 
-const banner = '/* mobilemoodle.js - bundle gerado do Painel AVA (IFRN). Edite os arquivos .ts e rode npm run build:mobilemoodle. */';
-
 const result = spawnSync(
     'npx',
     [
@@ -25,7 +23,6 @@ const result = spawnSync(
         '--target=es2020',
         '--log-level=warning',
         '--legal-comments=inline',
-        `--banner:js=${banner}`,
     ],
     { stdio: 'inherit', cwd },
 );

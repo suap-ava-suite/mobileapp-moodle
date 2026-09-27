@@ -1,4 +1,3 @@
-/* mobilemoodle.js - bundle gerado do Painel AVA (IFRN). Edite os arquivos .ts e rode npm run build:mobilemoodle. */
 "use strict";
 (() => {
   // src/MoodleIFRN/mobilemoodle/core_mobile/namespace.ts
@@ -794,9 +793,9 @@
    * ----------------------------------------------------------------------------
    * Fachada de dados do painel + cache em memória.
    *
-   * Preferência:
-   *   1. Painel AVA (/api/v1/diarios/) — courseid Moodle real
-   *   2. Fallback SUAP (/api/ensino/…) — só metadados acadêmicos
+   * Fonte do painel:
+   *   Painel AVA (/api/v1/diarios/) — courseid Moodle real.
+   *   Não usa fallback SUAP para cards: sem sessão Painel, mostra erro em vez de curso falso.
    *
    * Cache:
    *   - TTL 60s
@@ -826,14 +825,12 @@
     courseCache.clear();
   }
   async function fetchDashboardPreferPainel() {
-    if (typeof MM.hasPainelSession === "function" && MM.hasPainelSession()) {
-      try {
-        return await MM.fetchPainelDashboard();
-      } catch (error) {
-        console.warn("[Painel AVA] Falha ao listar di\xE1rios; fallback SUAP.", error);
-      }
+    if (typeof MM.hasPainelSession !== "function" || !MM.hasPainelSession()) {
+      console.error("[IFRN-PANEL] sess\xE3o Painel AVA ausente \u2014 fallback SUAP desativado");
+      throw new MM.ApiError(401, "Sess\xE3o do Painel AVA ausente. Entre novamente para carregar os cursos reais do Moodle.");
     }
-    return MM.fetchSuapDashboard();
+    console.log("[IFRN-PANEL] buscando diarios no Painel AVA");
+    return MM.fetchPainelDashboard();
   }
   function getDashboard(force = false) {
     if (DEMO_FORCE_500) {
@@ -1350,27 +1347,50 @@
     }
     return fragment;
   }
+  function siteUrlFromCourse(course) {
+    if (course.moodle_site_url) {
+      return course.moodle_site_url;
+    }
+    const viewurl = course.viewurl || course.details_url;
+    if (!viewurl || !/^https?:\/\//i.test(viewurl)) {
+      return void 0;
+    }
+    try {
+      return new URL(viewurl).origin;
+    } catch {
+      return void 0;
+    }
+  }
   function wireCourseCardOpen(link, course) {
     const moodleCourseId = course.moodle_course_id ?? (course.source === "painel" ? Number(course.id) : NaN);
-    const moodleSiteUrl = course.moodle_site_url;
-    const canOpenNative = Number.isFinite(moodleCourseId) && moodleCourseId > 0 && !!moodleSiteUrl;
-    if (canOpenNative && typeof App.resolveMoodleOpenUrl === "function") {
-      link.href = "#";
-      link.setAttribute("role", "button");
-      link.addEventListener("click", (event) => {
-        event.preventDefault();
-        console.log("[IFRN-COURSE] courseId recebido do Painel =", moodleCourseId);
-        window.location.assign(
-          App.resolveMoodleOpenUrl(
-            moodleCourseId,
-            course.name || course.fullname,
-            moodleSiteUrl
-          )
+    const moodleSiteUrl = siteUrlFromCourse(course);
+    link.href = "#";
+    link.setAttribute("role", "button");
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      console.log("[IFRN-COURSE] card-click");
+      if (!Number.isFinite(moodleCourseId) || moodleCourseId <= 0) {
+        console.warn(
+          "[IFRN-COURSE] card sem moodle_course_id \u2014 n\xE3o abre detalhe SPA",
+          { id: course.id, source: course.source }
         );
-      });
-      return;
-    }
-    link.href = "#/curso/" + encodeURIComponent(String(course.id));
+        return;
+      }
+      if (typeof App.resolveMoodleOpenUrl !== "function") {
+        console.warn("[IFRN-COURSE] resolveMoodleOpenUrl ausente no bundle");
+        return;
+      }
+      console.log("[IFRN-COURSE] courseId recebido do Painel =", moodleCourseId);
+      console.log("[IFRN-COURSE] leaving-mobilemoodle");
+      window.location.assign(
+        App.resolveMoodleOpenUrl(
+          moodleCourseId,
+          course.name || course.fullname,
+          moodleSiteUrl
+        )
+      );
+    });
   }
   function buildAutoinscricaoCard(course) {
     const fragment = App.cloneTemplate("tpl-painel-card-autoinscricao");
@@ -1386,9 +1406,8 @@
     const btnEnroll = fragment.querySelector(".btn-enroll");
     const btnAccess = fragment.querySelector(".btn-access");
     const btnUnenroll = fragment.querySelector(".btn-unenroll");
-    const courseId = course.id;
     if (link) {
-      link.href = course.details_url ? course.details_url : "#/curso/" + encodeURIComponent(String(courseId));
+      wireCourseCardOpen(link, course);
     }
     if (cardTitle) {
       cardTitle.textContent = itemName(course);
@@ -1412,10 +1431,24 @@
     }
     if (btnAccess) {
       btnAccess.hidden = !enrolled;
-      btnAccess.setAttribute(
-        "href",
-        "#/curso/" + encodeURIComponent(String(courseId))
-      );
+      btnAccess.removeAttribute("href");
+      btnAccess.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        console.log("[IFRN-COURSE] card-click");
+        const moodleCourseId = course.moodle_course_id ?? (course.source === "painel" ? Number(course.id) : NaN);
+        if (!Number.isFinite(moodleCourseId) || moodleCourseId <= 0 || typeof App.resolveMoodleOpenUrl !== "function") {
+          return;
+        }
+        console.log("[IFRN-COURSE] leaving-mobilemoodle");
+        window.location.assign(
+          App.resolveMoodleOpenUrl(
+            moodleCourseId,
+            course.name || course.fullname,
+            siteUrlFromCourse(course)
+          )
+        );
+      });
     }
     if (btnUnenroll) {
       btnUnenroll.hidden = !enrolled;
