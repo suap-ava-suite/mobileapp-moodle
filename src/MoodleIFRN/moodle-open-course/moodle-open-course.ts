@@ -21,15 +21,13 @@ import {
 } from '@/MoodleIFRN/services_mobile/moodle-site.service';
 import { CoreNavigator } from '@services/navigator';
 import { CoreAlerts } from '@services/overlays/alerts';
-import { CoreLoadings } from '@services/overlays/loadings';
 import { CorePlatform } from '@services/platform';
-import { CorePromiseUtils } from '@static/promise-utils';
 
 /**
  * Ponte mínima IFRN → Moodle Mobile nativo.
  *
- * Responsabilidade: identidade + courseId → handoff ao core.
- * Depois disso o Moodle App assume (seções, módulos, handlers nativos).
+ * No fluxo feliz a UI fica silenciosa (só spinner). A tela de diagnóstico
+ * (“Abrir curso” / site / courseid / “Complete o login…”) só aparece em erro.
  *
  * Rota: /login/moodle-open-course (intermediária; sai com reset ao abrir).
  */
@@ -48,12 +46,17 @@ export class MoodleOpenCoursePage implements OnInit {
     readonly defaultSiteUrl = IFRN_MOODLE_PRESENCIAL_URL;
 
     loading = false;
-    statusMessage = '';
     formError = '';
     courseId = 0;
     courseName = '';
     /** Site Moodle realmente usado no CoreSites (nunca mock localhost). */
     moodleSiteUrl = IFRN_MOODLE_PRESENCIAL_URL;
+
+    /**
+     * true só quando há erro / mismatch e o usuário precisa recuperar.
+     * false = tela silenciosa enquanto OAuth / abertura do curso rodam.
+     */
+    showBridgeUi = false;
 
     /** Evita segundo ngOnInit disparar OAuth na mesma instância. */
     private initStarted = false;
@@ -94,11 +97,13 @@ export class MoodleOpenCoursePage implements OnInit {
         console.log('[IFRN-COURSE] courseId recebido do Painel =', this.courseId || null);
 
         if (this.moodleSite.lastError) {
-            this.formError = this.moodleSite.lastError;
+            this.revealBridgeError(this.moodleSite.lastError);
         }
 
         if (!this.courseId) {
-            this.formError = this.formError || 'Nenhum curso Moodle informado pelo Painel.';
+            this.revealBridgeError(
+                this.formError || 'Nenhum curso Moodle informado pelo Painel.',
+            );
 
             return;
         }
@@ -111,11 +116,17 @@ export class MoodleOpenCoursePage implements OnInit {
         ) {
             // eslint-disable-next-line no-console
             console.log('[IFRN-IDENTITY] auto-OAuth bloqueado (retorno / reentrância)');
+            this.showBridgeUi = true;
+
+            if (!this.formError && this.moodleSite.lastError) {
+                this.formError = this.moodleSite.lastError;
+            }
 
             return;
         }
 
         this.initStarted = true;
+        this.showBridgeUi = false;
 
         const startOAuth = CoreNavigator.getRouteBooleanParam('startOAuth')
             || this.moodleSite.shouldResumeOAuthAfterSiteSwitch();
@@ -145,35 +156,29 @@ export class MoodleOpenCoursePage implements OnInit {
         }
 
         this.formError = '';
+        this.showBridgeUi = false;
         this.moodleSite.lastError = '';
         this.moodleSite.identityMismatchPending = false;
         this.loading = true;
 
-        const modal = await CoreLoadings.show('Abrindo curso Moodle…');
+        // Sem overlay Ionic por cima — a própria página já é o loading silencioso.
+        // (Evita a tela “Abrir curso” + modal “Loading” das capturas.)
 
         try {
             if (options.resumeAfterSwitch) {
-                this.statusMessage = 'Abrindo autenticação Moodle (SUAP)…';
                 this.moodleSite.setPendingOpenCourse({
                     courseId: this.courseId,
                     courseName: this.courseName,
                     siteUrl: this.moodleSiteUrl,
                 });
 
-                const result = await this.moodleSite.startSuapOAuthLogin({
+                await this.moodleSite.startSuapOAuthLogin({
                     resumeAfterSwitch: true,
                 });
 
-                this.statusMessage = this.statusForOAuthResult(result);
-
+                // Browser aberto: mantém UI silenciosa até o deep link voltar.
                 return;
             }
-
-            this.statusMessage = 'Preparando sessão Moodle…';
-
-            // Fecha o loading da ponte ANTES do handoff nativo (evita overlay
-            // cobrindo seções/módulos se a página ainda estiver no stack).
-            await modal.dismiss();
 
             const result = await this.moodleSite.ensureSessionAndOpenCourse(
                 this.courseId,
@@ -182,14 +187,10 @@ export class MoodleOpenCoursePage implements OnInit {
             );
 
             if (result === 'opened') {
-                this.statusMessage = 'Curso aberto no Moodle Mobile.';
-
                 return;
             }
 
-            this.statusMessage = this.statusForOAuthResult(
-                result === 'browser-opened' ? 'opened' : result,
-            );
+            // OAuth no navegador / switch-account: continua silencioso.
         } catch (error) {
             // eslint-disable-next-line no-console
             console.error('[IFRN-SITE] connectAndOpen erro', {
@@ -198,35 +199,26 @@ export class MoodleOpenCoursePage implements OnInit {
                 courseId: this.courseId,
             });
 
-            this.statusMessage = '';
-            this.formError = error instanceof Error
-                ? error.message
-                : 'Não foi possível abrir o curso Moodle.';
+            this.revealBridgeError(
+                error instanceof Error
+                    ? error.message
+                    : 'Não foi possível abrir o curso Moodle.',
+            );
             void CoreAlerts.showError(error, {
                 default: 'Não foi possível abrir o curso Moodle.',
             });
         } finally {
-            await CorePromiseUtils.ignoreErrors(Promise.resolve(modal.dismiss()));
             this.loading = false;
 
             if (this.moodleSite.lastError && !this.formError) {
-                this.formError = this.moodleSite.lastError;
+                this.revealBridgeError(this.moodleSite.lastError);
             }
         }
     }
 
-    private statusForOAuthResult(
-        result: 'switched' | 'opened' | 'already-active',
-    ): string {
-        if (result === 'switched') {
-            return 'Trocando conta Moodle…';
-        }
-
-        if (result === 'already-active') {
-            return 'Autenticação Moodle já em andamento no navegador.';
-        }
-
-        return 'Complete o login SUAP no navegador. O app reabre e entrega o curso ao Moodle Mobile.';
+    private revealBridgeError(message: string): void {
+        this.formError = message;
+        this.showBridgeUi = true;
     }
 
 }
