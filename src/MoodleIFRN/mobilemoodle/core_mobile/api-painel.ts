@@ -2,19 +2,13 @@
  * api-painel.ts
  * ----------------------------------------------------------------------------
  * Consome o Painel AVA oficial (djangoapp-painel_ava):
- *   GET https://painel.ead.ifrn.edu.br/api/v1/diarios/
- *
- * Autenticação: JWT do Painel (POST /api/v1/authenticate/), NÃO o JWT SUAP
- * e NÃO wstoken Moodle.
- *
- * Cada diário traz courseid Moodle (`id`), viewurl e diario_id SUAP.
+ *   GET https://ava.ifrn.edu.br/api/v1/diarios/
  */
+
 import { MM } from './namespace';
 
-const PAINEL_BASE = 'http://127.0.0.1:8000';
-const PAINEL_TOKEN_KEY = 'ifrn_painel_token';
+const PAINEL_DASHBOARD_KEY = 'ifrn_painel_dashboard';
 const PAINEL_PROFILE_KEY = 'ifrn_painel_profile';
-const REQUEST_TIMEOUT_MS = 15000;
 
 interface PainelAmbiente {
     id?: number;
@@ -50,21 +44,30 @@ interface PainelDiariosResponse {
     praticas?: PainelDiario[];
 }
 
-function getPainelToken(): string | null {
-    const stored = sessionStorage.getItem(PAINEL_TOKEN_KEY);
+function readPainelDashboard(): PainelDiariosResponse | PainelDiario[] | null {
+    const raw = sessionStorage.getItem(PAINEL_DASHBOARD_KEY);
 
-    if (!stored) {
+    if (!raw) {
         return null;
     }
 
-    // Reusa validador JWT do painel (formato + exp).
-    if (typeof MM.isValidToken === 'function' && !MM.isValidToken(stored)) {
-        sessionStorage.removeItem(PAINEL_TOKEN_KEY);
+    try {
+        const parsed: unknown = JSON.parse(raw);
+
+        if (Array.isArray(parsed)) {
+            return parsed as PainelDiario[];
+        }
+
+        if (parsed && typeof parsed === 'object') {
+            return parsed as PainelDiariosResponse;
+        }
+
+        return null;
+    } catch {
+        sessionStorage.removeItem(PAINEL_DASHBOARD_KEY);
 
         return null;
     }
-
-    return stored;
 }
 
 function readPainelProfile(): Record<string, unknown> | null {
@@ -162,58 +165,6 @@ function mapPainelDiario(diario: PainelDiario): DashboardCourse {
     };
 }
 
-async function requestPainel(path: string): Promise<unknown> {
-    const token = getPainelToken();
-
-    if (!token) {
-        throw new MM.ApiError(401, 'Sessão do Painel AVA ausente.');
-    }
-
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => {
-        controller.abort();
-    }, REQUEST_TIMEOUT_MS);
-
-    let response: Response;
-
-    try {
-        response = await fetch(PAINEL_BASE + path, {
-            method: 'GET',
-            headers: {
-                Accept: 'application/json',
-                Authorization: 'Bearer ' + token,
-            },
-            credentials: 'omit',
-            cache: 'no-store',
-            signal: controller.signal,
-        });
-    } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') {
-            throw new MM.ApiError(408);
-        }
-
-        throw new MM.ApiError(0, 'Falha de rede ao consultar o Painel AVA.');
-    } finally {
-        window.clearTimeout(timeoutId);
-    }
-
-    if (response.status === 401 || response.status === 403 || response.status === 428) {
-        throw new MM.ApiError(response.status, 'Sessão do Painel AVA inválida.');
-    }
-
-    if (!response.ok) {
-        throw new MM.ApiError(response.status);
-    }
-
-    const contentType = response.headers.get('content-type') || '';
-
-    if (!contentType.includes('application/json')) {
-        throw new MM.ApiError(502, 'Resposta inválida do Painel AVA.');
-    }
-
-    return response.json();
-}
-
 function profileDisplayName(profile: Record<string, unknown> | null): string {
     if (!profile) {
         return 'Usuário';
@@ -232,10 +183,24 @@ function profileDisplayName(profile: Record<string, unknown> | null): string {
  * Dashboard a partir do Painel AVA (courseids Moodle reais).
  */
 async function fetchPainelDashboard(): Promise<DashboardData> {
-    const data = await requestPainel('/api/v1/diarios/?situacao=inprogress') as PainelDiariosResponse;
+    const data = readPainelDashboard();
+
+    if (!data) {
+        throw new MM.ApiError(401, 'Dados do Painel AVA ausentes.');
+    }
+
     const profile = readPainelProfile();
-    const diarios = (data.diarios || []).map(mapPainelDiario);
-    const autoinscricoes = (data.autoinscricoes || []).map(mapPainelDiario);
+    // O Angular obtém este JSON dentro de ava.ifrn.edu.br via OAuth/cookie e o
+    // salva em sessionStorage. O mobilemoodle apenas consome a cópia local.
+    const rawDiarios = Array.isArray(data) ? data : (data.diarios || []);
+    const rawAutoinscricoes = Array.isArray(data) ? [] : (data.autoinscricoes || []);
+
+    const diarios = rawDiarios.map(mapPainelDiario);
+    const autoinscricoes = rawAutoinscricoes.map(mapPainelDiario);
+    const courses = [...diarios, ...autoinscricoes];
+
+    // eslint-disable-next-line no-console
+    console.log(`[IFRN-PANEL] dashboard local carregado; ${diarios.length} diário(s)`);
 
     return {
         nome: profileDisplayName(profile),
@@ -246,18 +211,19 @@ async function fetchPainelDashboard(): Promise<DashboardData> {
             ? profile['url_foto_150x200']
             : (typeof profile?.['foto'] === 'string' ? profile['foto'] : undefined),
         papel: 'estudante',
-        total_courses: diarios.length,
-        courses: diarios,
+        total_courses: courses.length,
+        courses,
         diarios,
         autoinscricoes,
         source: 'painel',
     };
 }
 
+
 function hasPainelSession(): boolean {
-    return getPainelToken() !== null;
+    return readPainelDashboard() !== null;
 }
 
 MM.fetchPainelDashboard = fetchPainelDashboard;
 MM.hasPainelSession = hasPainelSession;
-MM.getPainelToken = getPainelToken;
+MM.getPainelToken = (): string | null => null;

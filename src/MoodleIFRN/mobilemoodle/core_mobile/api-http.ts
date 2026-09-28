@@ -14,7 +14,7 @@ import { MM } from './namespace';
     const DEFAULT_BASE_URL = '';
     const REQUEST_TIMEOUT_MS = 15000;
 
-    /** Origem da API (ex.: http://localhost:8000). Vazio = path relativo à página. */
+    /** Origem da API. Vazio = path relativo à página. */
     let baseUrl = DEFAULT_BASE_URL;
 
     /** Bloqueia base URL arbitrária (open redirect / SSRF no client). */
@@ -33,11 +33,11 @@ import { MM } from './namespace';
             }
 
             // Painel AVA (diários com courseid Moodle).
-            if (parsed.origin === 'https://painel.ead.ifrn.edu.br') {
+            if (parsed.origin === 'https://ava.ifrn.edu.br') {
                 return true;
             }
 
-            return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(parsed.origin);
+            return false;
         } catch {
             return false;
         }

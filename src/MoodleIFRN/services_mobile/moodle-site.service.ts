@@ -225,7 +225,7 @@ function identityLog(message: string, safePayload?: Record<string, unknown>): vo
  * Identificadores da MESMA sessão autenticada SUAP/Painel.
  *
  * Evidência de que pertencem à mesma pessoa: todos vêm do login atual
- * (ifrn_username e/ou perfil retornado por /api/v1/authenticate/ → SUAP meus-dados).
+ * (ifrn_username e/ou perfil/username retornado pelo Painel AVA → SUAP meus-dados).
  *
  * NÃO inclui nome, e-mail nem tokens.
  * Ordem: matrícula primeiro (alinhada ao username Moodle IFRN típico).

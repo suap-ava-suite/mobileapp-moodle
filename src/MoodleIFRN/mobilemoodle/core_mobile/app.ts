@@ -51,8 +51,8 @@ import { MM, App } from './namespace';
      * Base da API do painel: SUAP oficial (perfil / fallback de diários).
      * Diários com courseid Moodle vêm do Painel AVA quando há JWT do Painel.
      * Docs SUAP: https://suap.ifrn.edu.br/api/docs/
-     * Painel: https://painel.ead.ifrn.edu.br/api/v1/diarios/
-     */
+     * Painel: https://ava.ifrn.edu.br/api/v2/sala/tipo/diario/*/
+     
     function resolveApiBase(): string {
         return 'https://suap.ifrn.edu.br';
     }

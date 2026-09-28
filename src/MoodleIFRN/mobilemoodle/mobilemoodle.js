@@ -215,10 +215,10 @@
       if (parsed.origin === "https://suap.ifrn.edu.br") {
         return true;
       }
-      if (parsed.origin === "https://painel.ead.ifrn.edu.br") {
+      if (parsed.origin === "https://ava.ifrn.edu.br") {
         return true;
       }
-      return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(parsed.origin);
+      return false;
     } catch {
       return false;
     }
@@ -625,27 +625,28 @@
    * api-painel.ts
    * ----------------------------------------------------------------------------
    * Consome o Painel AVA oficial (djangoapp-painel_ava):
-   *   GET https://painel.ead.ifrn.edu.br/api/v1/diarios/
-   *
-   * Autenticação: JWT do Painel (POST /api/v1/authenticate/), NÃO o JWT SUAP
-   * e NÃO wstoken Moodle.
-   *
-   * Cada diário traz courseid Moodle (`id`), viewurl e diario_id SUAP.
+   *   GET https://ava.ifrn.edu.br/api/v1/diarios/
    */
-  var PAINEL_BASE = "http://127.0.0.1:8000";
-  var PAINEL_TOKEN_KEY = "ifrn_painel_token";
+  var PAINEL_DASHBOARD_KEY = "ifrn_painel_dashboard";
   var PAINEL_PROFILE_KEY = "ifrn_painel_profile";
-  var REQUEST_TIMEOUT_MS2 = 15e3;
-  function getPainelToken() {
-    const stored = sessionStorage.getItem(PAINEL_TOKEN_KEY);
-    if (!stored) {
+  function readPainelDashboard() {
+    const raw = sessionStorage.getItem(PAINEL_DASHBOARD_KEY);
+    if (!raw) {
       return null;
     }
-    if (typeof MM.isValidToken === "function" && !MM.isValidToken(stored)) {
-      sessionStorage.removeItem(PAINEL_TOKEN_KEY);
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+      if (parsed && typeof parsed === "object") {
+        return parsed;
+      }
+      return null;
+    } catch {
+      sessionStorage.removeItem(PAINEL_DASHBOARD_KEY);
       return null;
     }
-    return stored;
   }
   function readPainelProfile() {
     const raw = sessionStorage.getItem(PAINEL_PROFILE_KEY);
@@ -715,47 +716,6 @@
       source: "painel"
     };
   }
-  async function requestPainel(path) {
-    const token = getPainelToken();
-    if (!token) {
-      throw new MM.ApiError(401, "Sess\xE3o do Painel AVA ausente.");
-    }
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => {
-      controller.abort();
-    }, REQUEST_TIMEOUT_MS2);
-    let response;
-    try {
-      response = await fetch(PAINEL_BASE + path, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: "Bearer " + token
-        },
-        credentials: "omit",
-        cache: "no-store",
-        signal: controller.signal
-      });
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        throw new MM.ApiError(408);
-      }
-      throw new MM.ApiError(0, "Falha de rede ao consultar o Painel AVA.");
-    } finally {
-      window.clearTimeout(timeoutId);
-    }
-    if (response.status === 401 || response.status === 403 || response.status === 428) {
-      throw new MM.ApiError(response.status, "Sess\xE3o do Painel AVA inv\xE1lida.");
-    }
-    if (!response.ok) {
-      throw new MM.ApiError(response.status);
-    }
-    const contentType = response.headers.get("content-type") || "";
-    if (!contentType.includes("application/json")) {
-      throw new MM.ApiError(502, "Resposta inv\xE1lida do Painel AVA.");
-    }
-    return response.json();
-  }
   function profileDisplayName(profile) {
     if (!profile) {
       return "Usu\xE1rio";
@@ -764,28 +724,35 @@
     return typeof nome === "string" && nome.trim() ? nome.trim() : "Usu\xE1rio";
   }
   async function fetchPainelDashboard() {
-    const data = await requestPainel("/api/v1/diarios/?situacao=inprogress");
+    const data = readPainelDashboard();
+    if (!data) {
+      throw new MM.ApiError(401, "Dados do Painel AVA ausentes.");
+    }
     const profile = readPainelProfile();
-    const diarios = (data.diarios || []).map(mapPainelDiario);
-    const autoinscricoes = (data.autoinscricoes || []).map(mapPainelDiario);
+    const rawDiarios = Array.isArray(data) ? data : data.diarios || [];
+    const rawAutoinscricoes = Array.isArray(data) ? [] : data.autoinscricoes || [];
+    const diarios = rawDiarios.map(mapPainelDiario);
+    const autoinscricoes = rawAutoinscricoes.map(mapPainelDiario);
+    const courses = [...diarios, ...autoinscricoes];
+    console.log(`[IFRN-PANEL] dashboard local carregado; ${diarios.length} di\xE1rio(s)`);
     return {
       nome: profileDisplayName(profile),
       username: typeof profile?.["matricula"] === "string" ? profile["matricula"] : typeof profile?.["username"] === "string" ? profile["username"] : void 0,
       foto_url: typeof profile?.["url_foto_150x200"] === "string" ? profile["url_foto_150x200"] : typeof profile?.["foto"] === "string" ? profile["foto"] : void 0,
       papel: "estudante",
-      total_courses: diarios.length,
-      courses: diarios,
+      total_courses: courses.length,
+      courses,
       diarios,
       autoinscricoes,
       source: "painel"
     };
   }
   function hasPainelSession() {
-    return getPainelToken() !== null;
+    return readPainelDashboard() !== null;
   }
   MM.fetchPainelDashboard = fetchPainelDashboard;
   MM.hasPainelSession = hasPainelSession;
-  MM.getPainelToken = getPainelToken;
+  MM.getPainelToken = () => null;
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/api.ts
   /*!
@@ -794,18 +761,7 @@
    * Fachada de dados do painel + cache em memória.
    *
    * Fonte do painel:
-   *   Painel AVA (/api/v1/diarios/) — courseid Moodle real.
-   *   Não usa fallback SUAP para cards: sem sessão Painel, mostra erro em vez de curso falso.
-   *
-   * Cache:
-   *   - TTL 60s
-   *   - inFlight evita requests duplicados em paralelo
-   *   - cursos: Map com no máximo 40 entradas (FIFO simples)
-   *
-   * Também monta window.MobileMoodleApi (API pública para o app Ionic / login).
-   *
-   * DEMO_FORCE_500: deixe false em produção; true só para testar tela de erro.
-   */
+   *   Painel AVA (/api/v2/sala/tipo/diario/*/
   var CACHE_TTL_MS = 60 * 1e3;
   var MAX_COURSE_CACHE = 40;
   var DEMO_FORCE_500 = false;

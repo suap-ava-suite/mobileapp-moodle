@@ -14,26 +14,30 @@
 
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { CoreWS } from '@services/ws';
-import { Observable, catchError, from, map, switchMap, timeout, throwError } from 'rxjs';
+import { CoreOpener } from '@static/opener';
+import { Observable, map, of, throwError } from 'rxjs';
 
 import { PAINEL_AVA_CONFIG } from './painel-ava.config';
 
 /* eslint-disable @typescript-eslint/naming-convention */
-/** Resposta de POST /api/v1/authenticate/ (Painel AVA). */
+/** Resposta mobile de POST /api/v1/authenticate/. */
 export interface PainelAvaAuthResponse {
+    username?: string;
+    access?: string;
+    access_token?: string;
+    refresh?: string;
     token: string;
     data?: Record<string, unknown>;
 }
 
 /**
- * Item bruto de GET /api/v1/diarios/.
+ * Item bruto da listagem de diários do Painel AVA.
  * Campos tipados só como referência do que o cliente já observava;
  * o PoC registra as chaves realmente presentes na resposta.
  */
 export type PainelAvaDiarioRaw = Record<string, unknown>;
 
-/** Envelope observado / esperado de GET /api/v1/diarios/. */
+/** Envelope legado aceito por compatibilidade. */
 export interface PainelAvaDiariosResponse {
     diarios?: PainelAvaDiarioRaw[];
     autoinscricoes?: PainelAvaDiarioRaw[];
@@ -322,12 +326,9 @@ function profileUsernameHint(profile: Record<string, unknown> | null, fallback: 
 }
 
 /**
- * Cliente do Painel AVA — API v1 (produção).
+ * Cliente do Painel AVA — sessão web de produção.
  *
- * POST /api/v1/authenticate/ → JWT do Painel (+ data de perfil)
- * GET  /api/v1/diarios/       → diários agregados (tool_painelava)
- *
- * O JWT do Painel NÃO é wstoken Moodle nem o SimpleJWT do SUAP.
+ * OAuth SUAP no InAppBrowser → cookie de sessão do Painel → GET /api/v1/diarios/.
  */
 @Injectable({
     providedIn: 'root',
@@ -335,356 +336,246 @@ function profileUsernameHint(profile: Record<string, unknown> | null, fallback: 
 export class PainelAvaService {
 
     /**
-     * Troca IFRN-id/senha por JWT do Painel (valida no SUAP no servidor).
-     * Endpoint: POST /api/v1/authenticate/
+     * Abre o Painel AVA no InAppBrowser e deixa o próprio Painel executar o OAuth do SUAP.
+     * Depois que a sessão web existir, consulta /api/v1/diarios/ dentro da origem
+     * https://ava.ifrn.edu.br, sem copiar cookie, código OAuth ou senha para o app.
      */
-    authenticate(credentials: {
-        username: string;
-        password: string;
-    }): Observable<PainelAvaAuthResponse> {
-        const url = `${PAINEL_AVA_CONFIG.baseUrl}${PAINEL_AVA_CONFIG.authenticatePath}`;
-
-        // Diagnóstico temporário para APK production. Não imprime senha, token ou Authorization.
-        // eslint-disable-next-line no-console
-        console.log('[IFRN-TEST] Iniciando autenticação Painel AVA v1');
-        // eslint-disable-next-line no-console
-        console.log('[IFRN-TEST] destino authenticate:', url);
-
-        return from(CoreWS.sendHTTPRequest<PainelAvaAuthResponse>(url, {
-            method: 'post',
-            data: {
-                username: credentials.username.trim(),
-                password: credentials.password,
-            },
-            // O endpoint v1 do Painel recebe credenciais como formulário.
-            // Não usar JSON aqui: no backend Django isso pode deixar request.POST vazio
-            // e resultar em HTTP 500 antes mesmo da validação no SUAP.
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                Accept: 'application/json',
-            },
-            serializer: 'urlencoded',
-            responseType: 'json',
-            timeout: REQUEST_TIMEOUT_MS / 1000,
-        })).pipe(
-            map((httpResponse) => {
-                const response = httpResponse.body;
-
-                if (!response?.token || !isValidPainelToken(response.token)) {
-                    throw new Error('Painel AVA v1 não retornou token válido.');
-                }
-
-                // eslint-disable-next-line no-console
-                console.log('[IFRN-TEST] Painel AVA autenticado com sucesso');
-
-                return response;
-            }),
-            catchError((error) => {
-                const diagnostic = getSafeHttpErrorDiagnostic(error);
-                const safeError = describeHttpError(error, 'Falha em POST /api/v1/authenticate/');
-
-                // Diagnóstico temporário: status e corpo retornado pelo servidor, sem credenciais/tokens.
-                // eslint-disable-next-line no-console
-                console.log('[IFRN-TEST] POST authenticate status:', diagnostic.status);
-                // eslint-disable-next-line no-console
-                console.log('[IFRN-TEST] POST authenticate resposta:', diagnostic.body);
-                // eslint-disable-next-line no-console
-                console.log('[IFRN-TEST] Falha na autenticação Painel AVA:', safeError.message);
-
-                return throwError(() => safeError);
-            }),
-            timeout(REQUEST_TIMEOUT_MS),
-        );
+    /**
+     * Compatibilidade temporária com a tela /login/moodle-poc.
+     * As credenciais não são reenviadas ao Painel; o fluxo real usa OAuth web.
+     */
+    runApiV1Poc(_credentials?: { username: string; password: string }): Observable<PainelAvaV1PocResult> {
+        return this.authenticateWithBrowser();
     }
 
-    /**
-     * Lista diários do usuário autenticado no Painel.
-     * Endpoint: GET /api/v1/diarios/?situacao=inprogress
-     */
-    getDiarios(accessToken?: string): Observable<{
-        raw: unknown;
-        topKeys: string[];
-        diarios: PainelAvaDiarioRaw[];
-    }> {
-        const access = accessToken || this.getToken();
+    authenticateWithBrowser(): Observable<PainelAvaV1PocResult> {
+        return new Observable<PainelAvaV1PocResult>((subscriber) => {
+            const baseUrl = PAINEL_AVA_CONFIG.baseUrl.replace(/\/$/, '');
+            const diariosPath = PAINEL_AVA_CONFIG.diariosPath;
+            const query = PAINEL_AVA_CONFIG.diariosQuery ? `?${PAINEL_AVA_CONFIG.diariosQuery}` : '';
+            const diariosUrl = `${baseUrl}${diariosPath}${query}`;
+            let finished = false;
+            let probing = false;
 
-        if (!access) {
-            return throwError(() => new Error('Token do Painel AVA ausente.'));
-        }
+            // Nunca limpa cookies aqui: uma sessão Painel existente deve poder ser reutilizada.
+            const browser = CoreOpener.openInApp(`${baseUrl}/`, {
+                location: 'yes',
+                clearcache: 'no',
+                clearsessioncache: 'no',
+            });
 
-        const query = PAINEL_AVA_CONFIG.diariosQuery
-            ? `?${PAINEL_AVA_CONFIG.diariosQuery}`
-            : '';
-        const url = `${PAINEL_AVA_CONFIG.baseUrl}${PAINEL_AVA_CONFIG.diariosPath}${query}`;
+            // eslint-disable-next-line no-console
+            console.log('[IFRN-PANEL] OAuth web iniciado');
 
-        // eslint-disable-next-line no-console
-        console.log('[IFRN-TEST] Consultando /api/v1/diarios/');
+            const finishWithError = (message: string): void => {
+                if (finished) {
+                    return;
+                }
+                finished = true;
+                subscriber.error(new Error(message));
+            };
 
-        return from(CoreWS.sendHTTPRequest<unknown>(url, {
-            method: 'get',
-            headers: {
-                Accept: 'application/json',
-                Authorization: `Bearer ${access}`,
-            },
-            responseType: 'json',
-            timeout: REQUEST_TIMEOUT_MS / 1000,
-        })).pipe(
-            map((httpResponse) => {
-                const raw = httpResponse.body;
-                const extracted = extractDiariosList(raw);
+            const loadStopSubscription = browser.on('loadstop').subscribe((event) => {
+                if (finished || probing || !event.url.startsWith(baseUrl)) {
+                    return;
+                }
 
-                // eslint-disable-next-line no-console
-                console.log('[IFRN-TEST] Quantidade de diários:', extracted.diarios.length);
-                extracted.diarios.forEach((diario, index) => {
-                    // Somente campos úteis para mapear diário -> curso Moodle.
-                    // eslint-disable-next-line no-console
-                    console.log(`[IFRN-TEST] Diário ${index}:`, pickExistingInterest(diario));
+                probing = true;
+
+                const script = `
+                    (function () {
+                        var endpoint = ${JSON.stringify(diariosPath + query)};
+                        fetch(endpoint, {
+                            method: 'GET',
+                            headers: { 'Accept': 'application/json' },
+                            credentials: 'same-origin',
+                            redirect: 'follow'
+                        })
+                        .then(function (response) {
+                            var contentType = response.headers.get('content-type') || '';
+                            if (!response.ok || contentType.indexOf('application/json') === -1) {
+                                throw new Error('Painel ainda não autenticado');
+                            }
+                            return response.json();
+                        })
+                        .then(function (payload) {
+                            window.webkit.messageHandlers.cordova_iab.postMessage(JSON.stringify({
+                                type: 'ifrn-painel-diarios',
+                                ok: true,
+                                payload: payload
+                            }));
+                        })
+                        .catch(function () {
+                            window.webkit.messageHandlers.cordova_iab.postMessage(JSON.stringify({
+                                type: 'ifrn-painel-probe',
+                                ok: false
+                            }));
+                        });
+                    })();
+                `;
+
+                browser.executeScript({ code: script }).then(() => {
+                    // Resultado real chega pelo evento message.
+                }).catch(() => {
+                    probing = false;
                 });
+            });
 
-                return {
-                    raw,
-                    topKeys: extracted.topKeys,
-                    diarios: extracted.diarios,
-                };
-            }),
-            catchError((error) => {
-                const safeError = describeHttpError(error, 'Falha em GET /api/v1/diarios/');
-                // eslint-disable-next-line no-console
-                console.log('[IFRN-TEST] Falha ao consultar diários:', safeError.message);
-
-                return throwError(() => safeError);
-            }),
-            timeout(REQUEST_TIMEOUT_MS),
-        );
-    }
-
-    /**
-     * Inspeciona os diários usando a sessão Painel AVA já autenticada.
-     * Não faz novo login e nunca registra o JWT no console.
-     */
-    inspectDiarios(accessToken?: string): Observable<PainelAvaV1PocResult> {
-        const profile = this.getProfile();
-
-        return this.getDiarios(accessToken).pipe(
-            map((payload) => {
-                const propertyUnion = new Set<string>();
-
-                for (const diario of payload.diarios) {
-                    Object.keys(diario).forEach((key) => propertyUnion.add(key));
+            const messageSubscription = browser.on('message').subscribe((event) => {
+                if (finished) {
+                    return;
                 }
 
-                const diariosResumo = payload.diarios.map((diario, index) => ({
+                let data: unknown = event.data;
+                if (typeof data === 'string') {
+                    try {
+                        data = JSON.parse(data);
+                    } catch {
+                        return;
+                    }
+                }
+
+                if (!isPlainObject(data)) {
+                    return;
+                }
+
+                if (data['type'] === 'ifrn-painel-probe') {
+                    probing = false;
+                    return;
+                }
+
+                if (data['type'] !== 'ifrn-painel-diarios' || data['ok'] !== true) {
+                    return;
+                }
+
+                const raw = data['payload'];
+                const extracted = extractDiariosList(raw);
+                this.saveDashboard(raw);
+
+                const propertyUnion = new Set<string>();
+                extracted.diarios.forEach((diario) => Object.keys(diario).forEach((key) => propertyUnion.add(key)));
+                const diariosResumo = extracted.diarios.map((diario, index) => ({
                     _index: index,
                     _keys: Object.keys(diario),
                     ...pickExistingInterest(diario),
                 }));
 
                 const result: PainelAvaV1PocResult = {
-                    baseUrl: PAINEL_AVA_CONFIG.baseUrl,
-                    authenticatePath: PAINEL_AVA_CONFIG.authenticatePath,
-                    diariosUrl:
-                        `${PAINEL_AVA_CONFIG.baseUrl}${PAINEL_AVA_CONFIG.diariosPath}`
-                        + (PAINEL_AVA_CONFIG.diariosQuery
-                            ? `?${PAINEL_AVA_CONFIG.diariosQuery}`
-                            : ''),
-                    usernameHint: profileUsernameHint(profile, '(sessão existente)'),
-                    tokenStored: this.hasValidToken(),
-                    profileKeys: profile ? Object.keys(profile) : [],
-                    responseTopKeys: payload.topKeys,
-                    diariosCount: payload.diarios.length,
+                    baseUrl,
+                    authenticatePath: 'OAuth web SUAP → /authenticate/?code=…',
+                    diariosUrl,
+                    usernameHint: '(sessão web Painel AVA)',
+                    tokenStored: false,
+                    profileKeys: [],
+                    responseTopKeys: extracted.topKeys,
+                    diariosCount: extracted.diarios.length,
                     diarioPropertyUnion: Array.from(propertyUnion).sort(),
-                    diarios: payload.diarios,
+                    diarios: extracted.diarios,
                     diariosResumo,
                 };
 
-                this.logDiariosToConsole(result, payload.raw);
+                finished = true;
+                // eslint-disable-next-line no-console
+                console.log(`[IFRN-PANEL] sessão web válida; ${result.diariosCount} diário(s) recebido(s)`);
+                subscriber.next(result);
+                subscriber.complete();
+                CoreOpener.closeInAppBrowser();
+            });
 
-                return result;
-            }),
-        );
+            const exitSubscription = browser.on('exit').subscribe(() => {
+                if (!finished) {
+                    finishWithError('Autenticação do Painel AVA cancelada.');
+                }
+            });
+
+            return () => {
+                loadStopSubscription.unsubscribe();
+                messageSubscription.unsubscribe();
+                exitSubscription.unsubscribe();
+            };
+        });
     }
 
-    /**
-     * PoC: authenticate → grava token (sem logar JWT) → GET diarios → logs seguros.
-     */
-    runApiV1Poc(credentials: {
-        username: string;
-        password: string;
-    }): Observable<PainelAvaV1PocResult> {
-        return this.authenticate(credentials).pipe(
-            switchMap((auth) => {
-                this.saveToken(auth.token);
-                this.saveProfile(auth.data);
-
-                return this.getDiarios(auth.token).pipe(
-                    map((payload) => {
-                        const propertyUnion = new Set<string>();
-
-                        for (const diario of payload.diarios) {
-                            Object.keys(diario).forEach((key) => propertyUnion.add(key));
-                        }
-
-                        const diariosResumo = payload.diarios.map((diario, index) => ({
-                            _index: index,
-                            _keys: Object.keys(diario),
-                            ...pickExistingInterest(diario),
-                        }));
-
-                        const result: PainelAvaV1PocResult = {
-                            baseUrl: PAINEL_AVA_CONFIG.baseUrl,
-                            authenticatePath: PAINEL_AVA_CONFIG.authenticatePath,
-                            diariosUrl:
-                                `${PAINEL_AVA_CONFIG.baseUrl}${PAINEL_AVA_CONFIG.diariosPath}`
-                                + (PAINEL_AVA_CONFIG.diariosQuery
-                                    ? `?${PAINEL_AVA_CONFIG.diariosQuery}`
-                                    : ''),
-                            usernameHint: profileUsernameHint(
-                                auth.data || null,
-                                credentials.username.trim(),
-                            ),
-                            tokenStored: true,
-                            profileKeys: auth.data ? Object.keys(auth.data) : [],
-                            responseTopKeys: payload.topKeys,
-                            diariosCount: payload.diarios.length,
-                            diarioPropertyUnion: Array.from(propertyUnion).sort(),
-                            diarios: payload.diarios,
-                            diariosResumo,
-                        };
-
-                        this.logDiariosToConsole(result, payload.raw);
-
-                        return result;
-                    }),
-                );
-            }),
-        );
-    }
-
-    saveToken(token: string): void {
-        if (!isValidPainelToken(token)) {
-            this.clearSession();
-
-            return;
+    /** Retorna os diários já obtidos pela sessão web do Painel. */
+    getDiarios(): Observable<{ raw: unknown; topKeys: string[]; diarios: PainelAvaDiarioRaw[] }> {
+        const raw = this.getDashboard();
+        if (raw === null) {
+            return throwError(() => new Error('Sessão/dados do Painel AVA ausentes.'));
         }
-
-        sessionStorage.setItem(PAINEL_TOKEN_KEY, token);
+        const extracted = extractDiariosList(raw);
+        return of({ raw, topKeys: extracted.topKeys, diarios: extracted.diarios });
     }
 
-    getToken(): string | null {
-        const stored = sessionStorage.getItem(PAINEL_TOKEN_KEY);
-
-        if (stored && isValidPainelToken(stored)) {
-            return stored;
-        }
-
-        if (stored) {
-            sessionStorage.removeItem(PAINEL_TOKEN_KEY);
-        }
-
-        return null;
+    inspectDiarios(): Observable<PainelAvaV1PocResult> {
+        return this.getDiarios().pipe(map((payload) => {
+            const propertyUnion = new Set<string>();
+            payload.diarios.forEach((diario) => Object.keys(diario).forEach((key) => propertyUnion.add(key)));
+            const diariosResumo = payload.diarios.map((diario, index) => ({
+                _index: index,
+                _keys: Object.keys(diario),
+                ...pickExistingInterest(diario),
+            }));
+            return {
+                baseUrl: PAINEL_AVA_CONFIG.baseUrl,
+                authenticatePath: 'OAuth web SUAP',
+                diariosUrl: `${PAINEL_AVA_CONFIG.baseUrl}${PAINEL_AVA_CONFIG.diariosPath}`,
+                usernameHint: '(sessão web Painel AVA)',
+                tokenStored: false,
+                profileKeys: [],
+                responseTopKeys: payload.topKeys,
+                diariosCount: payload.diarios.length,
+                diarioPropertyUnion: Array.from(propertyUnion).sort(),
+                diarios: payload.diarios,
+                diariosResumo,
+            };
+        }));
     }
 
-    hasValidToken(): boolean {
-        return this.getToken() !== null;
-    }
-
-    /**
-     * Perfil retornado por /authenticate/ (nome, foto, etc.) para o painel mobile.
-     */
-    saveProfile(data: Record<string, unknown> | undefined | null): void {
-        if (!data || typeof data !== 'object') {
-            sessionStorage.removeItem(PAINEL_PROFILE_KEY);
-
-            return;
-        }
-
+    private saveDashboard(raw: unknown): void {
         try {
-            sessionStorage.setItem(PAINEL_PROFILE_KEY, JSON.stringify(data));
+            sessionStorage.setItem(PainelAvaService.DASHBOARD_KEY, JSON.stringify(raw));
         } catch {
-            sessionStorage.removeItem(PAINEL_PROFILE_KEY);
+            sessionStorage.removeItem(PainelAvaService.DASHBOARD_KEY);
         }
     }
 
-    getProfile(): Record<string, unknown> | null {
-        const raw = sessionStorage.getItem(PAINEL_PROFILE_KEY);
-
+    getDashboard(): unknown | null {
+        const raw = sessionStorage.getItem(PainelAvaService.DASHBOARD_KEY);
         if (!raw) {
             return null;
         }
-
         try {
-            const parsed = JSON.parse(raw) as Record<string, unknown>;
-
-            return parsed && typeof parsed === 'object' ? parsed : null;
+            return JSON.parse(raw) as unknown;
         } catch {
+            sessionStorage.removeItem(PainelAvaService.DASHBOARD_KEY);
             return null;
         }
     }
 
+    hasDashboard(): boolean {
+        return this.getDashboard() !== null;
+    }
+
     clearSession(): void {
+        sessionStorage.removeItem(PainelAvaService.DASHBOARD_KEY);
         sessionStorage.removeItem(PAINEL_TOKEN_KEY);
         sessionStorage.removeItem(PAINEL_PROFILE_KEY);
     }
 
-    /**
-     * Logs seguros: chaves reais + valores de interesse.
-     * Nunca imprime JWT, senha ou Authorization.
-     */
-    logDiariosToConsole(result: PainelAvaV1PocResult, rawResponse?: unknown): void {
-        // eslint-disable-next-line no-console
-        console.group('[Painel AVA API v1 PoC] /api/v1/diarios/');
-        // eslint-disable-next-line no-console
-        console.log('baseUrl', result.baseUrl);
-        // eslint-disable-next-line no-console
-        console.log('authenticate', result.authenticatePath, '(token NÃO logado)');
-        // eslint-disable-next-line no-console
-        console.log('diariosUrl', result.diariosUrl);
-        // eslint-disable-next-line no-console
-        console.log('usernameHint', result.usernameHint);
-        // eslint-disable-next-line no-console
-        console.log('profileKeys (authenticate.data)', result.profileKeys);
-        // eslint-disable-next-line no-console
-        console.log('responseTopKeys', result.responseTopKeys);
-        // eslint-disable-next-line no-console
-        console.log('diarioPropertyUnion (todas as props vistas)', result.diarioPropertyUnion);
-        // eslint-disable-next-line no-console
-        console.log(`diariosCount=${result.diariosCount}`);
-
-        if (rawResponse !== undefined) {
-            // Estrutura completa sem o token (a resposta de diarios não traz token).
-            // eslint-disable-next-line no-console
-            console.log('rawResponse (estrutura)', rawResponse);
-        }
-
-        result.diariosResumo.forEach((resumo, index) => {
-            // eslint-disable-next-line no-console
-            console.group(`diário[${index}] keys=${JSON.stringify(resumo['_keys'])}`);
-            // eslint-disable-next-line no-console
-            console.log(resumo);
-            // eslint-disable-next-line no-console
-            console.groupEnd();
-        });
-
-        // eslint-disable-next-line no-console
-        console.table(result.diariosResumo.map((item) => ({
-            index: item['_index'],
-            id: item['id'] ?? '(ausente)',
-            courseid: item['courseid'] ?? '(ausente)',
-            fullname: item['fullname'] ?? '(ausente)',
-            shortname: item['shortname'] ?? '(ausente)',
-            viewurl: item['viewurl'] ?? '(ausente)',
-            idnumber: item['idnumber'] ?? '(ausente)',
-            diario_id: item['diario_id'] ?? '(ausente)',
-            ambiente: item['ambiente'] ?? '(ausente)',
-            keys: Array.isArray(item['_keys']) ? (item['_keys'] as string[]).join(',') : '',
-        })));
-
-        // eslint-disable-next-line no-console
-        console.groupEnd();
+    // Compatibilidade temporária com código antigo do mobilemoodle.
+    getToken(): string | null {
+        return null;
     }
 
-    /** Chaves usadas também pelo bundle mobilemoodle (mesma origem). */
+    hasValidToken(): boolean {
+        return false;
+    }
+
+    getProfile(): Record<string, unknown> | null {
+        return null;
+    }
+
     static readonly TOKEN_KEY = PAINEL_TOKEN_KEY;
     static readonly PROFILE_KEY = PAINEL_PROFILE_KEY;
-
+    static readonly DASHBOARD_KEY = 'ifrn_painel_dashboard';
 }

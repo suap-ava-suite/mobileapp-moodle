@@ -4,18 +4,7 @@
  * Fachada de dados do painel + cache em memória.
  *
  * Fonte do painel:
- *   Painel AVA (/api/v1/diarios/) — courseid Moodle real.
- *   Não usa fallback SUAP para cards: sem sessão Painel, mostra erro em vez de curso falso.
- *
- * Cache:
- *   - TTL 60s
- *   - inFlight evita requests duplicados em paralelo
- *   - cursos: Map com no máximo 40 entradas (FIFO simples)
- *
- * Também monta window.MobileMoodleApi (API pública para o app Ionic / login).
- *
- * DEMO_FORCE_500: deixe false em produção; true só para testar tela de erro.
- */
+ *   Painel AVA (/api/v2/sala/tipo/diario/*/
 import { MM } from './namespace';
 
     const CACHE_TTL_MS = 60 * 1000;
