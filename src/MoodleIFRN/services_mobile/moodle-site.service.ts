@@ -1033,7 +1033,14 @@ export class MoodleSiteService {
         }
 
         const beforeMatch = this.matchCurrentMoodleIdentity();
-        const hadSession = CoreSites.isLoggedIn();
+        const currentSite = CoreSites.getCurrentSite();
+        // loadSite() pode deixar uma conta armazenada como current mesmo se ela
+        // estiver logged-out. Isso não representa uma sessão Moodle reutilizável.
+        const hadSession = Boolean(
+            currentSite
+            && CoreSites.isLoggedIn()
+            && !currentSite.isLoggedOut()
+        );
 
         identityLog('OAuth iniciado', {
             resumeAfterSwitch: !!options.resumeAfterSwitch,
@@ -1049,7 +1056,7 @@ export class MoodleSiteService {
 
         // Mesmo padrão do Add site oficial: sair da sessão atual antes de
         // autenticar outra conta. Não apaga o site antigo nem o login IFRN.
-        if (!options.resumeAfterSwitch && CoreSites.isLoggedIn()) {
+        if (!options.resumeAfterSwitch && hadSession) {
             this.logger.debug(
                 `${LOG_PREFIX} Sessão Moodle ativa — switch-account antes do OAuth SUAP`,
             );

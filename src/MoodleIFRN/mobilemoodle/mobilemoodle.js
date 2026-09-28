@@ -180,6 +180,11 @@
     sessionStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem("ifrn_painel_token");
     sessionStorage.removeItem("ifrn_painel_profile");
+    sessionStorage.removeItem("ifrn_painel_dashboard");
+    sessionStorage.removeItem("ifrn_painel_owner");
+    sessionStorage.removeItem("ifrn_moodle_pending_open_course");
+    sessionStorage.removeItem("ifrn_moodle_poc_oauth_pending");
+    sessionStorage.removeItem("ifrn_moodle_poc_resume_oauth");
     if (typeof MM.invalidateCache === "function") {
       MM.invalidateCache();
     }
@@ -629,9 +634,22 @@
    */
   var PAINEL_DASHBOARD_KEY = "ifrn_painel_dashboard";
   var PAINEL_PROFILE_KEY = "ifrn_painel_profile";
+  var PAINEL_OWNER_KEY = "ifrn_painel_owner";
+  var IFRN_USERNAME_KEY = "ifrn_username";
+  function normalizeOwner(value) {
+    return (value || "").trim().toLowerCase();
+  }
   function readPainelDashboard() {
     const raw = sessionStorage.getItem(PAINEL_DASHBOARD_KEY);
     if (!raw) {
+      return null;
+    }
+    const owner = normalizeOwner(sessionStorage.getItem(PAINEL_OWNER_KEY));
+    const current = normalizeOwner(sessionStorage.getItem(IFRN_USERNAME_KEY));
+    if (owner && current && owner !== current) {
+      sessionStorage.removeItem(PAINEL_DASHBOARD_KEY);
+      sessionStorage.removeItem(PAINEL_OWNER_KEY);
+      sessionStorage.removeItem(PAINEL_PROFILE_KEY);
       return null;
     }
     try {
@@ -730,10 +748,12 @@
     }
     const profile = readPainelProfile();
     const rawDiarios = Array.isArray(data) ? data : data.diarios || [];
+    const rawCoordenacoes = Array.isArray(data) ? [] : data.coordenacoes || [];
     const rawAutoinscricoes = Array.isArray(data) ? [] : data.autoinscricoes || [];
     const diarios = rawDiarios.map(mapPainelDiario);
+    const coordenacoes = rawCoordenacoes.map(mapPainelDiario);
     const autoinscricoes = rawAutoinscricoes.map(mapPainelDiario);
-    const courses = [...diarios, ...autoinscricoes];
+    const courses = [...diarios, ...coordenacoes, ...autoinscricoes];
     console.log(`[IFRN-PANEL] dashboard local carregado; ${diarios.length} di\xE1rio(s)`);
     return {
       nome: profileDisplayName(profile),
@@ -743,6 +763,7 @@
       total_courses: courses.length,
       courses,
       diarios,
+      coordenacoes,
       autoinscricoes,
       source: "painel"
     };
@@ -1182,6 +1203,10 @@
       title: "Meus Di\xE1rios",
       empty: "\xC9 poss\xEDvel que a Secretaria Acad\xEAmica ainda n\xE3o tenha lhe inserido em di\xE1rio algum; neste caso, aguarde."
     },
+    coordenacoes: {
+      title: "Salas de Coordena\xE7\xE3o",
+      empty: "N\xE3o h\xE1 salas de coordena\xE7\xE3o dispon\xEDveis para este usu\xE1rio."
+    },
     autoinscricoes: {
       title: "Cursos com Autoinscri\xE7\xE3o",
       empty: "N\xE3o h\xE1 cursos com autoinscri\xE7\xE3o dispon\xEDveis no momento. Ajuste os filtros ou volte mais tarde."
@@ -1243,9 +1268,11 @@
   }
   function getPainelLists(dashboard) {
     const diarios = dashboard.diarios || dashboard.courses || [];
+    const coordenacoes = dashboard.coordenacoes || [];
     const autoinscricoes = dashboard.autoinscricoes || dashboard.self_enrolments || [];
     return {
       diarios: Array.isArray(diarios) ? diarios : [],
+      coordenacoes: Array.isArray(coordenacoes) ? coordenacoes : [],
       autoinscricoes: Array.isArray(autoinscricoes) ? autoinscricoes : []
     };
   }
@@ -1429,7 +1456,7 @@
     host.appendChild(empty);
   }
   function renderTabCards(host, tabKey, lists) {
-    const items = tabKey === "autoinscricoes" ? lists.autoinscricoes : lists.diarios;
+    const items = tabKey === "autoinscricoes" ? lists.autoinscricoes : tabKey === "coordenacoes" ? lists.coordenacoes : lists.diarios;
     host.innerHTML = "";
     host.setAttribute("data-active-tab", tabKey);
     if (!items.length) {
@@ -1499,7 +1526,7 @@
     setUser(dashboard);
     const lists = getPainelLists(dashboard);
     const page = App.cloneTemplate("tpl-painel");
-    const initialTab = App.activePainelTab === "autoinscricoes" ? "autoinscricoes" : "diarios";
+    const initialTab = App.activePainelTab === "autoinscricoes" || App.activePainelTab === "coordenacoes" ? App.activePainelTab : "diarios";
     App.dashboardPapel = dashboard.papel || dashboard.role || "estudante";
     if (!page || !App.content) {
       return;

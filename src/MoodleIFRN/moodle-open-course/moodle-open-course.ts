@@ -23,11 +23,15 @@ import { CoreNavigator } from '@services/navigator';
 import { CoreAlerts } from '@services/overlays/alerts';
 import { CorePlatform } from '@services/platform';
 
+/** Estados da ponte Painel → Moodle (bate com o template). */
+type OpenCoursePhase = 'loading' | 'waiting-browser' | 'error';
+
 /**
  * Ponte mínima IFRN → Moodle Mobile nativo.
  *
  * No fluxo feliz a UI fica silenciosa (só spinner). A tela de diagnóstico
  * (“Abrir curso” / site / courseid / “Complete o login…”) só aparece em erro.
+ * Quando o OAuth abre o navegador, phase = waiting-browser (não trava no spinner).
  *
  * Rota: /login/moodle-open-course (intermediária; sai com reset ao abrir).
  */
@@ -53,10 +57,11 @@ export class MoodleOpenCoursePage implements OnInit {
     moodleSiteUrl = IFRN_MOODLE_PRESENCIAL_URL;
 
     /**
-     * true só quando há erro / mismatch e o usuário precisa recuperar.
-     * false = tela silenciosa enquanto OAuth / abertura do curso rodam.
+     * loading = spinner “Abrindo curso…”
+     * waiting-browser = OAuth no navegador externo (não travar no spinner)
+     * error = UI de recuperação
      */
-    showBridgeUi = false;
+    phase: OpenCoursePhase = 'loading';
 
     /** Evita segundo ngOnInit disparar OAuth na mesma instância. */
     private initStarted = false;
@@ -116,7 +121,7 @@ export class MoodleOpenCoursePage implements OnInit {
         ) {
             // eslint-disable-next-line no-console
             console.log('[IFRN-IDENTITY] auto-OAuth bloqueado (retorno / reentrância)');
-            this.showBridgeUi = true;
+            this.phase = 'error';
 
             if (!this.formError && this.moodleSite.lastError) {
                 this.formError = this.moodleSite.lastError;
@@ -126,7 +131,7 @@ export class MoodleOpenCoursePage implements OnInit {
         }
 
         this.initStarted = true;
-        this.showBridgeUi = false;
+        this.phase = 'loading';
 
         const startOAuth = CoreNavigator.getRouteBooleanParam('startOAuth')
             || this.moodleSite.shouldResumeOAuthAfterSiteSwitch();
@@ -156,7 +161,7 @@ export class MoodleOpenCoursePage implements OnInit {
         }
 
         this.formError = '';
-        this.showBridgeUi = false;
+        this.phase = 'loading';
         this.moodleSite.lastError = '';
         this.moodleSite.identityMismatchPending = false;
         this.loading = true;
@@ -176,7 +181,9 @@ export class MoodleOpenCoursePage implements OnInit {
                     resumeAfterSwitch: true,
                 });
 
-                // Browser aberto: mantém UI silenciosa até o deep link voltar.
+                // Browser externo aberto: para o spinner e orienta o usuário.
+                this.phase = 'waiting-browser';
+
                 return;
             }
 
@@ -190,7 +197,14 @@ export class MoodleOpenCoursePage implements OnInit {
                 return;
             }
 
-            // OAuth no navegador / switch-account: continua silencioso.
+            if (result === 'browser-opened' || result === 'already-active') {
+                this.phase = 'waiting-browser';
+
+                return;
+            }
+
+            // switch-account: a navegação reinicia esta página com startOAuth.
+            this.phase = 'loading';
         } catch (error) {
             // eslint-disable-next-line no-console
             console.error('[IFRN-SITE] connectAndOpen erro', {
@@ -218,7 +232,7 @@ export class MoodleOpenCoursePage implements OnInit {
 
     private revealBridgeError(message: string): void {
         this.formError = message;
-        this.showBridgeUi = true;
+        this.phase = 'error';
     }
 
 }

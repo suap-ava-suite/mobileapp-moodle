@@ -29,6 +29,19 @@
     font-size: 0.95rem;
 }
 
+.moodle-open-course__silent-hint {
+    margin: 0;
+    max-width: 18rem;
+    text-align: center;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--moodle-open-muted);
+}
+
+.moodle-open-course__silent-back {
+    margin-top: 0.75rem;
+}
+
 .moodle-open-course__header {
     display: flex;
     align-items: center;

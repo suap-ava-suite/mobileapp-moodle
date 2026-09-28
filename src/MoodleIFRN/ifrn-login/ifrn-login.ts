@@ -677,11 +677,10 @@ export class IfrnLoginPage implements OnInit {
 
             this.statusMessage = 'Conectando ao Painel AVA…';
 
-            // O Painel AVA não recebe novamente IFRN-id/senha.
-            // A sessão web é criada pelo OAuth oficial SUAP dentro do InAppBrowser.
-            if (!this.painelAvaService.hasDashboard()) {
-                await this.linkPainelAvaSession();
-            }
+            // Troca de conta: NÃO reutilizar dashboard/cookies do usuário anterior.
+            // (Antes, hasDashboard() fazia o amigo ver os cursos do login antigo.)
+            this.painelAvaService.clearSession();
+            await this.linkPainelAvaSession();
 
             this.password = '';
 

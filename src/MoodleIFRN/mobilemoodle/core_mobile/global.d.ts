@@ -56,6 +56,7 @@ interface DashboardData {
     total_courses?: number;
     courses?: DashboardCourse[];
     diarios?: DashboardCourse[];
+    coordenacoes?: DashboardCourse[];
     autoinscricoes?: DashboardCourse[];
     self_enrolments?: DashboardCourse[];
     source?: 'painel' | 'suap';
@@ -97,7 +98,7 @@ interface CourseData {
     source?: 'painel' | 'suap';
 }
 
-type PainelTabKey = 'diarios' | 'autoinscricoes';
+type PainelTabKey = 'diarios' | 'coordenacoes' | 'autoinscricoes';
 
 type RouteInfo =
     | { name: 'painel' }

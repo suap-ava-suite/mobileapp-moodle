@@ -9,6 +9,8 @@ import { MM } from './namespace';
 
 const PAINEL_DASHBOARD_KEY = 'ifrn_painel_dashboard';
 const PAINEL_PROFILE_KEY = 'ifrn_painel_profile';
+const PAINEL_OWNER_KEY = 'ifrn_painel_owner';
+const IFRN_USERNAME_KEY = 'ifrn_username';
 
 interface PainelAmbiente {
     id?: number;
@@ -44,10 +46,26 @@ interface PainelDiariosResponse {
     praticas?: PainelDiario[];
 }
 
+function normalizeOwner(value: string | null | undefined): string {
+    return (value || '').trim().toLowerCase();
+}
+
 function readPainelDashboard(): PainelDiariosResponse | PainelDiario[] | null {
     const raw = sessionStorage.getItem(PAINEL_DASHBOARD_KEY);
 
     if (!raw) {
+        return null;
+    }
+
+    const owner = normalizeOwner(sessionStorage.getItem(PAINEL_OWNER_KEY));
+    const current = normalizeOwner(sessionStorage.getItem(IFRN_USERNAME_KEY));
+
+    // Dashboard de outra conta → descarta (troca de login).
+    if (owner && current && owner !== current) {
+        sessionStorage.removeItem(PAINEL_DASHBOARD_KEY);
+        sessionStorage.removeItem(PAINEL_OWNER_KEY);
+        sessionStorage.removeItem(PAINEL_PROFILE_KEY);
+
         return null;
     }
 
@@ -193,11 +211,13 @@ async function fetchPainelDashboard(): Promise<DashboardData> {
     // O Angular obtém este JSON dentro de ava.ifrn.edu.br via OAuth/cookie e o
     // salva em sessionStorage. O mobilemoodle apenas consome a cópia local.
     const rawDiarios = Array.isArray(data) ? data : (data.diarios || []);
+    const rawCoordenacoes = Array.isArray(data) ? [] : (data.coordenacoes || []);
     const rawAutoinscricoes = Array.isArray(data) ? [] : (data.autoinscricoes || []);
 
     const diarios = rawDiarios.map(mapPainelDiario);
+    const coordenacoes = rawCoordenacoes.map(mapPainelDiario);
     const autoinscricoes = rawAutoinscricoes.map(mapPainelDiario);
-    const courses = [...diarios, ...autoinscricoes];
+    const courses = [...diarios, ...coordenacoes, ...autoinscricoes];
 
     // eslint-disable-next-line no-console
     console.log(`[IFRN-PANEL] dashboard local carregado; ${diarios.length} diário(s)`);
@@ -214,6 +234,7 @@ async function fetchPainelDashboard(): Promise<DashboardData> {
         total_courses: courses.length,
         courses,
         diarios,
+        coordenacoes,
         autoinscricoes,
         source: 'painel',
     };

@@ -43,6 +43,10 @@ import { MM, App } from './namespace';
             empty:
                 'É possível que a Secretaria Acadêmica ainda não tenha lhe inserido em diário algum; neste caso, aguarde.',
         },
+        coordenacoes: {
+            title: 'Salas de Coordenação',
+            empty: 'Não há salas de coordenação disponíveis para este usuário.',
+        },
         autoinscricoes: {
             title: 'Cursos com Autoinscrição',
             empty:
@@ -52,6 +56,7 @@ import { MM, App } from './namespace';
 
     interface PainelLists {
         diarios: DashboardCourse[];
+        coordenacoes: DashboardCourse[];
         autoinscricoes: DashboardCourse[];
     }
 
@@ -133,10 +138,12 @@ import { MM, App } from './namespace';
      */
     function getPainelLists(dashboard: DashboardData): PainelLists {
         const diarios = dashboard.diarios || dashboard.courses || [];
+        const coordenacoes = dashboard.coordenacoes || [];
         const autoinscricoes = dashboard.autoinscricoes || dashboard.self_enrolments || [];
 
         return {
             diarios: Array.isArray(diarios) ? diarios : [],
+            coordenacoes: Array.isArray(coordenacoes) ? coordenacoes : [],
             autoinscricoes: Array.isArray(autoinscricoes) ? autoinscricoes : [],
         };
     }
@@ -395,7 +402,7 @@ import { MM, App } from './namespace';
     function renderTabCards(host: HTMLElement, tabKey: PainelTabKey, lists: PainelLists): void {
         const items: DashboardCourse[] = tabKey === 'autoinscricoes'
             ? lists.autoinscricoes
-            : lists.diarios;
+            : (tabKey === 'coordenacoes' ? lists.coordenacoes : lists.diarios);
 
         host.innerHTML = '';
         host.setAttribute('data-active-tab', tabKey);
@@ -493,9 +500,10 @@ import { MM, App } from './namespace';
 
         const lists = getPainelLists(dashboard);
         const page = App.cloneTemplate!('tpl-painel');
-        const initialTab: PainelTabKey = App.activePainelTab === 'autoinscricoes'
-            ? 'autoinscricoes'
-            : 'diarios';
+        const initialTab: PainelTabKey =
+            App.activePainelTab === 'autoinscricoes' || App.activePainelTab === 'coordenacoes'
+                ? App.activePainelTab
+                : 'diarios';
 
         App.dashboardPapel = dashboard.papel || dashboard.role || 'estudante';
 

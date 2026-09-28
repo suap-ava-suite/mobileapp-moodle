@@ -357,15 +357,17 @@ export class PainelAvaService {
             let finished = false;
             let probing = false;
 
-            // Nunca limpa cookies aqui: uma sessão Painel existente deve poder ser reutilizada.
+            // Sempre limpa a sessão web do InAppBrowser na troca de conta.
+            // Sem isso, cookies do SUAP/Painel do usuário anterior fazem o
+            // GET /api/v1/diarios/ devolver os cursos da conta errada.
             const browser = CoreOpener.openInApp(`${baseUrl}/`, {
                 location: 'yes',
-                clearcache: 'no',
-                clearsessioncache: 'no',
+                clearcache: 'yes',
+                clearsessioncache: 'yes',
             });
 
             // eslint-disable-next-line no-console
-            console.log('[IFRN-PANEL] OAuth web iniciado');
+            console.log('[IFRN-PANEL] OAuth web iniciado (sessão IAB limpa)');
 
             const finishWithError = (message: string): void => {
                 if (finished) {
@@ -531,11 +533,19 @@ export class PainelAvaService {
         }));
     }
 
-    private saveDashboard(raw: unknown): void {
+    private saveDashboard(raw: unknown, ownerUsername?: string): void {
         try {
             sessionStorage.setItem(PainelAvaService.DASHBOARD_KEY, JSON.stringify(raw));
+            const owner = (ownerUsername || sessionStorage.getItem('ifrn_username') || '').trim().toLowerCase();
+
+            if (owner) {
+                sessionStorage.setItem(PainelAvaService.OWNER_KEY, owner);
+            } else {
+                sessionStorage.removeItem(PainelAvaService.OWNER_KEY);
+            }
         } catch {
             sessionStorage.removeItem(PainelAvaService.DASHBOARD_KEY);
+            sessionStorage.removeItem(PainelAvaService.OWNER_KEY);
         }
     }
 
@@ -544,10 +554,22 @@ export class PainelAvaService {
         if (!raw) {
             return null;
         }
+
+        // Descarta dashboard de outro IFRN-id (troca de conta sem logout limpo).
+        const owner = (sessionStorage.getItem(PainelAvaService.OWNER_KEY) || '').trim().toLowerCase();
+        const current = (sessionStorage.getItem('ifrn_username') || '').trim().toLowerCase();
+
+        if (owner && current && owner !== current) {
+            this.clearSession();
+
+            return null;
+        }
+
         try {
             return JSON.parse(raw) as unknown;
         } catch {
             sessionStorage.removeItem(PainelAvaService.DASHBOARD_KEY);
+
             return null;
         }
     }
@@ -558,6 +580,7 @@ export class PainelAvaService {
 
     clearSession(): void {
         sessionStorage.removeItem(PainelAvaService.DASHBOARD_KEY);
+        sessionStorage.removeItem(PainelAvaService.OWNER_KEY);
         sessionStorage.removeItem(PAINEL_TOKEN_KEY);
         sessionStorage.removeItem(PAINEL_PROFILE_KEY);
     }
@@ -578,4 +601,6 @@ export class PainelAvaService {
     static readonly TOKEN_KEY = PAINEL_TOKEN_KEY;
     static readonly PROFILE_KEY = PAINEL_PROFILE_KEY;
     static readonly DASHBOARD_KEY = 'ifrn_painel_dashboard';
+    /** IFRN-id dono do dashboard em sessionStorage (evita reuso entre contas). */
+    static readonly OWNER_KEY = 'ifrn_painel_owner';
 }

@@ -1,4 +1,4 @@
-<!-- Partial Ionic · Painel AVA (Diários + Autoinscrição) -->
+<!-- Partial Ionic · Painel AVA (Diários + Coordenação + Autoinscrição) -->
 <template id="tpl-painel">
     <ion-refresher slot="fixed" id="painel-refresher">
         <ion-refresher-content></ion-refresher-content>
@@ -9,6 +9,10 @@
             <button type="button" class="ava-tab is-active" data-tab="diarios" role="tab" aria-selected="true" id="tab-diarios">
                 <span class="ava-tab__label-desktop">Meus Diários</span>
                 <span class="ava-tab__label-mobile">Diários</span>
+            </button>
+            <button type="button" class="ava-tab" data-tab="coordenacoes" role="tab" aria-selected="false" id="tab-coordenacoes">
+                <span class="ava-tab__label-desktop">Salas de Coordenação</span>
+                <span class="ava-tab__label-mobile">Coordenação</span>
             </button>
             <button type="button" class="ava-tab" data-tab="autoinscricoes" role="tab" aria-selected="false" id="tab-autoinscricoes">
                 <span class="ava-tab__label-desktop">Cursos com Autoinscrição</span>

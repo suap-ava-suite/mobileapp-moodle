@@ -122,6 +122,11 @@ import { MM } from './namespace';
         sessionStorage.removeItem(TOKEN_KEY);
         sessionStorage.removeItem('ifrn_painel_token');
         sessionStorage.removeItem('ifrn_painel_profile');
+        sessionStorage.removeItem('ifrn_painel_dashboard');
+        sessionStorage.removeItem('ifrn_painel_owner');
+        sessionStorage.removeItem('ifrn_moodle_pending_open_course');
+        sessionStorage.removeItem('ifrn_moodle_poc_oauth_pending');
+        sessionStorage.removeItem('ifrn_moodle_poc_resume_oauth');
 
         if (typeof MM.invalidateCache === 'function') {
             MM.invalidateCache();

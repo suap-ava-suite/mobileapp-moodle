@@ -1,12 +1,27 @@
-<ion-content class="moodle-open-course" [class.moodle-open-course--busy]="!showBridgeUi">
-    <!-- Fluxo normal: tela neutra (sem a ponte “Abrir curso” / site / courseid). -->
-    @if (!showBridgeUi) {
+<ion-content class="moodle-open-course" [class.moodle-open-course--busy]="phase !== 'error'">
+    @if (phase === 'loading') {
         <div class="moodle-open-course__silent" role="status" aria-live="polite" aria-busy="true">
             <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
             <p class="moodle-open-course__silent-text">Abrindo curso…</p>
         </div>
+    } @else if (phase === 'waiting-browser') {
+        <div class="moodle-open-course__silent" role="status" aria-live="polite">
+            <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+            <p class="moodle-open-course__silent-text">
+                Autenticação aberta no navegador.
+            </p>
+            <p class="moodle-open-course__silent-hint">
+                Conclua o login SUAP e volte ao app — o curso abre automaticamente.
+            </p>
+            <ion-button
+                fill="outline"
+                class="moodle-open-course__silent-back"
+                (click)="goBack()"
+                [disabled]="loading">
+                Voltar ao Painel AVA
+            </ion-button>
+        </div>
     } @else {
-        <!-- Só aparece em erro / mismatch — recuperação consciente. -->
         <header class="moodle-open-course__header">
             <ion-button
                 class="moodle-open-course__back"
