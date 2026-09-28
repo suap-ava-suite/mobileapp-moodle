@@ -1435,7 +1435,7 @@ export class MoodleSiteService {
         console.log(LOG_PREFIX, 'Cursos:', summary.courseCount);
 
         for (const course of summary.courses) {
-            // eslint-disable-next-line no-console
+            // eslint-disable-next-line no-consoles
             console.log(LOG_PREFIX, `  - [${course.id}] ${course.name}`);
         }
     }
