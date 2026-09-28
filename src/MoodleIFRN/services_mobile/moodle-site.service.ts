@@ -800,21 +800,53 @@ export class MoodleSiteService {
         const candidates = this.getExpectedIdentityCandidates();
         const ids = await CoreSites.getSiteIdsFromUrl(siteUrl);
 
-        if (!candidates.length) {
+        if (!candidates.length || !ids.length) {
             return undefined;
         }
 
+        // O siteId do Moodle Mobile é md5(siteUrl + username). Em alguns retornos
+        // ao mobilemoodle o CoreSite armazenado ainda não expõe getInfo().username,
+        // embora a conta exista no banco. Primeiro resolvemos a conta pelo próprio
+        // siteId, sem ativar uma conta diferente.
+        const strong = candidates.filter((candidate) => STRONG_IDENTITY_KEYS.has(candidate.key));
+        const hasMatricula = strong.some((candidate) => candidate.key === 'perfil.matricula');
+        const allowedCandidates = hasMatricula
+            ? strong
+            : [...strong, ...candidates.filter((candidate) => !STRONG_IDENTITY_KEYS.has(candidate.key))];
+
+        for (const candidate of allowedCandidates) {
+            const candidateSiteId = CoreSites.createSiteID(siteUrl, candidate.value);
+
+            if (ids.includes(candidateSiteId)) {
+                identityLog('site armazenado localizado pelo siteId', {
+                    matchedVia: candidate.key,
+                    siteIdPresent: true,
+                });
+
+                return candidateSiteId;
+            }
+        }
+
+        // Compatibilidade: se o siteId não puder ser reproduzido (URL histórica
+        // normalizada de forma diferente), tenta o username salvo no CoreSite.
         for (const id of ids) {
             try {
                 const site = await CoreSites.getSite(id);
                 const username = normalizeIdentity(site.getInfo()?.username);
                 const hit = matchMoodleAgainstCandidates(username, candidates);
 
+                identityLog('candidato Moodle armazenado inspecionado', {
+                    usernameAvailable: !!username,
+                    loggedOut: site.isLoggedOut(),
+                    matches: hit.matches,
+                    matchedVia: hit.matchedVia,
+                });
+
                 if (hit.matches && !site.isLoggedOut()) {
                     return id;
                 }
             } catch {
-                // Site corrompido / sem token — ignora.
+                // Site corrompido / sem token — ignora e deixa OAuth ser o fallback.
             }
         }
 
