@@ -736,7 +736,7 @@
   }
   function profileDisplayName(profile) {
     if (!profile) {
-      return "Usu\xE1rio";
+      return sessionStorage.getItem(IFRN_USERNAME_KEY) || "Usu\xE1rio";
     }
     const nome = profile["nome"] || profile["nome_usual"] || profile["nome_registro"] || profile["nome_social"];
     return typeof nome === "string" && nome.trim() ? nome.trim() : "Usu\xE1rio";
@@ -746,7 +746,17 @@
     if (!data) {
       throw new MM.ApiError(401, "Dados do Painel AVA ausentes.");
     }
-    const profile = readPainelProfile();
+    let profile = readPainelProfile();
+    if (!profile && typeof MM.getToken === "function" && MM.getToken()) {
+      try {
+        const suapProfile = await MM.request("/api/rh/eu/", { softAuth: true });
+        if (suapProfile && typeof suapProfile === "object" && !Array.isArray(suapProfile)) {
+          profile = suapProfile;
+          sessionStorage.setItem(PAINEL_PROFILE_KEY, JSON.stringify(profile));
+        }
+      } catch {
+      }
+    }
     const rawDiarios = Array.isArray(data) ? data : data.diarios || [];
     const rawCoordenacoes = Array.isArray(data) ? [] : data.coordenacoes || [];
     const rawAutoinscricoes = Array.isArray(data) ? [] : data.autoinscricoes || [];

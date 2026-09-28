@@ -595,7 +595,21 @@ export class PainelAvaService {
     }
 
     getProfile(): Record<string, unknown> | null {
-        return null;
+        const raw = sessionStorage.getItem(PAINEL_PROFILE_KEY);
+
+        if (!raw) {
+            return null;
+        }
+
+        try {
+            const parsed = JSON.parse(raw) as unknown;
+
+            return isPlainObject(parsed) ? parsed : null;
+        } catch {
+            sessionStorage.removeItem(PAINEL_PROFILE_KEY);
+
+            return null;
+        }
     }
 
     static readonly TOKEN_KEY = PAINEL_TOKEN_KEY;

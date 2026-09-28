@@ -185,7 +185,7 @@ function mapPainelDiario(diario: PainelDiario): DashboardCourse {
 
 function profileDisplayName(profile: Record<string, unknown> | null): string {
     if (!profile) {
-        return 'Usuário';
+        return sessionStorage.getItem(IFRN_USERNAME_KEY) || 'Usuário';
     }
 
     const nome =
@@ -207,7 +207,24 @@ async function fetchPainelDashboard(): Promise<DashboardData> {
         throw new MM.ApiError(401, 'Dados do Painel AVA ausentes.');
     }
 
-    const profile = readPainelProfile();
+    let profile = readPainelProfile();
+
+    // O endpoint de diários do Painel não traz necessariamente o perfil. Quando
+    // o JWT SUAP ainda estiver disponível, busca o próprio usuário uma vez e
+    // persiste apenas os dados de perfil necessários à interface/identidade.
+    if (!profile && typeof MM.getToken === 'function' && MM.getToken()) {
+        try {
+            const suapProfile = await MM.request('/api/rh/eu/', { softAuth: true });
+
+            if (suapProfile && typeof suapProfile === 'object' && !Array.isArray(suapProfile)) {
+                profile = suapProfile as Record<string, unknown>;
+                sessionStorage.setItem(PAINEL_PROFILE_KEY, JSON.stringify(profile));
+            }
+        } catch {
+            // Perfil é complementar: o dashboard Painel continua válido sem ele.
+        }
+    }
+
     // O Angular obtém este JSON dentro de ava.ifrn.edu.br via OAuth/cookie e o
     // salva em sessionStorage. O mobilemoodle apenas consome a cópia local.
     const rawDiarios = Array.isArray(data) ? data : (data.diarios || []);
