@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 100" aria-hidden="true">
+    <title>Símbolo IFRN</title>
+    <circle cx="14" cy="14" r="11" fill="#b93120"/>
+    <g fill="#539839">
+        <rect x="4" y="28" width="20" height="20" rx="2"/>
+        <rect x="4" y="52" width="20" height="20" rx="2"/>
+        <rect x="4" y="76" width="20" height="20" rx="2"/>
+        <rect x="28" y="4" width="20" height="20" rx="2"/>
+        <rect x="28" y="28" width="20" height="20" rx="2"/>
+        <rect x="28" y="52" width="20" height="20" rx="2"/>
+        <rect x="28" y="76" width="20" height="20" rx="2"/>
+        <rect x="52" y="4" width="20" height="20" rx="2"/>
+        <rect x="52" y="52" width="20" height="20" rx="2"/>
+    </g>
+</svg>

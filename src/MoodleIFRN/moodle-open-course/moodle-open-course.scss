@@ -1,0 +1,88 @@
+:host {
+    --moodle-open-bg: #f4f7f5;
+    --moodle-open-ink: #1a2e24;
+    --moodle-open-muted: #5a6b62;
+    --moodle-open-accent: #0b6b4a;
+}
+
+.moodle-open-course {
+    --background: var(--moodle-open-bg);
+}
+
+.moodle-open-course__header {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid rgba(26, 46, 36, 0.08);
+}
+
+.moodle-open-course__header h1 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--moodle-open-ink);
+}
+
+.moodle-open-course__content {
+    padding: 1.25rem 1rem 2rem;
+}
+
+.moodle-open-course__card {
+    max-width: 28rem;
+    margin: 0 auto;
+}
+
+.moodle-open-course__eyebrow {
+    margin: 0 0 0.35rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--moodle-open-muted);
+}
+
+.moodle-open-course__card h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.35rem;
+    color: var(--moodle-open-ink);
+}
+
+.moodle-open-course__subtitle {
+    margin: 0 0 0.35rem;
+    font-size: 0.9rem;
+    color: var(--moodle-open-muted);
+}
+
+.moodle-open-course__subtitle code {
+    font-size: 0.85em;
+    word-break: break-all;
+}
+
+.moodle-open-course__status {
+    margin: 1rem 0 0;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: rgba(11, 107, 74, 0.1);
+    color: var(--moodle-open-accent);
+    font-size: 0.95rem;
+}
+
+.moodle-open-course__error {
+    margin: 1rem 0 0;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: rgba(176, 0, 32, 0.08);
+    color: #8a1028;
+    font-size: 0.95rem;
+}
+
+.moodle-open-course__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.moodle-open-course__button {
+    margin: 0;
+}

@@ -1,0 +1,102 @@
+<!-- Partial Ionic · Painel AVA (Diários + Autoinscrição) -->
+<template id="tpl-painel">
+    <ion-refresher slot="fixed" id="painel-refresher">
+        <ion-refresher-content></ion-refresher-content>
+    </ion-refresher>
+
+    <div class="painel-page">
+        <div class="ava-topbar" id="painel-tabs" role="tablist" aria-label="Abas do painel">
+            <button type="button" class="ava-tab is-active" data-tab="diarios" role="tab" aria-selected="true" id="tab-diarios">
+                <span class="ava-tab__label-desktop">Meus Diários</span>
+                <span class="ava-tab__label-mobile">Diários</span>
+            </button>
+            <button type="button" class="ava-tab" data-tab="autoinscricoes" role="tab" aria-selected="false" id="tab-autoinscricoes">
+                <span class="ava-tab__label-desktop">Cursos com Autoinscrição</span>
+                <span class="ava-tab__label-mobile">Autoinscrição</span>
+            </button>
+        </div>
+
+        <section class="page-intro" id="painel-intro">
+            <h2 id="painel-intro-title">Meus Diários</h2>
+        </section>
+
+        <div class="card-container" id="painel-cards" data-active-tab="diarios"></div>
+    </div>
+</template>
+
+<!-- Card de diário / curso matriculado (theme_ifrn25) -->
+<template id="tpl-painel-card">
+    <ion-card class="painel-card">
+        <ion-card-content>
+            <a class="painel-card-link" href="#">
+                <h2 class="painel-card-title"></h2>
+                <span class="painel-card-header-shortname"></span>
+            </a>
+            <div class="painel-card-details">
+                <div class="painel-card-details-progress">
+                    <div class="painel-progress-bar-container">
+                        <div class="painel-progress-bar" style="width: 0%"></div>
+                    </div>
+                    <span class="painel-progress-label">0% concluído</span>
+                </div>
+                <div class="painel-card-details-info">
+                    <div class="painel-card-info-icon">
+                        <ion-icon name="school-outline"></ion-icon>
+                        <span class="painel-card-header-env">AVA Acadêmico</span>
+                    </div>
+                    <div class="painel-card-details-info-published">
+                        <ion-icon name="checkmark-circle-outline"></ion-icon>
+                        <span>Publicado</span>
+                    </div>
+                    <button type="button" class="painel-card-details-info-favourite" aria-label="Favorito">
+                        <ion-icon name="star-outline"></ion-icon>
+                    </button>
+                </div>
+            </div>
+        </ion-card-content>
+    </ion-card>
+</template>
+
+<!-- Card de autoinscrição (theme_ifrn25) -->
+<template id="tpl-painel-card-autoinscricao">
+    <ion-card class="painel-card painel-card--autoinscricao">
+        <ion-card-content>
+            <a class="painel-card-link" href="#">
+                <h2 class="painel-card-title"></h2>
+                <span class="painel-card-header-shortname"></span>
+            </a>
+            <div class="painel-card-details painel-card-details--autoinscricao">
+                <div class="painel-card-actions">
+                    <ion-button class="btn-enroll" color="primary" size="small">
+                        <ion-icon slot="start" name="enter-outline"></ion-icon>
+                        Inscreva-se
+                    </ion-button>
+                    <ion-button class="btn-access" color="primary" size="small" hidden>
+                        Acessar curso
+                    </ion-button>
+                    <ion-button class="btn-unenroll" fill="outline" color="medium" size="small" hidden>
+                        <ion-icon slot="start" name="close-outline"></ion-icon>
+                        Cancelar inscrição
+                    </ion-button>
+                </div>
+                <div class="painel-card-details-info">
+                    <div class="painel-card-info-icon">
+                        <ion-icon name="school-outline"></ion-icon>
+                        <span class="painel-card-header-env">AVA Acadêmico</span>
+                    </div>
+                    <div class="painel-card-info-icon painel-card-info-enrolled" hidden>
+                        <ion-icon name="checkmark-circle-outline"></ion-icon>
+                        <span>Inscrito</span>
+                    </div>
+                </div>
+            </div>
+        </ion-card-content>
+    </ion-card>
+</template>
+
+<template id="tpl-empty-cursos">
+    <div class="no-data">
+        <h3>Nenhum resultado encontrado nesta aba.</h3>
+        <p class="no-data__hint"></p>
+    </div>
+</template>

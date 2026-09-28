@@ -1,0 +1,184 @@
+// Página my/courses.php: exibe título "Meus cursos" e botões de gerenciar/criar curso
+#page-my-courses,
+.path-my-courses,
+.pagelayout-mycourses,
+#page-my-index.pagelayout-mycourses,
+#page-my-index.page-mycourses {
+    #page-navbar {
+        display: none !important; // Oculta apenas a barra de breadcrumbs no painel de meus cursos
+    }
+
+    #page-header {
+        display: block !important;
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 0 $spacing-sm 0 !important;
+        box-shadow: none !important;
+
+        .header-actions-container {
+            display: flex !important;
+            justify-content: flex-end !important;
+            margin-bottom: $spacing-xs !important;
+        }
+    }
+
+    // Botões de gerenciamento de cursos (Gerenciar cursos, Criar novo curso, Solicitar curso)
+    .my-action-buttons {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        flex-wrap: wrap !important;
+        gap: $spacing-xs !important;
+        margin-bottom: $spacing-sm !important;
+
+        form {
+            margin: 0 !important;
+            display: inline-flex !important;
+        }
+
+        .btn {
+            border-radius: $border-radius-pill !important;
+            padding: 6px 18px !important;
+            font-size: $font-size-sm !important;
+            font-weight: $font-weight-semibold !important;
+            font-family: $font-family-rawline !important;
+            margin: 0 !important;
+            width: auto !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+    }
+}
+
+.block-myoverview {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    
+    .card-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        
+        .col {
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            padding: 0 !important;
+            margin-bottom: $icon-size-sm !important;
+        }
+    }
+    
+    .paged-content-page-limit {
+        display: none !important;
+    }
+}
+
+.block-myoverview h3.card-title,
+.block_myoverview h3.card-title {
+    display: none !important;
+}
+
+.ifrn-inline-filter-section {
+    .card {
+        border: none !important;
+        border-radius: $border-radius-none !important;
+        background-color: transparent !important;
+        box-shadow: none !important;
+    }
+    
+    :is(button.ifrn-filter-toggle-btn, .ifrn-filter-toggle-btn) {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+        border: none !important;
+        border-radius: $border-radius-none !important;
+        background-color: transparent !important;
+        color: $blue-warm-vivid-70 !important;
+        font-weight: $font-weight-bold !important;
+        padding: 12px $spacing-md !important;
+        transition: background-color 0.2s ease-in-out;
+        outline: none !important;
+        box-shadow: none !important;
+        
+        &:hover {
+            background-color: $bg-hover !important;
+        }
+
+        &:focus, 
+        &:active, 
+        &:focus-visible, 
+        &:focus-within, 
+        &.active, 
+        &:not(.collapsed) {
+            border: none !important;
+            border-color: transparent !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        .filter-chevron-icon {
+            transition: transform 0.2s ease-in-out;
+        }
+
+        &:not(.collapsed) .filter-chevron-icon {
+            transform: rotate(180deg);
+        }
+    }
+
+    .card-body {
+        background-color: $bg-gray !important;
+        border-radius: $border-radius-none !important;
+        border-top: $border-width-thin solid $border-inner !important; // #e6e6e6 (Borda interna)
+        border-bottom: $border-width-thin solid $border-inner !important; // #e6e6e6 (Borda interna)
+    }
+
+    // Botões de ação do filtro (Limpar e Filtrar — mantidos no padrão redondo/pill Gov.br)
+    .ifrn-filter-actions {
+        .btn,
+        .ifrn-btn-limpar,
+        .ifrn-btn-filtrar {
+            border-radius: $border-radius-pill !important;
+        }
+    }
+
+    // Elementos de formulário e grupos dentro do filtro (retos e sem contorno/borda azul)
+    .ifrn-search-input,
+    .ifrn-search-group,
+    .ifrn-filter-group,
+    .input-group,
+    .input-group-text,
+    .form-control,
+    .form-select,
+    input,
+    select {
+        border-radius: $border-radius-none !important;
+        outline: none !important;
+        outline-width: 0 !important;
+        outline-style: none !important;
+        outline-color: transparent !important;
+        outline-offset: 0 !important;
+        box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+        border-color: $border-default !important;
+
+        &:hover {
+            border-color: $border-default !important;
+        }
+
+        &:focus,
+        &:active,
+        &:focus-visible,
+        &:focus-within {
+            @include focus-visible-ring;
+            border-color: $border-default !important;
+        }
+    }
+}
+

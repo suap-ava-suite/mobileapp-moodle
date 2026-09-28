@@ -1,0 +1,186 @@
+<ion-content class="ifrn-login">
+
+    <header class="ifrn-login__header">
+        @if (canGoBack) {
+            <button
+                type="button"
+                class="ifrn-login__back"
+                (click)="goBack()"
+                [disabled]="loading"
+                aria-label="Voltar">
+                <ion-icon name="chevron-back-outline" aria-hidden="true"></ion-icon>
+                Voltar
+            </button>
+        }
+        <img class="ifrn-login__logo" src="assets/img/Gov.br_logo.svg.webp" alt="gov.br">
+    </header>
+
+    <main class="ifrn-login__content">
+
+        <section class="ifrn-login__card" aria-labelledby="ifrn-login-title">
+
+            <h1 id="ifrn-login-title">
+                Entrar com SUAP
+            </h1>
+
+            <p class="ifrn-login__subtitle">
+                Use o mesmo IFRN-id e senha do SUAP.
+            </p>
+
+            @if (statusMessage) {
+                <p class="ifrn-login__status" role="status" aria-live="polite">
+                    {{ statusMessage }}
+                </p>
+            }
+
+            @if (formError) {
+                <p class="ifrn-login__error" role="alert" id="ifrn-login-error">
+                    {{ formError }}
+                </p>
+            }
+
+            @if (govBrNotice) {
+                <p class="ifrn-login__notice" role="status">
+                    {{ govBrNotice }}
+                </p>
+            }
+
+            <form class="ifrn-login__form" (submit)="$event.preventDefault(); login()">
+
+                <div class="ifrn-login__field">
+                    <label for="ifrn-login-username">
+                        IFRN-id
+                    </label>
+
+                    <div
+                        class="ifrn-login__input"
+                        [class.ifrn-login__input--error]="!!formError"
+                        (mousedown)="onFieldShellMouseDown($event, 'ifrn-login-username')">
+                        <input
+                            id="ifrn-login-username"
+                            name="username"
+                            type="text"
+                            dir="ltr"
+                            inputmode="text"
+                            enterkeyhint="next"
+                            autocapitalize="off"
+                            autocorrect="off"
+                            autocomplete="username"
+                            spellcheck="false"
+                            [(ngModel)]="username"
+                            placeholder="Digite seu IFRN-id"
+                            [disabled]="loading"
+                            [attr.aria-invalid]="formError ? true : null"
+                            [attr.aria-describedby]="formError ? 'ifrn-login-error' : null"
+                            (keydown.enter)="onUsernameEnter($event)">
+                    </div>
+
+                    <p>
+                        O IFRN-id é sua matrícula do IFRN ou, para colaboradores externos, o CPF.
+                    </p>
+                </div>
+
+                <div class="ifrn-login__field">
+                    <label for="ifrn-login-password">
+                        Senha
+                    </label>
+
+                    <div
+                        class="ifrn-login__input"
+                        [class.ifrn-login__input--error]="!!formError"
+                        (mousedown)="onFieldShellMouseDown($event, 'ifrn-login-password')">
+                        <input
+                            id="ifrn-login-password"
+                            name="password"
+                            dir="ltr"
+                            [type]="showPassword ? 'text' : 'password'"
+                            enterkeyhint="go"
+                            autocomplete="current-password"
+                            spellcheck="false"
+                            [(ngModel)]="password"
+                            placeholder="Digite sua senha"
+                            [disabled]="loading"
+                            [attr.aria-invalid]="formError ? true : null"
+                            [attr.aria-describedby]="formError ? 'ifrn-login-error' : null">
+
+                        <button
+                            type="button"
+                            class="ifrn-login__icon"
+                            (mousedown)="$event.stopPropagation()"
+                            (click)="togglePassword()"
+                            [disabled]="loading"
+                            aria-label="Mostrar ou ocultar senha"
+                            [attr.aria-pressed]="showPassword">
+                            <ion-icon
+                                [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"
+                                aria-hidden="true">
+                            </ion-icon>
+                        </button>
+                    </div>
+                </div>
+
+                <button
+                    class="ifrn-login__button ifrn-login__button--primary"
+                    type="submit"
+                    [disabled]="loading">
+                    @if (loading) {
+                        <ion-spinner name="crescent" class="ifrn-login__spinner" aria-hidden="true"></ion-spinner>
+                    }
+                    {{ loading ? 'Entrando…' : 'Entrar' }}
+                </button>
+
+                <button
+                    class="ifrn-login__button ifrn-login__button--govbr"
+                    type="button"
+                    [disabled]="loading"
+                    (click)="loginWithGovBr()">
+                    Entrar com GOV.BR
+                </button>
+
+                <p class="ifrn-login__govbr-help">
+                    @if (govBrIntegrated) {
+                        Use seu CPF no GOV.BR. Sua matrícula será localizada pelo SUAP.
+                    } @else {
+                        Abre o acesso oficial do SUAP para você consultar sua conta e matrícula.
+                    }
+                </p>
+
+                @if (biometricEnabled) {
+                    <button
+                        class="ifrn-login__button ifrn-login__button--secondary"
+                        type="button"
+                        [disabled]="loading"
+                        (click)="loginWithBiometrics()">
+                        Entrar com biometria
+                    </button>
+                }
+
+                <button
+                    class="ifrn-login__button ifrn-login__button--secondary"
+                    type="button"
+                    [disabled]="loading"
+                    (click)="clear()">
+                    Limpar
+                </button>
+
+            </form>
+
+            <a
+                class="ifrn-login__link ifrn-login__link--forgot"
+                href="https://suap.ifrn.edu.br/"
+                (click)="forgotPassword($event)">
+                Esqueci minha senha
+            </a>
+
+        </section>
+
+        <a
+            class="ifrn-login__link ifrn-login__link--help"
+            href="https://ajuda.ead.ifrn.edu.br/"
+            (click)="help($event)">
+            Precisa de ajuda?
+        </a>
+
+    </main>
+
+</ion-content>

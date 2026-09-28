@@ -1,0 +1,322 @@
+// ============================================================
+// Submenus & Dropdowns — Tema IFRN DS-GOV (v3.0)
+// ============================================================
+// Padronização global de todos os submenus, menus suspensos,
+// menus de ações (3 pontos), menus de usuário, navegações "Mais",
+// comboboxes e caixas de sugestões/autocomplete no padrão Gov.br.
+
+// ---------------------------------------------------------
+// 1. Container Global de Submenus e Dropdowns (.dropdown-menu)
+// ---------------------------------------------------------
+:is(
+    .dropdown-menu,
+    .action-menu .dropdown-menu,
+    .moodle-actionmenu .dropdown-menu,
+    .menubar .dropdown-menu,
+    .secondary-navigation .dropdown-menu,
+    .primary-navigation .dropdown-menu,
+    .tertiary-navigation .dropdown-menu,
+    .moremenu .dropdown-menu,
+    .usersearchdropdown,
+    .initialsdropdown,
+    .form-autocomplete-suggestions
+) {
+    background-color: $bg-white !important;
+    border: $border-width-thin solid $border-default !important; // #cccccc (DS Gov)
+    border-radius: $border-radius-default !important; // 4px (DS Gov)
+    box-shadow: $shadow-dropdown !important; // 0 5px 15px rgba(0, 0, 0, 0.10)
+    padding: 8px 0 !important;
+    z-index: $z-index-dropdown-page !important; // 1035 (Abaixo do cabeçalho fixo 1060 ao rolar a página)
+    list-style: none !important;
+    margin: 4px 0 0 0 !important;
+
+    // Reset de listas internas
+    ul,
+    ol,
+    ul[role="group"],
+    ul[role="menu"] {
+        list-style: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    // ---------------------------------------------------------
+    // 2. Cabeçalhos de Grupo e Títulos de Seção (.dropdown-header)
+    // ---------------------------------------------------------
+    :is(
+        .dropdown-header,
+        h6.dropdown-header,
+        li[role="presentation"],
+        .dropdown-group-header
+    ) {
+        font-family: $font-family-rawline !important;
+        font-size: $font-size-xs !important; // 0.75rem / 12px
+        font-weight: $font-weight-bold !important; // 700
+        color: $text-muted !important; // #666666
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        padding: 10px 20px 4px 20px !important;
+        margin: 0 !important;
+        list-style: none !important;
+        background-color: transparent !important;
+        border: none !important;
+    }
+
+    // ---------------------------------------------------------
+    // 3. Divisórias entre Grupos de Opções (.dropdown-divider)
+    // ---------------------------------------------------------
+    :is(
+        .dropdown-divider,
+        li[role="separator"],
+        hr.dropdown-divider,
+        .divider
+    ) {
+        border: none !important;
+        border-top: $border-width-thin solid $border-inner !important; // #e6e6e6
+        height: 0 !important;
+        margin: 6px 0 !important;
+        padding: 0 !important;
+        list-style: none !important;
+        opacity: 1 !important;
+    }
+
+    // ---------------------------------------------------------
+    // 4. Itens de Opção Clicáveis (.dropdown-item)
+    // ---------------------------------------------------------
+    :is(
+        .dropdown-item,
+        li.dropdown-item,
+        a.dropdown-item,
+        button.dropdown-item,
+        [role="option"],
+        [role="menuitem"],
+        .menubar .dropdown-item
+    ):not(.dropdown-header):not(.dropdown-divider):not(li[role="presentation"]):not(li[role="separator"]) {
+        display: flex !important;
+        align-items: center !important;
+        width: 100% !important;
+        font-family: $font-family-rawline !important;
+        font-size: $font-size-sm !important; // 0.875rem / 14px
+        font-weight: $font-weight-normal !important;
+        color: $text-dark !important; // #333333
+        padding: 10px 20px !important; // Task 8: Padding lateral aprimorado
+        gap: 12px !important; // Espaçamento entre ícone de selecionado e texto
+        background-color: transparent !important;
+        border: none !important;
+        border-top: none !important;
+        border-bottom: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-radius: 0 !important;
+        text-decoration: none !important;
+        cursor: pointer !important;
+        transition: background-color $transition-fast, color $transition-fast !important;
+        outline: none !important;
+        box-shadow: none !important;
+
+        // Ícones dentro dos itens (ícone de selecionado, fa-check, etc.)
+        :is(.icon, i.icon, img.icon, svg, .fa, .filler, .selected-icon) {
+            font-size: 16px !important;
+            width: 16px !important;
+            height: 16px !important;
+            min-width: 16px !important;
+            min-height: 16px !important;
+            margin-right: 8px !important;
+            margin-left: 0 !important;
+            color: inherit !important;
+            flex-shrink: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            vertical-align: middle !important;
+        }
+
+        // Hover e Focus DS Gov: fundo suave #eaeff8, texto #071d41
+        &:hover,
+        &:focus {
+            background-color: $blue-warm-vivid-10 !important; // #eaeff8
+            color: $blue-warm-vivid-90 !important; // #071d41
+            text-decoration: none !important;
+            border: none !important;
+            border-bottom: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        // Item Ativo / Selecionado
+        &.active,
+        &[aria-current="true"],
+        &[aria-selected="true"] {
+            background-color: $blue-warm-vivid-10 !important; // #eaeff8
+            color: $blue-warm-vivid-70 !important; // #1351b4
+            font-weight: $font-weight-bold !important;
+            border: none !important;
+            border-bottom: none !important;
+
+            &:hover,
+            &:focus {
+                background-color: $blue-warm-vivid-10 !important;
+                color: $blue-warm-vivid-90 !important;
+            }
+        }
+
+        // Item Desabilitado
+        &.disabled,
+        &:disabled,
+        &[aria-disabled="true"] {
+            color: $text-muted !important;
+            background-color: transparent !important;
+            cursor: not-allowed !important;
+            opacity: 0.6 !important;
+
+            &:hover,
+            &:focus {
+                background-color: transparent !important;
+                color: $text-muted !important;
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// Dropdown Menu Start (Task 9: Padding aumentado na esquerda)
+// ---------------------------------------------------------
+.dropdown-menu.dropdown-menu-start,
+.dropdown-menu-start {
+    .dropdown-item,
+    [role="menuitem"],
+    [role="option"] {
+        padding-left: 24px !important;
+    }
+
+    .dropdown-header,
+    li[role="presentation"] {
+        padding-left: 24px !important;
+    }
+}
+
+// ---------------------------------------------------------
+// 5. Botões de Abertura de Dropdown (Toggles & Action Menus)
+// ---------------------------------------------------------
+// Menu de Ações (3 pontos / engrenagem / menu de atividade / seção)
+.action-menu,
+.moodle-actionmenu {
+    .dropdown-toggle,
+    .action-menu-trigger,
+    .btn-icon.dropdown-toggle,
+    a[data-toggle="dropdown"],
+    a[data-bs-toggle="dropdown"],
+    button[data-toggle="dropdown"],
+    button[data-bs-toggle="dropdown"] {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: $blue-warm-vivid-70 !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+        text-decoration: none !important;
+        transition: color $transition-fast, background-color $transition-fast !important;
+
+        &:hover,
+        &:active {
+            color: $blue-warm-vivid-90 !important;
+            background-color: $blue-warm-vivid-10 !important;
+            text-decoration: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+
+        @include focus-visible-ring;
+
+        .icon,
+        i.icon {
+            color: inherit !important;
+            margin: 0 !important;
+        }
+
+        // Remove seta/caret padrão quando for botão de 3 pontos
+        &.no-caret::after,
+        &.btn-icon::after {
+            display: none !important;
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// 6. Submenu da Navegação por Abas (Botão "Mais" / Moremenu)
+// ---------------------------------------------------------
+.moremenu {
+    .dropdown {
+        .dropdown-toggle {
+            font-family: $font-family-rawline !important;
+            font-weight: $font-weight-semibold !important;
+            color: $blue-warm-vivid-70 !important;
+            border: none !important;
+            background-color: transparent !important;
+            box-shadow: none !important;
+
+            &:hover,
+            &:active {
+                color: $blue-warm-vivid-90 !important;
+                background-color: $blue-warm-vivid-10 !important;
+            }
+
+            @include focus-visible-ring;
+        }
+    }
+
+    .dropdown-menu {
+        min-width: 200px !important;
+    }
+}
+
+// ---------------------------------------------------------
+// 7. Menu do Usuário no Topo (#usernavigation / usermenu)
+// ---------------------------------------------------------
+.br-header,
+#usernavigation,
+[data-region="usermenu"] {
+    .dropdown-menu {
+        z-index: $z-index-dropdown-header !important; // 1100 (Acima do cabeçalho fixo)
+        min-width: 220px !important;
+        right: 0 !important;
+        left: auto !important;
+
+        .dropdown-item {
+            padding: 10px 16px !important;
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// 8. Sugestões de Autocomplete & Filtros de Busca
+// ---------------------------------------------------------
+.form-autocomplete-suggestions {
+    max-height: 280px !important;
+    overflow-y: auto !important;
+
+    li {
+        font-family: $font-family-rawline !important;
+        font-size: $font-size-sm !important;
+        color: $text-dark !important;
+        padding: 8px 16px !important;
+        cursor: pointer !important;
+        transition: background-color $transition-fast, color $transition-fast !important;
+
+        &:hover,
+        &[aria-selected="true"] {
+            background-color: $blue-warm-vivid-10 !important;
+            color: $blue-warm-vivid-90 !important;
+        }
+    }
+}
+
+// Dropdown de Filtro de Iniciais / Usuários
+.initialsdropdown,
+.usersearchdropdown {
+    padding: $spacing-md !important;
+    min-width: 280px !important;
+}

@@ -13,12 +13,14 @@
 // limitations under the License.
 
 const BuildLangTask = require('./gulp/task-build-lang');
+const BuildLangCustomTask = require('./gulp/task-build-lang-custom');
 const BuildBehatPluginTask = require('./gulp/task-build-behat-plugin');
 const BuildEnvTask = require('./gulp/task-build-env');
 const BuildIconsJsonTask = require('./gulp/task-build-icons-json');
 const OverrideLangTask = require('./gulp/task-override-lang');
 const FreezeDependenciesTask = require('./gulp/task-freeze-dependencies');
 const gulp = require('gulp');
+const { execSync } = require('child_process');
 
 const paths = {
     lang: [
@@ -27,12 +29,18 @@ const paths = {
         './src/assets/mimetypes.json',
         './src/core/features/**/',
         './src/core/',
+        './src/ifrn/**/',
     ],
 };
 
 // Build the language files into a single file per language.
 gulp.task('lang', (done) => {
     new BuildLangTask().run(paths.lang, done);
+});
+
+// Merge the customised IFRN strings into the generated lang files of every language.
+gulp.task('lang-custom', (done) => {
+    new BuildLangCustomTask().run(done);
 });
 
 // Use the English generated lang file (src/assets/lang/en.json) to override strings in features lang.json files.
@@ -53,6 +61,15 @@ gulp.task('freeze-dependencies', (done) => {
     new FreezeDependenciesTask().run(done);
 });
 
+gulp.task('mobilemoodle-ts', (done) => {
+    try {
+        execSync('node src/MoodleIFRN/mobilemoodle/build.mjs', { stdio: 'inherit' });
+        done();
+    } catch (error) {
+        done(error);
+    }
+});
+
 // Build a Moodle plugin to run Behat tests.
 if (BuildBehatPluginTask.isBehatConfigured()) {
     gulp.task('behat', (done) => {
@@ -63,16 +80,19 @@ if (BuildBehatPluginTask.isBehatConfigured()) {
 gulp.task(
     'default',
     gulp.parallel([
-        'lang',
+        gulp.series('lang', 'lang-custom'),
         'env',
         'icons',
+        'mobilemoodle-ts',
         ...(BuildBehatPluginTask.isBehatConfigured() ? ['behat'] : [])
     ]),
 );
 
 gulp.task('watch', () => {
-    gulp.watch(paths.lang, { interval: 500 }, gulp.parallel('lang'));
+    gulp.watch(paths.lang, { interval: 500 }, gulp.series('lang', 'lang-custom'));
     gulp.watch(['./moodle.config.json', './moodle.config.*.json'], { interval: 500 }, gulp.parallel('env'));
+    gulp.watch('src/MoodleIFRN/mobilemoodle/core_mobile/**/*.ts', { interval: 500 }, gulp.parallel('mobilemoodle-ts'));
+    gulp.watch('src/MoodleIFRN/mobilemoodle/mobilemoodle.ts', { interval: 500 }, gulp.parallel('mobilemoodle-ts'));
 
     if (BuildBehatPluginTask.isBehatConfigured()) {
         gulp.watch(['./tests/behat'], { interval: 500 }, gulp.parallel('behat'));

@@ -56,6 +56,10 @@
     <preference name="StatusBarBackgroundColor" value="#FFFFFF" />
     <preference name="NavigationBarBackgroundColor" value="#FFFFFF" />
     <preference name="AndroidEdgeToEdge" value="true" />
+    <preference name="SwiftVersion" value="5.0" />
+    <plugin name="cordova-plugin-fingerprint-aio" spec="6.0.1">
+        <variable name="FACEID_USAGE_DESCRIPTION" value="Use o Face ID para entrar com segurança no aplicativo." />
+    </plugin>
     <feature name="StatusBar">
         <param name="ios-package" onload="true" value="CDVStatusBar" />
     </feature>

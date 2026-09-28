@@ -1,0 +1,61 @@
+<ion-content class="moodle-open-course">
+    <header class="moodle-open-course__header">
+        <ion-button
+            class="moodle-open-course__back"
+            fill="clear"
+            (click)="goBack()"
+            [disabled]="loading"
+            aria-label="Voltar ao painel">
+            <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+        <h1 id="moodle-open-course-title">Abrir curso</h1>
+    </header>
+
+    <main class="moodle-open-course__content" aria-labelledby="moodle-open-course-title">
+        <section class="moodle-open-course__card">
+            <p class="moodle-open-course__eyebrow">Moodle Mobile nativo</p>
+            <h2>{{ courseName || ('Curso ' + courseId) }}</h2>
+            <p class="moodle-open-course__subtitle">
+                Site: <code>{{ moodleSiteUrl }}</code>
+            </p>
+            <p class="moodle-open-course__subtitle">
+                courseid: <code>{{ courseId || '—' }}</code>
+            </p>
+
+            @if (statusMessage) {
+                <p class="moodle-open-course__status" role="status" aria-live="polite">
+                    {{ statusMessage }}
+                </p>
+            }
+
+            @if (formError) {
+                <p class="moodle-open-course__error" role="alert">
+                    {{ formError }}
+                </p>
+            }
+
+            <div class="moodle-open-course__actions">
+                <ion-button
+                    expand="block"
+                    class="moodle-open-course__button"
+                    (click)="connectAndOpen()"
+                    [disabled]="loading || !courseId">
+                    @if (loading) {
+                        <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+                    } @else {
+                        Tentar novamente
+                    }
+                </ion-button>
+
+                <ion-button
+                    expand="block"
+                    fill="outline"
+                    class="moodle-open-course__button"
+                    (click)="goBack()"
+                    [disabled]="loading">
+                    Voltar ao Painel AVA
+                </ion-button>
+            </div>
+        </section>
+    </main>
+</ion-content>
