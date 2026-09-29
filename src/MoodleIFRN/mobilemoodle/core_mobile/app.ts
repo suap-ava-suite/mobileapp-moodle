@@ -26,10 +26,28 @@ import { MM, App } from './namespace';
     App.dashboardCache = null;
 
     function logout(): void {
+        // O OAuth Moodle roda no navegador do sistema (_system). Portanto, limpar
+        // apenas sessionStorage/IAB não encerra a sessão web que pode reutilizar
+        // a conta anterior. Abre o logout oficial do auth_suap no MESMO contexto.
+        const lastMoodleSite = sessionStorage.getItem('ifrn_moodle_last_site_url');
+
+        if (lastMoodleSite) {
+            try {
+                const origin = new URL(lastMoodleSite).origin;
+
+                if (origin.startsWith('https://')) {
+                    window.open(`${origin}/auth/suap/logout.php`, '_system');
+                }
+            } catch {
+                // URL inválida: segue com o logout local sem bloquear o usuário.
+            }
+        }
+
         if (window.MobileMoodleApi?.clearToken) {
             window.MobileMoodleApi.clearToken();
         }
 
+        sessionStorage.removeItem('ifrn_moodle_last_site_url');
         App.dashboardCache = null;
 
         const loginUrl = typeof App.resolveLoginUrl === 'function'
@@ -52,7 +70,7 @@ import { MM, App } from './namespace';
      * Diários com courseid Moodle vêm do Painel AVA quando há JWT do Painel.
      * Docs SUAP: https://suap.ifrn.edu.br/api/docs/
      * Painel: https://ava.ifrn.edu.br/api/v2/sala/tipo/diario/*/
-     
+
     function resolveApiBase(): string {
         return 'https://suap.ifrn.edu.br';
     }

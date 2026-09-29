@@ -131,6 +131,12 @@ import { MM, App } from './namespace';
                         siteUrl: siteUrl || undefined,
                     }),
                 );
+
+                // Mantém a última origem Moodle real para o logout web completo.
+                // Essa chave não contém token/cookie/PII; somente a origem HTTPS.
+                if (siteUrl && /^https:\/\//i.test(siteUrl)) {
+                    sessionStorage.setItem('ifrn_moodle_last_site_url', new URL(siteUrl).origin);
+                }
             } catch {
                 // ignore quota
             }

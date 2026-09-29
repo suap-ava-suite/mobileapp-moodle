@@ -1014,6 +1014,9 @@
             siteUrl: siteUrl || void 0
           })
         );
+        if (siteUrl && /^https:\/\//i.test(siteUrl)) {
+          sessionStorage.setItem("ifrn_moodle_last_site_url", new URL(siteUrl).origin);
+        }
       } catch {
       }
     }
@@ -2527,9 +2530,20 @@
   App.templatesRoot = document.getElementById("page-templates");
   App.dashboardCache = null;
   function logout() {
+    const lastMoodleSite = sessionStorage.getItem("ifrn_moodle_last_site_url");
+    if (lastMoodleSite) {
+      try {
+        const origin = new URL(lastMoodleSite).origin;
+        if (origin.startsWith("https://")) {
+          window.open(`${origin}/auth/suap/logout.php`, "_system");
+        }
+      } catch {
+      }
+    }
     if (window.MobileMoodleApi?.clearToken) {
       window.MobileMoodleApi.clearToken();
     }
+    sessionStorage.removeItem("ifrn_moodle_last_site_url");
     App.dashboardCache = null;
     const loginUrl = typeof App.resolveLoginUrl === "function" ? App.resolveLoginUrl() : "/login/ifrn-login";
     window.location.replace(loginUrl);
