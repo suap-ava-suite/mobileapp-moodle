@@ -37,6 +37,8 @@ export const IFRN_MOODLE_POC_COURSE_ID = 2836;
 const POC_PENDING_KEY = 'ifrn_moodle_poc_oauth_pending';
 const POC_RESUME_OAUTH_KEY = 'ifrn_moodle_poc_resume_oauth';
 const PENDING_OPEN_COURSE_KEY = 'ifrn_moodle_pending_open_course';
+/** Persiste mismatch Painel↔Moodle além do ciclo de logout/navegação. */
+const IDENTITY_MISMATCH_KEY = 'ifrn_moodle_identity_mismatch';
 const LOG_PREFIX = '[IFRN Moodle PoC]';
 /** Diagnóstico temporário do Teste A (sessão Moodle). Sem tokens. */
 const SITE_LOG = '[IFRN-SITE]';
@@ -398,7 +400,7 @@ export class MoodleSiteService {
 
     /**
      * True após mismatch de identidade (Caso B): a página NÃO deve auto-iniciar OAuth.
-     * O usuário toca em “Tentar novamente” conscientemente.
+     * O usuário toca em “Entrar com outra conta SUAP” conscientemente.
      */
     identityMismatchPending = false;
 
@@ -406,6 +408,23 @@ export class MoodleSiteService {
     private oauthFlowActive = false;
 
     private loginObserverRegistered = false;
+
+    /** Lê flag persistida de mismatch (sobrevive a logout/navegação). */
+    isIdentityMismatchPending(): boolean {
+        return this.identityMismatchPending
+            || sessionStorage.getItem(IDENTITY_MISMATCH_KEY) === '1';
+    }
+
+    /** Marca / limpa mismatch Painel↔Moodle (memória + sessionStorage). */
+    setIdentityMismatchPending(pending: boolean): void {
+        this.identityMismatchPending = pending;
+
+        if (pending) {
+            sessionStorage.setItem(IDENTITY_MISMATCH_KEY, '1');
+        } else {
+            sessionStorage.removeItem(IDENTITY_MISMATCH_KEY);
+        }
+    }
 
     /**
      * Garante o listener de LOGIN (retorno do OAuth) e diagnóstico do deep link.
@@ -530,12 +549,16 @@ export class MoodleSiteService {
      * Fluxo de produção: diário.id → sessão Moodle correta → abrir courseid nativo.
      * Só reutiliza sessão se a identidade Painel ↔ Moodle coincidir.
      * Pending (courseId/siteUrl/courseName) sobrevive ao OAuth em sessionStorage.
+     *
+     * Quando não há sessão correspondente, retorna `need-connect` sem iniciar o
+     * OAuth — a UI (moodle-open-course) mostra “Entrar com SUAP” e só então chama
+     * startSuapOAuthLogin(). Assim a segunda autenticação fica explícita.
      */
     async ensureSessionAndOpenCourse(
         courseId: number,
         siteUrl?: string,
         courseName?: string,
-    ): Promise<'opened' | 'switched' | 'browser-opened' | 'already-active'> {
+    ): Promise<'opened' | 'need-connect'> {
         this.ensureLoginObserver();
         this.lastError = '';
 
@@ -553,17 +576,10 @@ export class MoodleSiteService {
             return 'opened';
         }
 
-        const oauthResult = await this.startSuapOAuthLogin();
+        // eslint-disable-next-line no-console
+        console.log(COURSE_LOG, 'sessão Moodle ausente — aguardando Entrar com SUAP');
 
-        if (oauthResult === 'switched') {
-            return 'switched';
-        }
-
-        if (oauthResult === 'already-active') {
-            return 'already-active';
-        }
-
-        return 'browser-opened';
+        return 'need-connect';
     }
 
     /**
@@ -760,6 +776,8 @@ export class MoodleSiteService {
         }
 
         // Conta correta pode estar armazenada (multi-account no mesmo siteUrl).
+        let storedMatchingLoggedOut = false;
+
         if (match.hasExpected) {
             const storedId = await this.findStoredSiteIdForExpectedIdentities(resolved);
 
@@ -768,22 +786,50 @@ export class MoodleSiteService {
                     siteIdPresent: true,
                 });
 
-                const loaded = await CoreSites.loadSite(storedId);
+                // Não chamar loadSite() em conta logged-out: o Core seta currentSite,
+                // dispara SESSION_EXPIRED e pode redirecionar para /login/reconnect.
+                const storedSite = await CoreSites.getSite(storedId);
+                const storedIsLoggedOut = storedSite.isLoggedOut();
 
-                if (loaded && this.hasMatchingPresencialSession(resolved)) {
-                    const loadedMatch = this.matchCurrentMoodleIdentity();
-                    identityLog('sessão correta definida como current', {
-                        source: 'loadSite-stored',
-                        matchedVia: loadedMatch.matchedVia,
+                identityLog('estado do site armazenado correspondente', {
+                    siteIdPresent: true,
+                    loggedOut: storedIsLoggedOut,
+                });
+
+                if (storedIsLoggedOut) {
+                    storedMatchingLoggedOut = true;
+                    identityLog(
+                        'conta armazenada correspondente está logged-out — OAuth necessário (não descarta sessão válida)',
+                        { siteIdPresent: true },
+                    );
+                } else {
+                    const loaded = await CoreSites.loadSite(storedId);
+
+                    if (loaded && this.hasMatchingPresencialSession(resolved)) {
+                        const loadedMatch = this.matchCurrentMoodleIdentity();
+                        identityLog('sessão correta definida como current', {
+                            source: 'loadSite-stored',
+                            matchedVia: loadedMatch.matchedVia,
+                        });
+
+                        return 'loaded-stored';
+                    }
+
+                    identityLog('loadSite da conta correspondente falhou', {
+                        loadSiteReturned: loaded,
+                        hasMatchingAfterLoad: this.hasMatchingPresencialSession(resolved),
                     });
-
-                    return 'loaded-stored';
                 }
             }
         }
 
+        const oauthReason = hasSession
+            ? 'identity-mismatch-current'
+            : (storedMatchingLoggedOut ? 'stored-matching-logged-out' : 'no-session');
+
         identityLog('OAuth necessário', {
-            reason: hasSession ? 'identity-mismatch-or-logged-out-stored' : 'no-session',
+            reason: oauthReason,
+            storedMatchingLoggedOut,
             oauthFlowActive: this.oauthFlowActive,
         });
 
@@ -1126,7 +1172,7 @@ export class MoodleSiteService {
 
         sessionStorage.setItem(POC_PENDING_KEY, '1');
         this.oauthFlowActive = true;
-        this.identityMismatchPending = false;
+        this.setIdentityMismatchPending(false);
 
         const redirectData: CoreRedirectPayload | undefined = pending?.courseId
             ? {
@@ -1312,7 +1358,10 @@ export class MoodleSiteService {
     /**
      * Após OAuth: valida identidade e abre automaticamente o courseId pendente.
      * O usuário NÃO precisa voltar ao Painel e clicar de novo.
-     * NÃO abre URLs de logout (ex.: SUAP/Gov.br).
+     *
+     * Conta diferente do Painel: NÃO abre o curso e NÃO aceita a identidade
+     * retornada — mas NÃO destrói a sessão Moodle (sem forceLogout). A sessão
+     * criada por newSite() permanece persistida para reutilização futura.
      */
     private async afterOAuthLogin(): Promise<void> {
         this.oauthFlowActive = false;
@@ -1339,15 +1388,17 @@ export class MoodleSiteService {
         this.logIdentityDiagnostics('afterOAuthLogin');
 
         // Tipicamente Caso B: cookie SUAP no Chrome ainda na conta errada.
+        // Validação permanece; a sessão newSite() NÃO é destruída (sem forceLogout).
         if (match.hasExpected && !match.matches) {
-            this.identityMismatchPending = true;
+            this.setIdentityMismatchPending(true);
             this.lastError =
-                'A sessão Moodle não corresponde à conta do Painel. '
-                + 'No navegador, saia do SUAP da outra conta e entre com a mesma conta do Painel (ALUNO).';
+                'Conta diferente detectada. '
+                + 'O SUAP entrou com uma conta diferente da conta utilizada no Painel AVA. '
+                + 'O curso não foi aberto. A sessão Moodle não foi apagada.';
 
             identityLog('nova sessão corresponde = false', {
                 caseHint: 'B-browser-SUAP-cookie-or-format',
-                action: 'reject-no-external-logout',
+                action: 'reject-no-logout-preserve-session',
             });
 
             await CoreNavigator.navigate('/login/moodle-open-course', {
@@ -1382,7 +1433,7 @@ export class MoodleSiteService {
             source: 'oauth-newSite',
             matchedVia: match.matchedVia,
         });
-        this.identityMismatchPending = false;
+        this.setIdentityMismatchPending(false);
         this.lastError = '';
 
         if (!pending?.courseId) {

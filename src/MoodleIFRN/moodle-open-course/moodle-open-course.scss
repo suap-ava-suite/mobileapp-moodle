@@ -1,16 +1,26 @@
 :host {
-    --moodle-open-bg: #f4f7f5;
-    --moodle-open-ink: #1a2e24;
-    --moodle-open-muted: #5a6b62;
-    --moodle-open-accent: #0b6b4a;
+    --moodle-open-bg: #f7f7f7;
+    --moodle-open-ink: #333333;
+    --moodle-open-muted: #555555;
+    --moodle-open-accent: #168821;
+    --moodle-open-accent-dark: #0b4f1b;
+    --moodle-open-link: #1351b4;
+    --moodle-open-card-border: #e5e5e5;
+    --moodle-open-font: Arial, Helvetica, sans-serif;
 }
 
 .moodle-open-course {
     --background: var(--moodle-open-bg);
+    color: var(--moodle-open-ink);
+    font-family: var(--moodle-open-font);
 }
 
 .moodle-open-course--busy {
     --background: #ffffff;
+}
+
+.moodle-open-course--connect {
+    --background: var(--moodle-open-bg);
 }
 
 .moodle-open-course__silent {
@@ -41,6 +51,202 @@
 .moodle-open-course__silent-back {
     margin-top: 0.75rem;
 }
+
+/* —— Tela “Acesse sua conta institucional” (estilo gov.br / IFRN) —— */
+
+.moodle-open-course__connect-header {
+    align-items: center;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+    display: flex;
+    gap: 12px;
+    height: calc(62px + var(--ion-safe-area-top, 0px));
+    padding: var(--ion-safe-area-top, 0px) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
+}
+
+.moodle-open-course__connect-back {
+    align-items: center;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: var(--moodle-open-link);
+    cursor: pointer;
+    display: inline-flex;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    gap: 2px;
+    margin-right: 4px;
+    min-height: 44px;
+    padding: 8px 8px 8px 0;
+    -webkit-tap-highlight-color: transparent;
+
+    ion-icon {
+        font-size: 18px;
+    }
+
+    &:disabled {
+        opacity: 0.45;
+    }
+}
+
+.moodle-open-course__brand {
+    align-items: center;
+    display: inline-flex;
+    gap: 10px;
+}
+
+.moodle-open-course__brand-symbol {
+    display: block;
+    height: 36px;
+    width: auto;
+}
+
+.moodle-open-course__brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    line-height: 1.15;
+
+    strong {
+        color: var(--moodle-open-accent-dark);
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+
+    small {
+        color: var(--moodle-open-muted);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+}
+
+.moodle-open-course__connect-content {
+    box-sizing: border-box;
+    margin: 0 auto;
+    max-width: min(440px, 100%);
+    min-height: calc(100% - 62px - var(--ion-safe-area-top, 0px));
+    padding: 26px max(16px, env(safe-area-inset-right, 0px)) calc(48px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    width: 100%;
+}
+
+.moodle-open-course__connect-card {
+    background: #ffffff;
+    border: 1px solid var(--moodle-open-card-border);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    box-sizing: border-box;
+    padding: 22px 16px 28px;
+    width: 100%;
+}
+
+.moodle-open-course__connect-card h1 {
+    color: var(--moodle-open-ink);
+    font-size: clamp(1.05rem, 0.95rem + 0.4vw, 1.3rem);
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0 0 10px;
+}
+
+.moodle-open-course__connect-subtitle {
+    color: var(--moodle-open-muted);
+    font-size: 14px;
+    line-height: 1.45;
+    margin: 0 0 18px;
+}
+
+.moodle-open-course__connect-course {
+    background: #f0f7f1;
+    border: 1px solid #cfe8d3;
+    border-radius: 6px;
+    color: var(--moodle-open-accent-dark);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin: 0 0 22px;
+    padding: 10px 12px;
+}
+
+.moodle-open-course__suap-button {
+    align-items: center;
+    appearance: none;
+    background: #ffffff;
+    border: 2px solid var(--moodle-open-accent);
+    border-radius: 999px;
+    box-sizing: border-box;
+    color: var(--moodle-open-accent-dark);
+    cursor: pointer;
+    display: flex;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    gap: 8px;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 18px;
+    width: 100%;
+    -webkit-tap-highlight-color: transparent;
+
+    &:not(:disabled):active {
+        background: #e8f5ea;
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.65;
+    }
+}
+
+.moodle-open-course__suap-mark {
+    background: var(--moodle-open-accent);
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    padding: 5px 7px;
+}
+
+.moodle-open-course__suap-spinner {
+    height: 18px;
+    width: 18px;
+    --color: var(--moodle-open-accent-dark);
+}
+
+.moodle-open-course__connect-help {
+    color: var(--moodle-open-muted);
+    font-size: 12px;
+    line-height: 1.45;
+    margin: 12px 8px 0;
+    text-align: center;
+}
+
+.moodle-open-course__connect-secondary {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: var(--moodle-open-link);
+    cursor: pointer;
+    display: block;
+    font-family: inherit;
+    font-size: 14px;
+    margin: 22px auto 0;
+    min-height: 44px;
+    padding: 12px 8px;
+    text-align: center;
+    text-decoration: underline;
+    width: 100%;
+    -webkit-tap-highlight-color: transparent;
+
+    &:disabled {
+        opacity: 0.45;
+    }
+}
+
+/* —— Tela de erro (recuperação) —— */
 
 .moodle-open-course__header {
     display: flex;

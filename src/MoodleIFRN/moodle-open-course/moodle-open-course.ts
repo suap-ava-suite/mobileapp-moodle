@@ -29,9 +29,8 @@ type OpenCoursePhase = 'loading' | 'waiting-browser' | 'error';
 /**
  * Ponte mínima IFRN → Moodle Mobile nativo.
  *
- * No fluxo feliz a UI fica silenciosa (só spinner). A tela de diagnóstico
- * (“Abrir curso” / site / courseid / “Complete o login…”) só aparece em erro.
- * Quando o OAuth abre o navegador, phase = waiting-browser (não trava no spinner).
+ * Com sessão Moodle válida e correspondente: abre o curso em silêncio.
+ * Sem sessão reutilizável: inicia o OAuth/SSO oficial automaticamente, sem tela intermediária.
  *
  * Rota: /login/moodle-open-course (intermediária; sai com reset ao abrir).
  */
@@ -48,6 +47,7 @@ export class MoodleOpenCoursePage implements OnInit {
     private readonly moodleSite = inject(MoodleSiteService);
 
     readonly defaultSiteUrl = IFRN_MOODLE_PRESENCIAL_URL;
+    readonly ifrnSymbolSrc = 'mobilemoodle/static/theme/ifrn/img/ifrn-symbol.svg';
 
     loading = false;
     formError = '';
@@ -58,12 +58,12 @@ export class MoodleOpenCoursePage implements OnInit {
 
     /**
      * loading = spinner “Abrindo curso…”
-     * waiting-browser = OAuth no navegador externo (não travar no spinner)
+     * waiting-browser = OAuth no navegador externo
      * error = UI de recuperação
      */
     phase: OpenCoursePhase = 'loading';
 
-    /** Evita segundo ngOnInit disparar OAuth na mesma instância. */
+    /** Evita segundo ngOnInit disparar o fluxo na mesma instância. */
     private initStarted = false;
 
     async ngOnInit(): Promise<void> {
@@ -95,14 +95,14 @@ export class MoodleOpenCoursePage implements OnInit {
             hasPresencialSession: hasUrlSession,
             hasMatchingPresencialSession: hasMatchingSession,
             identityOnly,
-            identityMismatchPending: this.moodleSite.identityMismatchPending,
+            identityMismatchPending: this.moodleSite.isIdentityMismatchPending(),
             initStarted: this.initStarted,
         });
         // eslint-disable-next-line no-console
         console.log('[IFRN-COURSE] courseId recebido do Painel =', this.courseId || null);
 
         if (this.moodleSite.lastError) {
-            this.revealBridgeError(this.moodleSite.lastError);
+            this.formError = this.moodleSite.lastError;
         }
 
         if (!this.courseId) {
@@ -116,7 +116,7 @@ export class MoodleOpenCoursePage implements OnInit {
         // Retorno pós-OAuth com erro / mismatch: NÃO auto-iniciar outro OAuth.
         if (
             identityOnly
-            || this.moodleSite.identityMismatchPending
+            || this.moodleSite.isIdentityMismatchPending()
             || this.initStarted
         ) {
             // eslint-disable-next-line no-console
@@ -137,12 +137,12 @@ export class MoodleOpenCoursePage implements OnInit {
             || this.moodleSite.shouldResumeOAuthAfterSiteSwitch();
 
         if (startOAuth) {
-            await this.connectAndOpen({ resumeAfterSwitch: true });
+            await this.startOAuthFlow({ resumeAfterSwitch: true });
 
             return;
         }
 
-        await this.connectAndOpen();
+        await this.tryOpenOrPromptConnect();
     }
 
     goBack(): void {
@@ -155,7 +155,10 @@ export class MoodleOpenCoursePage implements OnInit {
         window.location.assign(`${root}mobilemoodle/index.html#/painel`);
     }
 
-    async connectAndOpen(options: { resumeAfterSwitch?: boolean } = {}): Promise<void> {
+    /**
+     * Verifica sessão Moodle: abre o curso se válida; senão inicia o OAuth oficial automaticamente.
+     */
+    async tryOpenOrPromptConnect(): Promise<void> {
         if (this.loading || !this.courseId) {
             return;
         }
@@ -163,30 +166,10 @@ export class MoodleOpenCoursePage implements OnInit {
         this.formError = '';
         this.phase = 'loading';
         this.moodleSite.lastError = '';
-        this.moodleSite.identityMismatchPending = false;
+        this.moodleSite.setIdentityMismatchPending(false);
         this.loading = true;
 
-        // Sem overlay Ionic por cima — a própria página já é o loading silencioso.
-        // (Evita a tela “Abrir curso” + modal “Loading” das capturas.)
-
         try {
-            if (options.resumeAfterSwitch) {
-                this.moodleSite.setPendingOpenCourse({
-                    courseId: this.courseId,
-                    courseName: this.courseName,
-                    siteUrl: this.moodleSiteUrl,
-                });
-
-                await this.moodleSite.startSuapOAuthLogin({
-                    resumeAfterSwitch: true,
-                });
-
-                // Browser externo aberto: para o spinner e orienta o usuário.
-                this.phase = 'waiting-browser';
-
-                return;
-            }
-
             const result = await this.moodleSite.ensureSessionAndOpenCourse(
                 this.courseId,
                 this.moodleSiteUrl,
@@ -197,17 +180,15 @@ export class MoodleOpenCoursePage implements OnInit {
                 return;
             }
 
-            if (result === 'browser-opened' || result === 'already-active') {
-                this.phase = 'waiting-browser';
-
-                return;
-            }
-
-            // switch-account: a navegação reinicia esta página com startOAuth.
-            this.phase = 'loading';
+            // Sem sessão reutilizável: não exibe uma segunda tela/botão.
+            // Libera o lock desta verificação e inicia o OAuth oficial imediatamente.
+            // eslint-disable-next-line no-console
+            console.log('[IFRN-COURSE] sessão Moodle ausente — iniciando OAuth automaticamente');
+            this.loading = false;
+            await this.startOAuthFlow();
         } catch (error) {
             // eslint-disable-next-line no-console
-            console.error('[IFRN-SITE] connectAndOpen erro', {
+            console.error('[IFRN-SITE] tryOpenOrPromptConnect erro', {
                 message: error instanceof Error ? error.message : String(error),
                 siteUrl: this.moodleSiteUrl,
                 courseId: this.courseId,
@@ -220,6 +201,70 @@ export class MoodleOpenCoursePage implements OnInit {
             );
             void CoreAlerts.showError(error, {
                 default: 'Não foi possível abrir o curso Moodle.',
+            });
+        } finally {
+            this.loading = false;
+
+            if (this.moodleSite.lastError && !this.formError) {
+                this.revealBridgeError(this.moodleSite.lastError);
+            }
+        }
+    }
+
+    /**
+    /**
+     * “Tentar novamente” após erro: revalida a sessão e, se necessário, reinicia o OAuth oficial.
+     */
+    async retryConnect(): Promise<void> {
+        await this.tryOpenOrPromptConnect();
+    }
+
+    private async startOAuthFlow(options: { resumeAfterSwitch?: boolean } = {}): Promise<void> {
+        if (this.loading || !this.courseId) {
+            return;
+        }
+
+        this.formError = '';
+        this.phase = 'loading';
+        this.moodleSite.lastError = '';
+        this.moodleSite.setIdentityMismatchPending(false);
+        this.loading = true;
+
+        try {
+            this.moodleSite.setPendingOpenCourse({
+                courseId: this.courseId,
+                courseName: this.courseName,
+                siteUrl: this.moodleSiteUrl,
+            });
+
+            const oauthResult = await this.moodleSite.startSuapOAuthLogin({
+                resumeAfterSwitch: options.resumeAfterSwitch === true,
+            });
+
+            if (oauthResult === 'switched') {
+                // switch-account: a navegação reinicia esta página com startOAuth.
+                this.phase = 'loading';
+
+                return;
+            }
+
+            // Browser externo aberto (ou fluxo já ativo): orienta o usuário.
+            this.phase = 'waiting-browser';
+        } catch (error) {
+            // eslint-disable-next-line no-console
+            console.error('[IFRN-SITE] startOAuthFlow erro', {
+                message: error instanceof Error ? error.message : String(error),
+                siteUrl: this.moodleSiteUrl,
+                courseId: this.courseId,
+            });
+
+            this.revealBridgeError(
+                error instanceof Error
+                    ? error.message
+                    : 'Não foi possível iniciar a autenticação SUAP.',
+            );
+            void CoreAlerts.showError(error, {
+                default: 'Não foi possível iniciar a autenticação SUAP.',
             });
         } finally {
             this.loading = false;
