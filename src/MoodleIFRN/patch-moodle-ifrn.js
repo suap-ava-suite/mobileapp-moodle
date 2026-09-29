@@ -39,7 +39,6 @@ const MARKER = {
  *   /login              → redirect para marketplace-ifrn
  *   /login/marketplace-ifrn → tela inicial (marketplace)
  *   /login/ifrn-login       → login com IFRN-id
- *   /login/moodle-poc       → PoC OAuth SUAP → CoreSites → cursos
  *   /login/moodle-open-course → abre courseid Moodle (OAuth se preciso)
  */
 const IFRN_LOGIN_ROUTES = `            ${MARKER.loginRoutesStart}
@@ -54,12 +53,6 @@ const IFRN_LOGIN_ROUTES = `            ${MARKER.loginRoutesStart}
                 loadComponent: () =>
                     import('@/MoodleIFRN/ifrn-login/ifrn-login')
                         .then(m => m.IfrnLoginPage),
-            },
-            {
-                path: 'moodle-poc',
-                loadComponent: () =>
-                    import('@/MoodleIFRN/moodle-poc/moodle-poc')
-                        .then(m => m.MoodlePocPage),
             },
             {
                 path: 'moodle-open-course',
@@ -116,7 +109,7 @@ function stripLegacyIfrnRoutes(content) {
 
     next = replaceBetweenMarkers(next, MARKER.loginRoutesStart, MARKER.loginRoutesEnd, '') ?? next;
 
-    const legacyPaths = ['marketplace-ifrn', 'ifrn-login', 'moodle-poc', 'moodle-open-course', 'ifrn'];
+    const legacyPaths = ['marketplace-ifrn', 'ifrn-login', 'moodle-open-course', 'ifrn'];
     for (const routePath of legacyPaths) {
         const pattern = new RegExp(
             `\\{[^{}]*path:\\s*'${routePath}'[\\s\\S]*?\\n\\s*\\},?\\s*`,
@@ -140,12 +133,10 @@ function isLoginModulePatched(content) {
         && content.includes(MARKER.loginRoutesEnd)
         && content.includes("path: 'marketplace-ifrn'")
         && content.includes("path: 'ifrn-login'")
-        && content.includes("path: 'moodle-poc'")
         && content.includes("path: 'moodle-open-course'")
         && /redirectTo:\s*'marketplace-ifrn'/.test(content)
         && content.includes('@/MoodleIFRN/marketplace-ifrn/marketplace-ifrn')
         && content.includes('@/MoodleIFRN/ifrn-login/ifrn-login')
-        && content.includes('@/MoodleIFRN/moodle-poc/moodle-poc')
         && content.includes('@/MoodleIFRN/moodle-open-course/moodle-open-course');
 }
 
@@ -178,7 +169,7 @@ function patchLoginModule() {
     }
 
     writeFile(FILES.loginModule, content);
-    console.log('✔ login.module.ts — redirect e rotas marketplace-ifrn / ifrn-login / moodle-poc aplicados');
+    console.log('✔ login.module.ts — redirect e rotas marketplace-ifrn / ifrn-login ');
 }
 
 function patchAngularAssets() {
@@ -287,7 +278,7 @@ function main() {
     patchPackageScripts();
 
     console.log('\n✔ Patch concluído.');
-    console.log('  Rotas: /login → marketplace-ifrn, /login/ifrn-login, /login/moodle-poc, /login/moodle-open-course');
+    console.log('  Rotas: /login → marketplace-ifrn, /login/ifrn-login,  /login/moodle-open-course');
     console.log('  Próximo passo: npm run build:mobilemoodle');
 }
 

@@ -28,18 +28,16 @@ import { CoreUrl } from '@static/url';
 import { CoreEvents } from '@static/events';
 import { CoreLogger } from '@static/logger';
 
-/** Site Moodle usado no PoC IFRN. */
+
 export const IFRN_MOODLE_PRESENCIAL_URL = 'https://presencial.ava.ifrn.edu.br';
 
-/** courseid de exemplo (Metodologia) — usado se o usuário estiver inscrito. */
-export const IFRN_MOODLE_POC_COURSE_ID = 2836;
 
-const POC_PENDING_KEY = 'ifrn_moodle_poc_oauth_pending';
-const POC_RESUME_OAUTH_KEY = 'ifrn_moodle_poc_resume_oauth';
+const OAUTH_PENDING_KEY = 'ifrn_moodle_oauth_pending';
+const RESUME_OAUTH_KEY = 'ifrn_moodle_resume_oauth';
 const PENDING_OPEN_COURSE_KEY = 'ifrn_moodle_pending_open_course';
 /** Persiste mismatch Painel↔Moodle além do ciclo de logout/navegação. */
 const IDENTITY_MISMATCH_KEY = 'ifrn_moodle_identity_mismatch';
-const LOG_PREFIX = '[IFRN Moodle PoC]';
+const LOG_PREFIX = '[IFRN Moodle]';
 /** Diagnóstico temporário do Teste A (sessão Moodle). Sem tokens. */
 const SITE_LOG = '[IFRN-SITE]';
 /** Diagnóstico temporário do Teste B (abrir curso). Sem tokens. */
@@ -362,23 +360,23 @@ export interface MoodlePendingOpenCourse {
     courseName?: string;
 }
 
-export interface MoodlePocCourseSummary {
+export interface MoodleCourseSummary {
     id: number;
     name: string;
 }
 
-export interface MoodlePocSessionSummary {
+export interface MoodleSessionSummary {
     userFullName: string;
     username: string;
     siteUrl: string;
     siteName: string;
     courseCount: number;
-    courses: MoodlePocCourseSummary[];
+    courses: MoodleCourseSummary[];
     openedCourseId?: number;
 }
 
 /**
- * PoC: autentica no AVA-Presencial via OAuth SUAP do próprio Moodle
+ * Autentica no AVA via OAuth SUAP do próprio Moodle
  * e reutiliza CoreSites / CoreCourses / CoreCourseHelper do núcleo.
  *
  * Não usa o JWT do SUAP do AuthService.
@@ -392,10 +390,10 @@ export class MoodleSiteService {
     private readonly authService = inject(AuthService);
     private readonly painelAva = inject(PainelAvaService);
 
-    /** Último resultado do PoC (para a UI). */
-    lastSummary: MoodlePocSessionSummary | null = null;
+    /** Último resumo da sessão Moodle. */
+    lastSummary: MoodleSessionSummary | null = null;
 
-    /** Último erro amigável do PoC. */
+    /** Último erro amigável do fluxo Moodle. */
     lastError = '';
 
     /**
@@ -450,7 +448,7 @@ export class MoodleSiteService {
             });
             identityLog('callback recebido', {
                 isSSOToken: CoreCustomURLSchemes.isCustomURLToken(url),
-                pendingOAuth: sessionStorage.getItem(POC_PENDING_KEY) === '1',
+                pendingOAuth: sessionStorage.getItem(OAUTH_PENDING_KEY) === '1',
             });
         });
 
@@ -477,7 +475,7 @@ export class MoodleSiteService {
                 isLoggedIn: CoreSites.isLoggedIn(),
                 siteUrl: site?.getURL() || null,
                 siteIdPresent: !!site?.getId(),
-                pendingOAuth: sessionStorage.getItem(POC_PENDING_KEY) === '1',
+                pendingOAuth: sessionStorage.getItem(OAUTH_PENDING_KEY) === '1',
                 note: 'SSO usa newSite(token do deep link), não getUserToken',
             }));
             identityLog('nova sessão Moodle criada', {
@@ -490,15 +488,15 @@ export class MoodleSiteService {
 
             this.logIdentityDiagnostics('CoreEvents.LOGIN');
 
-            if (sessionStorage.getItem(POC_PENDING_KEY) !== '1') {
+            if (sessionStorage.getItem(OAUTH_PENDING_KEY) !== '1') {
                 this.oauthFlowActive = false;
 
                 return;
             }
 
-            sessionStorage.removeItem(POC_PENDING_KEY);
+            sessionStorage.removeItem(OAUTH_PENDING_KEY);
 
-            // Deixa o núcleo concluir navigateToSiteHome e depois volta ao PoC
+            // Deixa o núcleo concluir navigateToSiteHome e depois volta ao bridge IFRN
             // ou abre o curso pendente (fluxo do painel).
             window.setTimeout(() => {
                 void this.afterOAuthLogin();
@@ -938,7 +936,7 @@ export class MoodleSiteService {
             siteIdPresent: !!CoreSites.getCurrentSiteId(),
         }));
 
-        let courses: MoodlePocCourseSummary[];
+        let courses: MoodleCourseSummary[];
 
         try {
             const enrolled = await CoreCourses.getUserCourses();
@@ -1032,7 +1030,7 @@ export class MoodleSiteService {
 
     /**
      * Há sessão Moodle ativa no site presencial?
-     * (sessão restaurada pelo CoreSites — não implica OAuth do PoC).
+     * (sessão restaurada pelo CoreSites — não implica OAuth do bridge IFRN).
      */
     hasPresencialSession(siteUrl = IFRN_MOODLE_PRESENCIAL_URL): boolean {
         const site = CoreSites.getCurrentSite();
@@ -1045,10 +1043,10 @@ export class MoodleSiteService {
     }
 
     /**
-     * True quando o PoC pediu switch-account e deve retomar o OAuth ao voltar.
+     * True quando o bridge pediu switch-account e deve retomar o OAuth ao voltar.
      */
     shouldResumeOAuthAfterSiteSwitch(): boolean {
-        return sessionStorage.getItem(POC_RESUME_OAUTH_KEY) === '1';
+        return sessionStorage.getItem(RESUME_OAUTH_KEY) === '1';
     }
 
     /**
@@ -1107,12 +1105,12 @@ export class MoodleSiteService {
                 `${LOG_PREFIX} Sessão Moodle ativa — switch-account antes do OAuth SUAP`,
             );
 
-            sessionStorage.setItem(POC_RESUME_OAUTH_KEY, '1');
+            sessionStorage.setItem(RESUME_OAUTH_KEY, '1');
 
             const pending = this.getPendingOpenCourse();
             const redirectPath = pending?.courseId
                 ? '/login/moodle-open-course'
-                : '/login/moodle-poc';
+                : '/login/moodle-open-course';
             const redirectOptions = pending?.courseId
                 ? { params: { startOAuth: true, courseId: pending.courseId, courseName: pending.courseName } }
                 : { params: { startOAuth: true } };
@@ -1126,7 +1124,7 @@ export class MoodleSiteService {
             return 'switched';
         }
 
-        sessionStorage.removeItem(POC_RESUME_OAUTH_KEY);
+        sessionStorage.removeItem(RESUME_OAUTH_KEY);
 
         const pending = this.getPendingOpenCourse();
         const rawCandidate = pending?.siteUrl;
@@ -1170,7 +1168,7 @@ export class MoodleSiteService {
             throw new Error('Identity provider SUAP sem parâmetro id na URL OAuth.');
         }
 
-        sessionStorage.setItem(POC_PENDING_KEY, '1');
+        sessionStorage.setItem(OAUTH_PENDING_KEY, '1');
         this.oauthFlowActive = true;
         this.setIdentityMismatchPending(false);
 
@@ -1207,85 +1205,16 @@ export class MoodleSiteService {
         // eslint-disable-next-line no-console
         console.log(SITE_LOG, 'openBrowserForOAuthLogin resultado', {
             opened,
-            pendingOAuth: sessionStorage.getItem(POC_PENDING_KEY) === '1',
+            pendingOAuth: sessionStorage.getItem(OAUTH_PENDING_KEY) === '1',
         });
 
         if (!opened) {
-            sessionStorage.removeItem(POC_PENDING_KEY);
+            sessionStorage.removeItem(OAUTH_PENDING_KEY);
             this.oauthFlowActive = false;
             throw new Error('Não foi possível abrir o navegador para OAuth SUAP.');
         }
 
         return 'opened';
-    }
-
-    /**
-     * Inspeciona a sessão atual e lista cursos via CoreCourses.getUserCourses().
-     * Nunca registra token.
-     */
-    async inspectSessionAndCourses(): Promise<MoodlePocSessionSummary> {
-        this.lastError = '';
-
-        const site = CoreSites.getCurrentSite();
-
-        if (!site || !CoreSites.isLoggedIn()) {
-            throw new Error('Não há sessão Moodle ativa. Conecte via OAuth SUAP primeiro.');
-        }
-
-        const info = site.getInfo();
-        const courses = await CoreCourses.getUserCourses();
-        const courseSummaries = courses.map((course) => this.toCourseSummary(course));
-
-        const summary: MoodlePocSessionSummary = {
-            userFullName: info?.fullname || info?.username || '(sem nome)',
-            username: info?.username || '',
-            siteUrl: site.getURL(),
-            siteName: info?.sitename || '',
-            courseCount: courseSummaries.length,
-            courses: courseSummaries,
-        };
-
-        this.logSessionSummary(summary);
-        this.lastSummary = summary;
-
-        return summary;
-    }
-
-    /**
-     * Abre um curso com CoreCourseHelper.getAndOpenCourse.
-     * Prefere 2836 se o usuário estiver inscrito; senão o primeiro da lista.
-     */
-    async openTestCourse(preferredCourseId = IFRN_MOODLE_POC_COURSE_ID): Promise<number> {
-        this.lastError = '';
-
-        if (!CoreSites.isLoggedIn()) {
-            throw new Error('Não há sessão Moodle ativa.');
-        }
-
-        let summary = this.lastSummary;
-
-        if (!summary) {
-            summary = await this.inspectSessionAndCourses();
-        }
-
-        if (!summary.courses.length) {
-            throw new Error('Nenhum curso encontrado para este usuário no Moodle.');
-        }
-
-        const preferred = summary.courses.find((course) => course.id === preferredCourseId);
-        const target = preferred ?? summary.courses[0];
-
-        this.logger.debug(
-            `${LOG_PREFIX} Abrindo curso id=${target.id} name=${target.name}`
-            + (preferred ? ' (preferido 2836)' : ' (primeiro da lista)'),
-        );
-
-        await CoreCourseHelper.getAndOpenCourse(target.id);
-
-        summary.openedCourseId = target.id;
-        this.lastSummary = summary;
-
-        return target.id;
     }
 
     /**
@@ -1306,7 +1235,7 @@ export class MoodleSiteService {
             const result = await CoreSites.checkSite(
                 resolved,
                 'https://',
-                'IFRN Moodle PoC',
+                'IFRN Moodle',
             );
 
             // eslint-disable-next-line no-console
@@ -1472,30 +1401,12 @@ export class MoodleSiteService {
         }
     }
 
-    private toCourseSummary(course: CoreEnrolledCourseData): MoodlePocCourseSummary {
+    private toCourseSummary(course: CoreEnrolledCourseData): MoodleCourseSummary {
         return {
             id: course.id,
             name: course.displayname || course.fullname || course.shortname || `Curso ${course.id}`,
         };
     }
 
-    /**
-     * Console seguro: nunca inclui token / privateToken / username.
-     */
-    private logSessionSummary(summary: MoodlePocSessionSummary): void {
-        // eslint-disable-next-line no-console
-        console.log(LOG_PREFIX, 'Sessão Moodle ativa');
-        // eslint-disable-next-line no-console
-        console.log(LOG_PREFIX, 'Identidade:', identityFingerprint(summary.username));
-        // eslint-disable-next-line no-console
-        console.log(LOG_PREFIX, 'Site:', summary.siteUrl, `| ${summary.siteName}`);
-        // eslint-disable-next-line no-console
-        console.log(LOG_PREFIX, 'Cursos:', summary.courseCount);
-
-        for (const course of summary.courses) {
-            // eslint-disable-next-line no-consoles
-            console.log(LOG_PREFIX, `  - [${course.id}] ${course.name}`);
-        }
-    }
 
 }

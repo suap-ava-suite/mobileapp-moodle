@@ -74,12 +74,7 @@ export class MarketplaceIfrnPage implements OnInit {
         void this.router.navigate(['/login/ifrn-login']);
     }
 
-    /**
-     * PoC temporário: Painel AVA API v1 (authenticate + /api/v1/diarios/).
-     */
-    openMoodlePoc(): void {
-        void this.router.navigate(['/login/moodle-poc']);
-    }
+
 
     /**
      * Abre a central de ajuda do AVA IFRN.

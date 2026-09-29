@@ -45,12 +45,6 @@ const appRoutes: Routes = [
                         .then(m => m.IfrnLoginPage),
             },
             {
-                path: 'moodle-poc',
-                loadComponent: () =>
-                    import('@/MoodleIFRN/moodle-poc/moodle-poc')
-                        .then(m => m.MoodlePocPage),
-            },
-            {
                 path: 'moodle-open-course',
                 loadComponent: () =>
                     import('@/MoodleIFRN/moodle-open-course/moodle-open-course')

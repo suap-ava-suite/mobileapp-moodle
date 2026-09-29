@@ -33,7 +33,7 @@ export interface PainelAvaAuthResponse {
 /**
  * Item bruto da listagem de diários do Painel AVA.
  * Campos tipados só como referência do que o cliente já observava;
- * o PoC registra as chaves realmente presentes na resposta.
+ * o serviço registra as chaves realmente presentes na resposta.
  */
 export type PainelAvaDiarioRaw = Record<string, unknown>;
 
@@ -46,8 +46,8 @@ export interface PainelAvaDiariosResponse {
     [key: string]: unknown;
 }
 
-/** Resultado do PoC API v1 (UI + console) — sem tokens. */
-export interface PainelAvaV1PocResult {
+/** Resultado da API v1 (UI + console) — sem tokens. */
+export interface PainelAvaV1Result {
     baseUrl: string;
     authenticatePath: string;
     diariosUrl: string;
@@ -340,16 +340,8 @@ export class PainelAvaService {
      * Depois que a sessão web existir, consulta /api/v1/diarios/ dentro da origem
      * https://ava.ifrn.edu.br, sem copiar cookie, código OAuth ou senha para o app.
      */
-    /**
-     * Compatibilidade temporária com a tela /login/moodle-poc.
-     * As credenciais não são reenviadas ao Painel; o fluxo real usa OAuth web.
-     */
-    runApiV1Poc(_credentials?: { username: string; password: string }): Observable<PainelAvaV1PocResult> {
-        return this.authenticateWithBrowser();
-    }
-
-    authenticateWithBrowser(): Observable<PainelAvaV1PocResult> {
-        return new Observable<PainelAvaV1PocResult>((subscriber) => {
+    authenticateWithBrowser(): Observable<PainelAvaV1Result> {
+        return new Observable<PainelAvaV1Result>((subscriber) => {
             const baseUrl = PAINEL_AVA_CONFIG.baseUrl.replace(/\/$/, '');
             const diariosPath = PAINEL_AVA_CONFIG.diariosPath;
             const query = PAINEL_AVA_CONFIG.diariosQuery ? `?${PAINEL_AVA_CONFIG.diariosQuery}` : '';
@@ -462,7 +454,7 @@ export class PainelAvaService {
                     ...pickExistingInterest(diario),
                 }));
 
-                const result: PainelAvaV1PocResult = {
+                const result: PainelAvaV1Result = {
                     baseUrl,
                     authenticatePath: 'OAuth web SUAP → /authenticate/?code=…',
                     diariosUrl,
@@ -508,7 +500,7 @@ export class PainelAvaService {
         return of({ raw, topKeys: extracted.topKeys, diarios: extracted.diarios });
     }
 
-    inspectDiarios(): Observable<PainelAvaV1PocResult> {
+    inspectDiarios(): Observable<PainelAvaV1Result> {
         return this.getDiarios().pipe(map((payload) => {
             const propertyUnion = new Set<string>();
             payload.diarios.forEach((diario) => Object.keys(diario).forEach((key) => propertyUnion.add(key)));
