@@ -50,7 +50,14 @@ const appRoutes: Routes = [
                     import('@/MoodleIFRN/moodle-open-course/moodle-open-course')
                         .then(m => m.MoodleOpenCoursePage),
             },
+            {
+                path: 'painel-enrol',
+                loadComponent: () =>
+                    import('@/MoodleIFRN/painel-enrol/painel-enrol')
+                        .then(m => m.PainelEnrolPage),
+            },
             // END MoodleIFRN login routes
+            
             {
                 path: 'site',
                 loadComponent: () => import('@features/login/pages/site/site'),

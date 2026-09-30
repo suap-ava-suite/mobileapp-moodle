@@ -103,9 +103,24 @@ import { MM, App } from './namespace';
         }
     }
 
-    /** Volta um nível (www/) e abre a rota Angular do login IFRN. */
+    /** Volta um nível (www/) e abre o Marketplace, a única porta de autenticação. */
     function resolveLoginUrl(): string {
-        return resolveIonicAppUrl('/login/ifrn-login');
+        return resolveIonicAppUrl('/login/marketplace-ifrn');
+    }
+
+    /** Agenda uma autoinscrição no Painel AVA usando a sessão web já autenticada. */
+    function resolvePainelEnrolUrl(courseId: number | string, ambienteId: number | string = 2): string {
+        const id = Number(courseId);
+        const envId = Number(ambienteId);
+
+        if (Number.isFinite(id) && id > 0 && Number.isFinite(envId) && envId > 0) {
+            sessionStorage.setItem(
+                'ifrn_painel_pending_enrol',
+                JSON.stringify({ courseId: id, ambienteId: envId }),
+            );
+        }
+
+        return resolveIonicAppUrl('/login/painel-enrol');
     }
 
     /**
@@ -147,6 +162,7 @@ import { MM, App } from './namespace';
 
     App.ASSET_BASE = resolveAssetBase();
     App.resolveLoginUrl = resolveLoginUrl;
+    App.resolvePainelEnrolUrl = resolvePainelEnrolUrl;
     App.resolveMoodleOpenUrl = resolveMoodleOpenUrl;
     App.escapeHtml = escapeHtml;
     App.initials = initials;

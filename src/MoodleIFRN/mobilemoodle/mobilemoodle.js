@@ -999,7 +999,18 @@
     }
   }
   function resolveLoginUrl() {
-    return resolveIonicAppUrl("/login/ifrn-login");
+    return resolveIonicAppUrl("/login/marketplace-ifrn");
+  }
+  function resolvePainelEnrolUrl(courseId, ambienteId = 2) {
+    const id = Number(courseId);
+    const envId = Number(ambienteId);
+    if (Number.isFinite(id) && id > 0 && Number.isFinite(envId) && envId > 0) {
+      sessionStorage.setItem(
+        "ifrn_painel_pending_enrol",
+        JSON.stringify({ courseId: id, ambienteId: envId })
+      );
+    }
+    return resolveIonicAppUrl("/login/painel-enrol");
   }
   function resolveMoodleOpenUrl(courseId, courseName, siteUrl) {
     const id = Number(courseId);
@@ -1024,6 +1035,7 @@
   }
   App.ASSET_BASE = resolveAssetBase();
   App.resolveLoginUrl = resolveLoginUrl;
+  App.resolvePainelEnrolUrl = resolvePainelEnrolUrl;
   App.resolveMoodleOpenUrl = resolveMoodleOpenUrl;
   App.escapeHtml = escapeHtml;
   App.initials = initials;
@@ -1158,7 +1170,7 @@
           if (typeof App.logout === "function") {
             App.logout();
           } else {
-            window.location.replace("/login/ifrn-login");
+            window.location.replace("/login/marketplace-ifrn");
           }
         });
         actionsEl.appendChild(login);
@@ -1420,10 +1432,16 @@
     }
     if (btnEnroll) {
       btnEnroll.hidden = enrolled;
-      btnEnroll.addEventListener("click", () => {
-        window.alert(
-          "A inscri\xE7\xE3o ser\xE1 confirmada quando a API de autoinscri\xE7\xE3o estiver dispon\xEDvel."
-        );
+      btnEnroll.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const courseId = course.moodle_course_id ?? (course.source === "painel" ? Number(course.id) : NaN);
+        const ambienteId = Number(course.ambiente?.id || 2);
+        if (!Number.isFinite(courseId) || courseId <= 0 || typeof App.resolvePainelEnrolUrl !== "function") {
+          window.alert("N\xE3o foi poss\xEDvel identificar este curso para autoinscri\xE7\xE3o.");
+          return;
+        }
+        window.location.assign(App.resolvePainelEnrolUrl(courseId, ambienteId));
       });
     }
     if (btnAccess) {
@@ -1794,7 +1812,7 @@
    *
    * loadRoute():
    *   1. Garante templates HTML carregados
-   *   2. Checa token
+   *   2. Verifica a sessão do Painel AVA
    *   3. Mostra splash → busca API → renderPainel / renderCurso
    *
    * routeSeq evita race: se o usuário mudar o hash no meio do await,
@@ -1806,7 +1824,10 @@
     const hash = window.location.hash.replace(/^#/, "") || "/painel";
     const courseMatch = hash.match(/^\/curso\/(\d{1,10})$/);
     if (courseMatch) {
-      return { name: "curso", courseId: Number(courseMatch[1]) };
+      return {
+        name: "curso",
+        courseId: Number(courseMatch[1])
+      };
     }
     if (hash === "/painel" || hash === "/" || hash === "") {
       return { name: "painel" };
@@ -1856,20 +1877,33 @@
         App.showNotFound?.();
         return;
       }
-      if (!window.MobileMoodleApi.getToken()) {
+      const hasPainelSession2 = typeof MM.hasPainelSession === "function" && MM.hasPainelSession();
+      if (!hasPainelSession2) {
+        console.warn(
+          "[IFRN-ROUTER] Sess\xE3o do Painel AVA n\xE3o encontrada."
+        );
         App.showStatusError?.({
           status: 401,
           title: "Acesso n\xE3o autorizado",
-          message: "Token de acesso n\xE3o encontrado. Fa\xE7a login no aplicativo.",
+          message: "A sess\xE3o do Painel AVA n\xE3o foi encontrada. Entre novamente pelo SUAP.",
           retryable: false
         });
         return;
       }
-      App.showLoading?.(route.name === "curso" ? "Carregando curso..." : "Carregando painel...");
+      console.debug(
+        "[IFRN-ROUTER] Sess\xE3o do Painel AVA v\xE1lida.",
+        { route: route.name }
+      );
+      App.showLoading?.(
+        route.name === "curso" ? "Carregando curso..." : "Carregando painel..."
+      );
       if (route.name === "curso") {
         const dashboard2 = await loadDashboard(force);
         const [course] = await Promise.all([
-          window.MobileMoodleApi.getCourse(route.courseId, force),
+          window.MobileMoodleApi.getCourse(
+            route.courseId,
+            force
+          ),
           App.waitLoadingMinimum?.(force) ?? Promise.resolve()
         ]);
         if (seq !== routeSeq) {
@@ -1894,6 +1928,10 @@
       if (seq !== routeSeq) {
         return;
       }
+      console.error(
+        "[IFRN-ROUTER] Erro ao carregar rota.",
+        error
+      );
       App.showStatusError?.(error);
     }
   }
@@ -2555,7 +2593,7 @@
     }
     sessionStorage.removeItem("ifrn_moodle_last_site_url");
     App.dashboardCache = null;
-    const loginUrl = typeof App.resolveLoginUrl === "function" ? App.resolveLoginUrl() : "/login/ifrn-login";
+    const loginUrl = typeof App.resolveLoginUrl === "function" ? App.resolveLoginUrl() : "/login/marketplace-ifrn";
     window.location.replace(loginUrl);
   }
   App.logout = logout;

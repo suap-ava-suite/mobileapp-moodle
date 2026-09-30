@@ -330,10 +330,26 @@ import { MM, App } from './namespace';
 
         if (btnEnroll) {
             btnEnroll.hidden = enrolled;
-            btnEnroll.addEventListener('click', () => {
-                window.alert(
-                    'A inscrição será confirmada quando a API de autoinscrição estiver disponível.',
-                );
+            btnEnroll.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const courseId = course.moodle_course_id
+                    ?? (course.source === 'painel' ? Number(course.id) : NaN);
+                const ambienteId = Number(course.ambiente?.id || 2);
+
+                if (
+                    !Number.isFinite(courseId)
+                    || courseId <= 0
+                    || typeof App.resolvePainelEnrolUrl !== 'function'
+                ) {
+                    window.alert('Não foi possível identificar este curso para autoinscrição.');
+                    return;
+                }
+
+                // O POST real é executado dentro da origem ava.ifrn.edu.br,
+                // preservando cookie/CSRF apenas no InAppBrowser do Painel.
+                window.location.assign(App.resolvePainelEnrolUrl(courseId, ambienteId));
             });
         }
 

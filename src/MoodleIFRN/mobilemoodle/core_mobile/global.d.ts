@@ -161,6 +161,7 @@ interface MobileMoodleApp {
     activeFilter?: ActiveFilter;
     ASSET_BASE?: string;
     resolveLoginUrl?: () => string;
+    resolvePainelEnrolUrl?: (courseId: number | string, ambienteId?: number | string) => string;
     resolveMoodleOpenUrl?: (courseId: number | string, courseName?: string, siteUrl?: string) => string;
     A11y?: A11yModule;
     FILTER_LABELS?: Record<string, string>;

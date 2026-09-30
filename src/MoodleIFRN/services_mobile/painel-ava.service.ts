@@ -490,6 +490,161 @@ export class PainelAvaService {
         });
     }
 
+    /**
+     * Realiza a autoinscrição dentro da própria origem do Painel AVA.
+     * Cookies e CSRF nunca saem do InAppBrowser; o app recebe somente o JSON
+     * funcional (status/courseid/viewurl) e o dashboard atualizado.
+     */
+    enrolCourse(courseId: number, ambienteId = 2): Observable<Record<string, unknown>> {
+        return new Observable<Record<string, unknown>>((subscriber) => {
+            if (!Number.isFinite(courseId) || courseId <= 0) {
+                subscriber.error(new Error('Identificador Moodle inválido para autoinscrição.'));
+                return;
+            }
+
+            const baseUrl = PAINEL_AVA_CONFIG.baseUrl.replace(/\/$/, '');
+            const query = PAINEL_AVA_CONFIG.diariosQuery ? `?${PAINEL_AVA_CONFIG.diariosQuery}` : '';
+            const diariosEndpoint = `${PAINEL_AVA_CONFIG.diariosPath}${query}`;
+            const enrolEndpoint = `/curso/${encodeURIComponent(String(ambienteId))}/${encodeURIComponent(String(courseId))}/enrol/`;
+            let finished = false;
+            let started = false;
+
+            // Não limpa cache/sessão: precisamos reutilizar exatamente a sessão
+            // web criada no login do Painel. hidden evita uma tela intermediária.
+            const browser = CoreOpener.openInApp(`${baseUrl}/`, {
+                location: 'no',
+                hidden: 'yes',
+            } as Parameters<typeof CoreOpener.openInApp>[1]);
+
+            const fail = (message: string): void => {
+                if (finished) {
+                    return;
+                }
+                finished = true;
+                CoreOpener.closeInAppBrowser();
+                subscriber.error(new Error(message));
+            };
+
+            const timeout = window.setTimeout(() => {
+                fail('A autoinscrição demorou demais. Entre novamente no Painel AVA e tente de novo.');
+            }, REQUEST_TIMEOUT_MS);
+
+            const loadStopSubscription = browser.on('loadstop').subscribe((event) => {
+                if (finished || started || !event.url.startsWith(baseUrl)) {
+                    return;
+                }
+                started = true;
+
+                const script = `
+                    (function () {
+                        function cookie(name) {
+                            var parts = document.cookie ? document.cookie.split(';') : [];
+                            for (var i = 0; i < parts.length; i++) {
+                                var item = parts[i].trim();
+                                if (item.indexOf(name + '=') === 0) {
+                                    return decodeURIComponent(item.substring(name.length + 1));
+                                }
+                            }
+                            return '';
+                        }
+
+                        var csrf = cookie('csrftoken');
+                        if (!csrf) {
+                            window.webkit.messageHandlers.cordova_iab.postMessage(JSON.stringify({
+                                type: 'ifrn-painel-enrol', ok: false, error: 'Sessão do Painel expirada (CSRF ausente).'
+                            }));
+                            return;
+                        }
+
+                        fetch(${JSON.stringify(enrolEndpoint)}, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrf
+                            },
+                            credentials: 'same-origin',
+                            body: '{}'
+                        })
+                        .then(function (response) {
+                            var contentType = response.headers.get('content-type') || '';
+                            if (!response.ok || contentType.indexOf('application/json') === -1) {
+                                throw new Error('Falha na autoinscrição (HTTP ' + response.status + ').');
+                            }
+                            return response.json();
+                        })
+                        .then(function (result) {
+                            if (result.status !== 'enrolled' && result.status !== 'reactivated') {
+                                throw new Error(result.message || 'O Painel não confirmou a inscrição.');
+                            }
+                            return fetch(${JSON.stringify(diariosEndpoint)}, {
+                                method: 'GET', headers: { 'Accept': 'application/json' },
+                                credentials: 'same-origin', redirect: 'follow'
+                            }).then(function (response) {
+                                if (!response.ok) { throw new Error('Inscrição concluída, mas não foi possível atualizar o Painel.'); }
+                                return response.json();
+                            }).then(function (dashboard) {
+                                window.webkit.messageHandlers.cordova_iab.postMessage(JSON.stringify({
+                                    type: 'ifrn-painel-enrol', ok: true, result: result, dashboard: dashboard
+                                }));
+                            });
+                        })
+                        .catch(function (error) {
+                            window.webkit.messageHandlers.cordova_iab.postMessage(JSON.stringify({
+                                type: 'ifrn-painel-enrol', ok: false, error: error && error.message ? error.message : 'Falha na autoinscrição.'
+                            }));
+                        });
+                    })();
+                `;
+
+                browser.executeScript({ code: script }).catch(() => {
+                    fail('Não foi possível executar a autoinscrição no Painel AVA.');
+                });
+            });
+
+            const messageSubscription = browser.on('message').subscribe((event) => {
+                if (finished) {
+                    return;
+                }
+
+                let data: unknown = event.data;
+                if (typeof data === 'string') {
+                    try { data = JSON.parse(data); } catch { return; }
+                }
+                if (!isPlainObject(data) || data['type'] !== 'ifrn-painel-enrol') {
+                    return;
+                }
+                if (data['ok'] !== true) {
+                    fail(typeof data['error'] === 'string' ? data['error'] : 'Falha na autoinscrição.');
+                    return;
+                }
+
+                if (data['dashboard'] !== undefined) {
+                    this.saveDashboard(data['dashboard']);
+                }
+
+                finished = true;
+                window.clearTimeout(timeout);
+                CoreOpener.closeInAppBrowser();
+                subscriber.next(isPlainObject(data['result']) ? data['result'] : {});
+                subscriber.complete();
+            });
+
+            const exitSubscription = browser.on('exit').subscribe(() => {
+                if (!finished) {
+                    fail('Autoinscrição cancelada.');
+                }
+            });
+
+            return () => {
+                window.clearTimeout(timeout);
+                loadStopSubscription.unsubscribe();
+                messageSubscription.unsubscribe();
+                exitSubscription.unsubscribe();
+            };
+        });
+    }
+
     /** Retorna os diários já obtidos pela sessão web do Painel. */
     getDiarios(): Observable<{ raw: unknown; topKeys: string[]; diarios: PainelAvaDiarioRaw[] }> {
         const raw = this.getDashboard();

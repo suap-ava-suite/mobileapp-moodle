@@ -10,157 +10,204 @@
  *
  * loadRoute():
  *   1. Garante templates HTML carregados
- *   2. Checa token
+ *   2. Verifica a sessão do Painel AVA
  *   3. Mostra splash → busca API → renderPainel / renderCurso
  *
  * routeSeq evita race: se o usuário mudar o hash no meio do await,
  * a resposta antiga é ignorada.
  */
+
 import { MM, App } from './namespace';
 
-    let templatesReady: Promise<void> | null = null;
-    /** Contador monotônico; cada loadRoute captura seu próprio seq. */
-    let routeSeq = 0;
+let templatesReady: Promise<void> | null = null;
 
-    function parseRoute(): RouteInfo {
-        const hash = window.location.hash.replace(/^#/, '') || '/painel';
-        const courseMatch = hash.match(/^\/curso\/(\d{1,10})$/);
+/** Contador monotônico; cada loadRoute captura seu próprio seq. */
+let routeSeq = 0;
 
-        if (courseMatch) {
-            return { name: 'curso', courseId: Number(courseMatch[1]) };
-        }
+function parseRoute(): RouteInfo {
+    const hash = window.location.hash.replace(/^#/, '') || '/painel';
+    const courseMatch = hash.match(/^\/curso\/(\d{1,10})$/);
 
-        if (hash === '/painel' || hash === '/' || hash === '') {
-            return { name: 'painel' };
-        }
-
-        return { name: 'notfound' };
+    if (courseMatch) {
+        return {
+            name: 'curso',
+            courseId: Number(courseMatch[1]),
+        };
     }
 
-    /**
-     * Injeta pages/painel.html, curso.html e erros.html em #page-templates
-     * (só uma vez; templatesReady memoiza a Promise).
-     */
-    async function loadTemplates(): Promise<void> {
-        if (templatesReady) {
-            return templatesReady;
-        }
+    if (hash === '/painel' || hash === '/' || hash === '') {
+        return { name: 'painel' };
+    }
 
-        // Já estão no DOM (ex.: build que embute os partials)
-        if (
-            document.getElementById('tpl-painel') &&
-            document.getElementById('tpl-curso') &&
-            document.getElementById('tpl-error-page')
-        ) {
-            templatesReady = Promise.resolve();
+    return { name: 'notfound' };
+}
 
-            return templatesReady;
-        }
+/**
+ * Injeta pages/painel.html, curso.html e erros.html em #page-templates
+ * (só uma vez; templatesReady memoiza a Promise).
+ */
+async function loadTemplates(): Promise<void> {
+    if (templatesReady) {
+        return templatesReady;
+    }
 
-        const assetBase = App.ASSET_BASE || '';
-        const base = assetBase.indexOf('static/theme/ifrn/') !== -1
-            ? assetBase.replace(/static\/theme\/ifrn\/$/, '')
-            : assetBase;
-
-        templatesReady = Promise.all([
-            App.fetchText!(base + 'pages/painel.html'),
-            App.fetchText!(base + 'pages/curso.html'),
-            App.fetchText!(base + 'pages/erros.html'),
-        ]).then((parts) => {
-            if (App.templatesRoot) {
-                App.templatesRoot.innerHTML = parts.join('\n');
-            }
-        }).catch((error: unknown) => {
-            templatesReady = null;
-            throw error;
-        });
+    // Já estão no DOM (ex.: build que embute os partials).
+    if (
+        document.getElementById('tpl-painel') &&
+        document.getElementById('tpl-curso') &&
+        document.getElementById('tpl-error-page')
+    ) {
+        templatesReady = Promise.resolve();
 
         return templatesReady;
     }
 
-    async function loadDashboard(force: boolean): Promise<DashboardData> {
-        if (!force && App.dashboardCache) {
-            return App.dashboardCache;
-        }
+    const assetBase = App.ASSET_BASE || '';
 
-        App.dashboardCache = await window.MobileMoodleApi.getDashboard(force);
+    const base = assetBase.indexOf('static/theme/ifrn/') !== -1
+        ? assetBase.replace(/static\/theme\/ifrn\/$/, '')
+        : assetBase;
 
+    templatesReady = Promise.all([
+        App.fetchText!(base + 'pages/painel.html'),
+        App.fetchText!(base + 'pages/curso.html'),
+        App.fetchText!(base + 'pages/erros.html'),
+    ])
+        .then((parts) => {
+            if (App.templatesRoot) {
+                App.templatesRoot.innerHTML = parts.join('\n');
+            }
+        })
+        .catch((error: unknown) => {
+            templatesReady = null;
+            throw error;
+        });
+
+    return templatesReady;
+}
+
+async function loadDashboard(force: boolean): Promise<DashboardData> {
+    if (!force && App.dashboardCache) {
         return App.dashboardCache;
     }
 
-    /**
-     * @param force true = invalidate + refetch (refresh / retry).
-     */
-    async function loadRoute(force: boolean): Promise<void> {
-        const seq = ++routeSeq;
-        const route = parseRoute();
+    App.dashboardCache =
+        await window.MobileMoodleApi.getDashboard(force);
 
-        try {
-            await loadTemplates();
+    return App.dashboardCache;
+}
 
-            if (seq !== routeSeq) {
-                return;
-            }
+/**
+ * @param force true = invalidate + refetch (refresh / retry).
+ */
+async function loadRoute(force: boolean): Promise<void> {
+    const seq = ++routeSeq;
+    const route = parseRoute();
 
-            if (route.name === 'notfound') {
-                App.showNotFound?.();
+    try {
+        await loadTemplates();
 
-                return;
-            }
+        if (seq !== routeSeq) {
+            return;
+        }
 
-            if (!window.MobileMoodleApi.getToken()) {
-                App.showStatusError?.({
-                    status: 401,
-                    title: 'Acesso não autorizado',
-                    message: 'Token de acesso não encontrado. Faça login no aplicativo.',
-                    retryable: false,
-                });
+        if (route.name === 'notfound') {
+            App.showNotFound?.();
 
-                return;
-            }
+            return;
+        }
 
-            App.showLoading?.(route.name === 'curso' ? 'Carregando curso...' : 'Carregando painel...');
+        /*
+         * O fluxo atual não depende mais do JWT antigo retornado por getToken().
+         *
+         * A autenticação acontece pelo SUAP/Painel AVA e os dados necessários
+         * são armazenados na sessão do Painel.
+         */
+       const hasPainelSession =
+    typeof MM.hasPainelSession === 'function' &&
+    MM.hasPainelSession();
+        if (!hasPainelSession) {
+            console.warn(
+                '[IFRN-ROUTER] Sessão do Painel AVA não encontrada.',
+            );
 
-            if (route.name === 'curso') {
-                // Dashboard primeiro: define se o id é courseid Moodle (Painel) ou diário SUAP.
-                const dashboard = await loadDashboard(force);
-                const [course] = await Promise.all([
-                    window.MobileMoodleApi.getCourse(route.courseId, force),
-                    App.waitLoadingMinimum?.(force) ?? Promise.resolve(),
-                ]);
+            App.showStatusError?.({
+                status: 401,
+                title: 'Acesso não autorizado',
+                message:
+                    'A sessão do Painel AVA não foi encontrada. Entre novamente pelo SUAP.',
+                retryable: false,
+            });
 
-                if (seq !== routeSeq) {
-                    return;
-                }
+            return;
+        }
 
-                App.renderCurso?.(course, dashboard);
+        console.debug(
+            '[IFRN-ROUTER] Sessão do Painel AVA válida.',
+            { route: route.name },
+        );
 
-                return;
-            }
+        App.showLoading?.(
+            route.name === 'curso'
+                ? 'Carregando curso...'
+                : 'Carregando painel...',
+        );
 
-            if (force) {
-                App.dashboardCache = null;
-                window.MobileMoodleApi.invalidateCache();
-            }
+        if (route.name === 'curso') {
+            /*
+             * Dashboard primeiro:
+             * define se o ID é courseid Moodle (Painel)
+             * ou diário SUAP.
+             */
+            const dashboard = await loadDashboard(force);
 
-            const [dashboard] = await Promise.all([
-                loadDashboard(force),
-                App.waitLoadingMinimum?.(force) ?? Promise.resolve(),
+            const [course] = await Promise.all([
+                window.MobileMoodleApi.getCourse(
+                    route.courseId,
+                    force,
+                ),
+                App.waitLoadingMinimum?.(force) ??
+                    Promise.resolve(),
             ]);
 
             if (seq !== routeSeq) {
                 return;
             }
 
-            App.renderPainel?.(dashboard);
-        } catch (error) {
-            if (seq !== routeSeq) {
-                return;
-            }
+            App.renderCurso?.(course, dashboard);
 
-            App.showStatusError?.(error);
+            return;
         }
-    }
 
-    App.parseRoute = parseRoute;
-    App.loadRoute = loadRoute;
+        if (force) {
+            App.dashboardCache = null;
+            window.MobileMoodleApi.invalidateCache();
+        }
+
+        const [dashboard] = await Promise.all([
+            loadDashboard(force),
+            App.waitLoadingMinimum?.(force) ??
+                Promise.resolve(),
+        ]);
+
+        if (seq !== routeSeq) {
+            return;
+        }
+
+        App.renderPainel?.(dashboard);
+    } catch (error) {
+        if (seq !== routeSeq) {
+            return;
+        }
+
+        console.error(
+            '[IFRN-ROUTER] Erro ao carregar rota.',
+            error,
+        );
+
+        App.showStatusError?.(error);
+    }
+}
+
+App.parseRoute = parseRoute;
+App.loadRoute = loadRoute;

@@ -46,6 +46,7 @@
                     expand="block"
                     fill="outline"
                     class="btn-continue"
+                    [disabled]="loading"
                     (click)="continueSession()">
                     <ion-icon
                         name="person-circle-outline"
@@ -56,8 +57,8 @@
                 </ion-button>
             }
 
-            <ion-button expand="block" class="btn-enter" (click)="enterAva()">
-                <span>Entrar no AVA</span>
+            <ion-button expand="block" class="btn-enter" [disabled]="loading" (click)="enterAva()">
+                <span>{{ loading ? 'Autenticando…' : 'Entrar no AVA' }}</span>
                 <ion-icon
                     name="arrow-forward-outline"
                     slot="end"
