@@ -1,24 +1,38 @@
-<!-- Páginas de erro (somente texto) -->
+<!-- Páginas de erro do Painel AVA -->
 <template id="tpl-error-page">
     <div class="status-page" role="alert">
-        <p class="status-page__code" id="status-code"></p>
-        <h2 class="status-page__title" id="status-title"></h2>
-        <p class="status-page__message" id="status-message"></p>
-        <div class="status-page__actions" id="status-actions"></div>
+        <div class="status-page__card">
+            <div class="status-page__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                    <path d="M17 8h-1V6a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2Zm-7-2a2 2 0 1 1 4 0v2h-4V6Zm3 9.73V18h-2v-2.27a2 2 0 1 1 2 0Z"/>
+                </svg>
+            </div>
+            <p class="status-page__code" id="status-code"></p>
+            <h2 class="status-page__title" id="status-title"></h2>
+            <p class="status-page__message" id="status-message"></p>
+            <div class="status-page__actions" id="status-actions"></div>
+        </div>
     </div>
 </template>
 
 <template id="tpl-not-found">
     <div class="status-page status-page--notfound" role="alert">
-        <p class="status-page__code">404</p>
-        <h2 class="status-page__title" data-i18n="notfound">Página não encontrada</h2>
-        <p class="status-page__message">
-            <span data-i18n="notfoundmessage">O endereço que você tentou abrir não existe ou foi removido.</span>
-        </p>
-        <div class="status-page__actions">
-            <ion-button id="status-go-painel" color="primary" href="#/painel">
-                <span data-i18n="backtopanel">Voltar ao painel</span>
-            </ion-button>
+        <div class="status-page__card">
+            <div class="status-page__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                    <path d="M11 17h2v2h-2v-2Zm1-14a9 9 0 1 0 9 9 9.01 9.01 0 0 0-9-9Zm0 16a7 7 0 1 1 7-7 7.01 7.01 0 0 1-7 7Zm0-12a4 4 0 0 0-4 4h2a2 2 0 1 1 3.17 1.62A4.05 4.05 0 0 0 11 16h2a2.07 2.07 0 0 1 1.1-1.72A4 4 0 0 0 12 7Z"/>
+                </svg>
+            </div>
+            <p class="status-page__code">404</p>
+            <h2 class="status-page__title" data-i18n="notfound">Página não encontrada</h2>
+            <p class="status-page__message">
+                <span data-i18n="notfoundmessage">O endereço que você tentou abrir não existe ou foi removido.</span>
+            </p>
+            <div class="status-page__actions">
+                <ion-button id="status-go-painel" color="primary" href="#/painel">
+                    <span data-i18n="backtopanel">Voltar ao painel</span>
+                </ion-button>
+            </div>
         </div>
     </div>
 </template>

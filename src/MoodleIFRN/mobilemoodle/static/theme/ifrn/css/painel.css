@@ -2611,3 +2611,93 @@ ion-button[color=primary] {
 .no-data h3 {
   color: var(--dsgov-blue-90);
 }
+
+.status-page {
+    min-height: calc(100dvh - var(--header-height, 88px));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px 56px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.status-page__card {
+    width: min(100%, 440px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 24px;
+    border: 1px solid rgba(19, 81, 180, 0.12);
+    border-radius: 20px;
+    background: var(--surface, #fff);
+    box-shadow: 0 8px 28px rgba(7, 29, 65, 0.08);
+}
+
+.status-page__icon {
+    width: 72px;
+    height: 72px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 14px;
+    border-radius: 50%;
+    background: var(--primary-light, #e8f1ff);
+}
+
+.status-page__icon svg {
+    width: 34px;
+    height: 34px;
+    fill: var(--primary, #1351b4);
+}
+
+.status-page__code {
+    margin: 0 0 8px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--primary-light, #e8f1ff);
+    color: var(--primary, #1351b4);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.status-page__code::before { content: "Erro "; }
+
+.status-page__title {
+    margin: 4px 0 10px;
+    color: var(--text-primary, #1b1b1b);
+    font-size: clamp(1.45rem, 5vw, 1.8rem);
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.status-page__message {
+    max-width: 340px;
+    margin: 0;
+    color: var(--text-secondary, #555);
+    font-size: 1rem;
+    line-height: 1.55;
+}
+
+.status-page__actions {
+    width: 100%;
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+}
+
+.status-page__actions ion-button {
+    width: 100%;
+    min-height: 48px;
+    margin: 0;
+    font-weight: 600;
+    --border-radius: 24px;
+    --box-shadow: 0 3px 10px rgba(19, 81, 180, 0.2);
+}
+
+@media (max-width: 480px) {
+    .status-page { padding: 24px 16px 40px; }
+    .status-page__card { padding: 28px 20px; border-radius: 18px; }
+}

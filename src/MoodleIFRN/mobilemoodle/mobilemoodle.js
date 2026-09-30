@@ -2531,14 +2531,24 @@
   App.dashboardCache = null;
   function logout() {
     const lastMoodleSite = sessionStorage.getItem("ifrn_moodle_last_site_url");
+    let webLogoutUrl = null;
     if (lastMoodleSite) {
       try {
         const origin = new URL(lastMoodleSite).origin;
         if (origin.startsWith("https://")) {
-          window.open(`${origin}/auth/suap/logout.php`, "_system");
+          webLogoutUrl = `${origin}/auth/suap/logout.php`;
         }
       } catch {
       }
+    }
+    if (webLogoutUrl) {
+      const proceed = window.confirm(
+        'Para sair completamente e poder trocar de conta, ser\xE1 aberta a p\xE1gina oficial do Moodle. Toque em "Confirmar sa\xEDda" nessa p\xE1gina.'
+      );
+      if (!proceed) {
+        return;
+      }
+      window.open(webLogoutUrl, "_system");
     }
     if (window.MobileMoodleApi?.clearToken) {
       window.MobileMoodleApi.clearToken();
