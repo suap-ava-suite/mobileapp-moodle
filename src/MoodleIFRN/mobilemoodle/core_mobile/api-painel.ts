@@ -184,25 +184,58 @@ function mapPainelDiario(diario: PainelDiario): DashboardCourse {
 }
 
 function profileDisplayName(profile: Record<string, unknown> | null): string {
+    // Se o usuário já autenticou em um Moodle pelo OAuth oficial, o bridge salva
+    // o fullname retornado pelo próprio Moodle aqui. Ele tem prioridade sobre o
+    // show_name capturado do HTML do Painel.
+    const moodleDisplayName = localStorage.getItem('ifrn_moodle_display_name')?.replace(/\s+/g, ' ').trim();
+    if (moodleDisplayName) {
+        return moodleDisplayName;
+    }
+
     if (!profile) {
         return sessionStorage.getItem(IFRN_USERNAME_KEY) || 'Usuário';
     }
 
-    // Mesma prioridade usada pelo fluxo antigo do SUAP.
-    const nome =
-        profile['nome_social'] ||
-        profile['nome_usual'] ||
-        profile['nome'] ||
-        profile['nome_registro'] ||
-        profile['nome_completo'] ||
-        profile['name'] ||
-        profile['display_name'];
+    const pick = (...keys: string[]): string => {
+        for (const key of keys) {
+            const raw = profile[key];
+            if (typeof raw !== 'string') {
+                continue;
+            }
+            let value = raw.replace(/\s+/g, ' ').trim();
+            if (!value || /\.\.\.$|…$/.test(value)) {
+                continue;
+            }
+            if (/^(usuário|usuario|perfil|avatar|imagem de perfil|minha foto)$/i.test(value)) {
+                continue;
+            }
+            // Evita título de disciplina que tenha vazado para o profile.
+            if (/\b(educa[cç][aã]o|disciplina|di[aá]rio|turma|semestre|componente|curricular)\b/i.test(value)) {
+                continue;
+            }
 
-    if (typeof nome === 'string') {
-        const value = nome.trim();
-        if (value && !/^(usuário|usuario|perfil|avatar|imagem de perfil)$/i.test(value)) {
             return value;
         }
+
+        return '';
+    };
+
+    // Nome de apresentação do Painel/SUAP (ex.: "Matheus Soares") — o que o sidebar oficial mostra.
+    // Nome civil completo só como complemento se não houver nome_usual.
+    const nome = pick(
+        'nome_usual',
+        'nome_social',
+        'primeiro_nome',
+        'nome',
+        'name',
+        'display_name',
+        'nome_registro',
+        'nome_completo',
+        'identificacao',
+    );
+
+    if (nome) {
+        return nome;
     }
 
     return sessionStorage.getItem(IFRN_USERNAME_KEY) || 'Usuário';

@@ -714,9 +714,13 @@ export class MoodleSiteService {
         const match = this.matchCurrentMoodleIdentity();
 
         if (!match.hasExpected) {
-            identityLog('sem identidade esperada do Painel — não reutiliza sessão');
+            // O Marketplace/Painel pode autenticar só por cookie e não expor matrícula.
+            // Nesse caso não inventamos uma identidade a partir do nome: reutilizamos
+            // a sessão Moodle válida do MESMO site e a abertura do curso ainda exige
+            // que o courseId esteja entre os cursos matriculados da sessão atual.
+            identityLog('sem identificador forte do Painel — sessão Moodle do site será reutilizada');
 
-            return false;
+            return true;
         }
 
         return match.matches;
@@ -756,16 +760,17 @@ export class MoodleSiteService {
 
         this.logIdentityDiagnostics('ensureMatchingMoodleSession');
 
-        if (hasSession && match.matches) {
+        if (hasSession && (match.matches || !match.hasExpected)) {
             identityLog('sessão correta definida como current', {
-                source: 'reuse-current',
+                source: match.matches ? 'reuse-current' : 'reuse-current-no-painel-identifier',
                 matchedVia: match.matchedVia,
+                identityVerified: match.matches,
             });
 
             return 'matched-current';
         }
 
-        if (hasSession && !match.matches) {
+        if (hasSession && match.hasExpected && !match.matches) {
             identityLog('sessão rejeitada por identidade diferente', {
                 source: 'CoreSites-current',
                 caseHint: match.hasExpected ? 'A-CoreSites-wrong-account' : 'sem-expected',
@@ -916,10 +921,20 @@ export class MoodleSiteService {
             throw new Error('Não há sessão Moodle ativa.');
         }
 
-        if (!match.matches) {
+        if (match.hasExpected && !match.matches) {
             throw new Error(
                 'Sessão Moodle não corresponde à conta do Painel — não é seguro abrir o curso.',
             );
+        }
+
+        if (!match.hasExpected) {
+            // O fluxo Marketplace → Painel não expõe necessariamente matrícula/username.
+            // Sem identificador forte não fazemos comparação por nome. A sessão precisa
+            // estar autenticada e o courseId exato ainda será validado em getUserCourses().
+            identityLog('abertura sem identificador forte do Painel', {
+                source: 'moodle-session+exact-enrolment-check',
+                siteIdPresent: !!CoreSites.getCurrentSiteId(),
+            });
         }
 
         if (!Number.isFinite(courseId) || courseId <= 0) {
@@ -1342,7 +1357,7 @@ export class MoodleSiteService {
             return;
         }
 
-        if (!match.matches) {
+        if (!match.matches && match.hasExpected) {
             this.lastError = 'Não foi possível confirmar a identidade Moodle após o login.';
 
             await CoreNavigator.navigate('/login/moodle-open-course', {
@@ -1357,11 +1372,22 @@ export class MoodleSiteService {
             return;
         }
 
-        identityLog('nova sessão corresponde = true');
-        identityLog('sessão correta definida como current', {
-            source: 'oauth-newSite',
-            matchedVia: match.matchedVia,
-        });
+        if (match.matches) {
+            identityLog('nova sessão corresponde = true');
+            identityLog('sessão correta definida como current', {
+                source: 'oauth-newSite',
+                matchedVia: match.matchedVia,
+                identityVerified: true,
+            });
+        } else {
+            // Sem matrícula/username forte vindo do Painel: não usar nome de exibição
+            // como identidade. Aceita a sessão recém-criada pelo OAuth oficial e
+            // valida o courseId exato contra os cursos matriculados antes de abrir.
+            identityLog('OAuth concluído sem identificador forte do Painel', {
+                source: 'oauth-newSite+exact-enrolment-check',
+                identityVerified: false,
+            });
+        }
         this.setIdentityMismatchPending(false);
         this.lastError = '';
 

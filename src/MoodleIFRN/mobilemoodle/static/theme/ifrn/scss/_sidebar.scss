@@ -129,8 +129,9 @@ ion-menu.ava-menu.show-menu {
     span {
         font: var(--font-heading4);
         white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        overflow: visible;
+        text-overflow: clip;
+        padding-right: 0.15rem;
     }
 
     &:hover,

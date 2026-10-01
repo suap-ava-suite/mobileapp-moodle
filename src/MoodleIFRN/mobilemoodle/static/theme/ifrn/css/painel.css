@@ -506,8 +506,9 @@ ion-menu.ava-menu.show-menu {
 .sidebar-user-content-profile span {
   font: var(--font-heading4);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: clip;
+  padding-right: 0.15rem;
 }
 .sidebar-user-content-profile:hover, .sidebar-user-content-profile.active {
   background: var(--primary-dark);

@@ -309,11 +309,12 @@ function profileUsernameHint(profile: Record<string, unknown> | null, fallback: 
         return fallback;
     }
 
+    // Identidade de conta somente. Nome de exibição NÃO pode virar ifrn_username:
+    // isso gerava falso mismatch com o username numérico retornado pelo Moodle.
     const candidates = [
         profile['matricula'],
         profile['username'],
         profile['identificacao'],
-        profile['nome_usual'],
     ];
 
     for (const value of candidates) {
@@ -416,121 +417,88 @@ export class PainelAvaService {
                             return response.json();
                         })
                         .then(function (payload) {
-                            // O fluxo antigo também mantinha o perfil do usuário. Como agora
-                            // autenticamos apenas pela sessão web do Painel, buscamos o perfil
-                            // dentro da MESMA origem/cookie do IAB (nenhum token é copiado).
-                            // /api/v2/usuario/info/ exige JWT Bearer e não serve para
-                            // este fluxo baseado em cookie web. Tentamos endpoints de perfil
-                            // compatíveis com a sessão web; se o servidor não os expuser,
-                            // extraímos somente dados visíveis do próprio Painel.
-                            var profileEndpoints = [
-                                '/api/v1/usuario/info/',
-                                '/api/usuario/info/',
-                                '/usuario/info/'
-                            ];
-
-                            function fetchProfile(index) {
-                                if (index >= profileEndpoints.length) {
-                                    // Mesmo critério visual do login antigo: nome_social → nome_usual → nome.
-                                    // No fluxo por cookie não temos o JWT do SUAP, então lemos esses dados
-                                    // da página autenticada do Painel sem copiar cookies ou credenciais.
-                                    var avatar = document.querySelector(
-                                        '.profile img, .perfil img, .user-info img, img.avatar, img.profile-image, '
-                                        + 'aside img[src*="foto"], nav img[src*="foto"], img[src*="150x200"]'
-                                    );
-                                    var photo = avatar && avatar.src ? avatar.src : '';
-                                    var name = '';
-
-                                    function validName(value) {
-                                        value = (value || '').replace(/\s+/g, ' ').trim();
-                                        if (!value || /^(usuário|usuario|perfil|avatar|imagem de perfil)$/i.test(value)) {
-                                            return '';
-                                        }
-                                        return value;
-                                    }
-
-                                    // A imagem serve somente para a foto. Nunca use alt/title como nome:
-                                    // no Painel AVA esses atributos podem conter apenas "Imagem de perfil".
-                                    if (avatar) {
-                                        name = validName(
-                                            avatar.getAttribute('data-user-name') ||
-                                            avatar.getAttribute('data-name') || ''
-                                        );
-                                    }
-
-                                    var nameSelectors = [
-                                        '[data-user-name]', '[data-name]', '[data-nome]',
-                                        '.user-name', '.username', '.profile-name', '.profile__name',
-                                        '.perfil-nome', '.nome-usuario', '.user-info .name',
-                                        '.user-info strong', '.profile strong', '.perfil strong',
-                                        'aside .name', 'aside .nome', 'nav .name', 'nav .nome'
-                                    ];
-                                    for (var i = 0; i < nameSelectors.length && !name; i++) {
-                                        var el = document.querySelector(nameSelectors[i]);
-                                        if (el) {
-                                            name = validName(
-                                                el.getAttribute('data-user-name') ||
-                                                el.getAttribute('data-name') ||
-                                                el.getAttribute('data-nome') ||
-                                                el.textContent || ''
-                                            );
-                                        }
-                                    }
-
-                                    // Último fallback: procura texto curto próximo da foto do usuário.
-                                    if (!name && avatar) {
-                                        var parent = avatar.parentElement;
-                                        for (var depth = 0; parent && depth < 4 && !name; depth++, parent = parent.parentElement) {
-                                            var candidates = parent.querySelectorAll('span, strong, b, p, div');
-                                            for (var j = 0; j < candidates.length && !name; j++) {
-                                                var text = validName(candidates[j].textContent || '');
-                                                if (text && text.length >= 3 && text.length <= 100 && /[A-Za-zÀ-ÿ]/.test(text)) {
-                                                    name = text;
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    return Promise.resolve(name || photo ? {
-                                        nome_social: name,
-                                        nome_usual: name,
-                                        nome: name,
-                                        foto: photo
-                                    } : null);
-                                }
-
-                                return fetch(profileEndpoints[index], {
-                                    method: 'GET',
-                                    headers: { 'Accept': 'application/json' },
-                                    credentials: 'same-origin',
-                                    redirect: 'follow'
-                                }).then(function (profileResponse) {
-                                    var contentType = profileResponse.headers.get('content-type') || '';
-                                    if (!profileResponse.ok || contentType.indexOf('application/json') === -1) {
-                                        return fetchProfile(index + 1);
-                                    }
-                                    return profileResponse.json().then(function (profileJson) {
-                                        // Alguns endpoints envelopam o usuário em data/user/usuario/profile.
-                                        if (profileJson && typeof profileJson === 'object') {
-                                            var nested = profileJson.usuario || profileJson.user || profileJson.profile || profileJson.data;
-                                            if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
-                                                return nested;
-                                            }
-                                        }
-                                        return profileJson;
-                                    });
-                                }).catch(function () {
-                                    return fetchProfile(index + 1);
-                                });
+                            // O login já está válido porque /api/v1/diarios/ respondeu JSON.
+                            // A captura do nome NÃO pode bloquear a autenticação.
+                            // Usamos somente o elemento oficial do perfil renderizado pelo Painel.
+                            function cleanName(value) {
+                                value = (value || '').replace(/\s+/g, ' ').trim();
+                                if (!value || value.length < 2 || value.length > 120) return '';
+                                if (/^(usuário|usuario|perfil|avatar|imagem de perfil|minha foto)$/i.test(value)) return '';
+                                return value;
                             }
 
-                            return fetchProfile(0).then(function (profile) {
+                            function profileFromDocument(doc, source) {
+                                if (!doc || !doc.querySelector) return null;
+
+                                // Tema ifrn25: exatamente o <span> filho direto do botão de perfil.
+                                var nameEl = doc.querySelector('#btn-toggle-profile > span');
+                                // Compatibilidade com tema ifrn23.
+                                if (!nameEl) nameEl = doc.querySelector('#header-user .user_name');
+
+                                var name = cleanName(nameEl && nameEl.textContent);
+                                var avatar = doc.querySelector('#btn-toggle-profile img.profile-image, #header-user img');
+                                var photo = avatar && avatar.getAttribute('src') ? avatar.getAttribute('src') : '';
+
+                                if (!name && !photo) return null;
+                                return {
+                                    nome: name || undefined,
+                                    nome_usual: name || undefined,
+                                    foto: photo || undefined,
+                                    _name_source: source
+                                };
+                            }
+
+                            function sendSuccess(profile) {
                                 window.webkit.messageHandlers.cordova_iab.postMessage(JSON.stringify({
                                     type: 'ifrn-painel-diarios',
                                     ok: true,
                                     payload: payload,
-                                    profile: profile
+                                    profile: profile,
+                                    profileProbeLog: []
                                 }));
+                            }
+
+                            // Primeiro tenta a própria página autenticada, sem nova requisição.
+                            var currentProfile = profileFromDocument(document, 'dom:#btn-toggle-profile > span');
+
+                            // Depois que /api/v1/diarios/ confirmou a sessão, testa o endpoint de perfil
+                            // usando o MESMO cookie do Painel. Esta tentativa é opcional e tem timeout
+                            // curto: nunca deve impedir a entrada no AVA.
+                            var profileTimeout = new Promise(function (resolve) {
+                                setTimeout(function () { resolve(null); }, 900);
+                            });
+
+                            var profileRequest = fetch('/usuario/info/', {
+                                method: 'GET',
+                                credentials: 'same-origin',
+                                redirect: 'follow',
+                                headers: { 'Accept': 'application/json' }
+                            }).then(function (response) {
+                                var contentType = response.headers.get('content-type') || '';
+                                if (!response.ok || contentType.indexOf('application/json') === -1) return null;
+                                return response.json().then(function (info) {
+                                    if (!info || typeof info !== 'object') return null;
+                                    var name = cleanName(
+                                        info.nome_registro || info.nome_social || info.nome_usual ||
+                                        info.nome || info.name || ''
+                                    );
+                                    var photo = info.foto || info.foto_url || '';
+                                    if (!name && !photo) return null;
+                                    return {
+                                        nome: name || undefined,
+                                        nome_registro: cleanName(info.nome_registro) || undefined,
+                                        nome_social: cleanName(info.nome_social) || undefined,
+                                        nome_usual: cleanName(info.nome_usual) || undefined,
+                                        foto: photo || undefined,
+                                        _name_source: 'GET /usuario/info/'
+                                    };
+                                });
+                            }).catch(function () { return null; });
+
+                            Promise.race([profileRequest, profileTimeout]).then(function (profile) {
+                                // Se /usuario/info/ não estiver publicado ou não aceitar a sessão web,
+                                // mantém o perfil já renderizado pelo Painel.
+                                sendSuccess(profile || currentProfile || null);
                             });
                         })
                         .catch(function () {
@@ -580,6 +548,11 @@ export class PainelAvaService {
                 const extracted = extractDiariosList(raw);
                 const profile = isPlainObject(data['profile']) ? data['profile'] : null;
                 const ownerUsername = profileUsernameHint(profile, '');
+                const profileKeys = profile ? Object.keys(profile).filter((key) => !key.startsWith('_')) : [];
+                const nameSource = typeof profile?.['_name_source'] === 'string'
+                    ? profile['_name_source']
+                    : '(ausente)';
+                const probeLog = Array.isArray(data['profileProbeLog']) ? data['profileProbeLog'] : [];
 
                 this.saveDashboard(raw, ownerUsername || undefined);
                 this.saveProfile(profile);
@@ -598,7 +571,7 @@ export class PainelAvaService {
                     diariosUrl,
                     usernameHint: '(sessão web Painel AVA)',
                     tokenStored: false,
-                    profileKeys: [],
+                    profileKeys,
                     responseTopKeys: extracted.topKeys,
                     diariosCount: extracted.diarios.length,
                     diarioPropertyUnion: Array.from(propertyUnion).sort(),
@@ -608,7 +581,15 @@ export class PainelAvaService {
 
                 finished = true;
                 // eslint-disable-next-line no-console
-                console.log(`[IFRN-PANEL] sessão web válida; ${result.diariosCount} diário(s) recebido(s)`);
+                console.log(
+                    `[IFRN-PANEL] sessão web válida; ${result.diariosCount} diário(s); `
+                    + `nome origem=${nameSource}; profileKeys=${profileKeys.join(',') || '(nenhuma)'}`,
+                );
+                // Diagnóstico temporário seguro: endpoint/status/content-type/keys (sem valores pessoais).
+                if (probeLog.length) {
+                    // eslint-disable-next-line no-console
+                    console.log('[IFRN-PANEL] profile probes:', JSON.stringify(probeLog));
+                }
                 subscriber.next(result);
                 subscriber.complete();
                 CoreOpener.closeInAppBrowser();
@@ -822,6 +803,9 @@ export class PainelAvaService {
     /** Guarda somente os dados de perfil necessários ao Painel/identidade. */
     private saveProfile(profile: Record<string, unknown> | null): void {
         if (!profile) {
+            // Evita reutilizar perfil antigo (ex.: scraping anterior com nome de disciplina).
+            sessionStorage.removeItem(PAINEL_PROFILE_KEY);
+
             return;
         }
 
@@ -831,6 +815,24 @@ export class PainelAvaService {
             const username = profileUsernameHint(profile, '').trim();
             if (username) {
                 sessionStorage.setItem('ifrn_username', username);
+            } else {
+                // Limpa somente um valor antigo que tenha sido salvo a partir do nome
+                // de exibição do próprio perfil. Não apaga matrícula/CPF válido de
+                // outros fluxos de autenticação.
+                const current = (sessionStorage.getItem('ifrn_username') || '').trim().toLowerCase();
+                const displayNames = [
+                    profile['nome_usual'],
+                    profile['nome_social'],
+                    profile['nome_registro'],
+                    profile['nome'],
+                    profile['display_name'],
+                ]
+                    .filter((value): value is string => typeof value === 'string' && !!value.trim())
+                    .map((value) => value.trim().toLowerCase());
+
+                if (current && displayNames.includes(current)) {
+                    sessionStorage.removeItem('ifrn_username');
+                }
             }
         } catch {
             sessionStorage.removeItem(PAINEL_PROFILE_KEY);

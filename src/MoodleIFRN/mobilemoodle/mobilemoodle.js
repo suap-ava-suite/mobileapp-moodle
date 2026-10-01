@@ -736,15 +736,46 @@
     };
   }
   function profileDisplayName(profile) {
+    const moodleDisplayName = localStorage.getItem("ifrn_moodle_display_name")?.replace(/\s+/g, " ").trim();
+    if (moodleDisplayName) {
+      return moodleDisplayName;
+    }
     if (!profile) {
       return sessionStorage.getItem(IFRN_USERNAME_KEY) || "Usu\xE1rio";
     }
-    const nome = profile["nome_social"] || profile["nome_usual"] || profile["nome"] || profile["nome_registro"] || profile["nome_completo"] || profile["name"] || profile["display_name"];
-    if (typeof nome === "string") {
-      const value = nome.trim();
-      if (value && !/^(usuário|usuario|perfil|avatar|imagem de perfil)$/i.test(value)) {
+    const pick = (...keys) => {
+      for (const key of keys) {
+        const raw = profile[key];
+        if (typeof raw !== "string") {
+          continue;
+        }
+        let value = raw.replace(/\s+/g, " ").trim();
+        if (!value || /\.\.\.$|…$/.test(value)) {
+          continue;
+        }
+        if (/^(usuário|usuario|perfil|avatar|imagem de perfil|minha foto)$/i.test(value)) {
+          continue;
+        }
+        if (/\b(educa[cç][aã]o|disciplina|di[aá]rio|turma|semestre|componente|curricular)\b/i.test(value)) {
+          continue;
+        }
         return value;
       }
+      return "";
+    };
+    const nome = pick(
+      "nome_usual",
+      "nome_social",
+      "primeiro_nome",
+      "nome",
+      "name",
+      "display_name",
+      "nome_registro",
+      "nome_completo",
+      "identificacao"
+    );
+    if (nome) {
+      return nome;
     }
     return sessionStorage.getItem(IFRN_USERNAME_KEY) || "Usu\xE1rio";
   }
