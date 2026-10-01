@@ -739,8 +739,14 @@
     if (!profile) {
       return sessionStorage.getItem(IFRN_USERNAME_KEY) || "Usu\xE1rio";
     }
-    const nome = profile["nome"] || profile["nome_usual"] || profile["nome_registro"] || profile["nome_social"];
-    return typeof nome === "string" && nome.trim() ? nome.trim() : "Usu\xE1rio";
+    const nome = profile["nome_social"] || profile["nome_usual"] || profile["nome"] || profile["nome_registro"] || profile["nome_completo"] || profile["name"] || profile["display_name"];
+    if (typeof nome === "string") {
+      const value = nome.trim();
+      if (value && !/^(usuário|usuario|perfil|avatar|imagem de perfil)$/i.test(value)) {
+        return value;
+      }
+    }
+    return sessionStorage.getItem(IFRN_USERNAME_KEY) || "Usu\xE1rio";
   }
   async function fetchPainelDashboard() {
     const data = readPainelDashboard();

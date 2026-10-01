@@ -22,6 +22,7 @@ export class MarketplaceIfrnPage implements OnInit {
     canContinue = false;
     continueLabel = 'Continuar no AVA';
     loading = false;
+    openingPainel = false;
 
     /**
      * O Marketplace é a única tela de entrada.
@@ -39,6 +40,7 @@ export class MarketplaceIfrnPage implements OnInit {
         }
 
         if (this.painelAvaService.hasDashboard()) {
+            this.openingPainel = true;
             this.openPainel();
             return;
         }
@@ -64,6 +66,7 @@ export class MarketplaceIfrnPage implements OnInit {
             // eslint-disable-next-line no-console
             console.log(`[IFRN-MARKETPLACE] OAuth concluído; ${result.diariosCount} diário(s). Abrindo Painel.`);
             this.canContinue = true;
+            this.openingPainel = true;
             this.openPainel();
         } catch (error) {
             // Cancelar o navegador não deve deixar o Marketplace em estado quebrado.

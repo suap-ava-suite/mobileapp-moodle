@@ -1,4 +1,10 @@
 <ion-content class="marketplace-ifrn" [fullscreen]="true" [scrollY]="true">
+    @if (openingPainel) {
+        <div class="marketplace-transition" role="status" aria-live="polite">
+            <ion-spinner name="crescent"></ion-spinner>
+            <strong>Abrindo Painel AVA…</strong>
+        </div>
+    }
     <main class="welcome">
         <div class="welcome__background" aria-hidden="true">
             <img [src]="welcomeImageSrc" alt="" />

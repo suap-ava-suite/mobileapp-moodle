@@ -348,6 +348,8 @@ export class PainelAvaService {
             const diariosUrl = `${baseUrl}${diariosPath}${query}`;
             let finished = false;
             let probing = false;
+            let sawSuap = false;
+            let painelHidden = false;
 
             // Sempre limpa a sessão web do InAppBrowser na troca de conta.
             // Sem isso, cookies do SUAP/Painel do usuário anterior fazem o
@@ -368,6 +370,27 @@ export class PainelAvaService {
                 finished = true;
                 subscriber.error(new Error(message));
             };
+
+            // O navegador precisa ficar visível durante o login no SUAP. Assim que
+            // o OAuth retornar ao Painel, escondemos o IAB antes da página web
+            // do AVA ser desenhada e continuamos a coleta usando a mesma sessão.
+            const loadStartSubscription = browser.on('loadstart').subscribe((event) => {
+                const url = event.url || '';
+
+                if (url.startsWith('https://suap.ifrn.edu.br/')) {
+                    sawSuap = true;
+                    return;
+                }
+
+                if (sawSuap && !painelHidden && url.startsWith(baseUrl)) {
+                    painelHidden = true;
+                    try {
+                        browser.hide();
+                    } catch {
+                        // Se a plataforma não oferecer hide(), o fluxo continua normalmente.
+                    }
+                }
+            });
 
             const loadStopSubscription = browser.on('loadstop').subscribe((event) => {
                 if (finished || probing || !event.url.startsWith(baseUrl)) {
@@ -393,11 +416,122 @@ export class PainelAvaService {
                             return response.json();
                         })
                         .then(function (payload) {
-                            window.webkit.messageHandlers.cordova_iab.postMessage(JSON.stringify({
-                                type: 'ifrn-painel-diarios',
-                                ok: true,
-                                payload: payload
-                            }));
+                            // O fluxo antigo também mantinha o perfil do usuário. Como agora
+                            // autenticamos apenas pela sessão web do Painel, buscamos o perfil
+                            // dentro da MESMA origem/cookie do IAB (nenhum token é copiado).
+                            // /api/v2/usuario/info/ exige JWT Bearer e não serve para
+                            // este fluxo baseado em cookie web. Tentamos endpoints de perfil
+                            // compatíveis com a sessão web; se o servidor não os expuser,
+                            // extraímos somente dados visíveis do próprio Painel.
+                            var profileEndpoints = [
+                                '/api/v1/usuario/info/',
+                                '/api/usuario/info/',
+                                '/usuario/info/'
+                            ];
+
+                            function fetchProfile(index) {
+                                if (index >= profileEndpoints.length) {
+                                    // Mesmo critério visual do login antigo: nome_social → nome_usual → nome.
+                                    // No fluxo por cookie não temos o JWT do SUAP, então lemos esses dados
+                                    // da página autenticada do Painel sem copiar cookies ou credenciais.
+                                    var avatar = document.querySelector(
+                                        '.profile img, .perfil img, .user-info img, img.avatar, img.profile-image, '
+                                        + 'aside img[src*="foto"], nav img[src*="foto"], img[src*="150x200"]'
+                                    );
+                                    var photo = avatar && avatar.src ? avatar.src : '';
+                                    var name = '';
+
+                                    function validName(value) {
+                                        value = (value || '').replace(/\s+/g, ' ').trim();
+                                        if (!value || /^(usuário|usuario|perfil|avatar|imagem de perfil)$/i.test(value)) {
+                                            return '';
+                                        }
+                                        return value;
+                                    }
+
+                                    // A imagem serve somente para a foto. Nunca use alt/title como nome:
+                                    // no Painel AVA esses atributos podem conter apenas "Imagem de perfil".
+                                    if (avatar) {
+                                        name = validName(
+                                            avatar.getAttribute('data-user-name') ||
+                                            avatar.getAttribute('data-name') || ''
+                                        );
+                                    }
+
+                                    var nameSelectors = [
+                                        '[data-user-name]', '[data-name]', '[data-nome]',
+                                        '.user-name', '.username', '.profile-name', '.profile__name',
+                                        '.perfil-nome', '.nome-usuario', '.user-info .name',
+                                        '.user-info strong', '.profile strong', '.perfil strong',
+                                        'aside .name', 'aside .nome', 'nav .name', 'nav .nome'
+                                    ];
+                                    for (var i = 0; i < nameSelectors.length && !name; i++) {
+                                        var el = document.querySelector(nameSelectors[i]);
+                                        if (el) {
+                                            name = validName(
+                                                el.getAttribute('data-user-name') ||
+                                                el.getAttribute('data-name') ||
+                                                el.getAttribute('data-nome') ||
+                                                el.textContent || ''
+                                            );
+                                        }
+                                    }
+
+                                    // Último fallback: procura texto curto próximo da foto do usuário.
+                                    if (!name && avatar) {
+                                        var parent = avatar.parentElement;
+                                        for (var depth = 0; parent && depth < 4 && !name; depth++, parent = parent.parentElement) {
+                                            var candidates = parent.querySelectorAll('span, strong, b, p, div');
+                                            for (var j = 0; j < candidates.length && !name; j++) {
+                                                var text = validName(candidates[j].textContent || '');
+                                                if (text && text.length >= 3 && text.length <= 100 && /[A-Za-zÀ-ÿ]/.test(text)) {
+                                                    name = text;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    return Promise.resolve(name || photo ? {
+                                        nome_social: name,
+                                        nome_usual: name,
+                                        nome: name,
+                                        foto: photo
+                                    } : null);
+                                }
+
+                                return fetch(profileEndpoints[index], {
+                                    method: 'GET',
+                                    headers: { 'Accept': 'application/json' },
+                                    credentials: 'same-origin',
+                                    redirect: 'follow'
+                                }).then(function (profileResponse) {
+                                    var contentType = profileResponse.headers.get('content-type') || '';
+                                    if (!profileResponse.ok || contentType.indexOf('application/json') === -1) {
+                                        return fetchProfile(index + 1);
+                                    }
+                                    return profileResponse.json().then(function (profileJson) {
+                                        // Alguns endpoints envelopam o usuário em data/user/usuario/profile.
+                                        if (profileJson && typeof profileJson === 'object') {
+                                            var nested = profileJson.usuario || profileJson.user || profileJson.profile || profileJson.data;
+                                            if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+                                                return nested;
+                                            }
+                                        }
+                                        return profileJson;
+                                    });
+                                }).catch(function () {
+                                    return fetchProfile(index + 1);
+                                });
+                            }
+
+                            return fetchProfile(0).then(function (profile) {
+                                window.webkit.messageHandlers.cordova_iab.postMessage(JSON.stringify({
+                                    type: 'ifrn-painel-diarios',
+                                    ok: true,
+                                    payload: payload,
+                                    profile: profile
+                                }));
+                            });
                         })
                         .catch(function () {
                             window.webkit.messageHandlers.cordova_iab.postMessage(JSON.stringify({
@@ -444,7 +578,11 @@ export class PainelAvaService {
 
                 const raw = data['payload'];
                 const extracted = extractDiariosList(raw);
-                this.saveDashboard(raw);
+                const profile = isPlainObject(data['profile']) ? data['profile'] : null;
+                const ownerUsername = profileUsernameHint(profile, '');
+
+                this.saveDashboard(raw, ownerUsername || undefined);
+                this.saveProfile(profile);
 
                 const propertyUnion = new Set<string>();
                 extracted.diarios.forEach((diario) => Object.keys(diario).forEach((key) => propertyUnion.add(key)));
@@ -483,6 +621,7 @@ export class PainelAvaService {
             });
 
             return () => {
+                loadStartSubscription.unsubscribe();
                 loadStopSubscription.unsubscribe();
                 messageSubscription.unsubscribe();
                 exitSubscription.unsubscribe();
@@ -678,6 +817,24 @@ export class PainelAvaService {
                 diariosResumo,
             };
         }));
+    }
+
+    /** Guarda somente os dados de perfil necessários ao Painel/identidade. */
+    private saveProfile(profile: Record<string, unknown> | null): void {
+        if (!profile) {
+            return;
+        }
+
+        try {
+            sessionStorage.setItem(PAINEL_PROFILE_KEY, JSON.stringify(profile));
+
+            const username = profileUsernameHint(profile, '').trim();
+            if (username) {
+                sessionStorage.setItem('ifrn_username', username);
+            }
+        } catch {
+            sessionStorage.removeItem(PAINEL_PROFILE_KEY);
+        }
     }
 
     private saveDashboard(raw: unknown, ownerUsername?: string): void {

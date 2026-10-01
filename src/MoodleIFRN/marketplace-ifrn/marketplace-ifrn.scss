@@ -363,4 +363,26 @@
             transition: none;
         }
     }
+
+    .marketplace-transition {
+        align-items: center;
+        background: var(--ifrn-green-deep);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        inset: 0;
+        justify-content: center;
+        position: fixed;
+        z-index: 9999;
+    }
+
+    .marketplace-transition ion-spinner {
+        height: 34px;
+        width: 34px;
+    }
+
+    .marketplace-transition strong {
+        font-size: 0.95rem;
+        font-weight: 700;
+    }
 }

@@ -188,13 +188,24 @@ function profileDisplayName(profile: Record<string, unknown> | null): string {
         return sessionStorage.getItem(IFRN_USERNAME_KEY) || 'Usuário';
     }
 
+    // Mesma prioridade usada pelo fluxo antigo do SUAP.
     const nome =
-        profile['nome'] ||
+        profile['nome_social'] ||
         profile['nome_usual'] ||
+        profile['nome'] ||
         profile['nome_registro'] ||
-        profile['nome_social'];
+        profile['nome_completo'] ||
+        profile['name'] ||
+        profile['display_name'];
 
-    return typeof nome === 'string' && nome.trim() ? nome.trim() : 'Usuário';
+    if (typeof nome === 'string') {
+        const value = nome.trim();
+        if (value && !/^(usuário|usuario|perfil|avatar|imagem de perfil)$/i.test(value)) {
+            return value;
+        }
+    }
+
+    return sessionStorage.getItem(IFRN_USERNAME_KEY) || 'Usuário';
 }
 
 /**
