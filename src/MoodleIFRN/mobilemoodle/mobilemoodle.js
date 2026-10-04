@@ -736,10 +736,6 @@
     };
   }
   function profileDisplayName(profile) {
-    const moodleDisplayName = localStorage.getItem("ifrn_moodle_display_name")?.replace(/\s+/g, " ").trim();
-    if (moodleDisplayName) {
-      return moodleDisplayName;
-    }
     if (!profile) {
       return sessionStorage.getItem(IFRN_USERNAME_KEY) || "Usu\xE1rio";
     }
@@ -764,15 +760,15 @@
       return "";
     };
     const nome = pick(
-      "nome_usual",
       "nome_social",
-      "primeiro_nome",
+      "nome_usual",
       "nome",
-      "name",
-      "display_name",
       "nome_registro",
       "nome_completo",
-      "identificacao"
+      "identificacao",
+      "primeiro_nome",
+      "name",
+      "display_name"
     );
     if (nome) {
       return nome;
@@ -785,7 +781,7 @@
       throw new MM.ApiError(401, "Dados do Painel AVA ausentes.");
     }
     let profile = readPainelProfile();
-    if (!profile && typeof MM.getToken === "function" && MM.getToken()) {
+    if (typeof MM.getToken === "function" && MM.getToken()) {
       try {
         const suapProfile = await MM.request("/api/rh/eu/", { softAuth: true });
         if (suapProfile && typeof suapProfile === "object" && !Array.isArray(suapProfile)) {

@@ -1,10 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CoreSharedModule } from '@/core/shared.module';
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
-import { CoreAlerts } from '@services/overlays/alerts';
 import { CoreLang } from '@services/lang';
 import { CorePlatform } from '@services/platform';
-import { firstValueFrom } from 'rxjs';
 
 @Component({
     selector: 'page-marketplace-ifrn',
@@ -49,9 +47,8 @@ export class MarketplaceIfrnPage implements OnInit {
     }
 
     /**
-     * Executa diretamente o mesmo OAuth web do Painel AVA que já funcionava
-     * no login antigo. O Marketplace apenas inicia o fluxo e, ao receber os
-     * diários, abre a SPA do Painel. Não existe etapa intermediária de login.
+     * Volta ao login IFRN-id/senha. O login antigo mantém o token SUAP
+     * no app e permite consultar /api/rh/eu/ para obter o perfil oficial.
      */
     async enterAva(): Promise<void> {
         if (this.loading) {
@@ -61,20 +58,11 @@ export class MarketplaceIfrnPage implements OnInit {
         this.loading = true;
 
         try {
-            const result = await firstValueFrom(this.painelAvaService.authenticateWithBrowser());
+            const base = document.querySelector('base')?.getAttribute('href') || '/';
+            const root = base.endsWith('/') ? base : `${base}/`;
+            const url = new URL(`${root}login/ifrn-login`, window.location.origin);
 
-            // eslint-disable-next-line no-console
-            console.log(`[IFRN-MARKETPLACE] OAuth concluído; ${result.diariosCount} diário(s). Abrindo Painel.`);
-            this.canContinue = true;
-            this.openingPainel = true;
-            this.openPainel();
-        } catch (error) {
-            // Cancelar o navegador não deve deixar o Marketplace em estado quebrado.
-            const message = error instanceof Error ? error.message : 'Não foi possível concluir o acesso ao AVA.';
-
-            if (!/cancelad/i.test(message)) {
-                void CoreAlerts.showError(message);
-            }
+            window.location.assign(url.toString());
         } finally {
             this.loading = false;
         }

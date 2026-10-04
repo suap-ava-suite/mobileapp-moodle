@@ -458,47 +458,47 @@ export class PainelAvaService {
                                 }));
                             }
 
-                            // Primeiro tenta a própria página autenticada, sem nova requisição.
-                            var currentProfile = profileFromDocument(document, 'dom:#btn-toggle-profile > span');
+                            // A própria tela de retorno pode ser uma página intermediária. Por isso,
+                            // primeiro lemos o perfil que já está renderizado e, depois, buscamos a raiz
+                            // autenticada do Painel usando exatamente o mesmo cookie da sessão web.
+                            // Não usamos texto genérico da página: somente seletores do bloco oficial
+                            // de usuário do Painel.
+                            var currentProfile = profileFromDocument(document, 'dom-atual:#btn-toggle-profile > span');
 
-                            // Depois que /api/v1/diarios/ confirmou a sessão, testa o endpoint de perfil
-                            // usando o MESMO cookie do Painel. Esta tentativa é opcional e tem timeout
-                            // curto: nunca deve impedir a entrada no AVA.
-                            var profileTimeout = new Promise(function (resolve) {
-                                setTimeout(function () { resolve(null); }, 900);
+                            function parseRootProfile(html) {
+                                if (!html || typeof html !== 'string') return null;
+                                try {
+                                    var parsed = new DOMParser().parseFromString(html, 'text/html');
+                                    return profileFromDocument(parsed, 'GET / -> #btn-toggle-profile > span');
+                                } catch (error) {
+                                    return null;
+                                }
+                            }
+
+                            // Depois que /api/v1/diarios/ respondeu JSON, o login JÁ terminou.
+                            // Esta coleta é apenas complementar. Timeout curto + fallback garantem que
+                            // uma falha ao buscar o nome nunca prenda o Marketplace em "Autenticando".
+                            var rootTimeout = new Promise(function (resolve) {
+                                setTimeout(function () { resolve(null); }, 800);
                             });
 
-                            var profileRequest = fetch('/usuario/info/', {
+                            var rootRequest = fetch('/', {
                                 method: 'GET',
                                 credentials: 'same-origin',
                                 redirect: 'follow',
-                                headers: { 'Accept': 'application/json' }
+                                headers: { 'Accept': 'text/html,application/xhtml+xml' }
                             }).then(function (response) {
                                 var contentType = response.headers.get('content-type') || '';
-                                if (!response.ok || contentType.indexOf('application/json') === -1) return null;
-                                return response.json().then(function (info) {
-                                    if (!info || typeof info !== 'object') return null;
-                                    var name = cleanName(
-                                        info.nome_registro || info.nome_social || info.nome_usual ||
-                                        info.nome || info.name || ''
-                                    );
-                                    var photo = info.foto || info.foto_url || '';
-                                    if (!name && !photo) return null;
-                                    return {
-                                        nome: name || undefined,
-                                        nome_registro: cleanName(info.nome_registro) || undefined,
-                                        nome_social: cleanName(info.nome_social) || undefined,
-                                        nome_usual: cleanName(info.nome_usual) || undefined,
-                                        foto: photo || undefined,
-                                        _name_source: 'GET /usuario/info/'
-                                    };
-                                });
+                                if (!response.ok || contentType.indexOf('text/html') === -1) return null;
+                                return response.text().then(parseRootProfile);
                             }).catch(function () { return null; });
 
-                            Promise.race([profileRequest, profileTimeout]).then(function (profile) {
-                                // Se /usuario/info/ não estiver publicado ou não aceitar a sessão web,
-                                // mantém o perfil já renderizado pelo Painel.
-                                sendSuccess(profile || currentProfile || null);
+                            Promise.race([rootRequest, rootTimeout]).then(function (rootProfile) {
+                                // A raiz autenticada é a fonte preferida. Se ela não trouxer o bloco
+                                // de perfil, reutiliza a página atual. Em qualquer caso o login segue.
+                                sendSuccess(rootProfile || currentProfile || null);
+                            }).catch(function () {
+                                sendSuccess(currentProfile || null);
                             });
                         })
                         .catch(function () {

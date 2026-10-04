@@ -999,20 +999,16 @@ export class MoodleSiteService {
             courseId,
             siteIdPresent: !!siteId,
             onMainMenu,
-            handoff: onMainMenu ? 'getAndOpenCourse' : 'navigateToSitePath-reset',
+            handoff: 'getAndOpenCourse-direct',
         }));
 
         try {
-            if (!onMainMenu) {
-                // Sai de /login/*, limpa stack (MoodleOpenCoursePage/overlays) e
-                // deixa o MainMenuDeepLinkManager chamar getAndOpenCourse nativo.
-                await CoreNavigator.navigateToSitePath(`course/${courseId}`, {
-                    reset: true,
-                    animated: false,
-                });
-            } else {
-                await CoreCourseHelper.getAndOpenCourse(courseId, {}, siteId);
-            }
+            // Abre o courseId explicitamente pelo mesmo helper usado pelo Moodle.
+            // Antes, quando a origem era /login/moodle-open-course, o código apenas
+            // navegava para `course/<id>` e dependia do deep-link manager terminar o
+            // handoff. Em alguns retornos do OAuth isso acabava no dashboard de cursos.
+            // O helper abaixo faz a abertura efetiva do curso solicitado.
+            await CoreCourseHelper.getAndOpenCourse(courseId, {}, siteId);
         } catch (error) {
             // eslint-disable-next-line no-console
             console.error(COURSE_LOG, 'getAndOpenCourse erro', {

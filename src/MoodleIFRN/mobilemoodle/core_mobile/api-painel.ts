@@ -184,14 +184,6 @@ function mapPainelDiario(diario: PainelDiario): DashboardCourse {
 }
 
 function profileDisplayName(profile: Record<string, unknown> | null): string {
-    // Se o usuário já autenticou em um Moodle pelo OAuth oficial, o bridge salva
-    // o fullname retornado pelo próprio Moodle aqui. Ele tem prioridade sobre o
-    // show_name capturado do HTML do Painel.
-    const moodleDisplayName = localStorage.getItem('ifrn_moodle_display_name')?.replace(/\s+/g, ' ').trim();
-    if (moodleDisplayName) {
-        return moodleDisplayName;
-    }
-
     if (!profile) {
         return sessionStorage.getItem(IFRN_USERNAME_KEY) || 'Usuário';
     }
@@ -220,18 +212,17 @@ function profileDisplayName(profile: Record<string, unknown> | null): string {
         return '';
     };
 
-    // Nome de apresentação do Painel/SUAP (ex.: "Matheus Soares") — o que o sidebar oficial mostra.
-    // Nome civil completo só como complemento se não houver nome_usual.
+    // Mesma prioridade usada pelo login IFRN antigo com /api/rh/eu/.
     const nome = pick(
-        'nome_usual',
         'nome_social',
-        'primeiro_nome',
+        'nome_usual',
         'nome',
-        'name',
-        'display_name',
         'nome_registro',
         'nome_completo',
         'identificacao',
+        'primeiro_nome',
+        'name',
+        'display_name',
     );
 
     if (nome) {
@@ -253,10 +244,10 @@ async function fetchPainelDashboard(): Promise<DashboardData> {
 
     let profile = readPainelProfile();
 
-    // O endpoint de diários do Painel não traz necessariamente o perfil. Quando
-    // o JWT SUAP ainda estiver disponível, busca o próprio usuário uma vez e
-    // persiste apenas os dados de perfil necessários à interface/identidade.
-    if (!profile && typeof MM.getToken === 'function' && MM.getToken()) {
+    // No login IFRN antigo o app possui o JWT oficial do SUAP. Sempre que ele
+    // estiver disponível, /api/rh/eu/ é a fonte principal do perfil. Isso evita
+    // usar o show_name capturado do HTML do Painel (que pode vir abreviado/cortado).
+    if (typeof MM.getToken === 'function' && MM.getToken()) {
         try {
             const suapProfile = await MM.request('/api/rh/eu/', { softAuth: true });
 
@@ -265,7 +256,7 @@ async function fetchPainelDashboard(): Promise<DashboardData> {
                 sessionStorage.setItem(PAINEL_PROFILE_KEY, JSON.stringify(profile));
             }
         } catch {
-            // Perfil é complementar: o dashboard Painel continua válido sem ele.
+            // Se o SUAP estiver indisponível, mantém o perfil já obtido do Painel.
         }
     }
 
