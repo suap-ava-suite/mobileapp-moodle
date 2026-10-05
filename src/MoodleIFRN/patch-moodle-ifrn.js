@@ -39,7 +39,11 @@ const MARKER = {
  *   /login              → redirect para marketplace-ifrn
  *   /login/marketplace-ifrn → tela inicial (marketplace)
  *   /login/ifrn-login       → login com IFRN-id
- *   /login/moodle-open-course → abre courseid Moodle (OAuth se preciso)
+ *   /login/moodle-open-course → ponte → CoreCourseHelper.getAndOpenCourse (curso NATIVO)
+ *   /login/painel-enrol     → matrícula via Painel
+ *
+ * O visual do curso nativo fica em moodle-course/moodle-course.scss
+ * (stylesheet global). NÃO existe rota paralela de curso.
  */
 const IFRN_LOGIN_ROUTES = `            ${MARKER.loginRoutesStart}
             {
@@ -115,7 +119,7 @@ function stripLegacyIfrnRoutes(content) {
 
     next = replaceBetweenMarkers(next, MARKER.loginRoutesStart, MARKER.loginRoutesEnd, '') ?? next;
 
-    const legacyPaths = ['marketplace-ifrn', 'ifrn-login', 'moodle-open-course', 'painel-enrol', 'ifrn'];
+    const legacyPaths = ['marketplace-ifrn', 'ifrn-login', 'moodle-open-course', 'moodle-course/:courseId', 'painel-enrol', 'ifrn'];
     for (const routePath of legacyPaths) {
         const pattern = new RegExp(
             `\\{[^{}]*path:\\s*'${routePath}'[\\s\\S]*?\\n\\s*\\},?\\s*`,
@@ -141,6 +145,7 @@ function isLoginModulePatched(content) {
         && content.includes("path: 'ifrn-login'")
         && content.includes("path: 'moodle-open-course'")
         && content.includes("path: 'painel-enrol'")
+        && !content.includes("path: 'moodle-course/:courseId'")
         && /redirectTo:\s*'marketplace-ifrn'/.test(content)
         && content.includes('@/MoodleIFRN/marketplace-ifrn/marketplace-ifrn')
         && content.includes('@/MoodleIFRN/ifrn-login/ifrn-login')
@@ -180,30 +185,54 @@ function patchLoginModule() {
     console.log('✔ login.module.ts — redirect e rotas marketplace-ifrn / ifrn-login ');
 }
 
+const COURSE_THEME_STYLE = `{
+                "input": "src/MoodleIFRN/moodle-course/moodle-course.scss"
+              }`;
+
 function patchAngularAssets() {
     let content = readFile(FILES.angularJson);
+    let changed = false;
 
-    if (content.includes('"input": "src/MoodleIFRN/mobilemoodle"')) {
-        console.log('• angular.json já inclui assets do mobilemoodle');
-        return;
-    }
-
-    const assetsMarker = `"input": "src/assets",
+    if (!content.includes('"input": "src/MoodleIFRN/mobilemoodle"')) {
+        const assetsMarker = `"input": "src/assets",
                 "output": "assets"
               },`;
 
-    if (!content.includes(assetsMarker)) {
-        throw new Error('Não foi possível localizar o bloco de assets padrão em angular.json.');
+        if (!content.includes(assetsMarker)) {
+            throw new Error('Não foi possível localizar o bloco de assets padrão em angular.json.');
+        }
+
+        content = content.replace(
+            assetsMarker,
+            `${assetsMarker}
+${MOODLEMOODLE_ASSET},`,
+        );
+        changed = true;
+        console.log('✔ angular.json — assets do painel mobilemoodle adicionados');
+    } else {
+        console.log('• angular.json já inclui assets do mobilemoodle');
     }
 
-    content = content.replace(
-        assetsMarker,
-        `${assetsMarker}
-${MOODLEMOODLE_ASSET},`,
-    );
+    if (!content.includes('"input": "src/MoodleIFRN/moodle-course/moodle-course.scss"')) {
+        const stylesPattern = /("input"\s*:\s*"src\/theme\/theme\.scss"\s*\r?\n\s*\})/;
 
-    writeFile(FILES.angularJson, content);
-    console.log('✔ angular.json — assets do painel mobilemoodle adicionados');
+        if (!stylesPattern.test(content)) {
+            throw new Error('Não foi possível localizar o bloco de styles em angular.json.');
+        }
+
+        content = content.replace(
+            stylesPattern,
+            `$1,\n              ${COURSE_THEME_STYLE}`,
+        );
+        changed = true;
+        console.log('✔ angular.json — tema visual do curso nativo (moodle-course.scss)');
+    } else {
+        console.log('• angular.json já inclui moodle-course.scss');
+    }
+
+    if (changed) {
+        writeFile(FILES.angularJson, content);
+    }
 }
 
 function patchGulpfile() {
@@ -286,7 +315,8 @@ function main() {
     patchPackageScripts();
 
     console.log('\n✔ Patch concluído.');
-    console.log('  Rotas: /login → marketplace-ifrn, /login/ifrn-login,  /login/moodle-open-course');
+    console.log('  Rotas: /login → marketplace-ifrn, /login/ifrn-login, /login/moodle-open-course');
+    console.log('  Curso: nativo via CoreCourseHelper.getAndOpenCourse + tema moodle-course.scss');
     console.log('  Próximo passo: npm run build:mobilemoodle');
 }
 

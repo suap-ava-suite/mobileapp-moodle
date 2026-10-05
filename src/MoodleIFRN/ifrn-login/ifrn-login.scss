@@ -42,9 +42,11 @@
 
     &__logo {
         display: block;
-        height: auto;
-        max-height: 40px;
-        width: 98px;
+        height: 28px;
+        width: auto;
+        max-width: 120px;
+        object-fit: contain;
+        object-position: left center;
     }
 
     &__content {
@@ -279,30 +281,6 @@
         color: #1351b4;
     }
 
-    &__button--govbr {
-        background: #ffffff;
-        border: 2px solid #1351b4;
-        color: #1351b4;
-        font-weight: 700;
-        gap: 6px;
-    }
-
-    &__button--govbr:not(:disabled):active {
-        background: #e8f0fe;
-    }
-
-    &__govbr-mark {
-        font-weight: 800;
-        letter-spacing: -0.02em;
-    }
-
-    &__govbr-help {
-        color: #555555;
-        font-size: 12px;
-        line-height: 1.4;
-        margin: 7px 8px 0;
-        text-align: center;
-    }
 
     &__link {
         color: #1351b4;

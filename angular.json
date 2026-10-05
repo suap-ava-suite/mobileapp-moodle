@@ -54,6 +54,9 @@
             "styles": [
               {
                 "input": "src/theme/theme.scss"
+              },
+              {
+                "input": "src/MoodleIFRN/moodle-course/moodle-course.scss"
               }
             ],
             "scripts": [],

@@ -57,6 +57,7 @@ const appRoutes: Routes = [
                         .then(m => m.PainelEnrolPage),
             },
             // END MoodleIFRN login routes
+
             
             {
                 path: 'site',

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { Injectable, inject } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
 import { CoreSiteIdentityProvider } from '@classes/sites/unauthenticated-site';
 import { NO_SITE_ID } from '@features/login/constants';
 import { CoreCourseHelper } from '@features/course/services/course-helper';
@@ -27,6 +28,7 @@ import { CoreCustomURLSchemes } from '@services/urlschemes';
 import { CoreUrl } from '@static/url';
 import { CoreEvents } from '@static/events';
 import { CoreLogger } from '@static/logger';
+import { filter } from 'rxjs/operators';
 
 
 export const IFRN_MOODLE_PRESENCIAL_URL = 'https://presencial.ava.ifrn.edu.br';
@@ -37,13 +39,102 @@ const RESUME_OAUTH_KEY = 'ifrn_moodle_resume_oauth';
 const PENDING_OPEN_COURSE_KEY = 'ifrn_moodle_pending_open_course';
 /** Persiste mismatch Painel↔Moodle além do ciclo de logout/navegação. */
 const IDENTITY_MISMATCH_KEY = 'ifrn_moodle_identity_mismatch';
+/** Curso aberto pelo fluxo Painel AVA → Voltar deve retornar ao Painel. */
+const COURSE_ORIGIN_KEY = 'ifrn_course_origin';
+const COURSE_ORIGIN_ID_KEY = 'ifrn_course_id';
 const LOG_PREFIX = '[IFRN Moodle]';
 /** Diagnóstico temporário do Teste A (sessão Moodle). Sem tokens. */
 const SITE_LOG = '[IFRN-SITE]';
 /** Diagnóstico temporário do Teste B (abrir curso). Sem tokens. */
 const COURSE_LOG = '[IFRN-COURSE]';
+/** Diagnóstico temporário da pilha curso↔Painel. Sem tokens. */
+const COURSE_NAV_LOG = '[IFRN-COURSE-NAV]';
 /** Diagnóstico de correspondência Painel/SUAP ↔ Moodle. Sem username/tokens. */
 const IDENTITY_LOG = '[IFRN-IDENTITY]';
+
+/**
+ * Normaliza URL Angular/Ionic (sem query/hash; sem barra final).
+ */
+function normalizeAppPath(url: string): string {
+    const pathOnly = (url || '').split(/[?#]/)[0] || '';
+
+    if (!pathOnly || pathOnly === '/') {
+        return pathOnly || '/';
+    }
+
+    return pathOnly.replace(/\/+$/, '') || '/';
+}
+
+/**
+ * Página principal do curso (index + tabs contents/participants/…).
+ * Exclui irmãos empilhados: summary, list-mod-type, {cmId}/module-preview.
+ *
+ * Exemplos true:
+ *   /main/home/course/123
+ *   /main/home/course/deep/123/contents
+ * Exemplos false:
+ *   /main/home/course/123/summary
+ *   /main/home/course/123/456/module-preview
+ *   /main/home/mod_forum/...
+ */
+function isCourseIndexPath(path: string, courseId: number): boolean {
+    const normalized = normalizeAppPath(path);
+    const match = normalized.match(
+        new RegExp(`^/main/[^/]+/course(?:/deep)*/${courseId}(?:/([^/]+))?$`),
+    );
+
+    if (!match) {
+        return false;
+    }
+
+    const rest = match[1];
+
+    if (!rest) {
+        return true;
+    }
+
+    // Rotas irmãs do index (não são a página principal do curso).
+    if (rest === 'summary' || rest === 'list-mod-type' || /^\d+$/.test(rest)) {
+        return false;
+    }
+
+    // Tab do course index: contents, participants, grades, overview, etc.
+    return true;
+}
+
+/**
+ * Raiz / landing do Main Menu (Dashboard, Site home, My courses…).
+ * Não inclui /course/… nem atividades (mod_*, caminhos profundos).
+ */
+function isMainMenuLandingPath(path: string): boolean {
+    const normalized = normalizeAppPath(path);
+
+    if (!normalized.startsWith('/main')) {
+        return false;
+    }
+
+    // Qualquer rota de curso não é landing.
+    if (/\/course(?:\/|$)/.test(normalized)) {
+        return false;
+    }
+
+    const parts = normalized.split('/').filter(Boolean);
+
+    // /main | /main/{tab} | /main/{tab}/{page}
+    if (parts[0] !== 'main') {
+        return false;
+    }
+
+    if (parts.length > 3) {
+        return false;
+    }
+
+    if (parts.some((part) => part.startsWith('mod_'))) {
+        return false;
+    }
+
+    return true;
+}
 
 /**
  * Origem do viewurl do diário NÃO é necessariamente um Moodle Mobile válido.
@@ -389,6 +480,7 @@ export class MoodleSiteService {
     private readonly logger = CoreLogger.getInstance('MoodleSiteService');
     private readonly authService = inject(AuthService);
     private readonly painelAva = inject(PainelAvaService);
+    private readonly router = inject(Router);
 
     /** Último resumo da sessão Moodle. */
     lastSummary: MoodleSessionSummary | null = null;
@@ -406,6 +498,24 @@ export class MoodleSiteService {
     private oauthFlowActive = false;
 
     private loginObserverRegistered = false;
+
+    /**
+     * Observer de NavigationEnd para Painel→curso→Painel.
+     * Criado no máximo uma vez (serviço root).
+     */
+    private courseNavObserverRegistered = false;
+
+    /**
+     * True só depois que a URL do course index do courseId marcado foi vista.
+     * Evita redirecionar no salto intermediário /login → /main antes do curso abrir.
+     */
+    private courseOpenedFromPainel = false;
+
+    /** URL anterior (path) para detectar saída course → main. */
+    private previousCourseNavUrl = '';
+
+    /** Evita redirect duplicado se NavigationEnd disparar em sequência. */
+    private redirectingToPainel = false;
 
     /** Lê flag persistida de mismatch (sobrevive a logout/navegação). */
     isIdentityMismatchPending(): boolean {
@@ -541,6 +651,121 @@ export class MoodleSiteService {
 
     clearPendingOpenCourse(): void {
         sessionStorage.removeItem(PENDING_OPEN_COURSE_KEY);
+    }
+
+    /**
+     * Marca que o curso foi aberto pelo Painel AVA (não pelo Dashboard Moodle).
+     * O observer de NavigationEnd só redireciona quando essas flags existem.
+     */
+    private markCourseOriginFromPainel(courseId: number): void {
+        sessionStorage.setItem(COURSE_ORIGIN_KEY, 'painel');
+        sessionStorage.setItem(COURSE_ORIGIN_ID_KEY, String(courseId));
+        this.courseOpenedFromPainel = false;
+        this.redirectingToPainel = false;
+        // eslint-disable-next-line no-console
+        console.log(COURSE_NAV_LOG, 'origin=painel');
+        this.ensureCourseNavObserver();
+    }
+
+    /** Remove flags de origem Painel↔curso (após redirect ou falha ao abrir). */
+    private clearCourseOriginFlags(): void {
+        sessionStorage.removeItem(COURSE_ORIGIN_KEY);
+        sessionStorage.removeItem(COURSE_ORIGIN_ID_KEY);
+        this.courseOpenedFromPainel = false;
+    }
+
+    /**
+     * Observer único de NavigationEnd.
+     * Só redireciona Painel quando: origin=painel + curso já aberto +
+     * saída de course/{id} (index/tabs) para landing /main|dashboard.
+     * Não intercepta Back global nem rotas filhas (mod/quiz/PDF/fórum…).
+     */
+    private ensureCourseNavObserver(): void {
+        if (this.courseNavObserverRegistered) {
+            return;
+        }
+
+        this.courseNavObserverRegistered = true;
+        this.previousCourseNavUrl = normalizeAppPath(CoreNavigator.getCurrentPath() || '');
+
+        this.router.events
+            .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+            .subscribe((event) => {
+                this.handleCourseNavEnd(event.urlAfterRedirects || event.url);
+            });
+    }
+
+    /**
+     * Reage a cada NavigationEnd. Sem flags → no-op (Dashboard Moodle intacto).
+     */
+    private handleCourseNavEnd(url: string): void {
+        const path = normalizeAppPath(url);
+        const previousPath = this.previousCourseNavUrl;
+
+        this.previousCourseNavUrl = path;
+
+        if (this.redirectingToPainel) {
+            return;
+        }
+
+        const origin = sessionStorage.getItem(COURSE_ORIGIN_KEY);
+        const courseIdRaw = sessionStorage.getItem(COURSE_ORIGIN_ID_KEY);
+
+        if (origin !== 'painel' || !courseIdRaw) {
+            this.courseOpenedFromPainel = false;
+
+            return;
+        }
+
+        const courseId = Number(courseIdRaw);
+
+        if (!Number.isFinite(courseId) || courseId <= 0) {
+            this.clearCourseOriginFlags();
+
+            return;
+        }
+
+        // 1) Curso principal (index + tabs) ficou visível → liberar o retorno.
+        if (isCourseIndexPath(path, courseId)) {
+            if (!this.courseOpenedFromPainel) {
+                this.courseOpenedFromPainel = true;
+                // eslint-disable-next-line no-console
+                console.log(COURSE_NAV_LOG, 'course opened');
+            }
+
+            return;
+        }
+
+        // Ainda não vimos o course index (ex.: /login → /main no deep link).
+        if (!this.courseOpenedFromPainel) {
+            return;
+        }
+
+        // 2) Só redireciona ao sair do index do curso marcado para a landing do Main Menu.
+        //    course → mod_*/quiz/PDF/fórum: destino NÃO é landing → ignore.
+        if (
+            previousPath
+            && isCourseIndexPath(previousPath, courseId)
+            && isMainMenuLandingPath(path)
+        ) {
+            // eslint-disable-next-line no-console
+            console.log(COURSE_NAV_LOG, 'leaving course to main');
+            // eslint-disable-next-line no-console
+            console.log(COURSE_NAV_LOG, 'redirecting to painel');
+
+            // Limpa estado ANTES do assign (evita reentrância / segundo redirect).
+            this.redirectingToPainel = true;
+            this.clearCourseOriginFlags();
+            this.redirectToPainelAva();
+        }
+    }
+
+    /** Mesmo destino do goBack() da ponte moodle-open-course. */
+    private redirectToPainelAva(): void {
+        const base = document.querySelector('base')?.getAttribute('href') || '/';
+        const root = base.endsWith('/') ? base : `${base}/`;
+
+        window.location.assign(`${root}mobilemoodle/index.html#/painel`);
     }
 
     /**
@@ -905,9 +1130,9 @@ export class MoodleSiteService {
     /**
      * Abre um courseid específico entregando ao Moodle Mobile nativo.
      *
-     * Fora do main menu (ex.: /login/moodle-open-course), usa o mesmo padrão
-     * do deep link oficial: navigateToSitePath + reset → /main → getAndOpenCourse.
-     * Assim a página intermediária NÃO fica na stack cobrindo a UI nativa.
+     * Fora do main menu (ex.: /login/moodle-open-course), o núcleo entra em
+     * /main via redirectPath e empilha o curso sobre o Dashboard — por isso
+     * marcamos origem=painel e o observer devolve ao Painel no Voltar do index.
      *
      * Dentro do main menu: CoreCourseHelper.getAndOpenCourse (igual “Meus cursos”).
      * Só abre se course.id === courseId em getUserCourses(). Sem aproximação por nome.
@@ -992,35 +1217,29 @@ export class MoodleSiteService {
         }
 
         const siteId = CoreSites.getCurrentSiteId();
-        const onMainMenu = !!CoreNavigator.getCurrentMainMenuTab();
 
+        // Reaproveita a rota, os componentes, handlers e toda a lógica
+        // nativa do Moodle Mobile. MoodleIFRN altera apenas a camada visual.
         // eslint-disable-next-line no-console
-        console.log(COURSE_LOG, 'chamando getAndOpenCourse', JSON.stringify({
+        console.log(COURSE_LOG, 'abrindo curso nativo Moodle', JSON.stringify({
             courseId,
             siteIdPresent: !!siteId,
-            onMainMenu,
-            handoff: 'getAndOpenCourse-direct',
+            frontend: 'moodle-native+ifrn-theme',
         }));
 
+        // Origem Painel: Voltar na página principal do curso → Painel AVA
+        // (não o Dashboard Moodle). Sem flag = comportamento nativo intacto.
+        this.markCourseOriginFromPainel(courseId);
+
         try {
-            // Abre o courseId explicitamente pelo mesmo helper usado pelo Moodle.
-            // Antes, quando a origem era /login/moodle-open-course, o código apenas
-            // navegava para `course/<id>` e dependia do deep-link manager terminar o
-            // handoff. Em alguns retornos do OAuth isso acabava no dashboard de cursos.
-            // O helper abaixo faz a abertura efetiva do curso solicitado.
             await CoreCourseHelper.getAndOpenCourse(courseId, {}, siteId);
         } catch (error) {
-            // eslint-disable-next-line no-console
-            console.error(COURSE_LOG, 'getAndOpenCourse erro', {
-                courseId,
-                message: error instanceof Error ? error.message : String(error),
-            });
-
+            this.clearCourseOriginFlags();
             throw error;
         }
 
         // eslint-disable-next-line no-console
-        console.log(COURSE_LOG, 'curso aberto', { courseId });
+        console.log(COURSE_LOG, 'curso nativo aberto', { courseId });
 
         if (this.lastSummary) {
             this.lastSummary.openedCourseId = courseId;
