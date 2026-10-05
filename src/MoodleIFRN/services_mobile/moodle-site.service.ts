@@ -13,9 +13,10 @@
 // limitations under the License.
 
 import { Injectable, inject } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, NavigationError, Router } from '@angular/router';
 import { CoreSiteIdentityProvider } from '@classes/sites/unauthenticated-site';
 import { NO_SITE_ID } from '@features/login/constants';
+import { MAIN_MENU_HOME_PAGE_NAME } from '@features/mainmenu/constants';
 import { CoreCourseHelper } from '@features/course/services/course-helper';
 import { CoreCourses, CoreEnrolledCourseData } from '@features/courses/services/courses';
 import { CoreLoginHelper } from '@features/login/services/login-helper';
@@ -28,7 +29,6 @@ import { CoreCustomURLSchemes } from '@services/urlschemes';
 import { CoreUrl } from '@static/url';
 import { CoreEvents } from '@static/events';
 import { CoreLogger } from '@static/logger';
-import { filter } from 'rxjs/operators';
 
 
 export const IFRN_MOODLE_PRESENCIAL_URL = 'https://presencial.ava.ifrn.edu.br';
@@ -133,7 +133,8 @@ function isMainMenuLandingPath(path: string): boolean {
         return false;
     }
 
-    return true;
+    // Não tratar qualquer plugin/página curta como Dashboard.
+    return parts.length <= 2 || ['dashboard', 'sitehome'].includes(parts[2]);
 }
 
 /**
@@ -216,14 +217,14 @@ function logSiteError(stage: string, error: unknown, context?: Record<string, un
     } | null;
 
     // eslint-disable-next-line no-console
-    console.error(SITE_LOG, stage, {
+    console.error(SITE_LOG, stage, JSON.stringify({
         ...context,
         errorName: err?.name || (error instanceof Error ? error.constructor.name : typeof error),
         message: err?.message || (error instanceof Error ? error.message : String(error)),
         critical: err?.critical,
         debugCode: err?.debug?.code,
         debugDetails: err?.debug?.details,
-    });
+    }));
 }
 
 /** Normaliza username Moodle/SUAP para comparação (sem logar o valor). */
@@ -517,6 +518,9 @@ export class MoodleSiteService {
     /** Evita redirect duplicado se NavigationEnd disparar em sequência. */
     private redirectingToPainel = false;
 
+    /** Uma única abertura IFRN por vez, inclusive durante o retorno do OAuth. */
+    private courseOpening: { courseId: number; promise: Promise<number> } | null = null;
+
     /** Lê flag persistida de mismatch (sobrevive a logout/navegação). */
     isIdentityMismatchPending(): boolean {
         return this.identityMismatchPending
@@ -549,13 +553,13 @@ export class MoodleSiteService {
         CoreEvents.on(CoreEvents.APP_LAUNCHED_URL, (data) => {
             const url = data?.url || '';
             // eslint-disable-next-line no-console
-            console.log(SITE_LOG, 'callback deep link APP_LAUNCHED_URL', {
+            console.log(SITE_LOG, 'callback deep link APP_LAUNCHED_URL', JSON.stringify({
                 ...sanitizeUrlForLog(url),
                 isCustomURL: CoreCustomURLSchemes.isCustomURL(url),
                 isSSOToken: CoreCustomURLSchemes.isCustomURLToken(url),
                 // SSO: token embutido no scheme — não chama getUserToken
                 expectsNewSite: CoreCustomURLSchemes.isCustomURLToken(url),
-            });
+            }));
             identityLog('callback recebido', {
                 isSSOToken: CoreCustomURLSchemes.isCustomURLToken(url),
                 pendingOAuth: sessionStorage.getItem(OAUTH_PENDING_KEY) === '1',
@@ -604,14 +608,23 @@ export class MoodleSiteService {
                 return;
             }
 
-            sessionStorage.removeItem(OAUTH_PENDING_KEY);
-
-            // Deixa o núcleo concluir navigateToSiteHome e depois volta ao bridge IFRN
-            // ou abre o curso pendente (fluxo do painel).
-            window.setTimeout(() => {
-                void this.afterOAuthLogin();
-            }, 800);
+            // LOGIN ocorre antes de urlschemes concluir navigateToSiteHome.
+            // O redirectPath oficial retorna à ponte IFRN; somente ela retoma
+            // o curso. Um timer aqui concorria com ngOnInit da ponte e com /main.
+            this.oauthFlowActive = false;
         });
+    }
+
+    /** Consome o retorno OAuth apenas quando a ponte oficial estiver ativa. */
+    async resumePendingOAuthCourse(): Promise<boolean> {
+        if (sessionStorage.getItem(OAUTH_PENDING_KEY) !== '1' || !CoreSites.isLoggedIn()) {
+            return false;
+        }
+
+        sessionStorage.removeItem(OAUTH_PENDING_KEY);
+        await this.afterOAuthLogin();
+
+        return true;
     }
 
     /**
@@ -662,6 +675,7 @@ export class MoodleSiteService {
         sessionStorage.setItem(COURSE_ORIGIN_ID_KEY, String(courseId));
         this.courseOpenedFromPainel = false;
         this.redirectingToPainel = false;
+        this.previousCourseNavUrl = normalizeAppPath(CoreNavigator.getCurrentPath() || '');
         // eslint-disable-next-line no-console
         console.log(COURSE_NAV_LOG, 'origin=painel');
         this.ensureCourseNavObserver();
@@ -688,11 +702,18 @@ export class MoodleSiteService {
         this.courseNavObserverRegistered = true;
         this.previousCourseNavUrl = normalizeAppPath(CoreNavigator.getCurrentPath() || '');
 
-        this.router.events
-            .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-            .subscribe((event) => {
+        this.router.events.subscribe((event) => {
+            if (event instanceof NavigationError && this.courseOpening) {
+                logSiteError('NavigationError durante abertura IFRN', event.error, {
+                    courseId: this.courseOpening.courseId,
+                    path: normalizeAppPath(event.url),
+                });
+            }
+
+            if (event instanceof NavigationEnd) {
                 this.handleCourseNavEnd(event.urlAfterRedirects || event.url);
-            });
+            }
+        });
     }
 
     /**
@@ -710,6 +731,18 @@ export class MoodleSiteService {
 
         const origin = sessionStorage.getItem(COURSE_ORIGIN_KEY);
         const courseIdRaw = sessionStorage.getItem(COURSE_ORIGIN_ID_KEY);
+
+        if (origin === 'painel') {
+            // eslint-disable-next-line no-console
+            console.log(COURSE_NAV_LOG, 'NavigationEnd', JSON.stringify({
+                previousPath,
+                path,
+                courseId: Number(courseIdRaw),
+                courseOpenedFromPainel: this.courseOpenedFromPainel,
+                opening: !!this.courseOpening,
+                redirectingToPainel: this.redirectingToPainel,
+            }));
+        }
 
         if (origin !== 'painel' || !courseIdRaw) {
             this.courseOpenedFromPainel = false;
@@ -741,6 +774,11 @@ export class MoodleSiteService {
             return;
         }
 
+        // Mesmo após reconhecer o index, não disputar transições de entrada.
+        if (this.courseOpening) {
+            return;
+        }
+
         // 2) Só redireciona ao sair do index do curso marcado para a landing do Main Menu.
         //    course → mod_*/quiz/PDF/fórum: destino NÃO é landing → ignore.
         if (
@@ -757,6 +795,13 @@ export class MoodleSiteService {
             this.redirectingToPainel = true;
             this.clearCourseOriginFlags();
             this.redirectToPainelAva();
+        } else if (isMainMenuLandingPath(path) || (
+            /\/course(?:\/deep)*\/\d+/.test(path)
+            && Number(path.match(/\/course(?:\/deep)*\/(\d+)/)?.[1]) !== courseId
+        )) {
+            // A origem vale apenas para este curso. Após sair para outra área,
+            // uma abertura futura pelo Dashboard não deve herdar a flag antiga.
+            this.clearCourseOriginFlags();
         }
     }
 
@@ -791,6 +836,9 @@ export class MoodleSiteService {
         this.setPendingOpenCourse({ courseId, siteUrl, courseName });
 
         const identityResult = await this.ensureMatchingMoodleSession(siteUrl);
+
+        // eslint-disable-next-line no-console
+        console.log(COURSE_LOG, 'sessão validada', JSON.stringify({ courseId, identityResult }));
 
         if (identityResult === 'matched-current' || identityResult === 'loaded-stored') {
             await this.openCourseById(courseId);
@@ -1137,7 +1185,24 @@ export class MoodleSiteService {
      * Dentro do main menu: CoreCourseHelper.getAndOpenCourse (igual “Meus cursos”).
      * Só abre se course.id === courseId em getUserCourses(). Sem aproximação por nome.
      */
-    async openCourseById(courseId: number): Promise<number> {
+    openCourseById(courseId: number): Promise<number> {
+        if (this.courseOpening) {
+            if (this.courseOpening.courseId === courseId) {
+                return this.courseOpening.promise;
+            }
+
+            return Promise.reject(new Error('Já existe outro curso Moodle sendo aberto.'));
+        }
+
+        const promise = this.performOpenCourseById(courseId).finally(() => {
+            this.courseOpening = null;
+        });
+        this.courseOpening = { courseId, promise };
+
+        return promise;
+    }
+
+    private async performOpenCourseById(courseId: number): Promise<number> {
         this.lastError = '';
 
         const match = this.matchCurrentMoodleIdentity();
@@ -1183,9 +1248,9 @@ export class MoodleSiteService {
             courses = enrolled.map((course) => this.toCourseSummary(course));
         } catch (error) {
             // eslint-disable-next-line no-console
-            console.error(COURSE_LOG, 'buscar cursos erro', {
+            console.error(COURSE_LOG, 'buscar cursos erro', JSON.stringify({
                 message: error instanceof Error ? error.message : String(error),
-            });
+            }));
 
             throw error instanceof Error
                 ? error
@@ -1207,10 +1272,10 @@ export class MoodleSiteService {
                 + 'Nenhum outro curso foi aberto.';
 
             // eslint-disable-next-line no-console
-            console.warn(COURSE_LOG, 'courseId não matriculado — abertura cancelada', {
+            console.warn(COURSE_LOG, 'courseId não matriculado — abertura cancelada', JSON.stringify({
                 requested: courseId,
                 enrolledCount: courses.length,
-            });
+            }));
 
             this.lastError = message;
             throw new Error(message);
@@ -1231,15 +1296,40 @@ export class MoodleSiteService {
         // (não o Dashboard Moodle). Sem flag = comportamento nativo intacto.
         this.markCourseOriginFromPainel(courseId);
 
+        const navigation = this.waitForCourseNavigation(courseId);
+
         try {
-            await CoreCourseHelper.getAndOpenCourse(courseId, {}, siteId);
+            // eslint-disable-next-line no-console
+            console.log(COURSE_LOG, 'chamando getAndOpenCourse', JSON.stringify({ courseId, siteIdPresent: !!siteId }));
+            // O handler nativo não aguarda navigateToSitePath. A Promise do helper
+            // pode resolver em /main: também aguardamos NavigationEnd do curso.
+            await Promise.all([
+                CoreCourseHelper.getAndOpenCourse(courseId, {}, siteId).then(() => {
+                    // eslint-disable-next-line no-console
+                    console.log(COURSE_LOG, 'getAndOpenCourse retornou (rota ainda deve ser confirmada)', JSON.stringify({
+                        courseId,
+                        siteIdPresent: !!siteId,
+                    }));
+                }),
+                navigation.promise,
+            ]);
         } catch (error) {
+            // eslint-disable-next-line no-console
+            console.error(COURSE_LOG, 'getAndOpenCourse / navegação FALHOU', JSON.stringify({
+                courseId,
+                siteIdPresent: !!siteId,
+                path: normalizeAppPath(CoreNavigator.getCurrentPath() || ''),
+                message: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined,
+            }));
             this.clearCourseOriginFlags();
             throw error;
+        } finally {
+            navigation.dispose();
         }
 
         // eslint-disable-next-line no-console
-        console.log(COURSE_LOG, 'curso nativo aberto', { courseId });
+        console.log(COURSE_LOG, 'curso nativo aberto', JSON.stringify({ courseId }));
 
         if (this.lastSummary) {
             this.lastSummary.openedCourseId = courseId;
@@ -1256,6 +1346,37 @@ export class MoodleSiteService {
         }
 
         return courseId;
+    }
+
+    /** Aguarda a rota real, sem substituir handlers, componentes ou APIs nativos. */
+    private waitForCourseNavigation(courseId: number): { promise: Promise<void>; dispose: () => void } {
+        let dispose = (): void => { /* Instalado abaixo antes de retornar. */ };
+        const promise = new Promise<void>((resolve, reject) => {
+            const timeout = window.setTimeout(() => {
+                reject(new Error(`A abertura do curso ${courseId} não confirmou a rota nativa em 45 segundos.`));
+            }, 45000);
+            const subscription = this.router.events.subscribe((event) => {
+                if (event instanceof NavigationEnd && isCourseIndexPath(event.urlAfterRedirects || event.url, courseId)) {
+                    resolve();
+                } else if (event instanceof NavigationError && (
+                    isCourseIndexPath(event.url, courseId) || isMainMenuLandingPath(event.url)
+                )) {
+                    reject(event.error);
+                }
+            });
+
+            dispose = () => {
+                window.clearTimeout(timeout);
+                subscription.unsubscribe();
+            };
+
+            // O helper pode somente selecionar a aba de um curso já visível.
+            if (isCourseIndexPath(CoreNavigator.getCurrentPath() || '', courseId)) {
+                resolve();
+            }
+        });
+
+        return { promise, dispose: () => dispose() };
     }
 
     /**
@@ -1361,30 +1482,30 @@ export class MoodleSiteService {
         const targetSiteUrl = resolveMoodleSiteUrl(rawCandidate);
 
         // eslint-disable-next-line no-console
-        console.log(SITE_LOG, 'startSuapOAuthLogin', {
+        console.log(SITE_LOG, 'startSuapOAuthLogin', JSON.stringify({
             rawCandidate: rawCandidate || null,
             targetSiteUrl,
             courseId: pending?.courseId ?? null,
-        });
+        }));
 
         const siteCheck = await this.checkPresencialSite(targetSiteUrl);
 
         // eslint-disable-next-line no-console
-        console.log(SITE_LOG, 'checkSite OK — próxima etapa: identity providers', {
+        console.log(SITE_LOG, 'checkSite OK — próxima etapa: identity providers', JSON.stringify({
             siteUrl: siteCheck.siteUrl,
             typeoflogin: siteCheck.code,
             hasConfig: !!siteCheck.config,
             enablemobilewebservice: siteCheck.config?.enablemobilewebservice,
-        });
+        }));
 
         const provider = await this.findSuapProvider(siteCheck);
 
         // eslint-disable-next-line no-console
-        console.log(SITE_LOG, 'findSuapProvider', {
+        console.log(SITE_LOG, 'findSuapProvider', JSON.stringify({
             found: !!provider,
             name: provider?.name || null,
             url: provider?.url ? sanitizeUrlForLog(provider.url) : null,
-        });
+        }));
 
         if (!provider) {
             throw new Error(
@@ -1404,18 +1525,29 @@ export class MoodleSiteService {
 
         const redirectData: CoreRedirectPayload | undefined = pending?.courseId
             ? {
-                redirectPath: '/login/moodle-open-course',
+                // O deep-link manager trata redirectPath como rota DO SITE.
+                // /login/... aqui virava /main/home/login/... (NG04002).
+                // Primeiro conclui a landing nativa; nextNavigation usa navigate
+                // absoluto para a ponte IFRN, mantendo a sessão recém-criada.
+                redirectPath: MAIN_MENU_HOME_PAGE_NAME,
                 redirectOptions: {
-                    params: {
-                        courseId: pending.courseId,
-                        courseName: pending.courseName,
+                    nextNavigation: {
+                        path: '/login/moodle-open-course',
+                        isSitePath: false,
+                        options: {
+                            animated: false,
+                            params: {
+                                courseId: pending.courseId,
+                                courseName: pending.courseName,
+                            },
+                        },
                     },
                 },
             }
             : undefined;
 
         // eslint-disable-next-line no-console
-        console.log(SITE_LOG, 'openBrowserForOAuthLogin (fluxo oficial, NÃO InAppBrowser)', {
+        console.log(SITE_LOG, 'openBrowserForOAuthLogin (fluxo oficial, NÃO InAppBrowser)', JSON.stringify({
             siteUrl: siteCheck.siteUrl,
             oauthsso: oauthParams.id,
             launchurl: siteCheck.config?.launchurl
@@ -1423,7 +1555,7 @@ export class MoodleSiteService {
                 : null,
             redirectPath: redirectData?.redirectPath || null,
             note: 'Retorno esperado: moodlemobile://token=… → handleOpenURL → newSite',
-        });
+        }));
 
         const opened = await CoreLoginHelper.openBrowserForOAuthLogin(
             siteCheck.siteUrl,
@@ -1433,10 +1565,10 @@ export class MoodleSiteService {
         );
 
         // eslint-disable-next-line no-console
-        console.log(SITE_LOG, 'openBrowserForOAuthLogin resultado', {
+        console.log(SITE_LOG, 'openBrowserForOAuthLogin resultado', JSON.stringify({
             opened,
             pendingOAuth: sessionStorage.getItem(OAUTH_PENDING_KEY) === '1',
-        });
+        }));
 
         if (!opened) {
             sessionStorage.removeItem(OAUTH_PENDING_KEY);
@@ -1456,10 +1588,10 @@ export class MoodleSiteService {
         const resolved = resolveMoodleSiteUrl(siteUrl);
 
         // eslint-disable-next-line no-console
-        console.log(SITE_LOG, 'CoreSites.checkSite → getPublicConfig', {
+        console.log(SITE_LOG, 'CoreSites.checkSite → getPublicConfig', JSON.stringify({
             requested: siteUrl,
             resolved,
-        });
+        }));
 
         try {
             const result = await CoreSites.checkSite(
@@ -1469,10 +1601,10 @@ export class MoodleSiteService {
             );
 
             // eslint-disable-next-line no-console
-            console.log(SITE_LOG, 'CoreSites.checkSite sucesso', {
+            console.log(SITE_LOG, 'CoreSites.checkSite sucesso', JSON.stringify({
                 siteUrl: result.siteUrl,
                 code: result.code,
-            });
+            }));
 
             return result;
         } catch (error) {
@@ -1623,10 +1755,11 @@ export class MoodleSiteService {
             // getAndOpenCourse já navega para o curso nativo.
         } catch (error) {
             // eslint-disable-next-line no-console
-            console.error(COURSE_LOG, 'abrir curso pendente após OAuth falhou', {
+            console.error(COURSE_LOG, 'abrir curso pendente após OAuth falhou', JSON.stringify({
                 courseId: pending.courseId,
                 message: error instanceof Error ? error.message : String(error),
-            });
+                stack: error instanceof Error ? error.stack : undefined,
+            }));
             this.lastError = error instanceof Error
                 ? error.message
                 : 'Falha ao abrir o curso Moodle após autenticação.';

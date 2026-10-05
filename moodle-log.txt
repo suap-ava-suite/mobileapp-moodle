@@ -1,0 +1,157 @@
+10-05 14:55:54.136  5025  5025 D CordovaWebViewImpl: onPageDidNavigate(http://localhost/mobilemoodle/index.html?lang=pt-br#/painel)
+10-05 14:55:54.349  5025  5025 D CordovaWebViewImpl: onPageFinished(http://localhost/mobilemoodle/index.html?lang=pt-br#/painel)
+10-05 14:55:54.370  5025  5025 I chromium: [INFO:CONSOLE:1926] "[IFRN-ROUTER] Sessão do Painel AVA válida. [object Object]", source: http://localhost/mobilemoodle/mobilemoodle.js (1926)
+10-05 14:55:54.370  5025  5025 I chromium: [INFO:CONSOLE:853] "[IFRN-PANEL] buscando diarios no Painel AVA", source: http://localhost/mobilemoodle/mobilemoodle.js (853)
+10-05 14:55:55.490  5025  5025 I chromium: [INFO:CONSOLE:801] "[IFRN-PANEL] dashboard local carregado; 4 diário(s)", source: http://localhost/mobilemoodle/mobilemoodle.js (801)
+10-05 14:55:58.144  5025  5025 I chromium: [INFO:CONSOLE:1414] "[IFRN-COURSE] card-click", source: http://localhost/mobilemoodle/mobilemoodle.js (1414)
+10-05 14:55:58.144  5025  5025 I chromium: [INFO:CONSOLE:1426] "[IFRN-COURSE] courseId recebido do Painel = 4022", source: http://localhost/mobilemoodle/mobilemoodle.js (1426)
+10-05 14:55:58.144  5025  5025 I chromium: [INFO:CONSOLE:1427] "[IFRN-COURSE] leaving-mobilemoodle", source: http://localhost/mobilemoodle/mobilemoodle.js (1427)
+10-05 14:55:58.145  5025  5025 I chromium: [INFO:CONSOLE:1052] "[IFRN-COURSE] courseId recebido do Painel = 4022", source: http://localhost/mobilemoodle/mobilemoodle.js (1052)
+10-05 14:55:58.243  5025  5025 D CordovaWebViewImpl: onPageDidNavigate(http://localhost/login/moodle-open-course)
+10-05 14:55:58.374  5025  5025 I chromium: [INFO:CONSOLE:1] "Could not find cordova.js script tag. Plugin loading may fail.", source: http://localhost/cordova.2c30b7ea289627cf.js (1)
+10-05 14:55:58.746  5025  5025 I chromium: [INFO:CONSOLE:2] "Log is disabled in production app", source: http://localhost/main.5fc0d33c0087d3fa.js (2)
+10-05 14:55:59.460  5025  5025 I chromium: [INFO:CONSOLE:175] "OPEN database: MoodleMobile", source: http://localhost/plugins/cordova-sqlite-storage/www/SQLitePlugin.js (175)
+10-05 14:55:59.491  5025  5025 I chromium: [INFO:CONSOLE:179] "OPEN database: MoodleMobile - OK", source: http://localhost/plugins/cordova-sqlite-storage/www/SQLitePlugin.js (179)
+10-05 14:55:59.510  5025  5025 D CordovaWebViewImpl: onPageFinished(http://localhost/login/moodle-open-course)
+10-05 14:55:59.782  5025  5236 W PluginManager: THREAD WARNING: exec() call to SecureStorage.get blocked the main thread for 121ms. Plugin should use CordovaInterface.getThreadPool().
+10-05 14:55:59.893  5025  5236 W PluginManager: THREAD WARNING: exec() call to SecureStorage.get blocked the main thread for 107ms. Plugin should use CordovaInterface.getThreadPool().
+10-05 14:55:59.996  5025  5236 W PluginManager: THREAD WARNING: exec() call to SecureStorage.get blocked the main thread for 101ms. Plugin should use CordovaInterface.getThreadPool().
+10-05 14:56:00.031  5025  5025 I chromium: [INFO:CONSOLE:175] "OPEN database: Site-e8be43f14b60325a6242bc13aea12062", source: http://localhost/plugins/cordova-sqlite-storage/www/SQLitePlugin.js (175)
+10-05 14:56:00.035  5025  5025 I chromium: [INFO:CONSOLE:175] "OPEN database: Site-2882cacf27dbe1277af791cd08be7317", source: http://localhost/plugins/cordova-sqlite-storage/www/SQLitePlugin.js (175)
+10-05 14:56:00.044  5025  5025 I chromium: [INFO:CONSOLE:179] "OPEN database: Site-2882cacf27dbe1277af791cd08be7317 - OK", source: http://localhost/plugins/cordova-sqlite-storage/www/SQLitePlugin.js (179)
+10-05 14:56:00.045  5025  5025 I chromium: [INFO:CONSOLE:179] "OPEN database: Site-e8be43f14b60325a6242bc13aea12062 - OK", source: http://localhost/plugins/cordova-sqlite-storage/www/SQLitePlugin.js (179)
+10-05 14:56:00.258  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-SITE] MoodleOpenCoursePage.init [object Object]", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:00.258  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-COURSE] courseId recebido do Painel = 4022", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:00.259  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-COURSE] courseId recebido do Painel = 4022", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:00.363  5025  5236 W PluginManager: THREAD WARNING: exec() call to SecureStorage.get blocked the main thread for 99ms. Plugin should use CordovaInterface.getThreadPool().
+10-05 14:56:00.368  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-IDENTITY] sessão Moodle existente {"hasSession":false,"isLoggedIn":false,"siteUrl":null,"siteIdPresent":false,"hasExpected":true,"candidateCount":2,"storedSitesForUrl":1}", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:00.368  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-IDENTITY] sessão existente corresponde = false", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:00.369  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-IDENTITY] diagnóstico origem {"caseA_storedWrongAccount":false,"caseB_needsBrowserOAuth":true,"multiAccountSitesForUrl":1}", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:00.371  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-IDENTITY] comparador {"stage":"ensureMatchingMoodleSession","preferredSource":"painel-profile","preferredField":"identificacao","preferredLength":14,"preferredShape":"digits-only","moodleUsernameAvailable":false,"moodleLength":null,"moodleShape":null,"moodleUserIdPresent":false,"normalizacao":"trim+toLowerCase","matchMode":"strong-first-no-cpf-if-matricula","candidateKeys":["perfil.identificacao","perfil.cpf"],"candidateCount":2,"corresponde":false,"matchedVia":null,"authAloneWouldMatch":null,"matriculaWouldMatch":null,"cpfWouldMatchButIgnoredIfMatricula":false,"candidateVsMoodle":[{"key":"perfil.identificacao","matchesMoodle":false,"sameLength":false,"sameShape":false},{"key":"perfil.cpf","matchesMoodle":false,"sameLength":false,"sameShape":false}]}", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:00.476  5025  5236 W PluginManager: THREAD WARNING: exec() call to SecureStorage.get blocked the main thread for 105ms. Plugin should use CordovaInterface.getThreadPool().
+10-05 14:56:00.479  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-IDENTITY] candidato Moodle armazenado inspecionado {"usernameAvailable":true,"loggedOut":true,"matches":false,"matchedVia":null}", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:00.479  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-IDENTITY] OAuth necessário {"reason":"no-session","storedMatchingLoggedOut":false,"oauthFlowActive":false}", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:00.479  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-COURSE] sessão validada [object Object]", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:00.480  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-COURSE] sessão Moodle ausente — aguardando Entrar com SUAP", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:00.480  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-COURSE] sessão Moodle ausente — iniciando OAuth automaticamente", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:00.481  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-IDENTITY] OAuth iniciado {"resumeAfterSwitch":false,"hadSessionBefore":false,"hasExpected":true,"candidateCount":2,"sessionMatchedBefore":false,"matchedViaBefore":null,"caseHint":"fresh-or-resume"}", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:00.481  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-SITE] startSuapOAuthLogin [object Object]", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:00.482  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-SITE] CoreSites.checkSite → getPublicConfig [object Object]", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:01.666  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-SITE] CoreSites.checkSite sucesso [object Object]", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:01.667  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-SITE] checkSite OK — próxima etapa: identity providers [object Object]", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:01.675  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-SITE] findSuapProvider [object Object]", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:01.676  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-SITE] openBrowserForOAuthLogin (fluxo oficial, NÃO InAppBrowser) [object Object]", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:02.148  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-SITE] openBrowserForOAuthLogin resultado [object Object]", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:02.156  5025  5025 D CordovaActivity: Paused the activity.
+10-05 14:56:04.382   971  2639 I ActivityTaskManager: START u0 {act=android.intent.action.VIEW dat=https://academico.ava.ifrn.edu.br/... flg=0x14002000 cmp=com.android.chrome/org.chromium.chrome.browser.ChromeTabbedActivity (has extras)} from uid 10208, pid 8504
+10-05 14:56:04.393   971  2639 I ActivityTaskManager: ->startActivity for ActivityRecord{848aaa8 u0 com.android.chrome/org.chromium.chrome.browser.ChromeTabbedActivity t445} result:START_SUCCESS
+10-05 14:56:04.553  8504  8504 I cr_MultiInstance: Intent component: org.chromium.chrome.browser.ChromeTabbedActivity
+10-05 14:56:04.728  8504  8504 I cr_MultiInstance: Returning new selector for org.chromium.chrome.browser.ChromeTabbedActivity@b88451c with window id: Pair{0 rcr@46fd9cf}
+10-05 14:56:04.852   971  1688 I WindowManager: Input focus has changed to Window{415df81 u0 com.android.chrome/org.chromium.chrome.browser.ChromeTabbedActivity}
+10-05 14:56:04.855   971   990 D WindowManager: update input focus to Window{415df81 u0 com.android.chrome/org.chromium.chrome.browser.ChromeTabbedActivity} , run:true
+10-05 14:56:04.878   539   539 I gralloc4: allocate: id=21b000220a3, hal_format=RGBA8888, mali_format=RGBA8888, afbc=SPLIT, usage=GPU_RW|HWC|BACKBUF, size=720x1600, stride=720, name=com.android.chrome/org.chromium.chrome.browser.ChromeTabbedActivity#0
+10-05 14:56:05.084   971   996 I ActivityManager: Start proc 8588:com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0ai100 for  {com.android.chrome/org.chromium.content.app.SandboxedProcessService0:0}
+10-05 14:56:05.152  8588  8588 I cr_SplitCompatApp: version=154.0.8037.92 (803709204) minSdkVersion=29 processName=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0 isIsolatedProcess=true splits=chrome,config.pt,dev_ui,on_demand,stack_unwinder
+10-05 14:56:05.489  8504  8504 I chromium: [INFO:components/enterprise/browser/controller/chrome_browser_cloud_management_controller.cc:334] Deferring CBCM Controller Initialization until it is unblocked.
+10-05 14:56:05.519   971   996 I ActivityManager: Start proc 8617:com.android.chrome:privileged_process0/u0a208 for service {com.android.chrome/org.chromium.content.app.PrivilegedProcessService0}
+10-05 14:56:05.618  8617  8637 W chromium: [WARNING:content/app/android/content_main_android.cc:82] android_setCpu already initialized
+10-05 14:56:05.775  8504  8504 W chromium: [WARNING:components/gcm_driver/instance_id/instance_id_android.cc:98] Non-zero TTL requested for InstanceID token, while TTLs are not supported by Android Firebase IID API.
+10-05 14:56:05.817  8504  8504 W chromium: [WARNING:components/gcm_driver/instance_id/instance_id_android.cc:98] Non-zero TTL requested for InstanceID token, while TTLs are not supported by Android Firebase IID API.
+10-05 14:56:06.267  8617  8637 I chromium: [INFO:third_party/skia/src/gpu/vk/VulkanPreferredFeatures.cpp:434] WARNING: VulkanPreferredFeatures::addFeaturesToQuery() was not called
+10-05 14:56:06.267  8617  8637 I chromium: 
+10-05 14:56:06.267  8617  8637 I chromium: [INFO:third_party/skia/src/gpu/vk/VulkanPreferredFeatures.cpp:437] WARNING: VulkanPreferredFeatures::addFeaturesToEnable() was not called
+10-05 14:56:06.267  8617  8637 I chromium: 
+10-05 14:56:06.456  8588  8605 W chromium: [WARNING:content/app/android/content_main_android.cc:82] android_setCpu already initialized
+10-05 14:56:06.650  8504  8612 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:06.656  8588  8686 I chromium: [INFO:third_party/skia/src/ports/SkFontMgr_android_parser.cpp:724] [SkFontMgr Android Parser] '/product/etc/fonts_customization.xml' could not be opened
+10-05 14:56:06.656  8588  8686 I chromium: 
+10-05 14:56:06.764  8504  8611 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:06.848  8504  8540 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:06.851  8504  8540 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:06.977   539   539 I gralloc4: allocate: id=21b000220a4, hal_format=RGBA8888, mali_format=RGBA8888, afbc=SPLIT, usage=GPU_RW|HWC|BACKBUF, size=720x1600, stride=720, name=com.android.chrome/org.chromium.chrome.browser.ChromeTabbedActivity#0
+10-05 14:56:07.023   539   539 I gralloc4: allocate: id=21b000220a5, hal_format=RGBA8888, mali_format=RGBA8888, afbc=SPLIT, usage=GPU_RW|HWC|BACKBUF, size=720x1600, stride=720, name=com.android.chrome/org.chromium.chrome.browser.ChromeTabbedActivity#0
+10-05 14:56:07.032   539   539 I gralloc4: allocate: id=21b000220a6, hal_format=RGBA8888, mali_format=RGBA8888, afbc=SPLIT, usage=GPU_RW|HWC|BACKBUF, size=720x1600, stride=720, name=com.android.chrome/org.chromium.chrome.browser.ChromeTabbedActivity#0
+10-05 14:56:07.048  5025  5025 D CordovaActivity: Stopped the activity.
+10-05 14:56:07.112  8504  8612 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:07.124  8504  8612 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:07.161   971  2576 I InputDispatcher: Focus entered window: Window{415df81 u0 com.android.chrome/org.chromium.chrome.browser.ChromeTabbedActivity} in display 0
+10-05 14:56:07.299   971   994 I ActivityTaskManager: Displayed com.android.chrome/org.chromium.chrome.browser.ChromeTabbedActivity: +2s772ms
+10-05 14:56:07.431  8504  8537 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:07.452  8504  8611 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:07.665  8504  8611 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:07.937  8504  8540 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:07.937  8504  8540 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:08.259  8504  8537 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:09.761   971  2548 I InputDispatcher: Focus left window: Window{415df81 u0 com.android.chrome/org.chromium.chrome.browser.ChromeTabbedActivity} in display 0
+10-05 14:56:09.838   971   996 I ActivityManager: Start proc 8740:com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:1/u0ai101 for  {com.android.chrome/org.chromium.content.app.SandboxedProcessService0:1}
+10-05 14:56:09.869   971  2548 I ActivityManager: Killing 8588:com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0a208i-8900 (adj 0): isolated not needed
+10-05 14:56:09.886  8740  8740 I cr_SplitCompatApp: version=154.0.8037.92 (803709204) minSdkVersion=29 processName=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:1 isIsolatedProcess=true splits=chrome,config.pt,dev_ui,on_demand,stack_unwinder
+10-05 14:56:09.920   971  2548 V ActivityManager: Clean up application record for ProcessRecord{365803 8588:com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0a208i-8900} restarting=false allowRestart=true index=-1 replacingPid=false
+10-05 14:56:09.935  8740  8758 W chromium: [WARNING:content/app/android/content_main_android.cc:82] android_setCpu already initialized
+10-05 14:56:09.955  8740  8761 I chromium: [INFO:third_party/skia/src/ports/SkFontMgr_android_parser.cpp:724] [SkFontMgr Android Parser] '/product/etc/fonts_customization.xml' could not be opened
+10-05 14:56:09.955  8740  8761 I chromium: 
+10-05 14:56:09.970  5025  5025 D CordovaActivity: Started the activity.
+10-05 14:56:09.975  5025  5025 D CordovaWebViewImpl: >>> loadUrl(javascript:handleOpenURL('moodlemobile%3A%2F%2Ftoken%3DYjEzN2FhMmU5MGU1NTgxZWI4MGQwNmI0OGNjMjYyMWQ6Ojo1NmRmYTVhODRhNzNlNTdmNWRmNjgzY2E5ZWI0ZDczNDo6OktXZlZ0ZEdtVnB4YkFYN0lhWXVCZzdET0NZZFJaUVhUc2VLRlZSZExvN1pCbmFFOUg2MTh0NWdWOXpMMDhONDE%3D');)
+10-05 14:56:09.979  5025  5025 D CordovaActivity: Resumed the activity.
+10-05 14:56:10.097  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-SITE] callback deep link APP_LAUNCHED_URL [object Object]", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:10.097  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-IDENTITY] callback recebido {"isSSOToken":true,"pendingOAuth":true}", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:10.196  8504  8537 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:10.239  2457 10592 I MediaProvider: Open with lower FS for /storage/emulated/0/Download/Edital_nº_01.2026-PROEN-IFRN_LISTA_DE_ESPERA_COMPLETA_SISU_2026.pdf. Uid: 10208
+10-05 14:56:10.322  2457 10592 I MediaProvider: Open with lower FS for /storage/emulated/0/Download/Edital_5_2026_-_DE_DG_CNAT_RE_IFRN_eIGmT7K (1).pdf. Uid: 10208
+10-05 14:56:10.386  8504  8537 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:10.513   971  2576 I ActivityManager: Killing 8740:com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:1/u0a208i-8899 (adj 0): isolated not needed
+10-05 14:56:10.551   971  2639 V ActivityManager: Clean up application record for ProcessRecord{716d3a1 8740:com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:1/u0a208i-8899} restarting=false allowRestart=true index=-1 replacingPid=false
+10-05 14:56:10.567   570   629 E BufferQueueProducer: [com.android.chrome/org.chromium.chrome.browser.ChromeTabbedActivity#0](id:23a00003c8f,api:0,p:-1,c:570) disconnect: not connected (req=1)
+10-05 14:56:11.212  2457 10592 I MediaProvider: Open with lower FS for /storage/emulated/0/Download/Edital_N_48-2025_-_CODEPE_-_DIGPE_-_RE_-_IFRN (1).pdf. Uid: 10208
+10-05 14:56:11.220  2457 10592 I MediaProvider: Open with lower FS for /storage/emulated/0/Download/Edital_N_48-2025_-_CODEPE_-_DIGPE_-_RE_-_IFRN.pdf. Uid: 10208
+10-05 14:56:11.271  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-SITE] CoreEvents.LOGIN — sessão Moodle {"isLoggedIn":true,"siteUrl":"https://academico.ava.ifrn.edu.br","siteIdPresent":true,"pendingOAuth":true,"note":"SSO usa newSite(token do deep link), não getUserToken"}", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:11.272  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-IDENTITY] nova sessão Moodle criada {"siteIdPresent":true,"hasExpected":true,"candidateCount":2,"matchedVia":null}", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:11.272  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-IDENTITY] nova sessão corresponde = false", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:11.280  5025  5025 I chromium: [INFO:CONSOLE:1] "[IFRN-IDENTITY] comparador {"stage":"CoreEvents.LOGIN","preferredSource":"painel-profile","preferredField":"identificacao","preferredLength":14,"preferredShape":"digits-only","moodleUsernameAvailable":true,"moodleLength":7,"moodleShape":"digits-only","moodleUserIdPresent":true,"normalizacao":"trim+toLowerCase","matchMode":"strong-first-no-cpf-if-matricula","candidateKeys":["perfil.identificacao","perfil.cpf"],"candidateCount":2,"corresponde":false,"matchedVia":null,"authAloneWouldMatch":null,"matriculaWouldMatch":null,"cpfWouldMatchButIgnoredIfMatricula":false,"candidateVsMoodle":[{"key":"perfil.identificacao","matchesMoodle":false,"sameLength":false,"sameShape":true},{"key":"perfil.cpf","matchesMoodle":false,"sameLength":false,"sameShape":false}]}", source: http://localhost/13190.1e8af85ae3455e25.js (1)
+10-05 14:56:11.433  2457 10592 I MediaProvider: Open with lower FS for /storage/emulated/0/Download/Edital_5_2026_-_DE_DG_CNAT_RE_IFRN_eIGmT7K.pdf. Uid: 10208
+10-05 14:56:12.292  5025  5025 I chromium: [INFO:CONSOLE:2] "ERROR Error: NG04002: 'main/home/login/moodle-open-course'", source: http://localhost/main.5fc0d33c0087d3fa.js (2)
+10-05 14:56:14.523  8504  8537 W cr_AuthTaskRetry: Failed to perform auth task: org.chromium.components.signin.AuthException: Error while getting token for scope 'oauth2:https://www.google.com/accounts/OAuthLogin'
+10-05 14:56:15.842  8504  8537 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:16.097  8504  8537 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:20.059  8504  8537 W cr_ContentUriUtils: 	at org.chromium.base.ContentUriUtils.b(chromium-Chrome.aab-stable-803709204:57)
+10-05 14:56:20.059  8504  8537 W cr_ContentUriUtils: 	at org.chromium.base.ContentUriUtils.contentUriExists(chromium-Chrome.aab-stable-803709204:3)
+10-05 14:56:21.172  8504  8537 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:25.170  8504  8537 W chromium: [WARNING:net/cert/ev_root_ca_metadata.cc:115] Not implemented
+10-05 14:56:44.449  8900  9139 W eddit.frontpag: Verification of void org.chromium.net.X509Util.reloadDefaultTrustManager() took 1.601s (11.87 bytecodes/s) (1904B approximate peak alloc)
+10-05 14:56:44.670  8900  9057 W eddit.frontpag: Initiating class loader of type dalvik.system.DelegateLastClassLoader is not well-behaved; it returned a different Class for racing loadClass("org.chromium.net.impl.ProxyCallbackRequestImpl").
+10-05 14:56:48.611 21146  7973 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:56:48.727 21146  7973 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:56:48.789 21146  7973 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:56:48.979 21146  7973 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:56:49.069 21146  7973 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:56:49.176 21146  7973 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:56:49.258 21146  7973 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:56:49.396 21146  7973 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:56:49.749 21146  7973 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:56:56.128  5025  5025 D CordovaActivity: Paused the activity.
+10-05 14:56:57.379  5025  5025 D CordovaActivity: Stopped the activity.
+10-05 14:56:57.668  5025  5025 D CordovaActivity: CordovaActivity.onDestroy()
+10-05 14:56:57.674   971   989 I ActivityManager: Killing 5138:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0a538i646 (adj 905): remove task
+10-05 14:56:57.750   971  1687 V ActivityManager: Clean up application record for ProcessRecord{fbc86de 5138:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0a538i646} restarting=false allowRestart=true index=-1 replacingPid=false
+10-05 14:57:13.681 10372 10993 E chromium: [ERROR:android_webview/browser/variations/variations_seed_loader.cc:36] Seed missing signature.
+10-05 14:57:13.683 10372 10993 I chromium: [INFO:android_webview/browser/variations/variations_seed_loader.cc:63] Failed to open file for reading.: No such file or directory (2)
+10-05 14:57:26.795 21146  9840 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:57:26.849 21146  9840 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:57:26.883 21146  9840 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:57:26.920 21146  9840 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:57:26.956 21146  9840 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:57:26.988 21146  9840 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:57:27.033 21146  9840 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:57:27.067 21146  9840 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:57:27.254 21146  9840 E Ads     : 	at org.chromium.net.impl.CronetUrlRequest.onError(:com.google.android.gms.dynamite_cronetdynamite@263635022@26.36.35 (150400-0):74)
+10-05 14:58:48.069 12000 12136 I cn_CronetUrlRequestContext: destroyNativeStreamLocked org.chromium.net.impl.CronetBidirectionalStream@69cc50f
+10-05 14:58:48.181 12000 12000 W linker  : Warning: "/data/app/~~MnRG2GZDm80lTFDdpYaZdg==/com.google.android.webview-9tT1OqQB1gCnw0Zy6gKosg==/base.apk!/lib/arm64-v8a/libwebviewchromium.so" unused DT entry: unknown processor-specific (type 0x70000001 arg 0x0) (ignoring)
+10-05 14:58:48.401 12000 12202 E chromium: [1005/145848.392687:ERROR:android_webview/browser/variations/variations_seed_loader.cc:39] Seed missing signature.
+10-05 14:58:48.536   971   996 I ActivityManager: Start proc 12206:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0i648 for  {com.google.android.gm/org.chromium.content.app.SandboxedProcessService0:0}
+10-05 14:58:48.594 12206 12206 I cr_WebViewApkApp: version=153.0.8010.36 (801003603) minSdkVersion=29 processName=com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0 splits=<none>
+10-05 15:00:20.868 12597 13200 E chromium: [ERROR:android_webview/browser/variations/variations_seed_loader.cc:36] Seed missing signature.
+10-05 15:00:20.870 12597 13200 I chromium: [INFO:android_webview/browser/variations/variations_seed_loader.cc:63] Failed to open file for reading.: No such file or directory (2)
+10-05 15:00:46.789   313   313 I lowmemorykiller: Kill 'com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0' (12206), uid 99648, oom_adj 995 to free 63732kB
+10-05 15:00:46.818   971  2641 I ActivityManager: Process com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0 (pid 12206) has died: cch+95 CEM 
+10-05 15:00:46.818   971  2641 V ActivityManager: Clean up application record for ProcessRecord{18cbe3b 12206:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0a216i648} restarting=false allowRestart=true index=-1 replacingPid=false
+10-05 15:01:06.962 21146 21430 I cn_CronetUrlRequestContext: destroyNativeStreamLocked org.chromium.net.impl.CronetBidirectionalStream@e438cfe
