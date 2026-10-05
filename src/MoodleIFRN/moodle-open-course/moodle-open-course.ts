@@ -66,6 +66,28 @@ export class MoodleOpenCoursePage implements OnInit {
     /** Evita segundo ngOnInit disparar o fluxo na mesma instância. */
     private initStarted = false;
 
+    get accountIssue(): MoodleSiteService['lastCourseAccessIssue'] {
+        return this.moodleSite.lastCourseAccessIssue;
+    }
+
+    /** Troca a conta Moodle pelo OAuth oficial; não apaga o login do Painel. */
+    async changeMoodleAccount(): Promise<void> {
+        await this.startOAuthFlow();
+    }
+
+    async returnToIfrnLogin(): Promise<void> {
+        if (this.loading) {
+            return;
+        }
+
+        this.loading = true;
+        try {
+            await this.moodleSite.returnToIfrnLogin();
+        } finally {
+            this.loading = false;
+        }
+    }
+
     async ngOnInit(): Promise<void> {
         await CorePlatform.ready();
 
@@ -88,7 +110,7 @@ export class MoodleOpenCoursePage implements OnInit {
         const identityOnly = CoreNavigator.getRouteBooleanParam('identityOnly');
 
         // eslint-disable-next-line no-console
-        console.log('[IFRN-SITE] MoodleOpenCoursePage.init', {
+        console.log('[IFRN-SITE] MoodleOpenCoursePage.init', JSON.stringify({
             courseId: this.courseId,
             pendingSiteUrl: pending?.siteUrl || null,
             resolvedSiteUrl: this.moodleSiteUrl,
@@ -97,7 +119,7 @@ export class MoodleOpenCoursePage implements OnInit {
             identityOnly,
             identityMismatchPending: this.moodleSite.isIdentityMismatchPending(),
             initStarted: this.initStarted,
-        });
+        }));
         // eslint-disable-next-line no-console
         console.log('[IFRN-COURSE] courseId recebido do Painel =', this.courseId || null);
 
@@ -111,6 +133,28 @@ export class MoodleOpenCoursePage implements OnInit {
             );
 
             return;
+        }
+
+        // O redirectPath do OAuth chega aqui depois do login nativo. Esta ponte
+        // é a única dona da retomada; o listener LOGIN não abre outro curso.
+        if (!identityOnly) {
+            this.loading = true;
+            try {
+                if (await this.moodleSite.resumePendingOAuthCourse()) {
+                    this.initStarted = true;
+                    if (this.moodleSite.lastError) {
+                        this.revealBridgeError(this.moodleSite.lastError);
+                    }
+
+                    return;
+                }
+            } catch (error) {
+                this.revealBridgeError(error instanceof Error ? error.message : String(error));
+
+                return;
+            } finally {
+                this.loading = false;
+            }
         }
 
         // Retorno pós-OAuth com erro / mismatch: NÃO auto-iniciar outro OAuth.
@@ -188,17 +232,33 @@ export class MoodleOpenCoursePage implements OnInit {
             await this.startOAuthFlow();
         } catch (error) {
             // eslint-disable-next-line no-console
-            console.error('[IFRN-SITE] tryOpenOrPromptConnect erro', {
+            console.error('[IFRN-SITE] tryOpenOrPromptConnect erro', JSON.stringify({
                 message: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined,
                 siteUrl: this.moodleSiteUrl,
                 courseId: this.courseId,
-            });
+            }));
 
             this.revealBridgeError(
                 error instanceof Error
                     ? error.message
                     : 'Não foi possível abrir o curso Moodle.',
             );
+            this.moodleSite.lastError = this.formError;
+
+            // Se /main já abriu e o deep-link falhou, mostrar o erro e a opção
+            // de tentar novamente na ponte. Não redirecionar ao Painel nem
+            // tratar uma falha como abertura bem-sucedida.
+            if (CoreNavigator.getCurrentPath().split(/[?#]/)[0] !== '/login/moodle-open-course') {
+                await CoreNavigator.navigate('/login/moodle-open-course', {
+                    animated: false,
+                    params: {
+                        courseId: this.courseId,
+                        courseName: this.courseName,
+                        identityOnly: true,
+                    },
+                });
+            }
             void CoreAlerts.showError(error, {
                 default: 'Não foi possível abrir o curso Moodle.',
             });
@@ -211,7 +271,6 @@ export class MoodleOpenCoursePage implements OnInit {
         }
     }
 
-    /**
     /**
      * “Tentar novamente” após erro: revalida a sessão e, se necessário, reinicia o OAuth oficial.
      */
@@ -252,11 +311,11 @@ export class MoodleOpenCoursePage implements OnInit {
             this.phase = 'waiting-browser';
         } catch (error) {
             // eslint-disable-next-line no-console
-            console.error('[IFRN-SITE] startOAuthFlow erro', {
+            console.error('[IFRN-SITE] startOAuthFlow erro', JSON.stringify({
                 message: error instanceof Error ? error.message : String(error),
                 siteUrl: this.moodleSiteUrl,
                 courseId: this.courseId,
-            });
+            }));
 
             this.revealBridgeError(
                 error instanceof Error

@@ -297,3 +297,31 @@
 .moodle-open-course__button {
     margin: 0;
 }
+
+.moodle-open-course__accounts {
+    background: #ffffff;
+    border: 1px solid var(--moodle-open-card-border);
+    margin: 1rem 0;
+    padding: 1rem;
+
+    dt {
+        color: var(--moodle-open-muted);
+        font-size: 0.85rem;
+    }
+
+    dd {
+        margin: 0.25rem 0 0.85rem;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+}
+
+.moodle-open-course__account-help {
+    color: var(--moodle-open-muted);
+    line-height: 1.5;
+    font-size: 0.9rem;
+}
