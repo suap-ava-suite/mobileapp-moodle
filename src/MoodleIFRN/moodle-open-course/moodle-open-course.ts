@@ -66,6 +66,28 @@ export class MoodleOpenCoursePage implements OnInit {
     /** Evita segundo ngOnInit disparar o fluxo na mesma instância. */
     private initStarted = false;
 
+    get accountIssue(): MoodleSiteService['lastCourseAccessIssue'] {
+        return this.moodleSite.lastCourseAccessIssue;
+    }
+
+    /** Troca a conta Moodle pelo OAuth oficial; não apaga o login do Painel. */
+    async changeMoodleAccount(): Promise<void> {
+        await this.startOAuthFlow();
+    }
+
+    async returnToIfrnLogin(): Promise<void> {
+        if (this.loading) {
+            return;
+        }
+
+        this.loading = true;
+        try {
+            await this.moodleSite.returnToIfrnLogin();
+        } finally {
+            this.loading = false;
+        }
+    }
+
     async ngOnInit(): Promise<void> {
         await CorePlatform.ready();
 

@@ -51,6 +51,8 @@ import { CoreLogger } from '@static/logger';
 
 import { CorePlatform } from '@services/platform';
 
+import { CoreNavigator } from '@services/navigator';
+
 import { TimeoutError, firstValueFrom } from 'rxjs';
 
 @Component({
@@ -206,12 +208,20 @@ export class IfrnLoginPage implements OnInit {
 
             this.biometricService.isEnabled();
 
-        const savedUsername = this.authService.getUsername();
+        const savedUsername = CoreNavigator.getRouteParam<string>('username') || this.authService.getUsername();
 
         if (savedUsername) {
 
             this.username = savedUsername;
 
+        }
+
+        // Troca de matrícula solicitada após erro no curso: exibir o formulário,
+        // sem retomar a conta anterior automaticamente por token/biometria.
+        if (CoreNavigator.getRouteBooleanParam('forceLogin')) {
+            this.statusMessage = 'Entre com a matrícula que possui vínculo com a disciplina.';
+
+            return;
         }
 
         await this.resumeSession();

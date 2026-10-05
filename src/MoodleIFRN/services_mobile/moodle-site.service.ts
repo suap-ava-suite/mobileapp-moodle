@@ -364,23 +364,26 @@ export type MoodleIdentityMatchResult = {
     hasExpected: boolean;
 };
 
-/**
- * Chaves "fortes": identidade de conta SUAP/Painel (matrícula etc.).
- * CPF é fraco: a mesma pessoa pode ter conta ALUNO e ESTAGIÁRIO com o mesmo CPF
- * e Moodle usernames diferentes — CPF-only geraria falso positivo na conta errada.
- */
-const STRONG_IDENTITY_KEYS = new Set([
-    'perfil.matricula',
-    'perfil.username',
-    'perfil.identificacao',
-    'suap-auth.ifrn_username',
-]);
+/** O perfil do Painel define a conta solicitada; outro vínculo/CPF não a substitui. */
+function allowedIdentityCandidates(candidates: { key: string; value: string }[]): { key: string; value: string }[] {
+    const profileAccount = candidates.find((candidate) => candidate.key === 'perfil.matricula')
+        ?? candidates.find((candidate) => candidate.key === 'perfil.username')
+        ?? candidates.find((candidate) => candidate.key === 'perfil.identificacao');
+
+    if (profileAccount) {
+        return [profileAccount];
+    }
+
+    const authAccount = candidates.find((candidate) => candidate.key === 'suap-auth.ifrn_username');
+
+    return authAccount ? [authAccount] : candidates;
+}
 
 /**
  * True se o username Moodle coincide com a identidade da sessão Painel/SUAP.
  *
  * Preferência: matrícula / username / identificação / ifrn_username.
- * CPF só entra se NÃO houver matrícula no perfil (ex.: login só com CPF).
+ * CPF só entra quando não há identificador de conta do perfil nem do login.
  */
 function matchMoodleAgainstCandidates(
     moodleUsername: string | null | undefined,
@@ -395,33 +398,7 @@ function matchMoodleAgainstCandidates(
         };
     }
 
-    const strong = candidates.filter((c) => STRONG_IDENTITY_KEYS.has(c.key));
-    const weak = candidates.filter((c) => !STRONG_IDENTITY_KEYS.has(c.key));
-    const hasMatricula = strong.some((c) => c.key === 'perfil.matricula');
-
-    for (const candidate of strong) {
-        if (identitiesMatch(candidate.value, moodleUsername)) {
-            return {
-                matches: true,
-                matchedVia: candidate.key,
-                candidateCount: candidates.length,
-                hasExpected: true,
-            };
-        }
-    }
-
-    // Matrícula presente e nenhum id forte bateu → NÃO aceitar só CPF
-    // (evita ALUNO no Painel + sessão Moodle ESTAGIÁRIO pelo CPF compartilhado).
-    if (hasMatricula) {
-        return {
-            matches: false,
-            matchedVia: null,
-            candidateCount: candidates.length,
-            hasExpected: true,
-        };
-    }
-
-    for (const candidate of weak) {
+    for (const candidate of allowedIdentityCandidates(candidates)) {
         if (identitiesMatch(candidate.value, moodleUsername)) {
             return {
                 matches: true,
@@ -488,6 +465,52 @@ export class MoodleSiteService {
 
     /** Último erro amigável do fluxo Moodle. */
     lastError = '';
+
+    /** Dados para a tela de recuperação; nunca contém senha ou token. */
+    lastCourseAccessIssue: {
+        kind: 'identity-mismatch' | 'not-enrolled';
+        expectedLogin: string | null;
+        actualLogin: string | null;
+    } | null = null;
+
+    private reportCourseAccessIssue(kind: 'identity-mismatch' | 'not-enrolled', courseId: number): string {
+        const expectedLogin = this.describeExpectedIdentity().value;
+        const actualLogin = this.getCurrentMoodleIdentity();
+        this.lastCourseAccessIssue = { kind, expectedLogin, actualLogin };
+        this.clearCourseOriginFlags();
+
+        if (kind === 'identity-mismatch') {
+            this.setIdentityMismatchPending(true);
+            this.lastError = 'O Moodle entrou com uma matrícula/login diferente da conta do Painel. '
+                + 'O curso não foi aberto. Entre no SUAP com a matrícula utilizada no Painel.';
+        } else {
+            this.lastError = `A matrícula/login ${actualLogin || 'autenticada no Moodle'} não está vinculada ao curso ${courseId}`
+                + ' na lista de cursos desta conta. Entre com a matrícula vinculada à disciplina '
+                + 'ou verifique sua matrícula no curso.';
+        }
+
+        return this.lastError;
+    }
+
+    /** Troca o login do Painel por escolha explícita, mantendo os sites Moodle salvos. */
+    async returnToIfrnLogin(): Promise<void> {
+        const expectedLogin = this.describeExpectedIdentity().value;
+        this.clearPendingOpenCourse();
+        this.clearCourseOriginFlags();
+        this.setIdentityMismatchPending(false);
+        sessionStorage.removeItem(OAUTH_PENDING_KEY);
+        sessionStorage.removeItem(RESUME_OAUTH_KEY);
+        this.oauthFlowActive = false;
+        this.lastCourseAccessIssue = null;
+        this.lastError = '';
+        this.authService.logout();
+        this.painelAva.clearSession();
+        await CoreNavigator.navigate('/login/ifrn-login', {
+            reset: true,
+            animated: false,
+            params: { forceLogin: true, username: expectedLogin || undefined },
+        });
+    }
 
     /**
      * True após mismatch de identidade (Caso B): a página NÃO deve auto-iniciar OAuth.
@@ -829,6 +852,7 @@ export class MoodleSiteService {
     ): Promise<'opened' | 'need-connect'> {
         this.ensureLoginObserver();
         this.lastError = '';
+        this.lastCourseAccessIssue = null;
 
         // eslint-disable-next-line no-console
         console.log(COURSE_LOG, 'courseId recebido do Painel =', courseId);
@@ -839,6 +863,10 @@ export class MoodleSiteService {
 
         // eslint-disable-next-line no-console
         console.log(COURSE_LOG, 'sessão validada', JSON.stringify({ courseId, identityResult }));
+
+        if (identityResult === 'oauth-mismatch') {
+            throw new Error(this.lastError);
+        }
 
         if (identityResult === 'matched-current' || identityResult === 'loaded-stored') {
             await this.openCourseById(courseId);
@@ -854,8 +882,7 @@ export class MoodleSiteService {
     }
 
     /**
-     * Identidade canônica preferida (matrícula do perfil > ifrn_username > outros).
-     * Para MATCH use matchCurrentMoodleIdentity() — qualquer candidato da sessão.
+     * Identidade canônica: conta do perfil do Painel antes do login digitado/CPF.
      */
     getExpectedPainelIdentity(): string | null {
         return this.describeExpectedIdentity().value;
@@ -870,7 +897,7 @@ export class MoodleSiteService {
     }
 
     /**
-     * Compara username Moodle com qualquer identificador da mesma sessão autenticada.
+     * Compara username Moodle com a conta solicitada pelo perfil do Painel.
      */
     matchCurrentMoodleIdentity(): MoodleIdentityMatchResult {
         return matchMoodleAgainstCandidates(
@@ -889,9 +916,7 @@ export class MoodleSiteService {
         field: string | null;
     } {
         const candidates = this.getExpectedIdentityCandidates();
-        const preferred = candidates.find((c) => c.key === 'perfil.matricula')
-            ?? candidates.find((c) => c.key === 'suap-auth.ifrn_username')
-            ?? candidates[0];
+        const preferred = allowedIdentityCandidates(candidates)[0];
 
         if (!preferred) {
             return { value: null, source: 'none', field: null };
@@ -1109,6 +1134,14 @@ export class MoodleSiteService {
             oauthFlowActive: this.oauthFlowActive,
         });
 
+        // Uma sessão de outra conta não deve ser reutilizada nem provocar um
+        // ciclo de OAuth automático. A tela oferece a troca explícita de conta.
+        if (hasSession && match.hasExpected && !match.matches) {
+            this.reportCourseAccessIssue('identity-mismatch', this.getPendingOpenCourse()?.courseId || 0);
+
+            return 'oauth-mismatch';
+        }
+
         return 'need-oauth';
     }
 
@@ -1130,11 +1163,7 @@ export class MoodleSiteService {
         // ao mobilemoodle o CoreSite armazenado ainda não expõe getInfo().username,
         // embora a conta exista no banco. Primeiro resolvemos a conta pelo próprio
         // siteId, sem ativar uma conta diferente.
-        const strong = candidates.filter((candidate) => STRONG_IDENTITY_KEYS.has(candidate.key));
-        const hasMatricula = strong.some((candidate) => candidate.key === 'perfil.matricula');
-        const allowedCandidates = hasMatricula
-            ? strong
-            : [...strong, ...candidates.filter((candidate) => !STRONG_IDENTITY_KEYS.has(candidate.key))];
+        const allowedCandidates = allowedIdentityCandidates(candidates);
 
         for (const candidate of allowedCandidates) {
             const candidateSiteId = CoreSites.createSiteID(siteUrl, candidate.value);
@@ -1204,6 +1233,7 @@ export class MoodleSiteService {
 
     private async performOpenCourseById(courseId: number): Promise<number> {
         this.lastError = '';
+        this.lastCourseAccessIssue = null;
 
         const match = this.matchCurrentMoodleIdentity();
 
@@ -1212,9 +1242,7 @@ export class MoodleSiteService {
         }
 
         if (match.hasExpected && !match.matches) {
-            throw new Error(
-                'Sessão Moodle não corresponde à conta do Painel — não é seguro abrir o curso.',
-            );
+            throw new Error(this.reportCourseAccessIssue('identity-mismatch', courseId));
         }
 
         if (!match.hasExpected) {
@@ -1266,10 +1294,7 @@ export class MoodleSiteService {
         console.log(COURSE_LOG, 'courseId encontrado =', found);
 
         if (!found) {
-            const message =
-                `O curso ${courseId} não está entre os cursos matriculados nesta conta Moodle `
-                + `(${courses.length} curso(s) encontrados). `
-                + 'Nenhum outro curso foi aberto.';
+            const message = this.reportCourseAccessIssue('not-enrolled', courseId);
 
             // eslint-disable-next-line no-console
             console.warn(COURSE_LOG, 'courseId não matriculado — abertura cancelada', JSON.stringify({
@@ -1419,6 +1444,7 @@ export class MoodleSiteService {
     ): Promise<'switched' | 'opened' | 'already-active'> {
         this.ensureLoginObserver();
         this.lastError = '';
+        this.lastCourseAccessIssue = null;
         this.lastSummary = null;
 
         if (this.oauthFlowActive && !options.resumeAfterSwitch) {
@@ -1681,11 +1707,7 @@ export class MoodleSiteService {
         // Tipicamente Caso B: cookie SUAP no Chrome ainda na conta errada.
         // Validação permanece; a sessão newSite() NÃO é destruída (sem forceLogout).
         if (match.hasExpected && !match.matches) {
-            this.setIdentityMismatchPending(true);
-            this.lastError =
-                'Conta diferente detectada. '
-                + 'O SUAP entrou com uma conta diferente da conta utilizada no Painel AVA. '
-                + 'O curso não foi aberto. A sessão Moodle não foi apagada.';
+            this.reportCourseAccessIssue('identity-mismatch', pending?.courseId || 0);
 
             identityLog('nova sessão corresponde = false', {
                 caseHint: 'B-browser-SUAP-cookie-or-format',
