@@ -1,0 +1,21 @@
+// O menu inferior da imagem é o Main Menu. As abas nativas do curso usam
+// core-tabs-bar, portanto não são atingidas por este seletor.
+html.ifrn-shell ion-tab-bar.mainmenu-tabs {
+    display: none !important;
+}
+
+// /main continua existindo para o deep-link nativo; sua landing não é uma
+// tela navegável do IFRN. Ocultar a página durante o handoff evita o flash
+// do Dashboard, sem substituir componentes ou impedir o carregamento.
+html.ifrn-native-handoff::after {
+    content: 'Preparando AVA…';
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    display: grid;
+    place-items: center;
+    background: #ffffff;
+    color: #098e95;
+    font: 1rem Arial, sans-serif;
+    pointer-events: auto;
+}

@@ -3,6 +3,8 @@ import { CoreSharedModule } from '@/core/shared.module';
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
 import { CoreLang } from '@services/lang';
 import { CorePlatform } from '@services/platform';
+import { CoreNavigator } from '@services/navigator';
+import { MoodleSiteService } from '@/MoodleIFRN/services_mobile/moodle-site.service';
 
 @Component({
     selector: 'page-marketplace-ifrn',
@@ -13,6 +15,7 @@ import { CorePlatform } from '@services/platform';
 export class MarketplaceIfrnPage implements OnInit {
 
     private readonly painelAvaService = inject(PainelAvaService);
+    private readonly moodleSite = inject(MoodleSiteService);
 
     readonly currentYear = new Date().getFullYear();
     readonly welcomeImageSrc = 'mobilemoodle/static/theme/ifrn/img/alunos-ifrn-welcome.webp';
@@ -28,6 +31,13 @@ export class MarketplaceIfrnPage implements OnInit {
      */
     async ngOnInit(): Promise<void> {
         await CorePlatform.ready();
+        if (CoreNavigator.getRouteBooleanParam('ifrnEntry')) {
+            this.openingPainel = true;
+            await this.moodleSite.openIfrnEntry();
+
+            return;
+        }
+
         this.canContinue = this.painelAvaService.hasDashboard();
     }
 

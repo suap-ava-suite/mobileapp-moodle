@@ -15,6 +15,7 @@
 import { NgModule, Type, provideAppInitializer } from '@angular/core';
 import { Routes } from '@angular/router';
 import { authGuard } from '@features/mainmenu/guards/auth';
+import { ifrnMainMenuGuard, provideIfrnNavigationShell } from '@/MoodleIFRN/navigation/navigation.guard';
 
 import { AppRoutingModule } from '@/app/app-routing.module';
 
@@ -73,7 +74,9 @@ const appRoutes: Routes = [
     {
         path: 'main',
         loadChildren: () => import('./mainmenu-lazy.module'),
-        canActivate: [authGuard],
+        canActivate: [authGuard, ifrnMainMenuGuard],
+        canActivateChild: [ifrnMainMenuGuard],
+        runGuardsAndResolvers: 'always',
     },
     {
         path: 'reload',
@@ -84,6 +87,7 @@ const appRoutes: Routes = [
 @NgModule({
     imports: [AppRoutingModule.forChild(appRoutes)],
     providers: [
+        provideIfrnNavigationShell(),
         provideAppInitializer(() => {
             CoreMainMenuDelegate.registerHandler(CoreMainMenuHomeHandler.instance);
         }),

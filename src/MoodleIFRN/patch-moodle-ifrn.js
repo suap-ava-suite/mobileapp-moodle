@@ -20,6 +20,7 @@ const PROJECT_ROOT = path.resolve(SCRIPT_DIR, '..', '..');
 
 const FILES = {
     loginModule: path.join(PROJECT_ROOT, 'src/core/features/login/login.module.ts'),
+    mainMenuModule: path.join(PROJECT_ROOT, 'src/core/features/mainmenu/mainmenu.module.ts'),
     angularJson: path.join(PROJECT_ROOT, 'angular.json'),
     gulpfile: path.join(PROJECT_ROOT, 'gulpfile.js'),
     packageJson: path.join(PROJECT_ROOT, 'package.json'),
@@ -189,6 +190,44 @@ const COURSE_THEME_STYLE = `{
                 "input": "src/MoodleIFRN/moodle-course/moodle-course.scss"
               }`;
 
+/** Só registra guard/initializer IFRN; a implementação nativa não é substituída. */
+function patchMainMenuNavigation() {
+    let content = readFile(FILES.mainMenuModule);
+    const original = content;
+    const importLine = "import { ifrnMainMenuGuard, provideIfrnNavigationShell } from '@/MoodleIFRN/navigation/navigation.guard';";
+
+    if (!content.includes(importLine)) {
+        const authImport = /import \{ authGuard \} from ['"]@features\/mainmenu\/guards\/auth['"];\r?\n/;
+        if (!authImport.test(content)) {
+            throw new Error('Não foi possível localizar authGuard para registrar a navegação IFRN.');
+        }
+        content = content.replace(authImport, (match) => `${match}${importLine}\n`);
+    }
+
+    if (!content.includes('canActivateChild: [ifrnMainMenuGuard]')) {
+        const nativeGuard = /canActivate:\s*\[authGuard\],/;
+        if (!nativeGuard.test(content)) {
+            throw new Error('Não foi possível localizar canActivate do Main Menu nativo.');
+        }
+        content = content.replace(nativeGuard,
+            "canActivate: [authGuard, ifrnMainMenuGuard],\n        canActivateChild: [ifrnMainMenuGuard],\n        runGuardsAndResolvers: 'always',");
+    }
+
+    if (!content.includes('provideIfrnNavigationShell(),')) {
+        if (!/providers:\s*\[/.test(content)) {
+            throw new Error('Não foi possível localizar providers do Main Menu para a inicialização IFRN.');
+        }
+        content = content.replace(/providers:\s*\[/, (match) => `${match}\n        provideIfrnNavigationShell(),`);
+    }
+
+    if (content !== original) {
+        writeFile(FILES.mainMenuModule, content);
+        console.log('✔ mainmenu.module.ts — guard global e inicialização IFRN registrados');
+    } else {
+        console.log('• navegação IFRN do Main Menu já estava registrada');
+    }
+}
+
 function patchAngularAssets() {
     let content = readFile(FILES.angularJson);
     let changed = false;
@@ -228,6 +267,17 @@ ${MOODLEMOODLE_ASSET},`,
         console.log('✔ angular.json — tema visual do curso nativo (moodle-course.scss)');
     } else {
         console.log('• angular.json já inclui moodle-course.scss');
+    }
+
+    if (!content.includes('"input": "src/MoodleIFRN/navigation/navigation-shell.scss"')) {
+        const themeStyle = /("input"\s*:\s*"src\/MoodleIFRN\/moodle-course\/moodle-course\.scss"\s*\r?\n\s*\})/;
+        if (!themeStyle.test(content)) {
+            throw new Error('Não foi possível localizar o tema IFRN para inserir navigation-shell.scss.');
+        }
+        content = content.replace(themeStyle,
+            '$1,\n              { "input": "src/MoodleIFRN/navigation/navigation-shell.scss" }');
+        changed = true;
+        console.log('✔ angular.json — estilo de navegação IFRN adicionado');
     }
 
     if (changed) {
@@ -310,6 +360,7 @@ function main() {
     console.log(`Projeto: ${PROJECT_ROOT}\n`);
 
     patchLoginModule();
+    patchMainMenuNavigation();
     patchAngularAssets();
     patchGulpfile();
     patchPackageScripts();
