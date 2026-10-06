@@ -51,6 +51,7 @@ export class MoodleOpenCoursePage implements OnInit {
 
     loading = false;
     formError = '';
+    accountSwitchStarted = false;
     courseId = 0;
     courseName = '';
     /** Site Moodle realmente usado no CoreSites (nunca mock localhost). */
@@ -70,8 +71,26 @@ export class MoodleOpenCoursePage implements OnInit {
         return this.moodleSite.lastCourseAccessIssue;
     }
 
-    /** Troca a conta Moodle pelo OAuth oficial; não apaga o login do Painel. */
-    async changeMoodleAccount(): Promise<void> {
+    /** Abre a saída web no mesmo navegador externo usado pelo OAuth Moodle. */
+    changeMoodleAccount(): void {
+        if (this.loading || !this.courseId) {
+            return;
+        }
+
+        // O logout local do CoreSites não remove os cookies do navegador.
+        // Usa o mesmo endpoint auth_suap/logout.php já usado pelo Sair do painel.
+        const origin = new URL(resolveMoodleSiteUrl(this.moodleSiteUrl)).origin;
+        this.moodleSite.hideNativeCourseHandoff();
+        this.accountSwitchStarted = true;
+        window.open(`${origin}/auth/suap/logout.php`, '_system');
+    }
+
+    /** Após confirmar a saída no navegador, reinicia o OAuth oficial do curso. */
+    async continueAccountSwitch(): Promise<void> {
+        if (this.loading || !this.accountSwitchStarted || !this.courseId) {
+            return;
+        }
+        this.accountSwitchStarted = false;
         await this.startOAuthFlow();
     }
 

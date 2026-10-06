@@ -61,6 +61,20 @@
 
                 <div class="moodle-open-course__actions">
                     @if (accountIssue) {
+                        @if (accountSwitchStarted) {
+                            <p class="moodle-open-course__account-help" role="status" aria-live="polite">
+                                No navegador, confirme a saída da conta atual. Depois volte ao app e toque em
+                                “Continuar com a matrícula do Painel”. No próximo login, use a matrícula
+                                {{ accountIssue?.expectedLogin }}.
+                            </p>
+                            <ion-button
+                                expand="block"
+                                class="moodle-open-course__button"
+                                (click)="continueAccountSwitch()"
+                                [disabled]="loading || !courseId">
+                                Continuar com a matrícula do Painel
+                            </ion-button>
+                        }
                         <ion-button
                             expand="block"
                             class="moodle-open-course__button"
