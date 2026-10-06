@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { HttpBackend, HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpBackend, HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { CoreLang } from '@services/lang';
-import { Observable, map, timeout } from 'rxjs';
+import { Observable, firstValueFrom, map, timeout } from 'rxjs';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 export interface AuthResponse {
@@ -45,6 +45,7 @@ interface SuapTokenRefreshResponse {
 
 const REQUEST_TIMEOUT_MS = 15000;
 const TOKEN_KEY = 'ifrn_access_token';
+const REFRESH_KEY = 'ifrn_refresh_token';
 const USERNAME_KEY = 'ifrn_username';
 const JWT_SHAPE = /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/;
 const MAX_TOKEN_LENGTH = 4096;
@@ -193,7 +194,7 @@ export class AuthService {
     }
 
     /**
-     * Mantém o access token em memória e no sessionStorage do WebView.
+     * Mantém o access token no WebView e persiste a sessão entre aberturas.
      */
     saveToken(token: string): void {
         if (!isValidAccessToken(token)) {
@@ -204,6 +205,7 @@ export class AuthService {
 
         this.accessToken = token;
         sessionStorage.setItem(TOKEN_KEY, token);
+        localStorage.setItem(TOKEN_KEY, token);
     }
 
     /**
@@ -214,15 +216,17 @@ export class AuthService {
 
         if (!value) {
             sessionStorage.removeItem(USERNAME_KEY);
+            localStorage.removeItem(USERNAME_KEY);
 
             return;
         }
 
         sessionStorage.setItem(USERNAME_KEY, value);
+        localStorage.setItem(USERNAME_KEY, value);
     }
 
     getUsername(): string | null {
-        return sessionStorage.getItem(USERNAME_KEY);
+        return sessionStorage.getItem(USERNAME_KEY) || localStorage.getItem(USERNAME_KEY);
     }
 
     /**
@@ -233,18 +237,62 @@ export class AuthService {
             return this.accessToken;
         }
 
-        const stored = sessionStorage.getItem(TOKEN_KEY);
+        const stored = sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
 
         if (stored && isValidAccessToken(stored)) {
             this.accessToken = stored;
+            sessionStorage.setItem(TOKEN_KEY, stored);
+            const username = this.getUsername();
+            if (username) {
+                sessionStorage.setItem(USERNAME_KEY, username);
+            }
 
             return stored;
         }
 
         this.accessToken = null;
         sessionStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(TOKEN_KEY);
 
         return null;
+    }
+
+    /** Guarda apenas tokens; a senha nunca é persistida. */
+    saveSession(response: AuthResponse): void {
+        this.saveToken(response.access_token);
+        if (JWT_SHAPE.test(response.refresh_token) && response.refresh_token.length < MAX_TOKEN_LENGTH) {
+            localStorage.setItem(REFRESH_KEY, response.refresh_token);
+        } else {
+            localStorage.removeItem(REFRESH_KEY);
+        }
+    }
+
+    /** Retoma a sessão, renovando access expirado e refresh rotacionado. */
+    async restoreSession(): Promise<boolean> {
+        if (this.getToken()) {
+            return true;
+        }
+
+        const refreshToken = localStorage.getItem(REFRESH_KEY);
+        if (!refreshToken) {
+            return false;
+        }
+
+        try {
+            const response = await firstValueFrom(this.refresh(refreshToken));
+            this.saveSession(response);
+            const username = this.getUsername();
+            if (username) {
+                this.saveUsername(username);
+            }
+            return true;
+        } catch (error) {
+            if (error instanceof HttpErrorResponse && (error.status === 400 || error.status === 401)) {
+                this.logout();
+            }
+            // Falha de rede não elimina a credencial: permite tentar novamente.
+            return false;
+        }
     }
 
     /**
@@ -271,8 +319,11 @@ export class AuthService {
      */
     logout(): void {
         this.accessToken = null;
+        localStorage.removeItem(REFRESH_KEY);
         sessionStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(TOKEN_KEY);
         sessionStorage.removeItem(USERNAME_KEY);
+        localStorage.removeItem(USERNAME_KEY);
         // JWT / perfil / dashboard do Painel AVA (não é wstoken Moodle).
         sessionStorage.removeItem('ifrn_painel_token');
         sessionStorage.removeItem('ifrn_painel_profile');
@@ -286,7 +337,7 @@ export class AuthService {
 
     /**
      * Abre o painel Mobile Moodle.
-     * Token fica só no sessionStorage (mesma origem) — não vai na URL.
+     * Token segue no storage da mesma origem — não vai na URL.
      */
     openMobileMoodle(hash = '/painel'): void {
         const token = this.getToken();
@@ -296,6 +347,7 @@ export class AuthService {
         }
 
         sessionStorage.setItem(TOKEN_KEY, token);
+        localStorage.setItem(TOKEN_KEY, token);
 
         const targetHash = hash.startsWith('#')
             ? hash

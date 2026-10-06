@@ -64,6 +64,9 @@ import { MM, App } from './namespace';
             window.MobileMoodleApi.clearToken();
         }
 
+        ['ifrn_access_token', 'ifrn_refresh_token', 'ifrn_username', 'ifrn_biometric_login_enabled']
+            .forEach(key => localStorage.removeItem(key));
+        sessionStorage.removeItem('ifrn_username');
         sessionStorage.removeItem('ifrn_moodle_last_site_url');
         App.dashboardCache = null;
 

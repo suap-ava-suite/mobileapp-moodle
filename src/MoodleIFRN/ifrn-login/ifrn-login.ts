@@ -268,6 +268,8 @@ export class IfrnLoginPage implements OnInit {
 
     private async enterWithValidAccessToken(): Promise<boolean> {
 
+        await this.authService.restoreSession();
+
         const token = this.authService.getToken();
 
         if (!token) {
@@ -284,9 +286,7 @@ export class IfrnLoginPage implements OnInit {
 
             await firstValueFrom(this.authService.verify(token));
 
-            this.authService.openMobileMoodle('/painel');
-
-            return true;
+            return await this.openRestoredPainel();
 
         } catch (error) {
 
@@ -306,11 +306,13 @@ export class IfrnLoginPage implements OnInit {
 
             }
 
-            // Rede/SUAP indisponível: exp local ainda ok → segue para o painel.
-
-            this.authService.openMobileMoodle('/painel');
-
-            return true;
+            // Sem rede só reutiliza o painel já disponível nesta abertura.
+            if (this.painelAvaService.hasDashboard()) {
+                this.authService.openMobileMoodle('/painel');
+                return true;
+            }
+            this.formError = 'Não foi possível recuperar o painel. Verifique a conexão e tente novamente.';
+            return false;
 
         } finally {
 
@@ -318,6 +320,24 @@ export class IfrnLoginPage implements OnInit {
 
         }
 
+    }
+
+    /** JWT SUAP não substitui a sessão web do Painel AVA. */
+    private async openRestoredPainel(): Promise<boolean> {
+        if (!this.painelAvaService.hasDashboard()) {
+            this.statusMessage = 'Recuperando seu painel…';
+            try {
+                await firstValueFrom(this.painelAvaService.authenticateWithBrowser({ reuseSession: true }));
+            } catch {
+                this.formError = 'Não foi possível recuperar a sessão do painel. Tente novamente.';
+                return false;
+            }
+        }
+        if (!this.painelAvaService.hasDashboard()) {
+            return false;
+        }
+        this.authService.openMobileMoodle('/painel');
+        return true;
     }
 
     /**
@@ -456,9 +476,9 @@ export class IfrnLoginPage implements OnInit {
 
             );
 
-            this.authService.saveToken(response.access_token);
+            this.authService.saveSession(response);
 
-            this.authService.openMobileMoodle('/painel');
+            await this.openRestoredPainel();
 
         } catch (error) {
 
@@ -536,11 +556,7 @@ export class IfrnLoginPage implements OnInit {
 
         try {
 
-            this.authService.saveToken(
-
-                response.access_token,
-
-            );
+            this.authService.saveSession(response);
 
             this.authService.saveUsername(
 

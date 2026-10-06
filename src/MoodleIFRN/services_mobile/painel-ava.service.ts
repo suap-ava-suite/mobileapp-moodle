@@ -15,7 +15,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { CoreOpener } from '@static/opener';
-import { Observable, map, of, throwError } from 'rxjs';
+import { Observable, map, of, throwError, timeout } from 'rxjs';
 
 import { PAINEL_AVA_CONFIG } from './painel-ava.config';
 
@@ -341,7 +341,7 @@ export class PainelAvaService {
      * Depois que a sessão web existir, consulta /api/v1/diarios/ dentro da origem
      * https://ava.ifrn.edu.br, sem copiar cookie, código OAuth ou senha para o app.
      */
-    authenticateWithBrowser(): Observable<PainelAvaV1Result> {
+    authenticateWithBrowser(options: { reuseSession?: boolean } = {}): Observable<PainelAvaV1Result> {
         return new Observable<PainelAvaV1Result>((subscriber) => {
             const baseUrl = PAINEL_AVA_CONFIG.baseUrl.replace(/\/$/, '');
             const diariosPath = PAINEL_AVA_CONFIG.diariosPath;
@@ -352,13 +352,13 @@ export class PainelAvaService {
             let sawSuap = false;
             let painelHidden = false;
 
-            // Sempre limpa a sessão web do InAppBrowser na troca de conta.
+            // Login novo limpa cookies; retomada preserva a sessão web da mesma conta.
             // Sem isso, cookies do SUAP/Painel do usuário anterior fazem o
             // GET /api/v1/diarios/ devolver os cursos da conta errada.
             const browser = CoreOpener.openInApp(`${baseUrl}/`, {
                 location: 'yes',
-                clearcache: 'yes',
-                clearsessioncache: 'yes',
+                clearcache: options.reuseSession ? 'no' : 'yes',
+                clearsessioncache: options.reuseSession ? 'no' : 'yes',
             });
 
             // eslint-disable-next-line no-console
@@ -602,12 +602,16 @@ export class PainelAvaService {
             });
 
             return () => {
+                if (!finished) {
+                    finished = true;
+                    CoreOpener.closeInAppBrowser();
+                }
                 loadStartSubscription.unsubscribe();
                 loadStopSubscription.unsubscribe();
                 messageSubscription.unsubscribe();
                 exitSubscription.unsubscribe();
             };
-        });
+        }).pipe(timeout(120000));
     }
 
     /**

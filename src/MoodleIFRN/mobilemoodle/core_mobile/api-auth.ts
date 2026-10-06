@@ -120,6 +120,7 @@ import { MM } from './namespace';
     /** Logout / 401: apaga token e zera caches da API. */
     function clearToken(): void {
         sessionStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(TOKEN_KEY);
         sessionStorage.removeItem('ifrn_painel_token');
         sessionStorage.removeItem('ifrn_painel_profile');
         sessionStorage.removeItem('ifrn_painel_dashboard');

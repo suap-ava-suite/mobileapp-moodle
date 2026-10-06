@@ -74,7 +74,7 @@ html.ifrn-shell ion-tab-bar.mainmenu-tabs {
 
 .ava-splash__gauge-track {
     fill: none;
-    stroke: rgba(19, 81, 180, 0.14);
+    stroke: rgba(22, 136, 33, 0.14);
     stroke-width: 4;
 }
 
@@ -90,7 +90,7 @@ html.ifrn-shell ion-tab-bar.mainmenu-tabs {
     aspect-ratio: 1;
     background: var(--branco-primario);
     border-radius: 50%;
-    box-shadow: 0 2px 10px rgba(7, 29, 65, 0.12);
+    box-shadow: 0 2px 10px rgba(11, 79, 27, 0.12);
     height: 86%;
     object-fit: cover;
     position: relative;
@@ -119,4 +119,18 @@ body.stop_animations .ava-splash__gauge {
         animation: none;
         opacity: 0.9;
     }
+}
+
+// Carregamento de curso usa o verde institucional do painel.
+.ava-splash__gauge-track { stroke: rgba(22, 136, 33, 0.14); }
+
+.ifrn-handoff__back {
+    background: transparent;
+    border: 1px solid #2d8a45;
+    border-radius: 1.5rem;
+    color: #0b4f1b;
+    cursor: pointer;
+    font: inherit;
+    min-height: 44px;
+    padding: 0.5rem 1rem;
 }

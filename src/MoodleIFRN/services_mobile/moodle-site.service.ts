@@ -880,6 +880,7 @@ export class MoodleSiteService {
 
         // 1) Curso principal (index + tabs) ficou visível → liberar o retorno.
         if (isCourseIndexPath(path, courseId)) {
+            this.hideNativeCourseHandoff();
             if (!this.courseOpenedFromPainel) {
                 this.courseOpenedFromPainel = true;
                 // eslint-disable-next-line no-console

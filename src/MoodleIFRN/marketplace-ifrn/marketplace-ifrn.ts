@@ -1,3 +1,4 @@
+import { AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
 import { Component, OnInit, inject } from '@angular/core';
 import { CoreSharedModule } from '@/core/shared.module';
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
@@ -14,6 +15,7 @@ import { MoodleSiteService } from '@/MoodleIFRN/services_mobile/moodle-site.serv
 })
 export class MarketplaceIfrnPage implements OnInit {
 
+    private readonly authService = inject(AuthService);
     private readonly painelAvaService = inject(PainelAvaService);
     private readonly moodleSite = inject(MoodleSiteService);
 
@@ -38,7 +40,7 @@ export class MarketplaceIfrnPage implements OnInit {
             return;
         }
 
-        this.canContinue = this.painelAvaService.hasDashboard();
+        this.canContinue = this.painelAvaService.hasDashboard() || !!this.authService.getUsername();
     }
 
     /** Reabre o Painel quando os dados da sessão atual já estão disponíveis. */

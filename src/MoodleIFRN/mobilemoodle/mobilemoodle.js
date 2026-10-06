@@ -178,6 +178,7 @@
   }
   function clearToken() {
     sessionStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem("ifrn_painel_token");
     sessionStorage.removeItem("ifrn_painel_profile");
     sessionStorage.removeItem("ifrn_painel_dashboard");
@@ -2624,6 +2625,8 @@
     if (window.MobileMoodleApi?.clearToken) {
       window.MobileMoodleApi.clearToken();
     }
+    ["ifrn_access_token", "ifrn_refresh_token", "ifrn_username", "ifrn_biometric_login_enabled"].forEach((key) => localStorage.removeItem(key));
+    sessionStorage.removeItem("ifrn_username");
     sessionStorage.removeItem("ifrn_moodle_last_site_url");
     App.dashboardCache = null;
     const loginUrl = typeof App.resolveLoginUrl === "function" ? App.resolveLoginUrl() : "/login/marketplace-ifrn";
