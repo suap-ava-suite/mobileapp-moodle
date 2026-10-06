@@ -14,7 +14,7 @@ export const ifrnMainMenuGuard: CanActivateFn & CanActivateChildFn = (_route, st
     if (service.isNativeCourseHandoffActive()) {
         // O núcleo precisa passar pela landing para tratar course/{id}/OAuth.
         // Ela fica invisível e sem interação durante essa passagem interna.
-        document.documentElement.classList.add('ifrn-native-handoff');
+        service.showNativeCourseHandoff();
 
         return true;
     }

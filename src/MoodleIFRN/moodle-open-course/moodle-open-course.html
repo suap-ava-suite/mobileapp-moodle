@@ -3,8 +3,26 @@
     [class.moodle-open-course--busy]="phase === 'loading' || phase === 'waiting-browser'">
 
     @if (phase === 'loading' || phase === 'waiting-browser') {
-        <!-- Ponte intencionalmente sem UI: a verificação e o handoff acontecem em silêncio. -->
-        <div class="moodle-open-course__silent" aria-live="polite" aria-busy="true"></div>
+        <div class="moodle-open-course__silent" role="status" aria-live="polite" aria-busy="true">
+<div class="ava-splash__brand">
+                        <div class="ava-splash__gauge" aria-hidden="true">
+                            <svg class="ava-splash__gauge-svg" viewBox="0 0 120 120" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="ifrn-bridge-gauge-grad" gradientUnits="userSpaceOnUse" x1="60" y1="6" x2="60" y2="114">
+                                        <stop offset="0%" stop-color="#2d8a45"></stop>
+                                        <stop offset="55%" stop-color="#1351b4"></stop>
+                                        <stop offset="100%" stop-color="#071d41"></stop>
+                                    </linearGradient>
+                                </defs>
+                                <circle class="ava-splash__gauge-track" cx="60" cy="60" r="54"></circle>
+                                <circle class="ava-splash__gauge-arc" cx="60" cy="60" r="54"></circle>
+                            </svg>
+                        </div>
+                        <img class="ava-splash__logo" src="mobilemoodle/static/theme/ifrn/img/splash-logo.png" alt="Painel AVA">
+                    </div>
+                                <p class="ava-splash__text">{{ phase === 'waiting-browser' ? 'Conclua o login no navegador' : 'Carregando curso...' }}</p>
+            <ion-button fill="clear" (click)="cancelOpening()">Voltar ao Painel</ion-button>
+        </div>
     } @else {
         <header class="moodle-open-course__header">
             <ion-button

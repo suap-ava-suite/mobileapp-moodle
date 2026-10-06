@@ -22,6 +22,7 @@ import { CoreCourses, CoreEnrolledCourseData } from '@features/courses/services/
 import { CoreLoginHelper } from '@features/login/services/login-helper';
 import { AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
+import { showHandoffLoading, hideHandoffLoading } from '@/MoodleIFRN/navigation/handoff-loading';
 import { isNativeMoodleLanding } from '@/MoodleIFRN/navigation/navigation-policy';
 import { CoreNavigator, CoreRedirectPayload } from '@services/navigator';
 import { CoreSites, CoreSiteCheckResponse } from '@services/sites';
@@ -504,7 +505,7 @@ export class MoodleSiteService {
         this.oauthFlowActive = false;
         this.oauthReturnNavigating = false;
         this.oauthCallbackReceived = false;
-        document.documentElement.classList.remove('ifrn-native-handoff');
+        this.hideNativeCourseHandoff();
         this.lastCourseAccessIssue = null;
         this.lastError = '';
         this.authService.logout();
@@ -552,6 +553,40 @@ export class MoodleSiteService {
     private oauthReturnNavigating = false;
     private oauthCallbackReceived = false;
 
+    private handoffTimeout: number | undefined;
+
+    /** Limite também para o intervalo OAuth → ponte, antes de abrir o curso. */
+    showNativeCourseHandoff(): void {
+        showHandoffLoading();
+        if (this.handoffTimeout !== undefined) {
+            return;
+        }
+        this.handoffTimeout = window.setTimeout(() => {
+            this.hideNativeCourseHandoff();
+            this.oauthReturnNavigating = false;
+            this.oauthCallbackReceived = false;
+            this.oauthFlowActive = false;
+            sessionStorage.removeItem(OAUTH_PENDING_KEY);
+            this.lastError = 'Não foi possível concluir a abertura do curso. Tente novamente ou volte ao Painel.';
+            const pending = this.getPendingOpenCourse();
+            void CoreNavigator.navigate('/login/moodle-open-course', {
+                animated: false,
+                params: { courseId: pending?.courseId, courseName: pending?.courseName, identityOnly: true },
+            }).catch((error) => {
+                logSiteError('Falha ao mostrar recuperação do carregamento', error);
+                this.redirectToPainelAva();
+            });
+        }, 60000);
+    }
+
+    hideNativeCourseHandoff(): void {
+        if (this.handoffTimeout !== undefined) {
+            window.clearTimeout(this.handoffTimeout);
+            this.handoffTimeout = undefined;
+        }
+        hideHandoffLoading();
+    }
+
     isNativeCourseHandoffActive(): boolean {
         return !!this.courseOpening || this.oauthReturnNavigating;
     }
@@ -567,7 +602,7 @@ export class MoodleSiteService {
         this.ensureCourseNavObserver();
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationEnd && !isNativeMoodleLanding(event.urlAfterRedirects || event.url)) {
-                document.documentElement.classList.remove('ifrn-native-handoff');
+                this.hideNativeCourseHandoff();
             }
         });
     }
@@ -583,7 +618,7 @@ export class MoodleSiteService {
         this.oauthCallbackReceived = false;
         this.oauthFlowActive = false;
         this.redirectingToPainel = false;
-        document.documentElement.classList.remove('ifrn-native-handoff');
+        this.hideNativeCourseHandoff();
 
         if (this.painelAva.hasDashboard()) {
             this.redirectToPainelAva();
@@ -1287,6 +1322,7 @@ export class MoodleSiteService {
 
         const promise = this.performOpenCourseById(courseId).finally(() => {
             this.courseOpening = null;
+            this.hideNativeCourseHandoff();
         });
         this.courseOpening = { courseId, promise };
 
@@ -1384,13 +1420,19 @@ export class MoodleSiteService {
         this.markCourseOriginFromPainel(courseId);
 
         const navigation = this.waitForCourseNavigation(courseId);
+        let openingTimeout: number | undefined;
+        const openingDeadline = new Promise<never>((_resolve, reject) => {
+            openingTimeout = window.setTimeout(() => {
+                reject(new Error('A abertura do curso demorou demais. Tente novamente ou volte ao Painel.'));
+            }, 45000);
+        });
 
         try {
             // eslint-disable-next-line no-console
             console.log(COURSE_LOG, 'chamando getAndOpenCourse', JSON.stringify({ courseId, siteIdPresent: !!siteId }));
             // O handler nativo não aguarda navigateToSitePath. A Promise do helper
             // pode resolver em /main: também aguardamos NavigationEnd do curso.
-            await Promise.all([
+            await Promise.race([openingDeadline, Promise.all([
                 CoreCourseHelper.getAndOpenCourse(courseId, {}, siteId).then(() => {
                     // eslint-disable-next-line no-console
                     console.log(COURSE_LOG, 'getAndOpenCourse retornou (rota ainda deve ser confirmada)', JSON.stringify({
@@ -1399,7 +1441,7 @@ export class MoodleSiteService {
                     }));
                 }),
                 navigation.promise,
-            ]);
+            ])]);
         } catch (error) {
             // eslint-disable-next-line no-console
             console.error(COURSE_LOG, 'getAndOpenCourse / navegação FALHOU', JSON.stringify({
@@ -1412,7 +1454,9 @@ export class MoodleSiteService {
             this.clearCourseOriginFlags();
             throw error;
         } finally {
+            window.clearTimeout(openingTimeout);
             navigation.dispose();
+            this.hideNativeCourseHandoff();
         }
 
         // eslint-disable-next-line no-console

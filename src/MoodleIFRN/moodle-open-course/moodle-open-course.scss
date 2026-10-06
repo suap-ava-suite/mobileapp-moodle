@@ -1,4 +1,9 @@
+@use "../mobilemoodle/static/theme/ifrn/scss/splash";
+
 :host {
+    --branco-primario: #ffffff;
+    --dark: #333333;
+    --font-button1: 1rem Arial, Helvetica, sans-serif;
     --moodle-open-bg: #f7f7f7;
     --moodle-open-ink: #333333;
     --moodle-open-muted: #555555;
@@ -325,3 +330,5 @@
     line-height: 1.5;
     font-size: 0.9rem;
 }
+
+.ava-splash__gauge-arc { stroke: url(#ifrn-bridge-gauge-grad); }

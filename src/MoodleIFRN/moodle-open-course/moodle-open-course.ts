@@ -189,6 +189,13 @@ export class MoodleOpenCoursePage implements OnInit {
         await this.tryOpenOrPromptConnect();
     }
 
+    cancelOpening(): void {
+        this.moodleSite.hideNativeCourseHandoff();
+        const base = document.querySelector('base')?.getAttribute('href') || '/';
+        const root = base.endsWith('/') ? base : `${base}/`;
+        window.location.assign(`${root}mobilemoodle/index.html#/painel`);
+    }
+
     goBack(): void {
         if (this.loading) {
             return;
