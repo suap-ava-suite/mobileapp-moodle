@@ -350,19 +350,20 @@ export class PainelAvaService {
             let finished = false;
             let probing = false;
             let sawSuap = false;
-            let painelHidden = false;
+            let painelHidden = true;
 
             // Login novo limpa cookies; retomada preserva a sessão web da mesma conta.
             // Sem isso, cookies do SUAP/Painel do usuário anterior fazem o
             // GET /api/v1/diarios/ devolver os cursos da conta errada.
             const browser = CoreOpener.openInApp(`${baseUrl}/`, {
                 location: 'yes',
+                hidden: 'yes',
                 clearcache: options.reuseSession ? 'no' : 'yes',
                 clearsessioncache: options.reuseSession ? 'no' : 'yes',
             });
 
             // eslint-disable-next-line no-console
-            console.log('[IFRN-PANEL] OAuth web iniciado (sessão IAB limpa)');
+            console.log('[IFRN-PANEL] recuperação web iniciada em segundo plano');
 
             const finishWithError = (message: string): void => {
                 if (finished) {
@@ -372,7 +373,7 @@ export class PainelAvaService {
                 subscriber.error(new Error(message));
             };
 
-            // O navegador precisa ficar visível durante o login no SUAP. Assim que
+            // Inicia oculto; fica visível somente na tela de login SUAP. Assim que
             // o OAuth retornar ao Painel, escondemos o IAB antes da página web
             // do AVA ser desenhada e continuamos a coleta usando a mesma sessão.
             const loadStartSubscription = browser.on('loadstart').subscribe((event) => {
@@ -394,6 +395,19 @@ export class PainelAvaService {
             });
 
             const loadStopSubscription = browser.on('loadstop').subscribe((event) => {
+                // Mostrar somente a autenticação quando ela realmente carregar.
+                // Com cookies válidos, o Painel permanece oculto desde a criação.
+                if (!finished && event.url.startsWith('https://suap.ifrn.edu.br/')) {
+                    sawSuap = true;
+                    painelHidden = false;
+                    try {
+                        browser.show();
+                    } catch {
+                        finishWithError('Não foi possível exibir a autenticação do SUAP.');
+                    }
+                    return;
+                }
+
                 if (finished || probing || !event.url.startsWith(baseUrl)) {
                     return;
                 }
