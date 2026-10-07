@@ -696,6 +696,10 @@ ion-menu.ava-menu.show-menu {
   justify-content: space-between;
   gap: 12px;
   padding: 16px;
+  padding-top: calc(16px + max(32px, var(--ifrn-safe-area-top, 0px), var(--safe-area-inset-top, 0px), env(safe-area-inset-top, 0px)));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  flex-shrink: 0;
   border-bottom: 1px solid var(--light);
   background: var(--primary);
   color: var(--dsgov-text-light);
@@ -2200,7 +2204,7 @@ body.stop_animations .ava-splash__gauge {
     padding-bottom: env(safe-area-inset-bottom);
   }
   .sidebar-modal__header {
-    padding-top: max(16px, var(--ion-safe-area-top, 0px));
+    padding-top: calc(16px + max(32px, var(--ifrn-safe-area-top, 0px), var(--ion-safe-area-top, 0px), var(--safe-area-inset-top, 0px), env(safe-area-inset-top, 0px)));
   }
   .sidebar-modal__body {
     padding: 12px 14px calc(16px + env(safe-area-inset-bottom));

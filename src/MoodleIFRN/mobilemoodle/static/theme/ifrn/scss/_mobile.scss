@@ -345,7 +345,7 @@
     }
 
     .sidebar-modal__header {
-        padding-top: max(16px, var(--ion-safe-area-top, 0px));
+        padding-top: calc(16px + max(32px, var(--ifrn-safe-area-top, 0px), var(--ion-safe-area-top, 0px), var(--safe-area-inset-top, 0px), env(safe-area-inset-top, 0px)));
     }
 
     .sidebar-modal__body {
