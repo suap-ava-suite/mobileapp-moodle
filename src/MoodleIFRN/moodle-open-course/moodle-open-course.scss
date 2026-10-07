@@ -7,8 +7,8 @@
     --moodle-open-bg: #f7f7f7;
     --moodle-open-ink: #333333;
     --moodle-open-muted: #555555;
-    --moodle-open-accent: #168821;
-    --moodle-open-accent-dark: #0b4f1b;
+    --moodle-open-accent: #087b45;
+    --moodle-open-accent-dark: #065831;
     --moodle-open-link: #1351b4;
     --moodle-open-card-border: #e5e5e5;
     --moodle-open-font: Arial, Helvetica, sans-serif;
@@ -335,3 +335,41 @@
 
 // Carregamento de curso usa o verde institucional do painel.
 .ava-splash__gauge-track { stroke: rgba(22, 136, 33, 0.14); }
+
+/* Identidade IFRN e proteção do cabeçalho contra a barra de status. */
+.moodle-open-course__header {
+    box-sizing: border-box;
+    min-height: 64px;
+    padding-top: calc(12px + max(28px, var(--ion-safe-area-top, 0px), env(safe-area-inset-top, 0px)));
+    padding-bottom: 12px;
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    gap: 8px;
+    background: #ffffff;
+}
+.moodle-open-course__header h1 { color: var(--moodle-open-accent-dark); line-height: 1.35; }
+.moodle-open-course__back { --color: var(--moodle-open-accent-dark); margin: 0; min-width: 44px; min-height: 44px; flex-shrink: 0; }
+.moodle-open-course__content { padding-bottom: calc(32px + max(var(--ion-safe-area-bottom, 0px), env(safe-area-inset-bottom, 0px))); }
+.moodle-open-course__button {
+    --background: var(--moodle-open-accent);
+    --background-hover: #076b3c;
+    --background-focused: #076b3c;
+    --background-activated: var(--moodle-open-accent-dark);
+    --color: #ffffff;
+    --border-radius: 9px;
+    --box-shadow: none;
+    min-height: 48px;
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 600;
+}
+.moodle-open-course__button[fill="outline"] {
+    --background: transparent;
+    --background-hover: #edf6f0;
+    --background-focused: #edf6f0;
+    --background-activated: #e1efe6;
+    --color: var(--moodle-open-accent-dark);
+    --border-color: #8eb9a0;
+    --border-width: 1px;
+}
+.moodle-open-course__accounts { border-radius: 10px; border-color: #dce9e0; }
