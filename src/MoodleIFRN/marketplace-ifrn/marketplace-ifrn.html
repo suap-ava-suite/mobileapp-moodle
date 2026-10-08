@@ -1,39 +1,70 @@
 <ion-content class="marketplace-ifrn" [fullscreen]="true" [scrollY]="true">
     @if (openingPainel) {
         <div class="marketplace-transition" role="status" aria-live="polite">
-            <ion-spinner name="crescent"></ion-spinner>
-            <strong>Abrindo Painel AVA…</strong>
+            <ion-spinner name="crescent" />
+            <strong>Abrindo Painel AVA...</strong>
         </div>
     }
+
     <main class="welcome">
-        <header class="welcome__header"><p>AVA IFRN Mobile</p></header>
-        <section class="welcome__body" aria-labelledby="welcome-title">
-            <div class="welcome__content">
-                <h1 id="welcome-title">Bem-vindo</h1>
-                <p class="welcome__description">Acesse suas disciplinas e<br />atividades de onde estiver.</p>
+        <header class="welcome__header">
+            <div class="brand" aria-label="Instituto Federal do Rio Grande do Norte">
+                <span class="ifrn-mark" aria-hidden="true">
+                    <i class="ifrn-mark__dot"></i>
+                    <i class="ifrn-mark__b1"></i>
+                    <i class="ifrn-mark__b2"></i>
+                    <i class="ifrn-mark__b3"></i>
+                    <i class="ifrn-mark__b4"></i>
+                    <i class="ifrn-mark__b5"></i>
+                    <i class="ifrn-mark__b6"></i>
+                    <i class="ifrn-mark__b7"></i>
+                    <i class="ifrn-mark__b8"></i>
+                    <i class="ifrn-mark__b9"></i>
+                </span>
+                <span class="brand__name">
+                    <strong>INSTITUTO FEDERAL</strong>
+                    <small>Rio Grande do Norte</small>
+                </span>
             </div>
-            <div class="welcome__illustration"><svg viewBox="0 0 320 240" role="img" aria-label="Ilustração de um prédio do Instituto Federal">
-<defs><linearGradient id="campus-facade" x2="0" y2="1"><stop stop-color="#dfe8e1"/><stop offset="1" stop-color="#b9cabe"/></linearGradient></defs>
-<ellipse cx="160" cy="214" rx="126" ry="12" fill="#edf4ef"/>
-<path d="M37 79h48l-12-12-9 6-10-17-17 23m190-8h46l-12-15-9 7-8-15z" fill="#f0f5f1"/>
-<path d="M68 195V100l19-13v108" fill="#9db6a5"/>
-<path d="M87 87h159v113H87z" fill="url(#campus-facade)"/>
-<path d="M87 87h159v8H87z" fill="#eaf0ec"/>
-<g fill="#f8fbf9"><rect x="91" y="100" width="15" height="12" rx="1"/><rect x="116" y="100" width="15" height="12" rx="1"/><rect x="194" y="100" width="15" height="12" rx="1"/><rect x="219" y="100" width="15" height="12" rx="1"/><rect x="91" y="123" width="15" height="12" rx="1"/><rect x="116" y="123" width="15" height="12" rx="1"/><rect x="194" y="123" width="15" height="12" rx="1"/><rect x="219" y="123" width="15" height="12" rx="1"/><rect x="91" y="146" width="15" height="12" rx="1"/><rect x="116" y="146" width="15" height="12" rx="1"/><rect x="194" y="146" width="15" height="12" rx="1"/><rect x="219" y="146" width="15" height="12" rx="1"/><rect x="91" y="169" width="15" height="12" rx="1"/><rect x="116" y="169" width="15" height="12" rx="1"/><rect x="194" y="169" width="15" height="12" rx="1"/><rect x="219" y="169" width="15" height="12" rx="1"/></g>
-<rect x="142" y="101" width="39" height="66" rx="3" fill="white"/>
-<g fill="#168821"><rect x="157" y="108" width="8" height="8"/><rect x="167" y="108" width="8" height="8"/><rect x="147" y="118" width="8" height="8"/><rect x="157" y="118" width="8" height="8"/><rect x="147" y="128" width="8" height="8"/><rect x="157" y="128" width="8" height="8"/><rect x="167" y="128" width="8" height="8"/><rect x="147" y="138" width="8" height="8"/><rect x="157" y="138" width="8" height="8"/></g><circle cx="151" cy="112" r="4" fill="#d92c35"/>
-<rect x="145" y="179" width="30" height="23" fill="#829f8e"/>
-<g fill="#76a785"><circle cx="53" cy="185" r="17"/><circle cx="265" cy="185" r="18"/></g>
-<g fill="#25864c"><circle cx="41" cy="197" r="16"/><circle cx="66" cy="192" r="19"/><circle cx="251" cy="196" r="19"/><circle cx="279" cy="202" r="13"/></g>
-<path d="M26 207q130-8 266 0v6H26z" fill="#176c3c"/>
-</svg></div>
-            <section class="welcome__actions" aria-label="Acesso ao AVA">
-                <ion-button expand="block" class="btn-enter" [disabled]="loading"
+            <span class="ava-label">AVA</span>
+        </header>
+
+        <div class="welcome__hero">
+            <img
+                [src]="welcomeImageSrc"
+                alt="Três estudantes do IFRN estudando juntos na biblioteca"
+                fetchpriority="high" />
+        </div>
+
+        <section class="welcome__content" aria-labelledby="welcome-title">
+            <h1 id="welcome-title">Seu aprendizado<br />continua aqui.</h1>
+            <p class="welcome__description">
+                Acesse suas disciplinas, atividades e conteúdos do IFRN em um só lugar.
+            </p>
+
+            <div class="welcome__actions" role="group" aria-label="Acesso ao AVA">
+                <ion-button
+                    expand="block"
+                    class="btn-enter"
+                    [disabled]="loading || openingPainel"
                     (click)="canContinue ? continueSession() : enterAva()">
-                    {{ loading ? 'Autenticando…' : 'Entrar no AVA' }}
+                    <span class="btn-enter__content">
+                        <span>{{ loading ? 'Autenticando...' : (canContinue ? continueLabel : 'Entrar no AVA') }}</span>
+                        <span class="btn-enter__arrow" aria-hidden="true">
+                            <ion-icon name="arrow-forward-outline" aria-hidden="true" />
+                        </span>
+                    </span>
                 </ion-button>
-            </section>
-            <footer class="welcome__footer">© {{ currentYear }} IFRN · Integrado ao SUAP</footer>
+
+                <p class="welcome__account">Acesse com sua conta SUAP</p>
+
+                <button type="button" class="help-link" (click)="openHelp()">
+                    <span>Precisa de ajuda para acessar?</span>
+                    <ion-icon name="arrow-up-outline" aria-hidden="true" />
+                </button>
+            </div>
         </section>
+
+        <footer class="welcome__footer">© {{ currentYear }} IFRN</footer>
     </main>
 </ion-content>

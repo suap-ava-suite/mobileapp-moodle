@@ -20,7 +20,7 @@ export class MarketplaceIfrnPage implements OnInit {
     private readonly moodleSite = inject(MoodleSiteService);
 
     readonly currentYear = new Date().getFullYear();
-    readonly welcomeImageSrc = 'mobilemoodle/static/theme/ifrn/img/alunos-ifrn-welcome.webp';
+    readonly welcomeImageSrc = 'mobilemoodle/static/theme/ifrn/img/alunos-ifrn-biblioteca-enhanced.webp';
 
     canContinue = false;
     continueLabel = 'Continuar no AVA';
