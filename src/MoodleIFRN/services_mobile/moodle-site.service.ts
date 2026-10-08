@@ -31,6 +31,7 @@ import { CoreCustomURLSchemes } from '@services/urlschemes';
 import { CoreUrl } from '@static/url';
 import { CoreEvents } from '@static/events';
 import { CoreLogger } from '@static/logger';
+import { useIfrnBrazilianPortuguese } from './ifrn-language';
 
 
 export const IFRN_MOODLE_PRESENCIAL_URL = 'https://presencial.ava.ifrn.edu.br';
@@ -1331,6 +1332,13 @@ export class MoodleSiteService {
     }
 
     private async performOpenCourseById(courseId: number): Promise<number> {
+        try {
+            await useIfrnBrazilianPortuguese();
+        } catch (error) {
+            // Falha de idioma não deve impedir a abertura do curso.
+            this.logger.error('Não foi possível ativar o português brasileiro.', error);
+        }
+
         this.lastError = '';
         this.lastCourseAccessIssue = null;
 
