@@ -156,6 +156,23 @@ function isLoginModulePatched(content) {
 
 function patchLoginModule() {
     let content = readFile(FILES.loginModule);
+    const guardImport = "import { ifrnReconnectGuard } from '@/MoodleIFRN/navigation/navigation.guard';";
+    if (!content.includes(guardImport)) {
+        content = guardImport + '\n' + content;
+    }
+    // Preserva os guards nativos e aceita reconnect com parâmetro de site.
+    const reconnect = /(path:\s*'reconnect(?:\/[^']*)?'\s*,)(?:\s*canActivate:\s*\[([^\]]*)\],)?/;
+    if (!reconnect.test(content)) {
+        throw new Error('Rota reconnect não encontrada; integração IFRN não aplicada.');
+    }
+    content = content.replace(reconnect, (_match, route, existing = '') => {
+        const guards = existing.split(',').map((guard) => guard.trim()).filter(Boolean);
+        if (!guards.includes('ifrnReconnectGuard')) {
+            guards.unshift('ifrnReconnectGuard');
+        }
+        return `${route}\n                canActivate: [${guards.join(', ')}],`;
+    });
+    writeFile(FILES.loginModule, content);
 
     if (isLoginModulePatched(content)) {
         console.log('• login.module.ts já estava atualizado');

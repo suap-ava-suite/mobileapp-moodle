@@ -1,3 +1,4 @@
+import { ifrnReconnectGuard } from '@/MoodleIFRN/navigation/navigation.guard';
 import { NgModule, Type, provideAppInitializer } from '@angular/core';
 import { Routes } from '@angular/router';
 
@@ -86,6 +87,7 @@ const appRoutes: Routes = [
             },
             {
                 path: 'reconnect',
+                canActivate: [ifrnReconnectGuard],
                 loadComponent: () => CoreLoginHelper.getReconnectPage(),
             },
         ],

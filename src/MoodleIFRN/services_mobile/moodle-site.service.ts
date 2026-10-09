@@ -479,6 +479,11 @@ export class MoodleSiteService {
     private reportCourseAccessIssue(kind: 'identity-mismatch' | 'not-enrolled', courseId: number): string {
         const expectedLogin = this.describeExpectedIdentity().value;
         const actualLogin = this.getCurrentMoodleIdentity();
+        this.oauthReturnNavigating = false;
+        this.oauthCallbackReceived = false;
+        this.oauthFlowActive = false;
+        sessionStorage.removeItem(OAUTH_PENDING_KEY);
+        this.hideNativeCourseHandoff();
         this.lastCourseAccessIssue = { kind, expectedLogin, actualLogin };
         this.clearCourseOriginFlags();
 
@@ -608,8 +613,54 @@ export class MoodleSiteService {
         });
     }
 
+    /** Cancelamento explícito pelo usuário; nenhum redirecionamento automático. */
+    dismissCourseRecovery(): void {
+        this.clearPendingOpenCourse();
+        this.clearCourseOriginFlags();
+        this.setIdentityMismatchPending(false);
+        sessionStorage.removeItem(OAUTH_PENDING_KEY);
+        sessionStorage.removeItem(RESUME_OAUTH_KEY);
+        this.oauthFlowActive = false;
+        this.oauthReturnNavigating = false;
+        this.oauthCallbackReceived = false;
+        this.lastCourseAccessIssue = null;
+        this.lastError = '';
+        this.hideNativeCourseHandoff();
+    }
+
+    isCurrentSiteIfrn(): boolean {
+        try {
+            const host = new URL(CoreSites.getCurrentSite()?.getURL() || '').hostname;
+            return host === 'ava.ifrn.edu.br' || host.endsWith('.ava.ifrn.edu.br');
+        } catch {
+            return false;
+        }
+    }
+
+    /** Mantém a recuperação vinculada ao curso, mesmo após sua abertura. */
+    getCourseRecoveryTarget(): MoodlePendingOpenCourse | null {
+        const pending = this.getPendingOpenCourse();
+        if (pending) {
+            return pending;
+        }
+        const courseId = Number(sessionStorage.getItem(COURSE_ORIGIN_ID_KEY));
+        if (!Number.isFinite(courseId) || courseId <= 0) {
+            return null;
+        }
+        return { courseId, siteUrl: CoreSites.getCurrentSite()?.getURL() };
+    }
+
     /** Entrada única IFRN após bloquear inicialização/retorno no Dashboard antigo. */
     async openIfrnEntry(): Promise<void> {
+        const recovery = this.getCourseRecoveryTarget();
+        if (this.isIdentityMismatchPending() && recovery) {
+            this.hideNativeCourseHandoff();
+            await CoreNavigator.navigate('/login/moodle-open-course', {
+                animated: false,
+                params: { courseId: recovery.courseId, courseName: recovery.courseName, identityOnly: true },
+            });
+            return;
+        }
         this.clearCourseOriginFlags();
         this.clearPendingOpenCourse();
         this.setIdentityMismatchPending(false);

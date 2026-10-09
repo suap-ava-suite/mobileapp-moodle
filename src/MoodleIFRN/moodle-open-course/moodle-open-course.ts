@@ -209,7 +209,7 @@ export class MoodleOpenCoursePage implements OnInit {
     }
 
     cancelOpening(): void {
-        this.moodleSite.hideNativeCourseHandoff();
+        this.moodleSite.dismissCourseRecovery();
         const base = document.querySelector('base')?.getAttribute('href') || '/';
         const root = base.endsWith('/') ? base : `${base}/`;
         window.location.assign(`${root}mobilemoodle/index.html#/painel`);
@@ -219,6 +219,8 @@ export class MoodleOpenCoursePage implements OnInit {
         if (this.loading) {
             return;
         }
+
+        this.moodleSite.dismissCourseRecovery();
 
         const base = document.querySelector('base')?.getAttribute('href') || '/';
         const root = base.endsWith('/') ? base : `${base}/`;
