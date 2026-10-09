@@ -164,15 +164,11 @@ import { MM, App } from './namespace';
             return document.createTextNode('');
         }
 
-        const progress = Math.max(0, Math.min(100, Number(course.progress || 0)));
         const link = fragment.querySelector('.painel-card-link') as HTMLAnchorElement | null;
         const cardTitle = fragment.querySelector('.painel-card-title');
         const shortname = fragment.querySelector('.painel-card-header-shortname');
-        const bar = fragment.querySelector('.painel-progress-bar') as HTMLElement | null;
-        const label = fragment.querySelector('.painel-progress-label');
         const env = fragment.querySelector('.painel-card-header-env');
         const favBtn = fragment.querySelector('.painel-card-details-info-favourite');
-        const progressBlock = fragment.querySelector('.painel-card-details-progress') as HTMLElement | null;
 
         if (link) {
             wireCourseCardOpen(link, course);
@@ -184,20 +180,6 @@ import { MM, App } from './namespace';
 
         if (shortname) {
             shortname.textContent = course.shortname || itemName(course);
-        }
-
-        if (course.hasprogress === false && course.progress == null) {
-            if (progressBlock) {
-                progressBlock.hidden = true;
-            }
-        } else {
-            if (bar) {
-                bar.style.width = progress + '%';
-            }
-
-            if (label) {
-                label.textContent = progress + '% concluído';
-            }
         }
 
         if (env) {
