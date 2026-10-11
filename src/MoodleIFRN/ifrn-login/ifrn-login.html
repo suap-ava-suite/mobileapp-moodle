@@ -39,6 +39,19 @@
                 </p>
             }
 
+            @if (oauthEnabled) {
+                <button
+                    type="button"
+                    class="ifrn-login__button ifrn-login__button--secondary"
+                    [disabled]="loading"
+                    (click)="loginWithSuapOAuth()">
+                    Entrar pelo SUAP (teste)
+                </button>
+                <p class="ifrn-login__subtitle">
+                    Faça o login na página oficial do SUAP. O acesso atual continua disponível abaixo.
+                </p>
+            }
+
             <form class="ifrn-login__form" (submit)="$event.preventDefault(); login()">
 
                 <div class="ifrn-login__field">
@@ -152,7 +165,7 @@
 
         </section>
 
-      
+
 
     </main>
 

@@ -18,6 +18,7 @@ import { CoreOpener } from '@static/opener';
 import { Observable, map, of, throwError, timeout } from 'rxjs';
 
 import { PAINEL_AVA_CONFIG } from './painel-ava.config';
+import { readOAuthProfile } from '../mobilemoodle/core_mobile/oauth-profile';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 /** Resposta mobile de POST /api/v1/authenticate/. */
@@ -820,6 +821,11 @@ export class PainelAvaService {
 
     /** Guarda somente os dados de perfil necessários ao Painel/identidade. */
     private saveProfile(profile: Record<string, unknown> | null): void {
+        // A captura resumida do HTML nao deve substituir o perfil completo do SUAP.
+        const oauth = readOAuthProfile();
+        if (oauth) {
+            profile = oauth.profile;
+        }
         if (!profile) {
             // Evita reutilizar perfil antigo (ex.: scraping anterior com nome de disciplina).
             sessionStorage.removeItem(PAINEL_PROFILE_KEY);

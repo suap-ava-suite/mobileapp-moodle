@@ -98,6 +98,27 @@
   MM.isRetryable = isRetryable;
   MM.ApiError = ApiError;
 
+  // src/MoodleIFRN/mobilemoodle/core_mobile/oauth-profile.ts
+  var OAUTH_PROFILE_KEY = "ifrn_suap_oauth_profile_v1";
+  function profileIdentity(profile) {
+    const value = profile["identificacao"];
+    return typeof value === "string" || typeof value === "number" && Number.isSafeInteger(value) ? String(value).trim() : "";
+  }
+  function hasOAuthProfileMode() {
+    return sessionStorage.getItem(OAUTH_PROFILE_KEY) !== null;
+  }
+  function readOAuthProfile() {
+    try {
+      const value = JSON.parse(sessionStorage.getItem(OAUTH_PROFILE_KEY) || "null");
+      if (!value || !value.profile || typeof value.profile !== "object" || Array.isArray(value.profile) || !value.identity || profileIdentity(value.profile) !== value.identity || !Number.isFinite(value.expiresAt) || value.expiresAt <= Date.now() || sessionStorage.getItem("ifrn_username") !== value.identity) {
+        return null;
+      }
+      return value;
+    } catch {
+      return null;
+    }
+  }
+
   // src/MoodleIFRN/mobilemoodle/core_mobile/api-auth.ts
   /*!
    * api-auth.ts
@@ -149,6 +170,9 @@
     }
   }
   function getToken() {
+    if (hasOAuthProfileMode()) {
+      return null;
+    }
     const params = new URLSearchParams(window.location.search);
     const queryToken = params.get("token");
     if (queryToken && isValidToken(queryToken)) {
@@ -177,6 +201,7 @@
     return true;
   }
   function clearToken() {
+    sessionStorage.removeItem(OAUTH_PROFILE_KEY);
     sessionStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem("ifrn_painel_token");
@@ -781,8 +806,12 @@
     if (!data) {
       throw new MM.ApiError(401, "Dados do Painel AVA ausentes.");
     }
-    let profile = readPainelProfile();
-    if (typeof MM.getToken === "function" && MM.getToken()) {
+    const oauth = readOAuthProfile();
+    if (hasOAuthProfileMode() && !oauth) {
+      throw new MM.ApiError(401, "Renove o acesso pelo SUAP. A sess\xE3o de teste expirou.");
+    }
+    let profile = oauth?.profile || readPainelProfile();
+    if (!oauth && typeof MM.getToken === "function" && MM.getToken()) {
       try {
         const suapProfile = await MM.request("/api/rh/eu/", { softAuth: true });
         if (suapProfile && typeof suapProfile === "object" && !Array.isArray(suapProfile)) {
@@ -802,7 +831,7 @@
     console.log(`[IFRN-PANEL] dashboard local carregado; ${diarios.length} di\xE1rio(s)`);
     return {
       nome: profileDisplayName(profile),
-      username: typeof profile?.["matricula"] === "string" ? profile["matricula"] : typeof profile?.["username"] === "string" ? profile["username"] : void 0,
+      username: oauth?.identity || (typeof profile?.["matricula"] === "string" ? profile["matricula"] : typeof profile?.["username"] === "string" ? profile["username"] : void 0),
       foto_url: typeof profile?.["url_foto_150x200"] === "string" ? profile["url_foto_150x200"] : typeof profile?.["foto"] === "string" ? profile["foto"] : void 0,
       papel: "estudante",
       total_courses: courses.length,
@@ -1896,7 +1925,7 @@
         return;
       }
       const hasPainelSession2 = typeof MM.hasPainelSession === "function" && MM.hasPainelSession();
-      if (!hasPainelSession2) {
+      if (!hasPainelSession2 || hasOAuthProfileMode() && !readOAuthProfile()) {
         console.warn(
           "[IFRN-ROUTER] Sess\xE3o do Painel AVA n\xE3o encontrada."
         );

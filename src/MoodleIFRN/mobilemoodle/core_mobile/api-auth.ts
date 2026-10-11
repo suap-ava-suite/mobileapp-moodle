@@ -11,6 +11,7 @@
  * Segurança: formato JWT, tamanho máximo, exp se existir; token inválido é apagado.
  */
 import { MM } from './namespace';
+import { hasOAuthProfileMode, OAUTH_PROFILE_KEY } from './oauth-profile';
 
     /** Chave única no sessionStorage (só nesta aba / origem). */
     const TOKEN_KEY = 'ifrn_access_token';
@@ -78,6 +79,9 @@ import { MM } from './namespace';
      * Query válida é persistida e depois removida da URL.
      */
     function getToken(): string | null {
+        if (hasOAuthProfileMode()) {
+            return null;
+        }
         const params = new URLSearchParams(window.location.search);
         const queryToken = params.get('token');
 
@@ -119,6 +123,7 @@ import { MM } from './namespace';
 
     /** Logout / 401: apaga token e zera caches da API. */
     function clearToken(): void {
+        sessionStorage.removeItem(OAUTH_PROFILE_KEY);
         sessionStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(TOKEN_KEY);
         sessionStorage.removeItem('ifrn_painel_token');

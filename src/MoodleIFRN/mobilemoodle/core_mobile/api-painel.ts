@@ -6,6 +6,7 @@
  */
 
 import { MM } from './namespace';
+import { hasOAuthProfileMode, readOAuthProfile } from './oauth-profile';
 
 const PAINEL_DASHBOARD_KEY = 'ifrn_painel_dashboard';
 const PAINEL_PROFILE_KEY = 'ifrn_painel_profile';
@@ -242,12 +243,16 @@ async function fetchPainelDashboard(): Promise<DashboardData> {
         throw new MM.ApiError(401, 'Dados do Painel AVA ausentes.');
     }
 
-    let profile = readPainelProfile();
+    const oauth = readOAuthProfile();
+    if (hasOAuthProfileMode() && !oauth) {
+        throw new MM.ApiError(401, 'Renove o acesso pelo SUAP. A sessão de teste expirou.');
+    }
+    let profile = oauth?.profile || readPainelProfile();
 
     // No login IFRN antigo o app possui o JWT oficial do SUAP. Sempre que ele
     // estiver disponível, /api/rh/eu/ é a fonte principal do perfil. Isso evita
     // usar o show_name capturado do HTML do Painel (que pode vir abreviado/cortado).
-    if (typeof MM.getToken === 'function' && MM.getToken()) {
+    if (!oauth && typeof MM.getToken === 'function' && MM.getToken()) {
         try {
             const suapProfile = await MM.request('/api/rh/eu/', { softAuth: true });
 
@@ -276,9 +281,9 @@ async function fetchPainelDashboard(): Promise<DashboardData> {
 
     return {
         nome: profileDisplayName(profile),
-        username: typeof profile?.['matricula'] === 'string'
+        username: oauth?.identity || (typeof profile?.['matricula'] === 'string'
             ? profile['matricula']
-            : (typeof profile?.['username'] === 'string' ? profile['username'] : undefined),
+            : (typeof profile?.['username'] === 'string' ? profile['username'] : undefined)),
         foto_url: typeof profile?.['url_foto_150x200'] === 'string'
             ? profile['url_foto_150x200']
             : (typeof profile?.['foto'] === 'string' ? profile['foto'] : undefined),

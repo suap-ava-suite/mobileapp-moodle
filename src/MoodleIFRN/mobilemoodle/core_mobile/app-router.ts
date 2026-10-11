@@ -18,6 +18,7 @@
  */
 
 import { MM, App } from './namespace';
+import { hasOAuthProfileMode, readOAuthProfile } from './oauth-profile';
 
 let templatesReady: Promise<void> | null = null;
 
@@ -126,7 +127,7 @@ async function loadRoute(force: boolean): Promise<void> {
        const hasPainelSession =
     typeof MM.hasPainelSession === 'function' &&
     MM.hasPainelSession();
-        if (!hasPainelSession) {
+        if (!hasPainelSession || (hasOAuthProfileMode() && !readOAuthProfile())) {
             console.warn(
                 '[IFRN-ROUTER] Sessão do Painel AVA não encontrada.',
             );

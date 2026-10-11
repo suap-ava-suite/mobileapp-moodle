@@ -35,6 +35,9 @@ import { Router } from '@angular/router';
 import { CoreSharedModule } from '@/core/shared.module';
 
 import { AuthResponse, AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
+import { SuapOAuthService } from '@/MoodleIFRN/services_mobile/suap-oauth.service';
+import { hasOAuthProfileMode, OAUTH_PROFILE_KEY, profileIdentity, readOAuthProfile }
+    from '../mobilemoodle/core_mobile/oauth-profile';
 
 import { BiometricService } from '@/MoodleIFRN/services_mobile/biometric.service';
 
@@ -74,6 +77,8 @@ import { TimeoutError, firstValueFrom } from 'rxjs';
 export class IfrnLoginPage implements OnInit {
 
     private readonly authService = inject(AuthService);
+    private readonly suapOAuth = inject(SuapOAuthService);
+    readonly oauthEnabled = this.suapOAuth.enabled;
 
     private readonly biometricService = inject(BiometricService);
 
@@ -239,6 +244,14 @@ export class IfrnLoginPage implements OnInit {
      */
 
     private async resumeSession(): Promise<void> {
+        if (hasOAuthProfileMode()) {
+            if (readOAuthProfile() && this.painelAvaService.hasDashboard()) {
+                this.authService.openMobileMoodle('/painel');
+            } else {
+                this.statusMessage = 'Entre novamente pelo SUAP para renovar o teste ou use o login atual.';
+            }
+            return;
+        }
 
         if (await this.enterWithValidAccessToken()) {
 
@@ -350,6 +363,64 @@ export class IfrnLoginPage implements OnInit {
 
         this.showPassword = !this.showPassword;
 
+    }
+
+    /** Opcao experimental; so substitui a sessao local depois de obter perfil E painel. */
+    async loginWithSuapOAuth(): Promise<void> {
+        if (this.loading || !this.oauthEnabled) {
+            return;
+        }
+        this.loading = true;
+        this.formError = '';
+        this.statusMessage = 'Entre na página oficial do SUAP…';
+        const keys = [
+            'ifrn_username', 'ifrn_access_token', 'ifrn_refresh_token', 'ifrn_biometric_login_enabled',
+            'ifrn_painel_profile', 'ifrn_painel_dashboard', 'ifrn_painel_owner', 'ifrn_painel_token', OAUTH_PROFILE_KEY,
+        ];
+        const backup = [sessionStorage, localStorage].map(storage => ({
+            storage, values: keys.map(key => ({ key, value: storage.getItem(key) })),
+        }));
+        try {
+            const result = await this.suapOAuth.login();
+            const identity = profileIdentity(result.profile);
+            const expected = this.username.trim();
+            if (expected && expected !== identity) {
+                throw new Error('A conta autenticada no SUAP não corresponde ao IFRN-id informado. Tente com a conta do aluno.');
+            }
+            this.statusMessage = 'Carregando seus cursos…';
+            // OAuth iniciou o navegador sem cookies antigos; agora preservamos a
+            // sessao SUAP recem-criada para o Painel executar seu proprio OAuth.
+            sessionStorage.setItem('ifrn_username', identity);
+            this.painelAvaService.clearSession();
+            await firstValueFrom(this.painelAvaService.authenticateWithBrowser({ reuseSession: true }));
+            const owner = sessionStorage.getItem('ifrn_painel_owner');
+            if (owner && owner !== identity.toLowerCase()) {
+                throw new Error('A conta do Painel AVA não corresponde à conta do SUAP. Tente novamente.');
+            }
+            if (!this.painelAvaService.hasDashboard()) {
+                throw new Error('O perfil foi recebido, mas não foi possível carregar o painel. Use o login atual.');
+            }
+            this.authService.saveOAuthSession(result.profile, result.expires_in);
+            this.biometricService.disable(); // Biometria antiga possui refresh JWT de outra modalidade.
+            this.biometricEnabled = false;
+            this.password = '';
+            this.username = identity;
+            this.authService.openMobileMoodle('/painel');
+        } catch (error) {
+            for (const { storage, values } of backup) {
+                for (const { key, value } of values) {
+                    if (value === null) {
+                        storage.removeItem(key);
+                    } else {
+                        storage.setItem(key, value);
+                    }
+                }
+            }
+            this.formError = error instanceof Error ? error.message : 'Não foi possível concluir o teste. Use o login atual.';
+        } finally {
+            this.loading = false;
+            this.statusMessage = '';
+        }
     }
 
     /**

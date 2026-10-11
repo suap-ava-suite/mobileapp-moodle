@@ -16,6 +16,8 @@ import { HttpBackend, HttpClient, HttpErrorResponse, HttpHeaders } from '@angula
 import { Injectable, inject } from '@angular/core';
 import { CoreLang } from '@services/lang';
 import { Observable, firstValueFrom, map, timeout } from 'rxjs';
+import { hasOAuthProfileMode, OAUTH_PROFILE_KEY, readOAuthProfile, saveOAuthProfile, profileIdentity }
+    from '../mobilemoodle/core_mobile/oauth-profile';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 export interface AuthResponse {
@@ -233,6 +235,9 @@ export class AuthService {
      * Retorna o Access Token.
      */
     getToken(): string | null {
+        if (hasOAuthProfileMode()) {
+            return null; // Perfil OAuth nao e JWT; nunca misturar as duas contas.
+        }
         if (this.accessToken && isValidAccessToken(this.accessToken)) {
             return this.accessToken;
         }
@@ -259,6 +264,7 @@ export class AuthService {
 
     /** Guarda apenas tokens; a senha nunca é persistida. */
     saveSession(response: AuthResponse): void {
+        sessionStorage.removeItem(OAUTH_PROFILE_KEY);
         this.saveToken(response.access_token);
         if (JWT_SHAPE.test(response.refresh_token) && response.refresh_token.length < MAX_TOKEN_LENGTH) {
             localStorage.setItem(REFRESH_KEY, response.refresh_token);
@@ -269,6 +275,9 @@ export class AuthService {
 
     /** Retoma a sessão, renovando access expirado e refresh rotacionado. */
     async restoreSession(): Promise<boolean> {
+        if (hasOAuthProfileMode()) {
+            return readOAuthProfile() !== null;
+        }
         if (this.getToken()) {
             return true;
         }
@@ -299,7 +308,18 @@ export class AuthService {
      * Verifica se existe um usuário autenticado.
      */
     isAuthenticated(): boolean {
-        return this.getToken() !== null;
+        return readOAuthProfile() !== null || this.getToken() !== null;
+    }
+
+    /** Somente apos carregar o Painel. Nao grava senha, OAuth token nem Client Secret. */
+    saveOAuthSession(profile: Record<string, unknown>, expiresIn: number): void {
+        saveOAuthProfile(profile, expiresIn);
+        this.accessToken = null;
+        sessionStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(REFRESH_KEY);
+        this.saveUsername(profileIdentity(profile));
+        sessionStorage.setItem('ifrn_painel_profile', JSON.stringify(profile));
     }
 
     /**
@@ -318,6 +338,7 @@ export class AuthService {
      * Remove os tokens salvos.
      */
     logout(): void {
+        sessionStorage.removeItem(OAUTH_PROFILE_KEY);
         this.accessToken = null;
         localStorage.removeItem(REFRESH_KEY);
         sessionStorage.removeItem(TOKEN_KEY);
@@ -342,12 +363,14 @@ export class AuthService {
     openMobileMoodle(hash = '/painel'): void {
         const token = this.getToken();
 
-        if (!token) {
+        if (!token && !readOAuthProfile()) {
             return;
         }
 
-        sessionStorage.setItem(TOKEN_KEY, token);
-        localStorage.setItem(TOKEN_KEY, token);
+        if (token) {
+            sessionStorage.setItem(TOKEN_KEY, token);
+            localStorage.setItem(TOKEN_KEY, token);
+        }
 
         const targetHash = hash.startsWith('#')
             ? hash
