@@ -1147,37 +1147,15 @@
    * app-status.ts
    * ----------------------------------------------------------------------------
    * Estados visuais enquanto a rota carrega ou falha:
-   * - splash / loading (mínimo ~3s na 1ª carga para não “piscar”)
+   * - splash / loading enquanto os dados são carregados
    * - not found (hash inválido)
    * - erro HTTP / rede (template tpl-error-page ou fallback simples)
    */
   var SPLASH_GAUGE_SVG = '<div class="ava-splash__gauge" aria-hidden="true"><svg class="ava-splash__gauge-svg" viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="ava-splash-gauge-grad" gradientUnits="userSpaceOnUse" x1="60" y1="6" x2="60" y2="114"><stop offset="0%" stop-color="#61c924"></stop><stop offset="55%" stop-color="#098e95"></stop><stop offset="100%" stop-color="#0b6064"></stop></linearGradient></defs><circle class="ava-splash__gauge-track" cx="60" cy="60" r="54"></circle><circle class="ava-splash__gauge-arc" cx="60" cy="60" r="54"></circle></svg></div>';
-  var LOADING_MIN_MS = 3e3;
-  var loadingStartedAt = 0;
-  function markLoadingStart() {
-    if (!loadingStartedAt) {
-      loadingStartedAt = Date.now();
-    }
-  }
-  function waitLoadingMinimum(force = false) {
-    if (force || !loadingStartedAt) {
-      loadingStartedAt = 0;
-      return Promise.resolve();
-    }
-    const remaining = LOADING_MIN_MS - (Date.now() - loadingStartedAt);
-    loadingStartedAt = 0;
-    if (remaining <= 0) {
-      return Promise.resolve();
-    }
-    return new Promise((resolve) => {
-      window.setTimeout(resolve, remaining);
-    });
-  }
   function buildSplashBrand(logoSrc) {
     return '<div class="ava-splash__brand">' + SPLASH_GAUGE_SVG + '<img class="ava-splash__logo" src="' + logoSrc + '" alt="Painel AVA"></div>';
   }
   function showLoading(message) {
-    markLoadingStart();
     const logoSrc = (App.ASSET_BASE || "") + "static/theme/ifrn/img/splash-logo.png";
     if (!App.content) {
       return;
@@ -1285,10 +1263,65 @@
     }
   }
   App.showLoading = showLoading;
-  App.markLoadingStart = markLoadingStart;
-  App.waitLoadingMinimum = waitLoadingMinimum;
   App.showNotFound = showNotFound;
   App.showStatusError = showStatusError;
+
+  // src/MoodleIFRN/mobilemoodle/core_mobile/course-favourites.ts
+  var PREFIX = "ifrn_course_favourites_v1:";
+  function currentOwner() {
+    return (sessionStorage.getItem("ifrn_username") || "").trim().toLowerCase();
+  }
+  function favouriteCourseKey(course) {
+    const id = Number(course.moodle_course_id ?? (course.source === "painel" ? course.id : NaN));
+    if (!Number.isSafeInteger(id) || id <= 0) return null;
+    for (const candidate of [course.moodle_site_url, course.viewurl, course.details_url]) {
+      if (!candidate) continue;
+      try {
+        const url = new URL(candidate);
+        if (url.protocol !== "https:" && url.protocol !== "http:") continue;
+        const sitePath = url.pathname.split("/course/")[0].replace(/\/+$/, "");
+        return JSON.stringify([url.origin + sitePath, id]);
+      } catch {
+      }
+    }
+    if (course.ambiente?.id != null) {
+      return JSON.stringify(["painel-ambiente:" + course.ambiente.id, id]);
+    }
+    return null;
+  }
+  function createCourseFavourites() {
+    const owner = currentOwner();
+    const storageKey = PREFIX + encodeURIComponent(owner);
+    let values = /* @__PURE__ */ Object.create(null);
+    if (owner) {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(storageKey) || "{}");
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          for (const [key, value] of Object.entries(parsed)) {
+            if (typeof value === "boolean") values[key] = value;
+          }
+        }
+      } catch {
+      }
+    }
+    const canEdit = (course) => !!owner && currentOwner() === owner && favouriteCourseKey(course) !== null;
+    const isFavourite = (course) => {
+      if (!owner || currentOwner() !== owner) return false;
+      const key = favouriteCourseKey(course);
+      if (key && typeof values[key] === "boolean") return values[key];
+      return course.isfavourite === true || course.favourite === true;
+    };
+    const toggle = (course) => {
+      const key = favouriteCourseKey(course);
+      if (!key || !canEdit(course)) throw new Error("N\xE3o foi poss\xEDvel identificar a conta ou o ambiente deste curso.");
+      const next = !isFavourite(course);
+      const updated = { ...values, [key]: next };
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+      values = updated;
+      return next;
+    };
+    return { canEdit, isFavourite, toggle };
+  }
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/app-views.ts
   /*!
@@ -1301,6 +1334,8 @@
    *
    * Também atualiza header (título/subtítulo) e dados do usuário na sidebar.
    */
+  var favourites;
+  var currentLists;
   var ACTIVITY_ICONS = {
     assign: "create-outline",
     forum: "chatbubbles-outline",
@@ -1430,15 +1465,39 @@
     if (env) {
       env.textContent = itemEnv(course);
     }
-    if (favBtn && (course.isfavourite || course.favourite)) {
-      favBtn.classList.remove("painel-card-details-info-favourite");
-      favBtn.classList.add("painel-card-details-info-unfavourite");
-      const icon = favBtn.querySelector("ion-icon");
-      if (icon) {
-        icon.setAttribute("name", "star");
-      }
-    }
+    if (favBtn) bindFavourite(favBtn, course);
     return fragment;
+  }
+  function bindFavourite(button, course) {
+    const key = favouriteCourseKey(course);
+    const update = (target, active) => {
+      target.classList.toggle("painel-card-details-info-favourite", !active);
+      target.classList.toggle("painel-card-details-info-unfavourite", active);
+      target.setAttribute("aria-pressed", String(active));
+      target.setAttribute("aria-label", (active ? "Remover dos favoritos: " : "Adicionar aos favoritos: ") + itemName(course));
+      target.querySelector("ion-icon")?.setAttribute("name", active ? "star" : "star-outline");
+    };
+    button.dataset.favouriteKey = key || "";
+    button.disabled = !favourites.canEdit(course);
+    button.title = button.disabled ? "Conta ou ambiente do curso n\xE3o identificado" : "Favorito salvo neste aparelho";
+    update(button, favourites.isFavourite(course));
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      try {
+        const active = favourites.toggle(course);
+        if (App.activeFilter?.situacao === "favourites") {
+          const host = document.getElementById("painel-cards");
+          if (host) renderTabCards(host, App.activePainelTab || "diarios", currentLists);
+        } else {
+          document.querySelectorAll("[data-favourite-key]").forEach((target) => {
+            if (target.dataset.favouriteKey === key) update(target, active);
+          });
+        }
+      } catch {
+        window.alert("N\xE3o foi poss\xEDvel salvar o favorito neste aparelho. Tente novamente.");
+      }
+    });
   }
   function siteUrlFromCourse(course) {
     if (course.moodle_site_url) {
@@ -1499,6 +1558,8 @@
     const btnEnroll = fragment.querySelector(".btn-enroll");
     const btnAccess = fragment.querySelector(".btn-access");
     const btnUnenroll = fragment.querySelector(".btn-unenroll");
+    const favouriteButton = fragment.querySelector("[data-course-favourite]");
+    if (favouriteButton) bindFavourite(favouriteButton, course);
     if (link) {
       wireCourseCardOpen(link, course);
     }
@@ -1567,12 +1628,13 @@
     const hint = empty.querySelector(".no-data__hint");
     const meta = TAB_META[tabKey] || TAB_META.diarios;
     if (hint) {
-      hint.textContent = meta.empty;
+      hint.textContent = App.activeFilter?.situacao === "favourites" ? "Nenhum favorito nesta aba. Marque a estrela de um curso para encontr\xE1-lo aqui." : meta.empty;
     }
     host.appendChild(empty);
   }
   function renderTabCards(host, tabKey, lists) {
-    const items = tabKey === "autoinscricoes" ? lists.autoinscricoes : tabKey === "coordenacoes" ? lists.coordenacoes : lists.diarios;
+    const allItems = tabKey === "autoinscricoes" ? lists.autoinscricoes : tabKey === "coordenacoes" ? lists.coordenacoes : lists.diarios;
+    const items = App.activeFilter?.situacao === "favourites" ? allItems.filter((course) => favourites.isFavourite(course)) : allItems;
     host.innerHTML = "";
     host.setAttribute("data-active-tab", tabKey);
     if (!items.length) {
@@ -1641,6 +1703,12 @@
     }
     setUser(dashboard);
     const lists = getPainelLists(dashboard);
+    currentLists = lists;
+    favourites = createCourseFavourites();
+    App.onFilterChange = () => {
+      const host = document.getElementById("painel-cards");
+      if (host) renderTabCards(host, App.activePainelTab || "diarios", lists);
+    };
     const page = App.cloneTemplate("tpl-painel");
     const initialTab = App.activePainelTab === "autoinscricoes" || App.activePainelTab === "coordenacoes" ? App.activePainelTab : "diarios";
     App.dashboardPapel = dashboard.papel || dashboard.role || "estudante";
@@ -1983,13 +2051,7 @@
       );
       if (route.name === "curso") {
         const dashboard2 = await loadDashboard(force);
-        const [course] = await Promise.all([
-          window.MobileMoodleApi.getCourse(
-            route.courseId,
-            force
-          ),
-          App.waitLoadingMinimum?.(force) ?? Promise.resolve()
-        ]);
+        const course = await window.MobileMoodleApi.getCourse(route.courseId, force);
         if (seq !== routeSeq) {
           return;
         }
@@ -2000,10 +2062,7 @@
         App.dashboardCache = null;
         window.MobileMoodleApi.invalidateCache();
       }
-      const [dashboard] = await Promise.all([
-        loadDashboard(force),
-        App.waitLoadingMinimum?.(force) ?? Promise.resolve()
-      ]);
+      const dashboard = await loadDashboard(force);
       if (seq !== routeSeq) {
         return;
       }
@@ -2290,6 +2349,7 @@
     accessibility: "btn-toggle-accessibility",
     filter: "btn-toggle-filter"
   };
+  var userSelectedFilter = false;
   App.activeFilter = {
     situacao: "allincludinghidden",
     label: FILTER_LABELS.allincludinghidden
@@ -2340,6 +2400,7 @@
     if (apply) {
       apply.addEventListener("click", () => {
         const value = select ? select.value : "allincludinghidden";
+        userSelectedFilter = true;
         App.activeFilter = {
           situacao: value,
           label: FILTER_LABELS[value] || FILTER_LABELS.allincludinghidden
@@ -2353,6 +2414,7 @@
     }
     if (clear) {
       clear.addEventListener("click", () => {
+        userSelectedFilter = true;
         App.activeFilter = {
           situacao: "allincludinghidden",
           label: FILTER_LABELS.allincludinghidden
@@ -2361,6 +2423,7 @@
         if (select) {
           select.value = "allincludinghidden";
         }
+        App.onFilterChange?.(App.activeFilter);
       });
     }
   }
@@ -2408,6 +2471,10 @@
     }
   }
   function applyUserFilter(dashboard) {
+    if (userSelectedFilter) {
+      updateFilterChip();
+      return;
+    }
     const situacao = dashboard && (dashboard.filtro_situacao || dashboard.situacao || dashboard.filter_situacao) || "allincludinghidden";
     const label = dashboard && (dashboard.filtro_label || dashboard.situacao_label) || FILTER_LABELS[situacao] || FILTER_LABELS.allincludinghidden;
     App.activeFilter = { situacao, label };
@@ -2703,9 +2770,6 @@
       App.A11y.init();
     }
     bindMenu();
-    if (document.querySelector("#page-content .page-loading")) {
-      App.markLoadingStart?.();
-    }
     const hash = window.location.hash.replace(/^#/, "");
     if (!hash || hash === "/") {
       window.location.hash = "/painel";

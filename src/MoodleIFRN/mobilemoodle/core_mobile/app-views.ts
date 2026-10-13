@@ -9,6 +9,10 @@
  * Também atualiza header (título/subtítulo) e dados do usuário na sidebar.
  */
 import { MM, App } from './namespace';
+import { createCourseFavourites, favouriteCourseKey } from './course-favourites';
+
+let favourites: ReturnType<typeof createCourseFavourites>;
+let currentLists: PainelLists;
 
 
     /** Ícone Ionic por modname do Moodle (assign, forum, quiz…). */
@@ -186,17 +190,43 @@ import { MM, App } from './namespace';
             env.textContent = itemEnv(course);
         }
 
-        if (favBtn && (course.isfavourite || course.favourite)) {
-            favBtn.classList.remove('painel-card-details-info-favourite');
-            favBtn.classList.add('painel-card-details-info-unfavourite');
-            const icon = favBtn.querySelector('ion-icon');
-
-            if (icon) {
-                icon.setAttribute('name', 'star');
-            }
-        }
+        if (favBtn) bindFavourite(favBtn as HTMLButtonElement, course);
 
         return fragment;
+    }
+
+    function bindFavourite(button: HTMLButtonElement, course: DashboardCourse): void {
+        const key = favouriteCourseKey(course);
+        const update = (target: Element, active: boolean): void => {
+            target.classList.toggle('painel-card-details-info-favourite', !active);
+            target.classList.toggle('painel-card-details-info-unfavourite', active);
+            target.setAttribute('aria-pressed', String(active));
+            target.setAttribute('aria-label', (active ? 'Remover dos favoritos: ' : 'Adicionar aos favoritos: ') + itemName(course));
+            target.querySelector('ion-icon')?.setAttribute('name', active ? 'star' : 'star-outline');
+        };
+        button.dataset.favouriteKey = key || '';
+        button.disabled = !favourites.canEdit(course);
+        button.title = button.disabled ? 'Conta ou ambiente do curso não identificado' : 'Favorito salvo neste aparelho';
+        update(button, favourites.isFavourite(course));
+        button.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            try {
+                const active = favourites.toggle(course);
+                if (App.activeFilter?.situacao === 'favourites') {
+                    const host = document.getElementById('painel-cards');
+                    if (host) renderTabCards(host, App.activePainelTab || 'diarios', currentLists);
+                } else {
+                    // Atualiza também entradas repetidas do mesmo curso, sem
+                    // reconstruir toda a lista nem repetir consultas ao AVA.
+                    document.querySelectorAll('[data-favourite-key]').forEach(target => {
+                        if ((target as HTMLElement).dataset.favouriteKey === key) update(target, active);
+                    });
+                }
+            } catch {
+                window.alert('Não foi possível salvar o favorito neste aparelho. Tente novamente.');
+            }
+        });
     }
 
     /**
@@ -289,6 +319,9 @@ import { MM, App } from './namespace';
         const btnEnroll = fragment.querySelector('.btn-enroll') as HTMLElement | null;
         const btnAccess = fragment.querySelector('.btn-access') as HTMLElement | null;
         const btnUnenroll = fragment.querySelector('.btn-unenroll') as HTMLElement | null;
+
+        const favouriteButton = fragment.querySelector<HTMLButtonElement>('[data-course-favourite]');
+        if (favouriteButton) bindFavourite(favouriteButton, course);
 
         if (link) {
             wireCourseCardOpen(link, course);
@@ -391,16 +424,22 @@ import { MM, App } from './namespace';
         const meta = TAB_META[tabKey] || TAB_META.diarios;
 
         if (hint) {
-            hint.textContent = meta.empty;
+            hint.textContent = App.activeFilter?.situacao === 'favourites'
+                ? 'Nenhum favorito nesta aba. Marque a estrela de um curso para encontrá-lo aqui.'
+                : meta.empty;
         }
 
         host.appendChild(empty);
     }
 
     function renderTabCards(host: HTMLElement, tabKey: PainelTabKey, lists: PainelLists): void {
-        const items: DashboardCourse[] = tabKey === 'autoinscricoes'
+        const allItems: DashboardCourse[] = tabKey === 'autoinscricoes'
             ? lists.autoinscricoes
             : (tabKey === 'coordenacoes' ? lists.coordenacoes : lists.diarios);
+
+        const items = App.activeFilter?.situacao === 'favourites'
+            ? allItems.filter(course => favourites.isFavourite(course))
+            : allItems;
 
         host.innerHTML = '';
         host.setAttribute('data-active-tab', tabKey);
@@ -497,6 +536,12 @@ import { MM, App } from './namespace';
         setUser(dashboard);
 
         const lists = getPainelLists(dashboard);
+        currentLists = lists;
+        favourites = createCourseFavourites();
+        App.onFilterChange = () => {
+            const host = document.getElementById('painel-cards');
+            if (host) renderTabCards(host, App.activePainelTab || 'diarios', lists);
+        };
         const page = App.cloneTemplate!('tpl-painel');
         const initialTab: PainelTabKey =
             App.activePainelTab === 'autoinscricoes' || App.activePainelTab === 'coordenacoes'

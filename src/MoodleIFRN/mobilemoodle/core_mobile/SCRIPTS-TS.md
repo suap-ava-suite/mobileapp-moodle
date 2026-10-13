@@ -68,7 +68,7 @@ Flag `DEMO_FORCE_500` em `api.ts`: quando `true`, força erro 500 no painel (só
 |---------|--------|
 | `namespace.ts` | Inicializa `window.MobileMoodle` e `App` |
 | `app-utils.ts` | Base de assets, `escapeHtml`, templates, `fetchText` |
-| `app-status.ts` | Loading (splash mínimo ~3s), tela de erro, not found |
+| `app-status.ts` | Loading enquanto os dados carregam, tela de erro, not found |
 | `app-views.ts` | Render do painel e do curso; atualiza título/subtítulo do header |
 | `app-router.ts` | Parse do hash + orquestra carregamento (`routeSeq` evita race) |
 | `app-accessibility.ts` | Preferências AVA: zoom, contraste, VLibras, etc. |
@@ -84,7 +84,7 @@ Flag `DEMO_FORCE_500` em `api.ts`: quando `true`, força erro 500 no painel (só
 | Browser / DevTools | `--ion-safe-area-top: 0` — sem padding artificial no topo. |
 | Teclado aberto | Atualiza `--keyboard-height` e classe `body.keyboard-is-open`. |
 
-Variáveis CSS: `--ion-safe-area-top/right/bottom/left`, `--keyboard-height`.  
+Variáveis CSS: `--ion-safe-area-top/right/bottom/left`, `--keyboard-height`.
 Consumidas pelo header (`.ava-toolbar`) e pelo layout mobile (`_mobile.scss`).
 
 Ver também: [`../../docs/TEMA-VISUAL.md`](../../docs/TEMA-VISUAL.md).

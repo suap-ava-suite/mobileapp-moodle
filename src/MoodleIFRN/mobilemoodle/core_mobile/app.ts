@@ -112,11 +112,6 @@ import { MM, App } from './namespace';
 
         bindMenu();
 
-        // Splash já está no HTML: inicia o timer mínimo de loading
-        if (document.querySelector('#page-content .page-loading')) {
-            App.markLoadingStart?.();
-        }
-
         const hash = window.location.hash.replace(/^#/, '');
 
         // Hash vazio → manda para o painel (dispara hashchange → loadRoute)

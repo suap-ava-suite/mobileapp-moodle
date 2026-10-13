@@ -162,14 +162,7 @@ async function loadRoute(force: boolean): Promise<void> {
              */
             const dashboard = await loadDashboard(force);
 
-            const [course] = await Promise.all([
-                window.MobileMoodleApi.getCourse(
-                    route.courseId,
-                    force,
-                ),
-                App.waitLoadingMinimum?.(force) ??
-                    Promise.resolve(),
-            ]);
+            const course = await window.MobileMoodleApi.getCourse(route.courseId, force);
 
             if (seq !== routeSeq) {
                 return;
@@ -185,11 +178,7 @@ async function loadRoute(force: boolean): Promise<void> {
             window.MobileMoodleApi.invalidateCache();
         }
 
-        const [dashboard] = await Promise.all([
-            loadDashboard(force),
-            App.waitLoadingMinimum?.(force) ??
-                Promise.resolve(),
-        ]);
+        const dashboard = await loadDashboard(force);
 
         if (seq !== routeSeq) {
             return;

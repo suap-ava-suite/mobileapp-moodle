@@ -172,8 +172,6 @@ interface MobileMoodleApp {
     cloneTemplate?: (id: string) => DocumentFragment | null;
     fetchText?: (url: string) => Promise<string>;
     showLoading?: (message?: string) => void;
-    markLoadingStart?: () => void;
-    waitLoadingMinimum?: (force?: boolean) => Promise<void>;
     showNotFound?: () => void;
     showStatusError?: (error: ApiErrorShape | Error | unknown) => void;
     loadRoute?: (force: boolean) => Promise<void>;

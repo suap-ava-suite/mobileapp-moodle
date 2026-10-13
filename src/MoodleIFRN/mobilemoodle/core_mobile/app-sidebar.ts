@@ -32,6 +32,8 @@ import { MM, App } from './namespace';
         filter: 'btn-toggle-filter',
     };
 
+    let userSelectedFilter = false;
+
     App.activeFilter = {
         situacao: 'allincludinghidden',
         label: FILTER_LABELS.allincludinghidden,
@@ -97,6 +99,7 @@ import { MM, App } from './namespace';
         if (apply) {
             apply.addEventListener('click', () => {
                 const value = select ? select.value : 'allincludinghidden';
+                userSelectedFilter = true;
 
                 App.activeFilter = {
                     situacao: value,
@@ -113,6 +116,7 @@ import { MM, App } from './namespace';
 
         if (clear) {
             clear.addEventListener('click', () => {
+                userSelectedFilter = true;
                 App.activeFilter = {
                     situacao: 'allincludinghidden',
                     label: FILTER_LABELS.allincludinghidden,
@@ -122,6 +126,7 @@ import { MM, App } from './namespace';
                 if (select) {
                     select.value = 'allincludinghidden';
                 }
+                App.onFilterChange?.(App.activeFilter);
             });
         }
     }
@@ -185,6 +190,10 @@ import { MM, App } from './namespace';
 
     /** Sincroniza o filtro ativo com o que veio do dashboard (API). */
     function applyUserFilter(dashboard: DashboardData): void {
+        if (userSelectedFilter) {
+            updateFilterChip();
+            return;
+        }
         const situacao =
             (dashboard && (dashboard.filtro_situacao || dashboard.situacao || dashboard.filter_situacao)) ||
             'allincludinghidden';
