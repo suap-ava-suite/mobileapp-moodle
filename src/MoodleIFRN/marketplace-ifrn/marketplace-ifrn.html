@@ -1,8 +1,19 @@
 <ion-content class="marketplace-ifrn" [fullscreen]="true" [scrollY]="true">
-    @if (openingPainel) {
-        <div class="marketplace-transition" role="status" aria-live="polite">
-            <ion-spinner name="crescent" />
-            <strong>Abrindo Painel AVA...</strong>
+    @if (loading || openingPainel) {
+        <div class="marketplace-transition" role="status" aria-live="polite" aria-busy="true">
+            <div class="marketplace-transition__brand" aria-hidden="true">
+                <svg class="marketplace-transition__ring" viewBox="0 0 120 120">
+                    <circle class="marketplace-transition__track" cx="60" cy="60" r="55" />
+                    <circle class="marketplace-transition__arc" cx="60" cy="60" r="55" />
+                </svg>
+                <img class="marketplace-transition__logo"
+                    src="mobilemoodle/static/theme/ifrn/img/splash-logo.png" alt="" />
+            </div>
+            <strong class="marketplace-transition__caption">Carregando painel...</strong>
+            <span class="marketplace-transition__status">{{ statusMessage }}</span>
+            @if (loading) {
+                <button type="button" class="marketplace-transition__cancel" (click)="cancelConnection()">Cancelar</button>
+            }
         </div>
     }
 

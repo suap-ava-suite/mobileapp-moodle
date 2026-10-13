@@ -8,6 +8,8 @@ import { MAIN_MENU_HOME_PAGE_NAME } from '@features/mainmenu/constants';
 import { AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
 import { BiometricService } from '@/MoodleIFRN/services_mobile/biometric.service';
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
+import { SuapBrowserService } from './suap-browser.service';
+import { CoreOpener } from '@static/opener';
 import { OAUTH_PROFILE_KEY, profileIdentity } from '../mobilemoodle/core_mobile/oauth-profile';
 import { beginNativeSuapEntry, readNativeSuapEntry, endNativeSuapEntry, markNativeSuapEntryAuthenticated } from '../navigation/suap-entry-state';
 
@@ -147,6 +149,7 @@ export class SuapEntryService {
     private readonly authService = inject(AuthService);
     private readonly biometricService = inject(BiometricService);
     private readonly painel = inject(PainelAvaService);
+    private readonly suapBrowser = inject(SuapBrowserService);
     private loading = false;
     private staged?: { profile: Profile; dashboard: unknown; until: number; siteId: string };
 
@@ -171,18 +174,23 @@ export class SuapEntryService {
         this.cancel();
         onStatus('Abrindo a autenticação oficial do SUAP…');
         try {
-            const check = await CoreSites.checkSite(AVA);
+            onStatus('Consultando o AVA…');
+            const check = await this.suapBrowser.waitFor(CoreSites.checkSite(AVA), 30000,
+                'O AVA não respondeu à consulta inicial. Verifique sua conexão e tente novamente.');
             if (!check.config || new URL(check.siteUrl).origin !== AVA) {
                 throw new Error('O AVA não retornou uma configuração mobile válida.');
             }
             const site = CoreSitesFactory.makeUnauthenticatedSite(check.siteUrl, check.config);
-            const providers = await CoreLoginHelper.getValidIdentityProvidersForSite(site);
+            onStatus('Preparando o acesso SUAP…');
+            const providers = await this.suapBrowser.waitFor(
+                CoreLoginHelper.getValidIdentityProvidersForSite(site), 30000,
+                'O AVA não retornou a configuração do login SUAP. Tente novamente.');
             const provider = providers.find(item => item.name.trim().toLowerCase() === 'suap');
             if (!provider) {
                 throw new Error('O AVA não informou o provedor SUAP. Tente novamente mais tarde.');
             }
             beginNativeSuapEntry(expectedIdentity.trim());
-            const opened = await CoreLoginHelper.openBrowserForOAuthLogin(check.siteUrl, provider, check.config.launchurl, {
+            const opened = await this.suapBrowser.login(check.siteUrl, provider, check.config.launchurl, {
                 redirectPath: MAIN_MENU_HOME_PAGE_NAME,
                 redirectOptions: { nextNavigation: {
                     path: '/login/marketplace-ifrn', isSitePath: false,
@@ -321,6 +329,14 @@ export class SuapEntryService {
                 }
             }
             throw error;
+        }
+    }
+
+    cancelConnection(): void {
+        this.suapBrowser.cancel();
+        // Se a entrada já avançou à consulta do painel, seu Observable recebe exit.
+        if (this.loading) {
+            CoreOpener.closeInAppBrowser();
         }
     }
 

@@ -159,6 +159,10 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         window.location.assign(url.toString());
     }
 
+    cancelConnection(): void {
+        this.suapEntry.cancelConnection();
+    }
+
     openHelp(): void {
         window.open('https://ajuda.ead.ifrn.edu.br/', '_blank', 'noopener,noreferrer');
     }
