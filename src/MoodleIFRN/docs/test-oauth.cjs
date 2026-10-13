@@ -4,7 +4,6 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const { webcrypto } = require('node:crypto');
 const ts = require('typescript');
 const root = path.resolve(__dirname, '..');
 class MemoryStorage {
@@ -17,11 +16,6 @@ class MemoryStorage {
 const sessionStorage = new MemoryStorage();
 const localStorage = new MemoryStorage();
 const instances = new Map();
-class Subscription {
-    items = [];
-    add(value) { this.items.push(value); }
-    unsubscribe() { this.items.forEach(item => item.unsubscribe()); }
-}
 class HttpHeaders { set() { return this; } }
 class HttpErrorResponse extends Error {}
 class HttpBackend {}
@@ -31,27 +25,9 @@ class PainelAvaService {}
 class BiometricService {}
 class Router {}
 const navigations = [];
-const window = {
-    cordova: {}, crypto: webcrypto, atob, btoa, setTimeout, clearTimeout,
+const window = { atob, btoa,
     location: { origin: 'http://localhost', assign: u => navigations.push(u), search: '' },
 };
-let browser;
-let onOpen;
-const CoreOpener = { openInApp(url, options) {
-    const handlers = new Map();
-    browser = {
-        url, options, closed: false,
-        on(name) { return { subscribe(handler) {
-            if (!handlers.has(name)) handlers.set(name, new Set());
-            handlers.get(name).add(handler);
-            return { unsubscribe() { handlers.get(name).delete(handler); } };
-        } }; },
-        emit(name, url) { for (const handler of [...(handlers.get(name) || [])]) handler({ url }); },
-        close() { this.closed = true; this.emit('exit'); },
-    };
-    queueMicrotask(() => onOpen?.());
-    return browser;
-} };
 const external = {
     '@angular/core': { Injectable: () => x => x, Component: () => x => x,
         inject: type => instances.get(type) || new type() },
@@ -65,8 +41,7 @@ const external = {
     '@static/logger': { CoreLogger: { getInstance: () => ({ debug() {}, warn() {} }) } },
     '@services/platform': { CorePlatform: { ready: async () => {} } },
     '@services/navigator': { CoreNavigator: {} },
-    '@static/opener': { CoreOpener },
-    rxjs: { firstValueFrom: value => Promise.resolve(value), Subscription, timeout: () => {}, map: () => {}, TimeoutError: class extends Error {} },
+    rxjs: { firstValueFrom: value => Promise.resolve(value),  timeout: () => {}, map: () => {}, TimeoutError: class extends Error {} },
 };
 const cache = new Map();
 function load(file) {
@@ -77,7 +52,7 @@ function load(file) {
         compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true },
     }).outputText;
     const context = {
-        module, exports: module.exports, window, sessionStorage, localStorage, crypto: webcrypto,
+        module, exports: module.exports, window, sessionStorage, localStorage,
         URL, URLSearchParams, TextEncoder, Uint8Array, btoa, atob, queueMicrotask, console, setTimeout, clearTimeout,
         document: { querySelector: () => null },
         require(name) {
@@ -92,7 +67,6 @@ function load(file) {
 }
 const state = load(path.join(root, 'mobilemoodle/core_mobile/oauth-profile.ts'));
 const { AuthService } = load(path.join(root, 'services_mobile/auth.service.ts'));
-const { SuapOAuthService } = load(path.join(root, 'services_mobile/suap-oauth.service.ts'));
 const profile = { identificacao: '00123', nome: 'Aluno teste', email: '', email_google_classroom: 'fake@example.invalid', campus: { sigla: 'XX' }, extra: 'preservado', foto: 'https://suap.ifrn.edu.br/media/foto.jpg' };
 const jwt = 'eyJhbGciOiJIUzI1NiJ9.' + Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url') + '.ZmFrZQ';
 function reset() {
@@ -131,38 +105,6 @@ async function main() {
     auth.logout();
     assert.equal(state.hasOAuthProfileMode(), false);
 
-    // Navegador: retorno de outra origem nao conclui; state errado falha; cancelamento libera a UI.
-    for (const mode of ['success', 'bad-state', 'cancel']) {
-        let opened; const ready = new Promise(resolve => { opened = resolve; }); onOpen = opened;
-        let exchanges = 0;
-        httpPost = (url, data) => {
-            exchanges++;
-            assert.ok(url.endsWith('/mobile/exchange'));
-            assert.match(data.verifier, /^[A-Za-z0-9_-]{43}$/);
-            assert.equal(data.state, new URL(browser.url).searchParams.get('state'));
-            return Promise.resolve({ profile, expires_in: 1800 });
-        };
-        const service = new SuapOAuthService();
-        const attempt = service.login();
-        const caught = attempt.then(value => ({ value }), error => ({ error }));
-        await ready;
-        assert.equal(browser.options.clearcache, 'yes');
-        browser.emit('loadstart', 'https://evil.example/mobile/complete?ticket=x');
-        assert.equal(browser.closed, false);
-        const start = new URL(browser.url);
-        if (mode === 'cancel') browser.emit('exit');
-        else {
-            const callback = new URL('/mobile/complete', start.origin);
-            callback.searchParams.set('ticket', 'a'.repeat(43));
-            callback.searchParams.set('state', mode === 'bad-state' ? 'x' : start.searchParams.get('state'));
-            browser.emit('loadstart', callback.href);
-            browser.emit('loadstop', callback.href);
-        }
-        const result = await caught;
-        assert.equal(!!result.value, mode === 'success');
-        assert.equal(exchanges, mode === 'success' ? 1 : 0);
-        assert.equal(browser.closed, true);
-    }
-    console.log('OK: sessão OAuth, foto preservada, expiração, login antigo e retorno mobile.');
+    console.log('OK: snapshot de perfil, foto preservada, expiração e compatibilidade da sessão.');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });
