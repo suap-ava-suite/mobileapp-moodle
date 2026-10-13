@@ -124,10 +124,35 @@ import { MM, App } from './namespace';
     }
 
     /**
+     * Splash nativo Cordova — sobrevive ao reload do WebView (mobilemoodle → Ionic).
+     * Sem isso, o documento some e o usuário vê a tela preta padrão do WebView.
+     */
+    function showNativeBridgeSplash(): void {
+        try {
+            sessionStorage.setItem('ifrn_course_handoff_pending', '1');
+        } catch {
+            // sessionStorage indisponível: segue só com o overlay DOM.
+        }
+
+        try {
+            const splash = (window.navigator as Navigator & {
+                splashscreen?: { show?: () => void };
+            }).splashscreen;
+
+            splash?.show?.();
+        } catch {
+            // Sem plugin: o overlay DOM + early handoff Ionic cobrem o gap.
+        }
+    }
+
+    /**
      * Splash branco antes de sair da SPA — cobre o flash preto da troca de página.
-     * Some com o document no assign; a ponte Ionic continua com o próprio splash.
+     * O overlay DOM some com o document no assign; o SplashScreen nativo e o
+     * early handoff Ionic (flag ifrn_course_handoff_pending) cobrem o bootstrap.
      */
     function showLeavingCourseSplash(): void {
+        showNativeBridgeSplash();
+
         if (document.getElementById('ifrn-leaving-course-splash')) {
             return;
         }

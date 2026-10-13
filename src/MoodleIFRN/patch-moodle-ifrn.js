@@ -24,6 +24,7 @@ const FILES = {
     angularJson: path.join(PROJECT_ROOT, 'angular.json'),
     gulpfile: path.join(PROJECT_ROOT, 'gulpfile.js'),
     packageJson: path.join(PROJECT_ROOT, 'package.json'),
+    indexHtml: path.join(PROJECT_ROOT, 'src/index.html'),
 };
 
 const MARKER = {
@@ -31,6 +32,8 @@ const MARKER = {
     loginRoutesEnd: '// END MoodleIFRN login routes',
     gulpTaskStart: '// BEGIN MoodleIFRN gulp',
     gulpTaskEnd: '// END MoodleIFRN gulp',
+    earlyHandoffStart: '<!-- BEGIN MoodleIFRN early-course-handoff -->',
+    earlyHandoffEnd: '<!-- END MoodleIFRN early-course-handoff -->',
 };
 
 /**
@@ -372,6 +375,43 @@ function patchPackageScripts() {
     console.log('✔ package.json — scripts patch:ifrn e build:mobilemoodle garantidos');
 }
 
+/**
+ * Injeta splash branco no index.html antes do Angular — evita tela preta no
+ * reload Painel → /login/moodle-open-course (primeira abertura de curso).
+ */
+function patchIndexEarlyHandoff() {
+    let content = readFile(FILES.indexHtml);
+    const publishedScript = `${MARKER.earlyHandoffStart}
+    <script src="assets/MoodleIFRN/navigation/early-course-handoff.js"></script>
+    ${MARKER.earlyHandoffEnd}`;
+
+    // Copia o JS para assets públicos (angular.json já publica src/assets → assets/).
+    const assetDir = path.join(PROJECT_ROOT, 'src/assets/MoodleIFRN/navigation');
+    const srcScript = path.join(SCRIPT_DIR, 'navigation/early-course-handoff.js');
+    fs.mkdirSync(assetDir, { recursive: true });
+    fs.copyFileSync(srcScript, path.join(assetDir, 'early-course-handoff.js'));
+
+    if (content.includes(MARKER.earlyHandoffStart) && content.includes(MARKER.earlyHandoffEnd)) {
+        content = replaceBetweenMarkers(
+            content,
+            MARKER.earlyHandoffStart,
+            MARKER.earlyHandoffEnd,
+            publishedScript,
+        ) ?? content;
+        writeFile(FILES.indexHtml, content);
+        console.log('• index.html — early-course-handoff atualizado');
+        return;
+    }
+
+    if (!content.includes('<body>')) {
+        throw new Error('Não foi possível localizar <body> em index.html.');
+    }
+
+    content = content.replace('<body>', `<body>\n    ${publishedScript}`);
+    writeFile(FILES.indexHtml, content);
+    console.log('✔ index.html — early-course-handoff injetado (cobre tela preta do curso)');
+}
+
 function main() {
     console.log('MoodleIFRN — reaplicando integrações...\n');
     console.log(`Projeto: ${PROJECT_ROOT}\n`);
@@ -381,6 +421,7 @@ function main() {
     patchAngularAssets();
     patchGulpfile();
     patchPackageScripts();
+    patchIndexEarlyHandoff();
 
     console.log('\n✔ Patch concluído.');
     console.log('  Rotas: /login → marketplace-ifrn, /login/ifrn-login, /login/moodle-open-course');

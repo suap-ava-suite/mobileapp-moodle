@@ -22,7 +22,11 @@ import { CoreCourses, CoreEnrolledCourseData } from '@features/courses/services/
 import { CoreLoginHelper } from '@features/login/services/login-helper';
 import { AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
-import { showHandoffLoading, hideHandoffLoading } from '@/MoodleIFRN/navigation/handoff-loading';
+import {
+    showHandoffLoading,
+    hideHandoffLoading,
+    shouldShowCourseHandoffOnBoot,
+} from '@/MoodleIFRN/navigation/handoff-loading';
 import { markNativeSuapEntryAuthenticated } from '@/MoodleIFRN/navigation/suap-entry-state';
 import { isNativeMoodleLanding } from '@/MoodleIFRN/navigation/navigation-policy';
 import { CoreNavigator, CoreRedirectPayload } from '@services/navigator';
@@ -595,6 +599,9 @@ export class MoodleSiteService {
     }
 
     isNativeCourseHandoffActive(): boolean {
+        // Somente enquanto a abertura nativa está em andamento.
+        // Não amarrar a pending_open_course / oauthFlowActive: isso reexibia o
+        // overlay após o curso abrir (ou no OAuth) e o usuário ficava em loading eterno.
         return !!this.courseOpening || this.oauthReturnNavigating;
     }
 
@@ -605,18 +612,31 @@ export class MoodleSiteService {
 
         this.navigationShellInitialized = true;
         document.documentElement.classList.add('ifrn-shell');
+        // Bootstrap após reload do Painel: cobre o WebView preto até a ponte/curso.
+        if (shouldShowCourseHandoffOnBoot()) {
+            this.showNativeCourseHandoff();
+        }
         this.ensureLoginObserver();
         this.ensureCourseNavObserver();
         this.router.events.subscribe((event) => {
             if (!(event instanceof NavigationEnd)) {
                 return;
             }
-            // Não esconder durante a abertura: a landing/curso ainda pode flashar preto.
-            // O finally de openCourseById remove o overlay quando a rota do curso confirma.
+            const path = event.urlAfterRedirects || event.url;
+            // Curso nativo confirmado: tira o overlay na hora (mesmo com courseOpening).
+            if (/\/course(?:\/deep)*\/\d+/.test(path)) {
+                this.hideNativeCourseHandoff();
+
+                return;
+            }
+            // Não esconder durante a passagem /login → /main → curso.
             if (this.courseOpening || this.oauthReturnNavigating) {
                 return;
             }
-            if (!isNativeMoodleLanding(event.urlAfterRedirects || event.url)) {
+            if (path.includes('/login/moodle-open-course')) {
+                return;
+            }
+            if (!isNativeMoodleLanding(path)) {
                 this.hideNativeCourseHandoff();
             }
         });
@@ -1539,7 +1559,7 @@ export class MoodleSiteService {
         } finally {
             window.clearTimeout(openingTimeout);
             navigation.dispose();
-            this.hideNativeCourseHandoff();
+            // hideNativeCourseHandoff fica no finally de openCourseById (com delay de paint).
         }
 
         // eslint-disable-next-line no-console

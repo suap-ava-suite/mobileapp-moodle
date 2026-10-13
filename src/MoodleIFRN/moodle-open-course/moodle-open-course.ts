@@ -111,6 +111,9 @@ export class MoodleOpenCoursePage implements OnInit {
         await CorePlatform.ready();
 
         this.moodleSite.ensureLoginObserver();
+        // Cobre /main e o bootstrap Ionic antes de qualquer await de sessão/OAuth.
+        this.moodleSite.showNativeCourseHandoff();
+        this.phase = 'loading';
 
         this.courseId = Number(CoreNavigator.getRouteNumberParam('courseId') || 0);
         this.courseName = CoreNavigator.getRouteParam('courseName') || '';
@@ -163,6 +166,9 @@ export class MoodleOpenCoursePage implements OnInit {
                     this.initStarted = true;
                     if (this.moodleSite.lastError) {
                         this.revealBridgeError(this.moodleSite.lastError);
+                    } else {
+                        // openCourseById já remove o overlay; reforça se a rota mudou.
+                        this.moodleSite.hideNativeCourseHandoff();
                     }
 
                     return;
@@ -184,11 +190,11 @@ export class MoodleOpenCoursePage implements OnInit {
         ) {
             // eslint-disable-next-line no-console
             console.log('[IFRN-IDENTITY] auto-OAuth bloqueado (retorno / reentrância)');
-            this.phase = 'error';
-
-            if (!this.formError && this.moodleSite.lastError) {
-                this.formError = this.moodleSite.lastError;
-            }
+            this.revealBridgeError(
+                this.formError
+                || this.moodleSite.lastError
+                || 'Não foi possível abrir o curso. Tente novamente.',
+            );
 
             return;
         }
@@ -210,6 +216,7 @@ export class MoodleOpenCoursePage implements OnInit {
 
     cancelOpening(): void {
         this.moodleSite.dismissCourseRecovery();
+        this.moodleSite.hideNativeCourseHandoff();
         const base = document.querySelector('base')?.getAttribute('href') || '/';
         const root = base.endsWith('/') ? base : `${base}/`;
         window.location.assign(`${root}mobilemoodle/index.html#/painel`);
@@ -221,6 +228,7 @@ export class MoodleOpenCoursePage implements OnInit {
         }
 
         this.moodleSite.dismissCourseRecovery();
+        this.moodleSite.hideNativeCourseHandoff();
 
         const base = document.querySelector('base')?.getAttribute('href') || '/';
         const root = base.endsWith('/') ? base : `${base}/`;
@@ -250,11 +258,12 @@ export class MoodleOpenCoursePage implements OnInit {
             );
 
             if (result === 'opened') {
+                this.moodleSite.hideNativeCourseHandoff();
+
                 return;
             }
 
-            // Sem sessão reutilizável: não exibe uma segunda tela/botão.
-            // Libera o lock desta verificação e inicia o OAuth oficial imediatamente.
+            // Sem sessão: libera o overlay e mostra a UI “Conclua o login no navegador”.
             // eslint-disable-next-line no-console
             console.log('[IFRN-COURSE] sessão Moodle ausente — iniciando OAuth automaticamente');
             this.moodleSite.hideNativeCourseHandoff();
@@ -333,11 +342,13 @@ export class MoodleOpenCoursePage implements OnInit {
             if (oauthResult === 'switched') {
                 // switch-account: a navegação reinicia esta página com startOAuth.
                 this.phase = 'loading';
+                this.moodleSite.showNativeCourseHandoff();
 
                 return;
             }
 
-            // Browser externo aberto (ou fluxo já ativo): orienta o usuário.
+            // Browser externo aberto: some o overlay para a ponte orientar o usuário.
+            this.moodleSite.hideNativeCourseHandoff();
             this.phase = 'waiting-browser';
         } catch (error) {
             // eslint-disable-next-line no-console
@@ -367,6 +378,7 @@ export class MoodleOpenCoursePage implements OnInit {
     private revealBridgeError(message: string): void {
         this.formError = message;
         this.phase = 'error';
+        this.moodleSite.hideNativeCourseHandoff();
     }
 
 }

@@ -1,9 +1,49 @@
+const HANDOFF_PENDING_KEY = 'ifrn_course_handoff_pending';
+const PENDING_OPEN_COURSE_KEY = 'ifrn_moodle_pending_open_course';
+
+/** Esconde o SplashScreen Cordova quando o overlay DOM IFRN já cobre a tela. */
+function hideNativeSplashScreen(): void {
+    try {
+        const splash = (window.navigator as Navigator & {
+            splashscreen?: { hide?: () => void };
+        }).splashscreen;
+
+        splash?.hide?.();
+    } catch {
+        // Sem plugin: nada a fazer.
+    }
+}
+
+/**
+ * True só no reload Painel → Ionic (flag curta).
+ * Não usa ifrn_moodle_pending_open_course: essa chave vive até o curso abrir e
+ * rearmar o handoff no meio da navegação (usuário fica em “Carregando…” para sempre).
+ */
+export function shouldShowCourseHandoffOnBoot(): boolean {
+    try {
+        return sessionStorage.getItem(HANDOFF_PENDING_KEY) === '1';
+    } catch {
+        return false;
+    }
+}
+
 /** Mesmo logo e gauge da tela de carregamento do Painel AVA. */
 export function showHandoffLoading(): void {
     document.documentElement.classList.add('ifrn-native-handoff');
-    if (document.getElementById('ifrn-handoff-loading')) {
+    try {
+        sessionStorage.setItem(HANDOFF_PENDING_KEY, '1');
+    } catch {
+        // ignore
+    }
+
+    const existing = document.getElementById('ifrn-handoff-loading');
+    if (existing?.querySelector('.ifrn-handoff__back')) {
+        hideNativeSplashScreen();
+
         return;
     }
+    // Early script monta um overlay sem o botão Voltar — substitui pelo completo.
+    existing?.remove();
 
     const element = document.createElement('div');
     element.id = 'ifrn-handoff-loading';
@@ -29,15 +69,23 @@ export function showHandoffLoading(): void {
                     <p class="ava-splash__text">Carregando curso...</p><button type="button" class="ifrn-handoff__back">Voltar ao Painel</button></div>`;
     element.querySelector('button')?.addEventListener('click', () => {
         hideHandoffLoading();
-        sessionStorage.removeItem('ifrn_moodle_pending_open_course');
+        sessionStorage.removeItem(PENDING_OPEN_COURSE_KEY);
         sessionStorage.removeItem('ifrn_moodle_poc_oauth_pending');
         sessionStorage.removeItem('ifrn_moodle_poc_resume_oauth');
         window.location.assign(painelUrl.toString());
     });
     document.body.appendChild(element);
+    // Overlay DOM já cobre; libera o splash nativo para não empilhar camadas.
+    hideNativeSplashScreen();
 }
 
 export function hideHandoffLoading(): void {
     document.documentElement.classList.remove('ifrn-native-handoff');
     document.getElementById('ifrn-handoff-loading')?.remove();
+    try {
+        sessionStorage.removeItem(HANDOFF_PENDING_KEY);
+    } catch {
+        // ignore
+    }
+    hideNativeSplashScreen();
 }
