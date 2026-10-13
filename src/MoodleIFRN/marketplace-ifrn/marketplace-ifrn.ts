@@ -8,12 +8,12 @@ import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.servic
 import { CoreLang } from '@services/lang';
 import { CorePlatform } from '@services/platform';
 import { CoreNavigator } from '@services/navigator';
-import { SuapEntryService } from '@/MoodleIFRN/services_mobile/suap-entry.service';
+import { SuapEntryService, SuapEntryAccountError } from '@/MoodleIFRN/services_mobile/suap-entry.service';
 
 @Component({
     selector: 'page-marketplace-ifrn',
     templateUrl: './marketplace-ifrn.html',
-    styleUrls: ['./marketplace-ifrn.scss'],
+    styleUrls: ['../moodle-open-course/moodle-open-course.scss', './marketplace-ifrn.scss'],
     imports: [CoreSharedModule],
 })
 export class MarketplaceIfrnPage implements OnInit, OnDestroy {
@@ -24,6 +24,8 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private returnSubscription?: Subscription;
+    accountIssue: SuapEntryAccountError | null = null;
+    accountSwitchStarted = false;
     formError = '';
     statusMessage = '';
     private nativeReturnQueued = false;
@@ -35,7 +37,27 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     canContinue = false;
     continueLabel = 'Continuar no AVA';
     loading = false;
+    /** OAuth Moodle/SUAP aberto no navegador externo; overlay permanece até o retorno. */
+    waitingBrowser = false;
     openingPainel = false;
+
+    /** Overlay de transição cobre preparação, OAuth externo e abertura do painel. */
+    get showTransition(): boolean {
+        return this.loading || this.waitingBrowser || this.openingPainel;
+    }
+
+    get transitionCaption(): string {
+        if (this.waitingBrowser) {
+            return 'Conclua o login no navegador';
+        }
+        if (this.openingPainel) {
+            return 'Abrindo painel...';
+        }
+        if (this.statusMessage) {
+            return this.statusMessage;
+        }
+        return 'Carregando painel...';
+    }
 
     /**
      * O Marketplace é a única tela de entrada.
@@ -69,6 +91,13 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         if (CoreNavigator.getRouteBooleanParam('nativeSuapReturn')) {
             this.nativeReturnQueued = true;
             void this.completeNativeReturn();
+            return;
+        }
+        // Voltou do navegador sem callback ainda: mantém o splash em vez da tela inicial.
+        if (readNativeSuapEntry() && !this.loading && !this.waitingBrowser) {
+            this.waitingBrowser = true;
+            this.loading = true;
+            this.statusMessage = 'Conclua o login no navegador';
         }
     }
 
@@ -77,30 +106,35 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     }
 
     private async completeNativeReturn(): Promise<void> {
-        if (this.loading) {
+        if (this.loading && !this.waitingBrowser) {
             this.nativeReturnQueued = true;
             return;
         }
         if (!readNativeSuapEntry()) {
+            this.waitingBrowser = false;
             return;
         }
         this.nativeReturnQueued = false;
+        this.waitingBrowser = false;
         this.loading = true;
         this.canContinue = false;
         this.formError = '';
         try {
             await this.suapEntry.complete(message => this.statusMessage = message);
         } catch (error) {
+            this.accountIssue = error instanceof SuapEntryAccountError ? error : null;
+            this.accountSwitchStarted = false;
             this.formError = error instanceof Error ? error.message : 'Não foi possível concluir a entrada no AVA.';
         } finally {
             this.loading = false;
+            this.waitingBrowser = false;
             this.statusMessage = '';
         }
     }
 
     /** Reabre o Painel quando os dados da sessão atual já estão disponíveis. */
     continueSession(): void {
-        if (this.loading) {
+        if (this.loading || this.waitingBrowser) {
             return;
         }
 
@@ -115,10 +149,13 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
 
     /** Inicia o SUAP diretamente a partir do gesto no marketplace. */
     async enterAva(): Promise<void> {
-        if (this.loading || this.openingPainel) {
+        if (this.loading || this.waitingBrowser || this.openingPainel) {
             return;
         }
+        this.accountIssue = null;
+        this.accountSwitchStarted = false;
         this.loading = true;
+        this.waitingBrowser = false;
         this.nativeReturnQueued = false;
         this.formError = '';
         try {
@@ -126,13 +163,22 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
             await this.router.navigate([], { relativeTo: this.route, replaceUrl: true,
                 queryParams: { nativeSuapReturn: null }, queryParamsHandling: 'merge' });
             await this.suapEntry.login(this.expectedIdentity, message => this.statusMessage = message);
+            // OAuth fica no navegador do sistema; mantém o splash até o callback.
+            if (readNativeSuapEntry()) {
+                this.waitingBrowser = true;
+                this.statusMessage = 'Conclua o login no navegador';
+                return;
+            }
         } catch (error) {
             this.formError = error instanceof Error ? error.message : 'Não foi possível entrar. Tente novamente.';
         } finally {
-            this.loading = false;
-            this.openingPainel = false;
-            this.statusMessage = '';
-            this.canContinue = !this.expectedIdentity && this.authService.isAuthenticated() && this.painelAvaService.hasDashboard();
+            if (!this.waitingBrowser) {
+                this.loading = false;
+                this.openingPainel = false;
+                this.statusMessage = '';
+                this.canContinue = !this.expectedIdentity && this.authService.isAuthenticated()
+                    && this.painelAvaService.hasDashboard();
+            }
         }
         // O retorno pode chegar antes de openBrowserForOAuthLogin resolver.
         // Reprocessar depois de liberar loading em vez de descartá-lo.
@@ -159,8 +205,39 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         window.location.assign(url.toString());
     }
 
+    /** A recuperação começa apenas após o usuário tocar no botão. */
+    async correctAccount(): Promise<void> {
+        if (this.loading || this.waitingBrowser || !this.accountIssue) return;
+        this.expectedIdentity = this.accountIssue.expectedLogin;
+        if (this.accountIssue.source === 'moodle' && !this.accountSwitchStarted) {
+            // Mesmo navegador da autenticação oficial. A saída é confirmada no site.
+            this.accountSwitchStarted = true;
+            window.open('https://academico.ava.ifrn.edu.br/auth/suap/logout.php', '_system');
+            return;
+        }
+        // expectedIdentity faz a consulta do painel iniciar sem reutilizar
+        // cookies anteriores. A matrícula é novamente validada antes de gravar.
+        await this.enterAva();
+    }
+
+    dismissAccountIssue(): void {
+        if (this.loading) return;
+        this.accountIssue = null;
+        this.accountSwitchStarted = false;
+        this.formError = '';
+        this.suapEntry.cancel();
+        this.canContinue = !this.expectedIdentity && this.authService.isAuthenticated() && this.painelAvaService.hasDashboard();
+    }
+
     cancelConnection(): void {
         this.suapEntry.cancelConnection();
+        this.suapEntry.cancel();
+        this.waitingBrowser = false;
+        this.loading = false;
+        this.openingPainel = false;
+        this.statusMessage = '';
+        this.canContinue = !this.expectedIdentity && this.authService.isAuthenticated()
+            && this.painelAvaService.hasDashboard();
     }
 
     openHelp(): void {

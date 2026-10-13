@@ -1,5 +1,5 @@
-<ion-content class="marketplace-ifrn" [fullscreen]="true" [scrollY]="true">
-    @if (loading || openingPainel) {
+<ion-content class="marketplace-ifrn" [fullscreen]="true" [scrollY]="true" [class.moodle-open-course]="!!accountIssue">
+    @if (showTransition) {
         <div class="marketplace-transition" role="status" aria-live="polite" aria-busy="true">
             <div class="marketplace-transition__brand" aria-hidden="true">
                 <svg class="marketplace-transition__ring" viewBox="0 0 120 120">
@@ -16,14 +16,50 @@
                 <img class="marketplace-transition__logo"
                     src="mobilemoodle/static/theme/ifrn/img/splash-logo.png" alt="" />
             </div>
-            <p class="marketplace-transition__caption">Carregando painel...</p>
-            <span class="marketplace-transition__status">{{ statusMessage }}</span>
-            @if (loading) {
-                <button type="button" class="marketplace-transition__cancel" (click)="cancelConnection()">Cancelar</button>
+            <p class="marketplace-transition__caption">{{ transitionCaption }}</p>
+            @if (waitingBrowser) {
+                <p class="marketplace-transition__hint">Após autenticar no SUAP, volte ao app automaticamente.</p>
             }
+            <button type="button" class="marketplace-transition__cancel" (click)="cancelConnection()">Cancelar</button>
         </div>
     }
 
+    @if (accountIssue; as issue) {
+        <header class="moodle-open-course__header">
+            <ion-button fill="clear" class="moodle-open-course__back" (click)="dismissAccountIssue()" [disabled]="showTransition" aria-label="Voltar ao início">
+                <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+            <h1 id="entry-account-title">Verifique sua matrícula</h1>
+        </header>
+        <main class="moodle-open-course__content" aria-labelledby="entry-account-title">
+            <section class="moodle-open-course__card">
+                <h2>Acesso ao Painel AVA</h2>
+                <p class="moodle-open-course__error" role="alert">{{ formError }}</p>
+                <dl class="moodle-open-course__accounts">
+                    <dt>Matrícula para continuar</dt>
+                    <dd>{{ issue.expectedLogin }}</dd>
+                    <dt>{{ issue.source === 'painel' ? 'Conta encontrada no Painel' : 'Conta que entrou no Moodle' }}</dt>
+                    <dd>{{ issue.actualLogin }}</dd>
+                </dl>
+                <p class="moodle-open-course__account-help">
+                    Para continuar, use a mesma matrícula no AVA e no Painel. Seus dados anteriores foram mantidos.
+                </p>
+                @if (accountSwitchStarted) {
+                    <p class="moodle-open-course__account-help" role="status">
+                        Confirme a saída no navegador. Depois volte ao app e toque em “Continuar com a matrícula correta”.
+                    </p>
+                }
+                <div class="moodle-open-course__actions">
+                    <ion-button expand="block" class="moodle-open-course__button" (click)="correctAccount()" [disabled]="showTransition">
+                        {{ accountSwitchStarted ? 'Continuar com a matrícula correta' : 'Entrar com outra conta SUAP' }}
+                    </ion-button>
+                    <ion-button expand="block" fill="outline" class="moodle-open-course__button" (click)="dismissAccountIssue()" [disabled]="showTransition">
+                        Voltar à tela inicial
+                    </ion-button>
+                </div>
+            </section>
+        </main>
+    } @else {
     <main class="welcome">
         <header class="welcome__header">
             <div class="brand" aria-label="Instituto Federal do Rio Grande do Norte">
@@ -65,10 +101,10 @@
                 <ion-button
                     expand="block"
                     class="btn-enter"
-                    [disabled]="loading || openingPainel"
+                    [disabled]="showTransition"
                     (click)="canContinue ? continueSession() : enterAva()">
                     <span class="btn-enter__content">
-                        <span>{{ loading ? 'Autenticando...' : (canContinue ? continueLabel : 'Entrar no AVA') }}</span>
+                        <span>{{ showTransition ? 'Autenticando...' : (canContinue ? continueLabel : 'Entrar no AVA') }}</span>
                         <span class="btn-enter__arrow" aria-hidden="true">
                             <ion-icon name="arrow-forward-outline" aria-hidden="true" />
                         </span>
@@ -90,4 +126,5 @@
 
         <footer class="welcome__footer">© {{ currentYear }} IFRN</footer>
     </main>
+    }
 </ion-content>

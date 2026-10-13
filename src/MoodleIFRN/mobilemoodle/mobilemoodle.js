@@ -2731,12 +2731,6 @@
       }
     }
     if (webLogoutUrl) {
-      const proceed = window.confirm(
-        'Para sair completamente e poder trocar de conta, ser\xE1 aberta a p\xE1gina oficial do Moodle. Toque em "Confirmar sa\xEDda" nessa p\xE1gina.'
-      );
-      if (!proceed) {
-        return;
-      }
       window.open(webLogoutUrl, "_system");
     }
     if (window.MobileMoodleApi?.clearToken) {

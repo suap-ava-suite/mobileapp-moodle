@@ -13,6 +13,18 @@ import { CoreOpener } from '@static/opener';
 import { OAUTH_PROFILE_KEY, profileIdentity } from '../mobilemoodle/core_mobile/oauth-profile';
 import { beginNativeSuapEntry, readNativeSuapEntry, endNativeSuapEntry, markNativeSuapEntryAuthenticated } from '../navigation/suap-entry-state';
 
+/** Divergência comprovada: transporta as contas para a tela de recuperação. */
+export class SuapEntryAccountError extends Error {
+    constructor(
+        public readonly expectedLogin: string,
+        public readonly actualLogin: string,
+        public readonly source: 'moodle' | 'painel',
+    ) {
+        super('As contas do AVA e do Painel são diferentes. Entre com a mesma matrícula para continuar.');
+        this.name = 'SuapEntryAccountError';
+    }
+}
+
 const AVA = 'https://academico.ava.ifrn.edu.br';
 type Profile = Record<string, unknown>;
 const present = (value: unknown): boolean => value !== undefined && value !== null && String(value).trim() !== '';
@@ -238,8 +250,11 @@ export class SuapEntryService {
             }, { getFromCache: false, saveToCache: false });
             const raw = profiles.find(item => Number(item.id) === info.userid);
             const identity = String(raw?.username || info.username || '').trim();
-            if (!raw || !identity || (entry.expectedIdentity && identity !== entry.expectedIdentity)) {
+            if (!raw || !identity) {
                 throw new Error('A conta do AVA não corresponde à matrícula esperada. Entre com a conta correta.');
+            }
+            if (entry.expectedIdentity && identity !== entry.expectedIdentity) {
+                throw new SuapEntryAccountError(entry.expectedIdentity, identity, 'moodle');
             }
             let previous: Profile = {};
             try {
@@ -257,11 +272,12 @@ export class SuapEntryService {
                 // Mantém a URL original se o núcleo não puder tokenizar o pluginfile.
             }
             const profile = mapNativeProfile(raw, identity, previous, photoUrl);
-            onStatus('Carregando seus cursos. Se solicitado, use a mesma conta SUAP…');
+            onStatus('Conectando ao Painel AVA…');
             const previousIdentity = sessionStorage.getItem('ifrn_username') || '';
             const panel = await firstValueFrom(this.painel.authenticateWithBrowser({
                 readOnly: true, reuseSession: previousIdentity === identity && !entry.expectedIdentity,
             }));
+            onStatus('Organizando seus cursos…');
             const dashboard = panel.diagnosticDashboard;
             if (!dashboard || typeof dashboard !== 'object' || Array.isArray(dashboard)
                 || !Array.isArray((dashboard as Profile).diarios)) {
@@ -273,7 +289,7 @@ export class SuapEntryService {
             // eslint-disable-next-line no-console
             console.log('[IFRN-ENTRY]', JSON.stringify({ identidadeDisponivel, contaCorresponde }));
             if (identidadeDisponivel && !contaCorresponde) {
-                throw new Error('O painel está em outra conta. Saia dessa conta no navegador e entre com a matrícula do AVA.');
+                throw new SuapEntryAccountError(identity, owner, 'painel');
             }
             if (!identidadeDisponivel) {
                 throw new Error(

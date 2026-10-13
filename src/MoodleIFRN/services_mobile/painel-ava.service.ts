@@ -74,6 +74,25 @@ const PAINEL_TOKEN_KEY = 'ifrn_painel_token';
 const PAINEL_PROFILE_KEY = 'ifrn_painel_profile';
 const JWT_SHAPE = /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/;
 const MAX_TOKEN_LENGTH = 4096;
+const SUAP_ORIGIN = 'https://suap.ifrn.edu.br';
+
+/** Opções do IAB: sem barra de URL e toolbar clara (evita tela preta padrão do Cordova). */
+const PAINEL_IAB_CHROME = {
+    location: 'no' as const,
+    hidden: 'yes' as const,
+    footer: 'no' as const,
+    toolbarcolor: '#ffffff',
+    closebuttoncolor: '#19743c',
+    navigationbuttoncolor: '#19743c',
+};
+
+/** Páginas em que o usuário precisa interagir (login/autorização). Demais URLs ficam ocultas. */
+function needsSuapUserInteraction(url: string): boolean {
+    if (!url.startsWith(`${SUAP_ORIGIN}/`)) {
+        return false;
+    }
+    return /\/(accounts\/login|login\/?(\?|$)|o\/authorize|oauth\/?2?\/authorize|authorize\/?(\?|$))/i.test(url);
+}
 
 /** Campos que o time quer inspecionar — só entram no resumo se existirem. */
 const DIARIO_INTEREST_KEYS = [
@@ -352,10 +371,9 @@ export class PainelAvaService {
             const diariosPath = PAINEL_AVA_CONFIG.diariosPath;
             const query = PAINEL_AVA_CONFIG.diariosQuery ? `?${PAINEL_AVA_CONFIG.diariosQuery}` : '';
             const diariosUrl = `${baseUrl}${diariosPath}${query}`;
-            const suapOrigin = 'https://suap.ifrn.edu.br';
+            const suapOrigin = SUAP_ORIGIN;
             let finished = false;
             let probing = false;
-            let sawSuap = false;
             let painelHidden = true;
             /** Após diários OK sem matrícula: consulta identidade no SUAP com a mesma sessão do IAB. */
             let awaitingSuapIdentity = false;
@@ -363,12 +381,36 @@ export class PainelAvaService {
             let pendingProfile: Record<string, unknown> | null = null;
             let pendingProbeLog: unknown[] = [];
 
+            const hideBrowser = (): void => {
+                if (painelHidden) {
+                    return;
+                }
+                painelHidden = true;
+                try {
+                    browser.hide();
+                } catch {
+                    // Plataforma sem hide(): o fluxo segue; o overlay Ionic cobre o retorno.
+                }
+            };
+
+            const showBrowserForLogin = (): void => {
+                if (!painelHidden) {
+                    return;
+                }
+                painelHidden = false;
+                try {
+                    browser.show();
+                } catch {
+                    finishWithError('Não foi possível exibir a autenticação do SUAP.');
+                }
+            };
+
             // Login novo limpa cookies; retomada preserva a sessão web da mesma conta.
             // Sem isso, cookies do SUAP/Painel do usuário anterior fazem o
             // GET /api/v1/diarios/ devolver os cursos da conta errada.
+            // Sem barra de URL e com toolbar branca para não flashar tela preta/URLs.
             const browser = CoreOpener.openInApp(`${baseUrl}/`, {
-                location: 'yes',
-                hidden: 'yes',
+                ...PAINEL_IAB_CHROME,
                 clearcache: options.reuseSession ? 'no' : 'yes',
                 clearsessioncache: options.reuseSession ? 'no' : 'yes',
             });
@@ -453,11 +495,7 @@ export class PainelAvaService {
             const beginSuapIdentityProbe = (): void => {
                 awaitingSuapIdentity = true;
                 probing = true;
-                try {
-                    browser.hide();
-                } catch {
-                    // Continua oculto se hide() não existir.
-                }
+                hideBrowser();
                 // Mesma sessão SUAP do OAuth do painel; em suap.ifrn.edu.br o fetch é same-origin.
                 browser.executeScript({
                     code: `window.location.href = ${JSON.stringify(`${suapOrigin}/`)};`,
@@ -467,25 +505,20 @@ export class PainelAvaService {
                 });
             };
 
-            // Inicia oculto; fica visível somente na tela de login SUAP. Assim que
-            // o OAuth retornar ao Painel, escondemos o IAB antes da página web
-            // do AVA ser desenhada e continuamos a coleta usando a mesma sessão.
+            // Inicia oculto; só mostra login/autorização SUAP. Esconde no loadstart
+            // (antes do paint) ao voltar ao Painel ou em redirects sem interação.
             const loadStartSubscription = browser.on('loadstart').subscribe((event) => {
                 const url = event.url || '';
 
                 if (url.startsWith(`${suapOrigin}/`)) {
-                    sawSuap = true;
+                    if (awaitingSuapIdentity || !needsSuapUserInteraction(url)) {
+                        hideBrowser();
+                    }
                     return;
                 }
 
-                if (sawSuap && !painelHidden && url.startsWith(baseUrl) && !awaitingSuapIdentity) {
-                    painelHidden = true;
-                    try {
-                        browser.hide();
-                    } catch {
-                        // Se a plataforma não oferecer hide(), o fluxo continua normalmente.
-                    }
-                }
+                // Qualquer saída do SUAP (callback OAuth, AVA, etc.): esconde antes do paint.
+                hideBrowser();
             });
 
             const loadStopSubscription = browser.on('loadstop').subscribe((event) => {
@@ -558,16 +591,15 @@ export class PainelAvaService {
                     return;
                 }
 
-                // Mostrar somente a autenticação quando ela realmente carregar.
+                // Mostrar só login/autorização; redirects intermediários ficam ocultos.
                 // Com cookies válidos, o Painel permanece oculto desde a criação.
-                if (!finished && !awaitingSuapIdentity && url.startsWith(`${suapOrigin}/`)) {
-                    sawSuap = true;
-                    painelHidden = false;
-                    try {
-                        browser.show();
-                    } catch {
-                        finishWithError('Não foi possível exibir a autenticação do SUAP.');
-                    }
+                if (!finished && !awaitingSuapIdentity && needsSuapUserInteraction(url)) {
+                    showBrowserForLogin();
+                    return;
+                }
+
+                if (!finished && url.startsWith(`${suapOrigin}/`)) {
+                    hideBrowser();
                     return;
                 }
 
@@ -875,8 +907,7 @@ export class PainelAvaService {
             // Não limpa cache/sessão: precisamos reutilizar exatamente a sessão
             // web criada no login do Painel. hidden evita uma tela intermediária.
             const browser = CoreOpener.openInApp(`${baseUrl}/`, {
-                location: 'no',
-                hidden: 'yes',
+                ...PAINEL_IAB_CHROME,
             } as Parameters<typeof CoreOpener.openInApp>[1]);
 
             const fail = (message: string): void => {

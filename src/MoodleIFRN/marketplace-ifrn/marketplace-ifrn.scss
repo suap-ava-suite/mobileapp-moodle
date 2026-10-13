@@ -444,15 +444,14 @@
     box-shadow: 0 2px 10px rgba(7, 29, 65, 0.12);
     z-index: 1;
 }
-.marketplace-transition__caption { font-size: 1rem; font-weight: 600; margin: 0; }
-.marketplace-transition__status {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
+.marketplace-transition__caption { font-size: 1rem; font-weight: 600; margin: 0; padding-inline: 12px; }
+.marketplace-transition__hint {
+    color: #526b6a;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    margin: 0;
+    max-width: 28ch;
+    padding-inline: 12px;
 }
 .marketplace-transition__cancel {
     position: absolute;

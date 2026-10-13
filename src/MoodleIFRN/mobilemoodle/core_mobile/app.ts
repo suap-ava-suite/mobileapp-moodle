@@ -28,8 +28,7 @@ import { MM, App } from './namespace';
     function logout(): void {
         // O OAuth Moodle roda no navegador do sistema (_system). A sessão web desse
         // navegador precisa ser encerrada para que outro usuário possa autenticar.
-        // O auth_suap exige uma confirmação humana na página de logout; por isso
-        // avisamos antes e abrimos a página oficial, sem tentar automatizar o clique.
+        // Abre a saída oficial; a confirmação do servidor permanece na página.
         const lastMoodleSite = sessionStorage.getItem('ifrn_moodle_last_site_url');
         let webLogoutUrl: string | null = null;
 
@@ -46,15 +45,6 @@ import { MM, App } from './namespace';
         }
 
         if (webLogoutUrl) {
-            const proceed = window.confirm(
-                'Para sair completamente e poder trocar de conta, será aberta a página oficial do Moodle. ' +
-                'Toque em "Confirmar saída" nessa página.',
-            );
-
-            if (!proceed) {
-                return;
-            }
-
             // Mesmo contexto usado pelo OAuth Moodle. O servidor exibirá
             // "Confirmar saída"; essa confirmação não é automatizada pelo app.
             window.open(webLogoutUrl, '_system');
