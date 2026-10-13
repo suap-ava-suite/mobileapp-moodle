@@ -608,7 +608,15 @@ export class MoodleSiteService {
         this.ensureLoginObserver();
         this.ensureCourseNavObserver();
         this.router.events.subscribe((event) => {
-            if (event instanceof NavigationEnd && !isNativeMoodleLanding(event.urlAfterRedirects || event.url)) {
+            if (!(event instanceof NavigationEnd)) {
+                return;
+            }
+            // Não esconder durante a abertura: a landing/curso ainda pode flashar preto.
+            // O finally de openCourseById remove o overlay quando a rota do curso confirma.
+            if (this.courseOpening || this.oauthReturnNavigating) {
+                return;
+            }
+            if (!isNativeMoodleLanding(event.urlAfterRedirects || event.url)) {
                 this.hideNativeCourseHandoff();
             }
         });
@@ -787,6 +795,9 @@ export class MoodleSiteService {
             this.oauthReturnNavigating = this.oauthCallbackReceived || this.oauthFlowActive;
             this.oauthCallbackReceived = false;
             this.oauthFlowActive = false;
+            if (this.oauthReturnNavigating) {
+                this.showNativeCourseHandoff();
+            }
         });
     }
 
@@ -797,9 +808,14 @@ export class MoodleSiteService {
         }
 
         sessionStorage.removeItem(OAUTH_PENDING_KEY);
-        this.oauthReturnNavigating = false;
+        this.oauthReturnNavigating = true;
+        this.showNativeCourseHandoff();
         this.oauthCallbackReceived = false;
-        await this.afterOAuthLogin();
+        try {
+            await this.afterOAuthLogin();
+        } finally {
+            this.oauthReturnNavigating = false;
+        }
 
         return true;
     }
@@ -1378,6 +1394,8 @@ export class MoodleSiteService {
             return Promise.reject(new Error('Já existe outro curso Moodle sendo aberto.'));
         }
 
+        // Overlay antes de /main e do getAndOpenCourse — evita tela preta da landing.
+        this.showNativeCourseHandoff();
         const promise = this.performOpenCourseById(courseId).finally(() => {
             this.courseOpening = null;
             this.hideNativeCourseHandoff();

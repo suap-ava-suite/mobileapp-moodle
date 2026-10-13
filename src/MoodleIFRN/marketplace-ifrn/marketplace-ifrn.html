@@ -42,18 +42,28 @@
                     <dd>{{ issue.actualLogin }}</dd>
                 </dl>
                 <p class="moodle-open-course__account-help">
-                    Para continuar, use a mesma matrícula no AVA e no Painel. Seus dados anteriores foram mantidos.
+                    As contas são diferentes. Saia da conta errada no navegador e entre de novo com a matrícula
+                    <strong>{{ issue.expectedLogin }}</strong>. Seus dados anteriores foram mantidos.
                 </p>
                 @if (accountSwitchStarted) {
-                    <p class="moodle-open-course__account-help" role="status">
-                        Confirme a saída no navegador. Depois volte ao app e toque em “Continuar com a matrícula correta”.
+                    <p class="moodle-open-course__account-help" role="status" aria-live="polite">
+                        No navegador, confirme a saída. Depois volte ao app e toque em
+                        “Continuar com a matrícula correta”.
                     </p>
                 }
                 <div class="moodle-open-course__actions">
-                    <ion-button expand="block" class="moodle-open-course__button" (click)="correctAccount()" [disabled]="showTransition">
-                        {{ accountSwitchStarted ? 'Continuar com a matrícula correta' : 'Entrar com outra conta SUAP' }}
+                    @if (accountSwitchStarted) {
+                        <ion-button expand="block" class="moodle-open-course__button"
+                            (click)="continueCorrectAccount()" [disabled]="showTransition">
+                            Continuar com a matrícula correta
+                        </ion-button>
+                    }
+                    <ion-button expand="block" class="moodle-open-course__button"
+                        (click)="openWebLogout()" [disabled]="showTransition">
+                        {{ accountSwitchStarted ? 'Abrir saída no navegador de novo' : 'Sair da conta no navegador' }}
                     </ion-button>
-                    <ion-button expand="block" fill="outline" class="moodle-open-course__button" (click)="dismissAccountIssue()" [disabled]="showTransition">
+                    <ion-button expand="block" fill="outline" class="moodle-open-course__button"
+                        (click)="dismissAccountIssue()" [disabled]="showTransition">
                         Voltar à tela inicial
                     </ion-button>
                 </div>

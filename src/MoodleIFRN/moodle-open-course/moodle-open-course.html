@@ -4,24 +4,33 @@
 
     @if (phase === 'loading' || phase === 'waiting-browser') {
         <div class="moodle-open-course__silent" role="status" aria-live="polite" aria-busy="true">
-<div class="ava-splash__brand">
-                        <div class="ava-splash__gauge" aria-hidden="true">
-                            <svg class="ava-splash__gauge-svg" viewBox="0 0 120 120" aria-hidden="true">
-                                <defs>
-                                    <linearGradient id="ifrn-bridge-gauge-grad" gradientUnits="userSpaceOnUse" x1="60" y1="6" x2="60" y2="114">
-                                        <stop offset="0%" stop-color="#168821"></stop>
-                                        <stop offset="55%" stop-color="#2d8a45"></stop>
-                                        <stop offset="100%" stop-color="#0b4f1b"></stop>
-                                    </linearGradient>
-                                </defs>
-                                <circle class="ava-splash__gauge-track" cx="60" cy="60" r="54"></circle>
-                                <circle class="ava-splash__gauge-arc" cx="60" cy="60" r="54"></circle>
-                            </svg>
-                        </div>
-                        <img class="ava-splash__logo" src="mobilemoodle/static/theme/ifrn/img/splash-logo.png" alt="Painel AVA">
-                    </div>
-                                <p class="ava-splash__text">{{ phase === 'waiting-browser' ? 'Conclua o login no navegador' : 'Carregando curso...' }}</p>
-            <ion-button fill="clear" (click)="cancelOpening()">Voltar ao Painel</ion-button>
+            <div class="ava-splash__brand">
+                <div class="ava-splash__gauge" aria-hidden="true">
+                    <svg class="ava-splash__gauge-svg" viewBox="0 0 120 120" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="ifrn-bridge-gauge-grad" gradientUnits="userSpaceOnUse" x1="60" y1="6" x2="60" y2="114">
+                                <stop offset="0%" stop-color="#168821"></stop>
+                                <stop offset="55%" stop-color="#2d8a45"></stop>
+                                <stop offset="100%" stop-color="#0b4f1b"></stop>
+                            </linearGradient>
+                        </defs>
+                        <circle class="ava-splash__gauge-track" cx="60" cy="60" r="54"></circle>
+                        <circle class="ava-splash__gauge-arc" cx="60" cy="60" r="54"></circle>
+                    </svg>
+                </div>
+                <img class="ava-splash__logo" src="mobilemoodle/static/theme/ifrn/img/splash-logo.png" alt="Painel AVA">
+            </div>
+            <p class="ava-splash__text">
+                {{ phase === 'waiting-browser' ? 'Conclua o login no navegador' : 'Carregando curso...' }}
+            </p>
+            @if (phase === 'waiting-browser') {
+                <p class="moodle-open-course__silent-hint">
+                    Após autenticar no SUAP, o app abre o curso automaticamente.
+                </p>
+            }
+            <ion-button fill="clear" class="moodle-open-course__silent-back" (click)="cancelOpening()">
+                Voltar ao Painel
+            </ion-button>
         </div>
     } @else {
         <header class="moodle-open-course__header">

@@ -1,5 +1,6 @@
 /** Mesmo logo e gauge da tela de carregamento do Painel AVA. */
 export function showHandoffLoading(): void {
+    document.documentElement.classList.add('ifrn-native-handoff');
     if (document.getElementById('ifrn-handoff-loading')) {
         return;
     }

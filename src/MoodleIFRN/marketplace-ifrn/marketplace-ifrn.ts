@@ -8,6 +8,7 @@ import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.servic
 import { CoreLang } from '@services/lang';
 import { CorePlatform } from '@services/platform';
 import { CoreNavigator } from '@services/navigator';
+import { CoreOpener } from '@static/opener';
 import { SuapEntryService, SuapEntryAccountError } from '@/MoodleIFRN/services_mobile/suap-entry.service';
 
 @Component({
@@ -205,28 +206,64 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         window.location.assign(url.toString());
     }
 
-    /** A recuperação começa apenas após o usuário tocar no botão. */
-    async correctAccount(): Promise<void> {
-        if (this.loading || this.waitingBrowser || !this.accountIssue) return;
-        this.expectedIdentity = this.accountIssue.expectedLogin;
-        if (this.accountIssue.source === 'moodle' && !this.accountSwitchStarted) {
-            // Mesmo navegador da autenticação oficial. A saída é confirmada no site.
-            this.accountSwitchStarted = true;
-            window.open('https://academico.ava.ifrn.edu.br/auth/suap/logout.php', '_system');
+    /**
+     * Abre a página oficial de saída na web.
+     * Moodle: navegador do sistema (mesmo do OAuth).
+     * Painel: InAppBrowser (mesmos cookies da sessão errada).
+     */
+    openWebLogout(): void {
+        if (this.showTransition || !this.accountIssue) {
             return;
         }
-        // expectedIdentity faz a consulta do painel iniciar sem reutilizar
-        // cookies anteriores. A matrícula é novamente validada antes de gravar.
+        this.expectedIdentity = this.accountIssue.expectedLogin;
+        this.accountSwitchStarted = true;
+        const url = this.accountLogoutUrl(this.accountIssue.source);
+        if (this.accountIssue.source === 'painel') {
+            CoreOpener.openInApp(url, {
+                location: 'no',
+                hidden: 'no',
+                toolbarcolor: '#ffffff',
+                closebuttoncolor: '#19743c',
+                closebuttoncaption: 'Fechar',
+            });
+            return;
+        }
+        window.open(url, '_system');
+    }
+
+    /** Depois da saída na web, reinicia a entrada com a matrícula esperada. */
+    async continueCorrectAccount(): Promise<void> {
+        if (this.showTransition || !this.accountIssue || !this.accountSwitchStarted) {
+            return;
+        }
+        this.expectedIdentity = this.accountIssue.expectedLogin;
+        this.accountSwitchStarted = false;
+        try {
+            CoreOpener.closeInAppBrowser();
+        } catch {
+            // Nada aberto: segue o novo login.
+        }
+        // expectedIdentity faz a consulta do painel iniciar sem reutilizar cookies.
         await this.enterAva();
     }
 
+    private accountLogoutUrl(source: 'moodle' | 'painel'): string {
+        if (source === 'painel') {
+            return 'https://suap.ifrn.edu.br/accounts/logout/';
+        }
+        return 'https://academico.ava.ifrn.edu.br/auth/suap/logout.php';
+    }
+
     dismissAccountIssue(): void {
-        if (this.loading) return;
+        if (this.showTransition) {
+            return;
+        }
         this.accountIssue = null;
         this.accountSwitchStarted = false;
         this.formError = '';
         this.suapEntry.cancel();
-        this.canContinue = !this.expectedIdentity && this.authService.isAuthenticated() && this.painelAvaService.hasDashboard();
+        this.canContinue = !this.expectedIdentity && this.authService.isAuthenticated()
+            && this.painelAvaService.hasDashboard();
     }
 
     cancelConnection(): void {

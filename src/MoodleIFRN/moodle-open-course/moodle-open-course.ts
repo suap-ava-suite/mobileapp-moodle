@@ -240,6 +240,7 @@ export class MoodleOpenCoursePage implements OnInit {
         this.moodleSite.lastError = '';
         this.moodleSite.setIdentityMismatchPending(false);
         this.loading = true;
+        this.moodleSite.showNativeCourseHandoff();
 
         try {
             const result = await this.moodleSite.ensureSessionAndOpenCourse(
@@ -256,6 +257,7 @@ export class MoodleOpenCoursePage implements OnInit {
             // Libera o lock desta verificação e inicia o OAuth oficial imediatamente.
             // eslint-disable-next-line no-console
             console.log('[IFRN-COURSE] sessão Moodle ausente — iniciando OAuth automaticamente');
+            this.moodleSite.hideNativeCourseHandoff();
             this.loading = false;
             await this.startOAuthFlow();
         } catch (error) {
