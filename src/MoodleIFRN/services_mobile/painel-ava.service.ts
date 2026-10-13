@@ -49,6 +49,10 @@ export interface PainelAvaDiariosResponse {
 
 /** Resultado da API v1 (UI + console) — sem tokens. */
 export interface PainelAvaV1Result {
+    /** Somente diagnóstico: resposta completa, sem persistir no painel. */
+    diagnosticDashboard?: unknown;
+    diagnosticOwner?: string;
+    diagnosticProfile?: Record<string, unknown> | null;
     baseUrl: string;
     authenticatePath: string;
     diariosUrl: string;
@@ -342,16 +346,22 @@ export class PainelAvaService {
      * Depois que a sessão web existir, consulta /api/v1/diarios/ dentro da origem
      * https://ava.ifrn.edu.br, sem copiar cookie, código OAuth ou senha para o app.
      */
-    authenticateWithBrowser(options: { reuseSession?: boolean } = {}): Observable<PainelAvaV1Result> {
+    authenticateWithBrowser(options: { reuseSession?: boolean; readOnly?: boolean } = {}): Observable<PainelAvaV1Result> {
         return new Observable<PainelAvaV1Result>((subscriber) => {
             const baseUrl = PAINEL_AVA_CONFIG.baseUrl.replace(/\/$/, '');
             const diariosPath = PAINEL_AVA_CONFIG.diariosPath;
             const query = PAINEL_AVA_CONFIG.diariosQuery ? `?${PAINEL_AVA_CONFIG.diariosQuery}` : '';
             const diariosUrl = `${baseUrl}${diariosPath}${query}`;
+            const suapOrigin = 'https://suap.ifrn.edu.br';
             let finished = false;
             let probing = false;
             let sawSuap = false;
             let painelHidden = true;
+            /** Após diários OK sem matrícula: consulta identidade no SUAP com a mesma sessão do IAB. */
+            let awaitingSuapIdentity = false;
+            let pendingRaw: unknown = null;
+            let pendingProfile: Record<string, unknown> | null = null;
+            let pendingProbeLog: unknown[] = [];
 
             // Login novo limpa cookies; retomada preserva a sessão web da mesma conta.
             // Sem isso, cookies do SUAP/Painel do usuário anterior fazem o
@@ -371,7 +381,90 @@ export class PainelAvaService {
                     return;
                 }
                 finished = true;
+                awaitingSuapIdentity = false;
                 subscriber.error(new Error(message));
+            };
+
+            const finishWithDashboard = (
+                raw: unknown,
+                profile: Record<string, unknown> | null,
+                probeLog: unknown[],
+            ): void => {
+                if (finished) {
+                    return;
+                }
+                const extracted = extractDiariosList(raw);
+                const ownerUsername = profileUsernameHint(profile, '');
+                const profileKeys = profile ? Object.keys(profile).filter((key) => !key.startsWith('_')) : [];
+                const nameSource = typeof profile?.['_name_source'] === 'string'
+                    ? profile['_name_source']
+                    : '(ausente)';
+
+                if (!options.readOnly) {
+                    this.saveDashboard(raw, ownerUsername || undefined);
+                    this.saveProfile(profile);
+                }
+
+                const propertyUnion = new Set<string>();
+                extracted.diarios.forEach((diario) => Object.keys(diario).forEach((key) => propertyUnion.add(key)));
+                const diariosResumo = extracted.diarios.map((diario, index) => ({
+                    _index: index,
+                    _keys: Object.keys(diario),
+                    ...pickExistingInterest(diario),
+                }));
+
+                const result: PainelAvaV1Result = {
+                    ...(options.readOnly ? {
+                        diagnosticDashboard: raw,
+                        diagnosticOwner: ownerUsername,
+                        diagnosticProfile: profile,
+                    } : {}),
+                    baseUrl,
+                    authenticatePath: 'OAuth web SUAP → /authenticate/?code=…',
+                    diariosUrl,
+                    usernameHint: '(sessão web Painel AVA)',
+                    tokenStored: false,
+                    profileKeys,
+                    responseTopKeys: extracted.topKeys,
+                    diariosCount: extracted.diarios.length,
+                    diarioPropertyUnion: Array.from(propertyUnion).sort(),
+                    diarios: extracted.diarios,
+                    diariosResumo,
+                };
+
+                finished = true;
+                awaitingSuapIdentity = false;
+                // eslint-disable-next-line no-console
+                console.log('[IFRN-PANEL]', JSON.stringify({
+                    diariosCount: result.diariosCount,
+                    identidadeDisponivel: !!ownerUsername,
+                    identitySource: nameSource,
+                    profileKeyCount: profileKeys.length,
+                }));
+                if (probeLog.length) {
+                    // eslint-disable-next-line no-console
+                    console.log('[IFRN-PANEL] profile probes:', JSON.stringify(probeLog));
+                }
+                subscriber.next(result);
+                subscriber.complete();
+                CoreOpener.closeInAppBrowser();
+            };
+
+            const beginSuapIdentityProbe = (): void => {
+                awaitingSuapIdentity = true;
+                probing = true;
+                try {
+                    browser.hide();
+                } catch {
+                    // Continua oculto se hide() não existir.
+                }
+                // Mesma sessão SUAP do OAuth do painel; em suap.ifrn.edu.br o fetch é same-origin.
+                browser.executeScript({
+                    code: `window.location.href = ${JSON.stringify(`${suapOrigin}/`)};`,
+                }).catch(() => {
+                    finishWithDashboard(pendingRaw, pendingProfile, pendingProbeLog);
+                    probing = false;
+                });
             };
 
             // Inicia oculto; fica visível somente na tela de login SUAP. Assim que
@@ -380,12 +473,12 @@ export class PainelAvaService {
             const loadStartSubscription = browser.on('loadstart').subscribe((event) => {
                 const url = event.url || '';
 
-                if (url.startsWith('https://suap.ifrn.edu.br/')) {
+                if (url.startsWith(`${suapOrigin}/`)) {
                     sawSuap = true;
                     return;
                 }
 
-                if (sawSuap && !painelHidden && url.startsWith(baseUrl)) {
+                if (sawSuap && !painelHidden && url.startsWith(baseUrl) && !awaitingSuapIdentity) {
                     painelHidden = true;
                     try {
                         browser.hide();
@@ -396,9 +489,78 @@ export class PainelAvaService {
             });
 
             const loadStopSubscription = browser.on('loadstop').subscribe((event) => {
+                const url = event.url || '';
+
+                // Coleta de identidade após diários: permanece oculta; não reabre o login.
+                if (!finished && awaitingSuapIdentity && url.startsWith(`${suapOrigin}/`)) {
+                    const identityScript = `
+                        (function () {
+                            var probeLog = ${JSON.stringify(pendingProbeLog)};
+                            function post(profile) {
+                                window.webkit.messageHandlers.cordova_iab.postMessage(JSON.stringify({
+                                    type: 'ifrn-suap-identity',
+                                    ok: true,
+                                    profile: profile,
+                                    profileProbeLog: probeLog
+                                }));
+                            }
+                            function fromJson(data, source) {
+                                if (!data || typeof data !== 'object') return null;
+                                var id = (data.identificacao || data.matricula || data.username || '').toString().trim();
+                                if (!id) return null;
+                                return {
+                                    matricula: id,
+                                    identificacao: id,
+                                    username: id,
+                                    nome: data.nome_usual || data.nome_social || data.nome || undefined,
+                                    nome_usual: data.nome_usual || undefined,
+                                    foto: data.foto || data.url_foto_150x200 || undefined,
+                                    url_foto_150x200: data.url_foto_150x200 || undefined,
+                                    url_foto_75x100: data.url_foto_75x100 || undefined,
+                                    _name_source: source
+                                };
+                            }
+                            function fetchJson(path) {
+                                return fetch(path, {
+                                    method: 'GET',
+                                    headers: { 'Accept': 'application/json' },
+                                    credentials: 'same-origin',
+                                    redirect: 'follow'
+                                }).then(function (response) {
+                                    var contentType = response.headers.get('content-type') || '';
+                                    probeLog.push({ path: 'suap:' + path, status: response.status, json: contentType.indexOf('application/json') !== -1 });
+                                    if (!response.ok || contentType.indexOf('application/json') === -1) return null;
+                                    return response.json();
+                                }).catch(function () {
+                                    probeLog.push({ path: 'suap:' + path, status: 0, json: false });
+                                    return null;
+                                });
+                            }
+                            var paths = ['/api/rh/eu/', '/api/v2/minhas-informacoes/meus-dados/', '/api/minhas-informacoes/meus-dados/'];
+                            function next(i) {
+                                if (i >= paths.length) {
+                                    post(null);
+                                    return;
+                                }
+                                fetchJson(paths[i]).then(function (data) {
+                                    var parsed = fromJson(data, 'GET suap' + paths[i]);
+                                    if (parsed) post(parsed);
+                                    else next(i + 1);
+                                });
+                            }
+                            next(0);
+                        })();
+                    `;
+                    browser.executeScript({ code: identityScript }).catch(() => {
+                        finishWithDashboard(pendingRaw, pendingProfile, pendingProbeLog);
+                        probing = false;
+                    });
+                    return;
+                }
+
                 // Mostrar somente a autenticação quando ela realmente carregar.
                 // Com cookies válidos, o Painel permanece oculto desde a criação.
-                if (!finished && event.url.startsWith('https://suap.ifrn.edu.br/')) {
+                if (!finished && !awaitingSuapIdentity && url.startsWith(`${suapOrigin}/`)) {
                     sawSuap = true;
                     painelHidden = false;
                     try {
@@ -409,7 +571,7 @@ export class PainelAvaService {
                     return;
                 }
 
-                if (finished || probing || !event.url.startsWith(baseUrl)) {
+                if (finished || probing || awaitingSuapIdentity || !url.startsWith(baseUrl)) {
                     return;
                 }
 
@@ -418,6 +580,25 @@ export class PainelAvaService {
                 const script = `
                     (function () {
                         var endpoint = ${JSON.stringify(diariosPath + query)};
+                        var probeLog = [];
+                        function fetchJson(path) {
+                            return fetch(path, {
+                                method: 'GET',
+                                headers: { 'Accept': 'application/json' },
+                                credentials: 'same-origin',
+                                redirect: 'follow'
+                            }).then(function (response) {
+                                var contentType = response.headers.get('content-type') || '';
+                                probeLog.push({ path: path, status: response.status, json: contentType.indexOf('application/json') !== -1 });
+                                if (!response.ok || contentType.indexOf('application/json') === -1) {
+                                    return null;
+                                }
+                                return response.json();
+                            }).catch(function () {
+                                probeLog.push({ path: path, status: 0, json: false });
+                                return null;
+                            });
+                        }
                         fetch(endpoint, {
                             method: 'GET',
                             headers: { 'Accept': 'application/json' },
@@ -433,8 +614,8 @@ export class PainelAvaService {
                         })
                         .then(function (payload) {
                             // O login já está válido porque /api/v1/diarios/ respondeu JSON.
-                            // A captura do nome NÃO pode bloquear a autenticação.
-                            // Usamos somente o elemento oficial do perfil renderizado pelo Painel.
+                            // A identidade confiável vem de /api/v2/usuario/info/ (sessão web).
+                            // O HTML só complementa nome/foto quando a API não estiver disponível.
                             function cleanName(value) {
                                 value = (value || '').replace(/\s+/g, ' ').trim();
                                 if (!value || value.length < 2 || value.length > 120) return '';
@@ -442,25 +623,83 @@ export class PainelAvaService {
                                 return value;
                             }
 
+                            function absoluteUrl(src) {
+                                if (!src || typeof src !== 'string') return '';
+                                src = src.trim();
+                                if (!src) return '';
+                                try { return new URL(src, location.origin).href; } catch (error) { return src; }
+                            }
+
                             function profileFromDocument(doc, source) {
                                 if (!doc || !doc.querySelector) return null;
-
-                                // Tema ifrn25: exatamente o <span> filho direto do botão de perfil.
                                 var nameEl = doc.querySelector('#btn-toggle-profile > span');
-                                // Compatibilidade com tema ifrn23.
                                 if (!nameEl) nameEl = doc.querySelector('#header-user .user_name');
-
                                 var name = cleanName(nameEl && nameEl.textContent);
                                 var avatar = doc.querySelector('#btn-toggle-profile img.profile-image, #header-user img');
-                                var photo = avatar && avatar.getAttribute('src') ? avatar.getAttribute('src') : '';
-
-                                if (!name && !photo) return null;
+                                var photo = absoluteUrl(avatar && avatar.getAttribute('src') ? avatar.getAttribute('src') : '');
+                                var root = doc.querySelector('#btn-toggle-profile, #header-user');
+                                var matricula = '';
+                                if (root) {
+                                    ['data-username', 'data-user', 'data-matricula', 'data-identificacao'].forEach(function (attr) {
+                                        if (!matricula) {
+                                            var value = (root.getAttribute(attr) || '').trim();
+                                            if (value) matricula = value;
+                                        }
+                                    });
+                                }
+                                if (!matricula && photo) {
+                                    var photoId = photo.match(/(?:alunos|servidores|funcionarios)\\/(\\d{6,14})/i)
+                                        || photo.match(/\\/(\\d{11,14})(?:[_\\/.?]|$)/);
+                                    if (photoId) matricula = photoId[1];
+                                }
+                                if (!name && !photo && !matricula) return null;
                                 return {
                                     nome: name || undefined,
                                     nome_usual: name || undefined,
                                     foto: photo || undefined,
+                                    matricula: matricula || undefined,
+                                    identificacao: matricula || undefined,
+                                    username: matricula || undefined,
                                     _name_source: source
                                 };
+                            }
+
+                            function profileFromUserInfo(data, source) {
+                                if (!data || typeof data !== 'object') return null;
+                                var matricula = (data.matricula || data.identificacao || data.username || '').toString().trim();
+                                if (!matricula) return null;
+                                var foto = absoluteUrl(data.url_foto_150x200 || data.url_foto_75x100 || data.foto || '');
+                                return {
+                                    matricula: matricula,
+                                    identificacao: matricula,
+                                    username: matricula,
+                                    nome: cleanName(data.nome_usual || data.nome_social || data.nome_registro || data.nome) || undefined,
+                                    nome_usual: cleanName(data.nome_usual) || undefined,
+                                    nome_social: cleanName(data.nome_social) || undefined,
+                                    nome_registro: cleanName(data.nome_registro) || undefined,
+                                    foto: foto || undefined,
+                                    url_foto_150x200: absoluteUrl(data.url_foto_150x200 || '') || undefined,
+                                    url_foto_75x100: absoluteUrl(data.url_foto_75x100 || '') || undefined,
+                                    email: typeof data.email === 'string' ? data.email : undefined,
+                                    _name_source: source
+                                };
+                            }
+
+                            function mergeProfiles(primary, secondary) {
+                                if (!primary) return secondary || null;
+                                if (!secondary) return primary;
+                                var merged = {};
+                                Object.keys(secondary).forEach(function (key) {
+                                    if (secondary[key] !== undefined && secondary[key] !== null && secondary[key] !== '') {
+                                        merged[key] = secondary[key];
+                                    }
+                                });
+                                Object.keys(primary).forEach(function (key) {
+                                    if (primary[key] !== undefined && primary[key] !== null && primary[key] !== '') {
+                                        merged[key] = primary[key];
+                                    }
+                                });
+                                return merged;
                             }
 
                             function sendSuccess(profile) {
@@ -469,15 +708,22 @@ export class PainelAvaService {
                                     ok: true,
                                     payload: payload,
                                     profile: profile,
-                                    profileProbeLog: []
+                                    profileProbeLog: probeLog
                                 }));
                             }
 
-                            // A própria tela de retorno pode ser uma página intermediária. Por isso,
-                            // primeiro lemos o perfil que já está renderizado e, depois, buscamos a raiz
-                            // autenticada do Painel usando exatamente o mesmo cookie da sessão web.
-                            // Não usamos texto genérico da página: somente seletores do bloco oficial
-                            // de usuário do Painel.
+                            function fetchUserInfo() {
+                                var paths = ['/api/v2/usuario/info/', '/api/usuario/info/', '/usuario/info/'];
+                                function next(index) {
+                                    if (index >= paths.length) return Promise.resolve(null);
+                                    return fetchJson(paths[index]).then(function (data) {
+                                        var parsed = profileFromUserInfo(data, 'GET ' + paths[index]);
+                                        return parsed || next(index + 1);
+                                    });
+                                }
+                                return next(0);
+                            }
+
                             var currentProfile = profileFromDocument(document, 'dom-atual:#btn-toggle-profile > span');
 
                             function parseRootProfile(html) {
@@ -490,12 +736,9 @@ export class PainelAvaService {
                                 }
                             }
 
-                            // Depois que /api/v1/diarios/ respondeu JSON, o login JÁ terminou.
-                            // Esta coleta é apenas complementar. Timeout curto + fallback garantem que
-                            // uma falha ao buscar o nome nunca prenda o Marketplace em "Autenticando".
-                            var rootTimeout = new Promise(function (resolve) {
-                                setTimeout(function () { resolve(null); }, 800);
-                            });
+                            var shortTimeout = function () {
+                                return new Promise(function (resolve) { setTimeout(function () { resolve(null); }, 800); });
+                            };
 
                             var rootRequest = fetch('/', {
                                 method: 'GET',
@@ -508,10 +751,13 @@ export class PainelAvaService {
                                 return response.text().then(parseRootProfile);
                             }).catch(function () { return null; });
 
-                            Promise.race([rootRequest, rootTimeout]).then(function (rootProfile) {
-                                // A raiz autenticada é a fonte preferida. Se ela não trouxer o bloco
-                                // de perfil, reutiliza a página atual. Em qualquer caso o login segue.
-                                sendSuccess(rootProfile || currentProfile || null);
+                            Promise.all([
+                                Promise.race([rootRequest, shortTimeout()]),
+                                Promise.race([fetchUserInfo(), shortTimeout()])
+                            ]).then(function (results) {
+                                var htmlProfile = results[0] || currentProfile || null;
+                                var apiProfile = results[1] || null;
+                                sendSuccess(mergeProfiles(apiProfile, htmlProfile));
                             }).catch(function () {
                                 sendSuccess(currentProfile || null);
                             });
@@ -555,59 +801,37 @@ export class PainelAvaService {
                     return;
                 }
 
+                if (data['type'] === 'ifrn-suap-identity') {
+                    probing = false;
+                    const suapProfile = isPlainObject(data['profile']) ? data['profile'] : null;
+                    const probeLog = Array.isArray(data['profileProbeLog']) ? data['profileProbeLog'] : pendingProbeLog;
+                    const merged = suapProfile
+                        ? { ...(pendingProfile || {}), ...suapProfile }
+                        : pendingProfile;
+                    finishWithDashboard(pendingRaw, merged, probeLog);
+                    return;
+                }
+
                 if (data['type'] !== 'ifrn-painel-diarios' || data['ok'] !== true) {
                     return;
                 }
 
                 const raw = data['payload'];
-                const extracted = extractDiariosList(raw);
                 const profile = isPlainObject(data['profile']) ? data['profile'] : null;
                 const ownerUsername = profileUsernameHint(profile, '');
-                const profileKeys = profile ? Object.keys(profile).filter((key) => !key.startsWith('_')) : [];
-                const nameSource = typeof profile?.['_name_source'] === 'string'
-                    ? profile['_name_source']
-                    : '(ausente)';
                 const probeLog = Array.isArray(data['profileProbeLog']) ? data['profileProbeLog'] : [];
+                probing = false;
 
-                this.saveDashboard(raw, ownerUsername || undefined);
-                this.saveProfile(profile);
-
-                const propertyUnion = new Set<string>();
-                extracted.diarios.forEach((diario) => Object.keys(diario).forEach((key) => propertyUnion.add(key)));
-                const diariosResumo = extracted.diarios.map((diario, index) => ({
-                    _index: index,
-                    _keys: Object.keys(diario),
-                    ...pickExistingInterest(diario),
-                }));
-
-                const result: PainelAvaV1Result = {
-                    baseUrl,
-                    authenticatePath: 'OAuth web SUAP → /authenticate/?code=…',
-                    diariosUrl,
-                    usernameHint: '(sessão web Painel AVA)',
-                    tokenStored: false,
-                    profileKeys,
-                    responseTopKeys: extracted.topKeys,
-                    diariosCount: extracted.diarios.length,
-                    diarioPropertyUnion: Array.from(propertyUnion).sort(),
-                    diarios: extracted.diarios,
-                    diariosResumo,
-                };
-
-                finished = true;
-                // eslint-disable-next-line no-console
-                console.log(
-                    `[IFRN-PANEL] sessão web válida; ${result.diariosCount} diário(s); `
-                    + `nome origem=${nameSource}; profileKeys=${profileKeys.join(',') || '(nenhuma)'}`,
-                );
-                // Diagnóstico temporário seguro: endpoint/status/content-type/keys (sem valores pessoais).
-                if (probeLog.length) {
-                    // eslint-disable-next-line no-console
-                    console.log('[IFRN-PANEL] profile probes:', JSON.stringify(probeLog));
+                // API v2 do painel ainda pode estar ausente no host; usa sessão SUAP do IAB.
+                if (!ownerUsername) {
+                    pendingRaw = raw;
+                    pendingProfile = profile;
+                    pendingProbeLog = probeLog;
+                    beginSuapIdentityProbe();
+                    return;
                 }
-                subscriber.next(result);
-                subscriber.complete();
-                CoreOpener.closeInAppBrowser();
+
+                finishWithDashboard(raw, profile, probeLog);
             });
 
             const exitSubscription = browser.on('exit').subscribe(() => {

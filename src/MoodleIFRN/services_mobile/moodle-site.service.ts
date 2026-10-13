@@ -23,6 +23,7 @@ import { CoreLoginHelper } from '@features/login/services/login-helper';
 import { AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
 import { showHandoffLoading, hideHandoffLoading } from '@/MoodleIFRN/navigation/handoff-loading';
+import { markNativeSuapEntryAuthenticated } from '@/MoodleIFRN/navigation/suap-entry-state';
 import { isNativeMoodleLanding } from '@/MoodleIFRN/navigation/navigation-policy';
 import { CoreNavigator, CoreRedirectPayload } from '@services/navigator';
 import { CoreSites, CoreSiteCheckResponse } from '@services/sites';
@@ -750,6 +751,10 @@ export class MoodleSiteService {
 
         CoreEvents.on(CoreEvents.LOGIN, () => {
             const site = CoreSites.getCurrentSite();
+            if (site && !site.isLoggedOut() && CoreSites.isLoggedIn()
+                && site.getURL().replace(/\/$/, '') === 'https://academico.ava.ifrn.edu.br') {
+                markNativeSuapEntryAuthenticated(site.getId());
+            }
             const match = this.matchCurrentMoodleIdentity();
 
             // eslint-disable-next-line no-console

@@ -15,9 +15,10 @@
 /**
  * Configuração do Painel AVA oficial observado em produção.
  *
- * O navegador usa GET /api/v1/diarios/ com sessão web. Para o APK,
- * mantemos o endpoint legado de autenticação v1 como tentativa de ponte mobile
- * no host atual. O runtime/logcat confirmará se ele está publicado nesse host.
+ * O navegador usa GET /api/v1/diarios/ com sessão web.
+ * Identidade: tenta /api/v2/usuario/info/ (404 no host em 2026-10; v2 no código-fonte
+ * mas ainda não publicada) e, se ausente, consulta /api/rh/eu/ no SUAP com a
+ * mesma sessão do InAppBrowser (same-origin após navegação).
  */
 export const PAINEL_AVA_CONFIG = {
     /** Base URL do Painel AVA (sem barra final). */
@@ -28,6 +29,12 @@ export const PAINEL_AVA_CONFIG = {
 
     /** Lista de diários em todos os AVAs; cada item traz id Moodle e viewurl. */
     diariosPath: '/api/v1/diarios/',
+
+    /** Identidade preferida no Painel (sessão web). Em produção pode ainda retornar 404. */
+    usuarioInfoPath: '/api/v2/usuario/info/',
+
+    /** Fallback de identidade no SUAP, com cookies do OAuth do painel no IAB. */
+    suapEuPath: '/api/rh/eu/',
 
     /** Query usada pelo painel mobile (diários em andamento). */
     diariosQuery: 'q=&situacao=inprogress&semestre=&disciplina=&curso=&ambiente=',

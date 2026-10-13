@@ -761,6 +761,43 @@
       source: "painel"
     };
   }
+  function usableProfilePhoto(value) {
+    if (typeof value !== "string") {
+      return void 0;
+    }
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return void 0;
+    }
+    if (/^(usuário|usuario|perfil|avatar|imagem de perfil|minha foto)$/i.test(trimmed)) {
+      return void 0;
+    }
+    if (/defaultuserpic|gravatar\.com\/avatar\//i.test(trimmed)) {
+      return void 0;
+    }
+    if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith("data:")) {
+      return trimmed;
+    }
+    if (trimmed.startsWith("/media/") || trimmed.startsWith("/static/")) {
+      return `https://suap.ifrn.edu.br${trimmed}`;
+    }
+    if (trimmed.startsWith("/")) {
+      return `https://ava.ifrn.edu.br${trimmed}`;
+    }
+    return void 0;
+  }
+  function pickProfilePhoto(profile) {
+    if (!profile) {
+      return void 0;
+    }
+    for (const key of ["url_foto_150x200", "url_foto_75x100", "foto", "profileimageurl"]) {
+      const url = usableProfilePhoto(profile[key]);
+      if (url) {
+        return url;
+      }
+    }
+    return void 0;
+  }
   function profileDisplayName(profile) {
     if (!profile) {
       return sessionStorage.getItem(IFRN_USERNAME_KEY) || "Usu\xE1rio";
@@ -832,7 +869,7 @@
     return {
       nome: profileDisplayName(profile),
       username: oauth?.identity || (typeof profile?.["matricula"] === "string" ? profile["matricula"] : typeof profile?.["username"] === "string" ? profile["username"] : void 0),
-      foto_url: typeof profile?.["url_foto_150x200"] === "string" ? profile["url_foto_150x200"] : typeof profile?.["foto"] === "string" ? profile["foto"] : void 0,
+      foto_url: pickProfilePhoto(profile),
       papel: "estudante",
       total_courses: courses.length,
       courses,

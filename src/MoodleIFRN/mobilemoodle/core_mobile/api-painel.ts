@@ -184,6 +184,48 @@ function mapPainelDiario(diario: PainelDiario): DashboardCourse {
     };
 }
 
+/** Aceita apenas URL utilizável; string vazia não pode sombrear foto Moodle. */
+function usableProfilePhoto(value: unknown): string | undefined {
+    if (typeof value !== 'string') {
+        return undefined;
+    }
+    const trimmed = value.trim();
+    if (!trimmed) {
+        return undefined;
+    }
+    if (/^(usuário|usuario|perfil|avatar|imagem de perfil|minha foto)$/i.test(trimmed)) {
+        return undefined;
+    }
+    if (/defaultuserpic|gravatar\.com\/avatar\//i.test(trimmed)) {
+        return undefined;
+    }
+    if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith('data:')) {
+        return trimmed;
+    }
+    if (trimmed.startsWith('/media/') || trimmed.startsWith('/static/')) {
+        return `https://suap.ifrn.edu.br${trimmed}`;
+    }
+    if (trimmed.startsWith('/')) {
+        return `https://ava.ifrn.edu.br${trimmed}`;
+    }
+
+    return undefined;
+}
+
+function pickProfilePhoto(profile: Record<string, unknown> | null): string | undefined {
+    if (!profile) {
+        return undefined;
+    }
+    for (const key of ['url_foto_150x200', 'url_foto_75x100', 'foto', 'profileimageurl']) {
+        const url = usableProfilePhoto(profile[key]);
+        if (url) {
+            return url;
+        }
+    }
+
+    return undefined;
+}
+
 function profileDisplayName(profile: Record<string, unknown> | null): string {
     if (!profile) {
         return sessionStorage.getItem(IFRN_USERNAME_KEY) || 'Usuário';
@@ -284,9 +326,7 @@ async function fetchPainelDashboard(): Promise<DashboardData> {
         username: oauth?.identity || (typeof profile?.['matricula'] === 'string'
             ? profile['matricula']
             : (typeof profile?.['username'] === 'string' ? profile['username'] : undefined)),
-        foto_url: typeof profile?.['url_foto_150x200'] === 'string'
-            ? profile['url_foto_150x200']
-            : (typeof profile?.['foto'] === 'string' ? profile['foto'] : undefined),
+        foto_url: pickProfilePhoto(profile),
         papel: 'estudante',
         total_courses: courses.length,
         courses,

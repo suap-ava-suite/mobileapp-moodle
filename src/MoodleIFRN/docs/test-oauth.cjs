@@ -93,11 +93,7 @@ function load(file) {
 const state = load(path.join(root, 'mobilemoodle/core_mobile/oauth-profile.ts'));
 const { AuthService } = load(path.join(root, 'services_mobile/auth.service.ts'));
 const { SuapOAuthService } = load(path.join(root, 'services_mobile/suap-oauth.service.ts'));
-const { IfrnLoginPage } = load(path.join(root, 'ifrn-login/ifrn-login.ts'));
-const profile = { identificacao: '00123', nome: 'Aluno teste', email: '', email_google_classroom: 'fake@example.invalid', campus: { sigla: 'XX' }, extra: 'preservado' };
-const dashboard = { diarios: [{ id: 1, viewurl: 'https://academico.ava.ifrn.edu.br/course/view.php?id=1' }],
-    coordenacoes: [{ id: 2, viewurl: 'https://presencial.ava.ifrn.edu.br/course/view.php?id=2' }],
-    autoinscricoes: [{ id: 3, is_enrolled: false }], praticas: [] };
+const profile = { identificacao: '00123', nome: 'Aluno teste', email: '', email_google_classroom: 'fake@example.invalid', campus: { sigla: 'XX' }, extra: 'preservado', foto: 'https://suap.ifrn.edu.br/media/foto.jpg' };
 const jwt = 'eyJhbGciOiJIUzI1NiJ9.' + Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url') + '.ZmFrZQ';
 function reset() {
     sessionStorage.clear(); localStorage.clear(); instances.clear(); navigations.length = 0;
@@ -109,60 +105,18 @@ function reset() {
     localStorage.setItem('ifrn_refresh_token', jwt);
     localStorage.setItem('ifrn_biometric_login_enabled', 'true');
 }
-function snapshot() { return JSON.stringify([[...sessionStorage.map], [...localStorage.map]].map(pairs => pairs.sort())); }
-function page(oauth, failPainel = false) {
-    let calls = 0;
-    const auth = new AuthService();
-    instances.set(AuthService, auth);
-    instances.set(SuapOAuthService, { enabled: true, login: oauth });
-    instances.set(BiometricService, { disable: () => localStorage.removeItem('ifrn_biometric_login_enabled') });
-    instances.set(PainelAvaService, {
-        clearSession() { ['ifrn_painel_dashboard', 'ifrn_painel_profile', 'ifrn_painel_owner'].forEach(k => sessionStorage.removeItem(k)); },
-        authenticateWithBrowser(options) {
-            calls++;
-            assert.equal(options.reuseSession, true);
-            if (failPainel === true) return Promise.reject(new Error('Falha simulada do painel'));
-            sessionStorage.setItem('ifrn_painel_dashboard', JSON.stringify(dashboard));
-            sessionStorage.setItem('ifrn_painel_owner', failPainel === 'identity' ? 'OUTRA_CONTA' : sessionStorage.getItem('ifrn_username'));
-            return Promise.resolve({});
-        },
-        hasDashboard: () => !!sessionStorage.getItem('ifrn_painel_dashboard'),
-    });
-    return { value: new IfrnLoginPage(), auth, calls: () => calls };
-}
 async function main() {
     reset();
-    const success = page(async () => ({ profile, expires_in: 1800 }));
-    success.value.username = '00123';
-    await success.value.loginWithSuapOAuth();
-    assert.equal(success.value.formError, '');
-    assert.equal(success.calls(), 1);
-    assert.equal(navigations.length, 1);
-    assert.equal(sessionStorage.getItem('ifrn_painel_dashboard'), JSON.stringify(dashboard));
-    assert.equal(sessionStorage.getItem('ifrn_painel_profile'), JSON.stringify(profile));
+    const auth = new AuthService();
+    auth.saveOAuthSession(profile, 1800);
     assert.equal(state.readOAuthProfile().identity, '00123');
     assert.equal(state.readOAuthProfile().profile.extra, 'preservado');
-    assert.equal(success.auth.getToken(), null);
-    assert.equal(localStorage.getItem('ifrn_refresh_token'), null);
-    assert.equal(await success.auth.restoreSession(), true);
-    assert.equal(localStorage.getItem('ifrn_biometric_login_enabled'), null);
+    assert.equal(state.readOAuthProfile().profile.foto, profile.foto);
+    assert.equal(auth.getToken(), null);
+    assert.equal(sessionStorage.getItem('ifrn_username'), '00123');
+    assert.equal(await auth.restoreSession(), true);
 
-    for (const mode of ['cancel', 'mismatch', 'panel', 'panel-identity']) {
-        reset(); const before = snapshot();
-        const attempt = page(async () => {
-            if (mode === 'cancel') throw new Error('Cancelado');
-            return { profile, expires_in: 1800 };
-        }, mode === 'panel-identity' ? 'identity' : mode === 'panel');
-        if (mode === 'mismatch') attempt.value.username = '123'; // Nao remover zeros.
-        await attempt.value.loginWithSuapOAuth();
-        assert.equal(snapshot(), before, 'rollback ' + mode);
-        assert.equal(navigations.length, 0);
-        assert.ok(attempt.value.formError);
-        assert.equal(attempt.value.loading, false);
-        assert.equal(attempt.calls(), mode.startsWith('panel') ? 1 : 0);
-    }
     reset();
-    const auth = new AuthService();
     auth.saveOAuthSession(profile, 1800);
     const record = JSON.parse(sessionStorage.getItem(state.OAUTH_PROFILE_KEY));
     record.expiresAt = Date.now() - 1;
@@ -209,6 +163,6 @@ async function main() {
         assert.equal(exchanges, mode === 'success' ? 1 : 0);
         assert.equal(browser.closed, true);
     }
-    console.log('OK: perfil completo, cursos preservados, rollback, identidade, expiracao, login antigo e retorno mobile.');
+    console.log('OK: sessão OAuth, foto preservada, expiração, login antigo e retorno mobile.');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

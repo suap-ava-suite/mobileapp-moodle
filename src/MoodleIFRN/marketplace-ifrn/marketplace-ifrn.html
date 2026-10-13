@@ -57,7 +57,14 @@
                     </span>
                 </ion-button>
 
+                @if (statusMessage) {
+                    <p class="welcome__account" role="status" aria-live="polite">{{ statusMessage }}</p>
+                }
+                @if (formError) {
+                    <p class="welcome__error" role="alert">{{ formError }}</p>
+                }
                 <p class="welcome__account">Acesse com sua conta SUAP</p>
+
 
 
             </div>

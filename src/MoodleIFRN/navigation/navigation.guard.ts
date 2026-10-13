@@ -1,6 +1,7 @@
 import { inject, provideAppInitializer } from '@angular/core';
 import { CanActivateChildFn, CanActivateFn, Router } from '@angular/router';
 import { MoodleSiteService } from '@/MoodleIFRN/services_mobile/moodle-site.service';
+import { readNativeSuapEntry } from './suap-entry-state';
 import { isNativeMoodleLanding } from './navigation-policy';
 
 /** Executado antes de ativar a landing: não depende de o usuário ter aberto um curso. */
@@ -9,6 +10,12 @@ export const ifrnMainMenuGuard: CanActivateFn & CanActivateChildFn = (_route, st
 
     if (!isNativeMoodleLanding(state.url)) {
         return true;
+    }
+
+    if (readNativeSuapEntry()) {
+        return inject(Router).createUrlTree(['/login/marketplace-ifrn'], {
+            queryParams: { nativeSuapReturn: true },
+        });
     }
 
     const recovery = service.getCourseRecoveryTarget();
