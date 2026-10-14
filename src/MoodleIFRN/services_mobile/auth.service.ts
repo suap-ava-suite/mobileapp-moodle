@@ -16,7 +16,7 @@ import { HttpBackend, HttpClient, HttpErrorResponse, HttpHeaders } from '@angula
 import { Injectable, inject } from '@angular/core';
 import { CoreLang } from '@services/lang';
 import { Observable, firstValueFrom, map, timeout } from 'rxjs';
-import { hasOAuthProfileMode, OAUTH_PROFILE_KEY, readOAuthProfile, saveOAuthProfile, profileIdentity }
+import { clearOAuthProfile, hasOAuthProfileMode, OAUTH_PROFILE_KEY, readOAuthProfile, saveOAuthProfile, profileIdentity }
     from '../mobilemoodle/core_mobile/oauth-profile';
 
 /* eslint-disable @typescript-eslint/naming-convention */
@@ -264,7 +264,7 @@ export class AuthService {
 
     /** Guarda apenas tokens; a senha nunca é persistida. */
     saveSession(response: AuthResponse): void {
-        sessionStorage.removeItem(OAUTH_PROFILE_KEY);
+        clearOAuthProfile();
         this.saveToken(response.access_token);
         if (JWT_SHAPE.test(response.refresh_token) && response.refresh_token.length < MAX_TOKEN_LENGTH) {
             localStorage.setItem(REFRESH_KEY, response.refresh_token);
@@ -319,7 +319,9 @@ export class AuthService {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(REFRESH_KEY);
         this.saveUsername(profileIdentity(profile));
-        sessionStorage.setItem('ifrn_painel_profile', JSON.stringify(profile));
+        const serialized = JSON.stringify(profile);
+        sessionStorage.setItem('ifrn_painel_profile', serialized);
+        localStorage.setItem('ifrn_painel_profile', serialized);
     }
 
     /**
@@ -339,6 +341,7 @@ export class AuthService {
      */
     logout(): void {
         sessionStorage.removeItem(OAUTH_PROFILE_KEY);
+        localStorage.removeItem(OAUTH_PROFILE_KEY);
         this.accessToken = null;
         localStorage.removeItem(REFRESH_KEY);
         sessionStorage.removeItem(TOKEN_KEY);
@@ -347,9 +350,13 @@ export class AuthService {
         localStorage.removeItem(USERNAME_KEY);
         // JWT / perfil / dashboard do Painel AVA (não é wstoken Moodle).
         sessionStorage.removeItem('ifrn_painel_token');
+        localStorage.removeItem('ifrn_painel_token');
         sessionStorage.removeItem('ifrn_painel_profile');
+        localStorage.removeItem('ifrn_painel_profile');
         sessionStorage.removeItem('ifrn_painel_dashboard');
+        localStorage.removeItem('ifrn_painel_dashboard');
         sessionStorage.removeItem('ifrn_painel_owner');
+        localStorage.removeItem('ifrn_painel_owner');
         sessionStorage.removeItem('ifrn_moodle_pending_open_course');
         sessionStorage.removeItem('ifrn_moodle_poc_oauth_pending');
         sessionStorage.removeItem('ifrn_moodle_poc_resume_oauth');

@@ -123,13 +123,13 @@ import { hasOAuthProfileMode, OAUTH_PROFILE_KEY } from './oauth-profile';
 
     /** Logout / 401: apaga token e zera caches da API. */
     function clearToken(): void {
-        sessionStorage.removeItem(OAUTH_PROFILE_KEY);
-        sessionStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(TOKEN_KEY);
-        sessionStorage.removeItem('ifrn_painel_token');
-        sessionStorage.removeItem('ifrn_painel_profile');
-        sessionStorage.removeItem('ifrn_painel_dashboard');
-        sessionStorage.removeItem('ifrn_painel_owner');
+        // A cópia persistente não pode restaurar uma conta depois de Sair/401.
+        for (const storage of [sessionStorage, localStorage]) {
+            for (const key of [OAUTH_PROFILE_KEY, TOKEN_KEY, 'ifrn_refresh_token', 'ifrn_username',
+                'ifrn_painel_token', 'ifrn_painel_profile', 'ifrn_painel_dashboard', 'ifrn_painel_owner']) {
+                storage.removeItem(key);
+            }
+        }
         sessionStorage.removeItem('ifrn_moodle_pending_open_course');
         sessionStorage.removeItem('ifrn_moodle_poc_oauth_pending');
         sessionStorage.removeItem('ifrn_moodle_poc_resume_oauth');

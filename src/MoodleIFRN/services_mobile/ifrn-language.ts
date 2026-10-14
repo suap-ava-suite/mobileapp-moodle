@@ -2802,10 +2802,17 @@ const IFRN_PT_BR: Record<string, string> = {
     "ifrn.login.usernameplaceholder": "Enter your IFRN ID"
 };
 
+let languageInitialized = false;
+
 /** Pré-carrega a tabela, evitando depender de assets/lang/pt-br.json. */
-export async function useIfrnBrazilianPortuguese(): Promise<void> {
+export async function useIfrnBrazilianPortuguese(force = false): Promise<void> {
+    if (languageInitialized && !force && CoreLang.getCurrentLanguageSync() === 'pt-br') {
+        return;
+    }
     Translate.setTranslation('pt-br', IFRN_PT_BR, true);
     await CoreLang.changeCurrentLanguage('pt-br');
     // Mantém as traduções IFRN após os eventos da mudança de idioma.
     Translate.setTranslation('pt-br', IFRN_PT_BR, true);
+    languageInitialized = true;
 }
+

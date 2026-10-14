@@ -80,8 +80,18 @@ export function showHandoffLoading(): void {
 }
 
 export function hideHandoffLoading(): void {
-    document.documentElement.classList.remove('ifrn-native-handoff');
-    document.getElementById('ifrn-handoff-loading')?.remove();
+    const element = document.getElementById('ifrn-handoff-loading');
+    if (element) {
+        element.style.transition = 'opacity 0.28s ease-out';
+        element.style.opacity = '0';
+        element.style.pointerEvents = 'none';
+        window.setTimeout(() => {
+            element.remove();
+            document.documentElement.classList.remove('ifrn-native-handoff');
+        }, 280);
+    } else {
+        document.documentElement.classList.remove('ifrn-native-handoff');
+    }
     try {
         sessionStorage.removeItem(HANDOFF_PENDING_KEY);
     } catch {

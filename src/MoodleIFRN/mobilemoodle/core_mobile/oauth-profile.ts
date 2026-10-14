@@ -1,5 +1,7 @@
 /** Copia temporaria do perfil OAuth. Nao e token SUAP nem sessao Moodle. */
 export const OAUTH_PROFILE_KEY = 'ifrn_suap_oauth_profile_v1';
+/** Prazo do cache local; não estende tokens nem cookies dos servidores. */
+export const OAUTH_PROFILE_MAX_AGE_SECONDS = 30 * 24 * 3600;
 
 export interface OAuthProfileSnapshot {
     profile: Record<string, unknown>;
@@ -15,17 +17,32 @@ export function profileIdentity(profile: Record<string, unknown>): string {
 }
 
 export function hasOAuthProfileMode(): boolean {
-    return sessionStorage.getItem(OAUTH_PROFILE_KEY) !== null;
+    return sessionStorage.getItem(OAUTH_PROFILE_KEY) !== null
+        || localStorage.getItem(OAUTH_PROFILE_KEY) !== null;
 }
 
 export function readOAuthProfile(): OAuthProfileSnapshot | null {
     try {
-        const value = JSON.parse(sessionStorage.getItem(OAUTH_PROFILE_KEY) || 'null') as OAuthProfileSnapshot | null;
+        let raw = sessionStorage.getItem(OAUTH_PROFILE_KEY);
+        if (!raw) {
+            raw = localStorage.getItem(OAUTH_PROFILE_KEY);
+        }
+
+        const value = JSON.parse(raw || 'null') as OAuthProfileSnapshot | null;
+        const currentUsername = sessionStorage.getItem('ifrn_username') || localStorage.getItem('ifrn_username');
+
         if (!value || !value.profile || typeof value.profile !== 'object' || Array.isArray(value.profile)
                 || !value.identity || profileIdentity(value.profile) !== value.identity
                 || !Number.isFinite(value.expiresAt) || value.expiresAt <= Date.now()
-                || sessionStorage.getItem('ifrn_username') !== value.identity) {
+                || (currentUsername && currentUsername !== value.identity)) {
             return null;
+        }
+
+        if (!sessionStorage.getItem('ifrn_username')) {
+            sessionStorage.setItem('ifrn_username', value.identity);
+        }
+        if (raw) {
+            sessionStorage.setItem(OAUTH_PROFILE_KEY, raw);
         }
 
         return value;
@@ -39,7 +56,48 @@ export function saveOAuthProfile(profile: Record<string, unknown>, expiresIn: nu
     if (!identity || identity.length > 150 || !Number.isFinite(expiresIn) || expiresIn <= 0) {
         throw new Error('O SUAP não retornou uma identificação válida. Use o login atual.');
     }
-    sessionStorage.setItem(OAUTH_PROFILE_KEY, JSON.stringify({
-        profile, identity, expiresAt: Date.now() + Math.min(expiresIn, 1800) * 1000,
-    }));
+    // Nunca alongar um prazo menor informado pelo chamador. Ler/reabrir não renova.
+    const durationSeconds = Math.min(expiresIn, OAUTH_PROFILE_MAX_AGE_SECONDS);
+    const data = JSON.stringify({
+        profile,
+        identity,
+        expiresAt: Date.now() + durationSeconds * 1000,
+    });
+    sessionStorage.setItem(OAUTH_PROFILE_KEY, data);
+    localStorage.setItem(OAUTH_PROFILE_KEY, data);
 }
+
+export function clearOAuthProfile(): void {
+    sessionStorage.removeItem(OAUTH_PROFILE_KEY);
+    localStorage.removeItem(OAUTH_PROFILE_KEY);
+}
+
+/** Restaura todas as listas do painel apenas quando pertencem ao perfil válido. */
+export function readOAuthDashboard(): Record<string, unknown> | unknown[] | null {
+    const snapshot = readOAuthProfile();
+    if (!snapshot) {
+        return null;
+    }
+    try {
+        // Owner e dados vêm sempre do mesmo armazenamento, sem misturar contas.
+        const storage = sessionStorage.getItem('ifrn_painel_dashboard') !== null
+            ? sessionStorage : localStorage;
+        const raw = storage.getItem('ifrn_painel_dashboard');
+        const owner = storage.getItem('ifrn_painel_owner');
+        if (!raw || !owner || owner.trim().toLowerCase() !== snapshot.identity.trim().toLowerCase()) {
+            return null;
+        }
+        const dashboard: unknown = JSON.parse(raw);
+        if (!dashboard || typeof dashboard !== 'object') {
+            return null;
+        }
+        sessionStorage.setItem('ifrn_painel_dashboard', raw);
+        sessionStorage.setItem('ifrn_painel_owner', owner);
+        sessionStorage.setItem('ifrn_painel_profile', JSON.stringify(snapshot.profile));
+
+        return dashboard as Record<string, unknown> | unknown[];
+    } catch {
+        return null;
+    }
+}
+

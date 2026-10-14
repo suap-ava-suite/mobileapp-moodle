@@ -6,7 +6,7 @@
  */
 
 import { MM } from './namespace';
-import { hasOAuthProfileMode, readOAuthProfile } from './oauth-profile';
+import { hasOAuthProfileMode, readOAuthDashboard, readOAuthProfile } from './oauth-profile';
 
 const PAINEL_DASHBOARD_KEY = 'ifrn_painel_dashboard';
 const PAINEL_PROFILE_KEY = 'ifrn_painel_profile';
@@ -52,6 +52,9 @@ function normalizeOwner(value: string | null | undefined): string {
 }
 
 function readPainelDashboard(): PainelDiariosResponse | PainelDiario[] | null {
+    if (hasOAuthProfileMode()) {
+        return readOAuthDashboard() as PainelDiariosResponse | PainelDiario[] | null;
+    }
     const raw = sessionStorage.getItem(PAINEL_DASHBOARD_KEY);
 
     if (!raw) {

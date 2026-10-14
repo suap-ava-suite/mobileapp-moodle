@@ -1499,7 +1499,8 @@ export class MoodleSiteService {
         let courses: MoodleCourseSummary[];
 
         try {
-            const enrolled = await CoreCourses.getUserCourses();
+            const currentSiteId = CoreSites.getCurrentSiteId();
+            const enrolled = await CoreCourses.getUserCourses(true, currentSiteId);
             courses = enrolled.map((course) => this.toCourseSummary(course));
         } catch (error) {
             // eslint-disable-next-line no-console
@@ -1571,6 +1572,9 @@ export class MoodleSiteService {
                 }),
                 navigation.promise,
             ])]);
+
+            // Aguarda a renderização inicial dos componentes do curso IFRN antes de liberar o overlay.
+            await new Promise((resolve) => window.setTimeout(resolve, 380));
         } catch (error) {
             // eslint-disable-next-line no-console
             console.error(COURSE_LOG, 'getAndOpenCourse / navegação FALHOU', JSON.stringify({

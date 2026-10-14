@@ -258,8 +258,6 @@ export class MoodleOpenCoursePage implements OnInit {
             );
 
             if (result === 'opened') {
-                this.moodleSite.hideNativeCourseHandoff();
-
                 return;
             }
 

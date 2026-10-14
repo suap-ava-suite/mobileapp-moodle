@@ -10,7 +10,7 @@ import { BiometricService } from '@/MoodleIFRN/services_mobile/biometric.service
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
 import { SuapBrowserService } from './suap-browser.service';
 import { CoreOpener } from '@static/opener';
-import { OAUTH_PROFILE_KEY, profileIdentity } from '../mobilemoodle/core_mobile/oauth-profile';
+import { OAUTH_PROFILE_KEY, OAUTH_PROFILE_MAX_AGE_SECONDS, profileIdentity } from '../mobilemoodle/core_mobile/oauth-profile';
 import { beginNativeSuapEntry, readNativeSuapEntry, endNativeSuapEntry, markNativeSuapEntryAuthenticated } from '../navigation/suap-entry-state';
 
 /** Divergência comprovada: transporta as contas para a tela de recuperação. */
@@ -184,16 +184,14 @@ export class SuapEntryService {
         }
         this.loading = true;
         this.cancel();
-        onStatus('Abrindo a autenticação oficial do SUAP…');
+        onStatus('Acessando o SUAP…');
         try {
-            onStatus('Consultando o AVA…');
             const check = await this.suapBrowser.waitFor(CoreSites.checkSite(AVA), 30000,
                 'O AVA não respondeu à consulta inicial. Verifique sua conexão e tente novamente.');
             if (!check.config || new URL(check.siteUrl).origin !== AVA) {
                 throw new Error('O AVA não retornou uma configuração mobile válida.');
             }
             const site = CoreSitesFactory.makeUnauthenticatedSite(check.siteUrl, check.config);
-            onStatus('Preparando o acesso SUAP…');
             const providers = await this.suapBrowser.waitFor(
                 CoreLoginHelper.getValidIdentityProvidersForSite(site), 30000,
                 'O AVA não retornou a configuração do login SUAP. Tente novamente.');
@@ -326,9 +324,13 @@ export class SuapEntryService {
             storage, values: keys.map(key => ({ key, value: storage.getItem(key) })),
         }));
         try {
-            this.authService.saveOAuthSession(value.profile, 1800);
-            sessionStorage.setItem('ifrn_painel_dashboard', JSON.stringify(value.dashboard));
-            sessionStorage.setItem('ifrn_painel_owner', profileIdentity(value.profile).toLowerCase());
+            this.authService.saveOAuthSession(value.profile, OAUTH_PROFILE_MAX_AGE_SECONDS);
+            const serializedDashboard = JSON.stringify(value.dashboard);
+            const ownerKey = profileIdentity(value.profile).toLowerCase();
+            sessionStorage.setItem('ifrn_painel_dashboard', serializedDashboard);
+            localStorage.setItem('ifrn_painel_dashboard', serializedDashboard);
+            sessionStorage.setItem('ifrn_painel_owner', ownerKey);
+            localStorage.setItem('ifrn_painel_owner', ownerKey);
             sessionStorage.removeItem('ifrn_painel_token');
             localStorage.removeItem('ifrn_painel_token');
             this.biometricService.disable();

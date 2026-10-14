@@ -88,6 +88,9 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
 
     /** Ionic mantém telas em cache; este retorno nem sempre dispara ngOnInit. */
     ionViewWillEnter(): void {
+        this.canContinue = !this.expectedIdentity && this.authService.isAuthenticated()
+            && this.painelAvaService.hasDashboard();
+
         if (CoreNavigator.getRouteBooleanParam('nativeSuapReturn')) {
             this.nativeReturnQueued = true;
             void this.completeNativeReturn();

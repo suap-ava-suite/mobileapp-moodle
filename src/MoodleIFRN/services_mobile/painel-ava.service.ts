@@ -18,7 +18,7 @@ import { CoreOpener } from '@static/opener';
 import { Observable, map, of, throwError, timeout } from 'rxjs';
 
 import { PAINEL_AVA_CONFIG } from './painel-ava.config';
-import { readOAuthProfile } from '../mobilemoodle/core_mobile/oauth-profile';
+import { hasOAuthProfileMode, readOAuthDashboard, readOAuthProfile } from '../mobilemoodle/core_mobile/oauth-profile';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 /** Resposta mobile de POST /api/v1/authenticate/. */
@@ -757,6 +757,10 @@ export class PainelAvaService {
                             }
 
                             var currentProfile = profileFromDocument(document, 'dom-atual:#btn-toggle-profile > span');
+                            if (currentProfile && (currentProfile.matricula || currentProfile.identificacao || currentProfile.username)) {
+                                sendSuccess(currentProfile);
+                                return;
+                            }
 
                             function parseRootProfile(html) {
                                 if (!html || typeof html !== 'string') return null;
@@ -1084,21 +1088,25 @@ export class PainelAvaService {
         if (!profile) {
             // Evita reutilizar perfil antigo (ex.: scraping anterior com nome de disciplina).
             sessionStorage.removeItem(PAINEL_PROFILE_KEY);
+            localStorage.removeItem(PAINEL_PROFILE_KEY);
 
             return;
         }
 
         try {
-            sessionStorage.setItem(PAINEL_PROFILE_KEY, JSON.stringify(profile));
+            const serialized = JSON.stringify(profile);
+            sessionStorage.setItem(PAINEL_PROFILE_KEY, serialized);
+            localStorage.setItem(PAINEL_PROFILE_KEY, serialized);
 
             const username = profileUsernameHint(profile, '').trim();
             if (username) {
                 sessionStorage.setItem('ifrn_username', username);
+                localStorage.setItem('ifrn_username', username);
             } else {
                 // Limpa somente um valor antigo que tenha sido salvo a partir do nome
                 // de exibição do próprio perfil. Não apaga matrícula/CPF válido de
                 // outros fluxos de autenticação.
-                const current = (sessionStorage.getItem('ifrn_username') || '').trim().toLowerCase();
+                const current = (sessionStorage.getItem('ifrn_username') || localStorage.getItem('ifrn_username') || '').trim().toLowerCase();
                 const displayNames = [
                     profile['nome_usual'],
                     profile['nome_social'],
@@ -1111,38 +1119,55 @@ export class PainelAvaService {
 
                 if (current && displayNames.includes(current)) {
                     sessionStorage.removeItem('ifrn_username');
+                    localStorage.removeItem('ifrn_username');
                 }
             }
         } catch {
             sessionStorage.removeItem(PAINEL_PROFILE_KEY);
+            localStorage.removeItem(PAINEL_PROFILE_KEY);
         }
     }
 
     private saveDashboard(raw: unknown, ownerUsername?: string): void {
         try {
-            sessionStorage.setItem(PainelAvaService.DASHBOARD_KEY, JSON.stringify(raw));
-            const owner = (ownerUsername || sessionStorage.getItem('ifrn_username') || '').trim().toLowerCase();
+            const serialized = JSON.stringify(raw);
+            sessionStorage.setItem(PainelAvaService.DASHBOARD_KEY, serialized);
+            localStorage.setItem(PainelAvaService.DASHBOARD_KEY, serialized);
+            const owner = (ownerUsername || sessionStorage.getItem('ifrn_username') || localStorage.getItem('ifrn_username') || '').trim().toLowerCase();
 
             if (owner) {
                 sessionStorage.setItem(PainelAvaService.OWNER_KEY, owner);
+                localStorage.setItem(PainelAvaService.OWNER_KEY, owner);
             } else {
                 sessionStorage.removeItem(PainelAvaService.OWNER_KEY);
+                localStorage.removeItem(PainelAvaService.OWNER_KEY);
             }
         } catch {
             sessionStorage.removeItem(PainelAvaService.DASHBOARD_KEY);
+            localStorage.removeItem(PainelAvaService.DASHBOARD_KEY);
             sessionStorage.removeItem(PainelAvaService.OWNER_KEY);
+            localStorage.removeItem(PainelAvaService.OWNER_KEY);
         }
     }
 
     getDashboard(): unknown | null {
-        const raw = sessionStorage.getItem(PainelAvaService.DASHBOARD_KEY);
+        if (hasOAuthProfileMode()) {
+            return readOAuthDashboard();
+        }
+        let raw = sessionStorage.getItem(PainelAvaService.DASHBOARD_KEY);
+        if (!raw) {
+            raw = localStorage.getItem(PainelAvaService.DASHBOARD_KEY);
+            if (raw) {
+                sessionStorage.setItem(PainelAvaService.DASHBOARD_KEY, raw);
+            }
+        }
         if (!raw) {
             return null;
         }
 
         // Descarta dashboard de outro IFRN-id (troca de conta sem logout limpo).
-        const owner = (sessionStorage.getItem(PainelAvaService.OWNER_KEY) || '').trim().toLowerCase();
-        const current = (sessionStorage.getItem('ifrn_username') || '').trim().toLowerCase();
+        const owner = (sessionStorage.getItem(PainelAvaService.OWNER_KEY) || localStorage.getItem(PainelAvaService.OWNER_KEY) || '').trim().toLowerCase();
+        const current = (sessionStorage.getItem('ifrn_username') || localStorage.getItem('ifrn_username') || '').trim().toLowerCase();
 
         if (owner && current && owner !== current) {
             this.clearSession();
@@ -1150,10 +1175,18 @@ export class PainelAvaService {
             return null;
         }
 
+        if (owner && !sessionStorage.getItem(PainelAvaService.OWNER_KEY)) {
+            sessionStorage.setItem(PainelAvaService.OWNER_KEY, owner);
+        }
+        if (current && !sessionStorage.getItem('ifrn_username')) {
+            sessionStorage.setItem('ifrn_username', current);
+        }
+
         try {
             return JSON.parse(raw) as unknown;
         } catch {
             sessionStorage.removeItem(PainelAvaService.DASHBOARD_KEY);
+            localStorage.removeItem(PainelAvaService.DASHBOARD_KEY);
 
             return null;
         }
@@ -1165,9 +1198,13 @@ export class PainelAvaService {
 
     clearSession(): void {
         sessionStorage.removeItem(PainelAvaService.DASHBOARD_KEY);
+        localStorage.removeItem(PainelAvaService.DASHBOARD_KEY);
         sessionStorage.removeItem(PainelAvaService.OWNER_KEY);
+        localStorage.removeItem(PainelAvaService.OWNER_KEY);
         sessionStorage.removeItem(PAINEL_TOKEN_KEY);
+        localStorage.removeItem(PAINEL_TOKEN_KEY);
         sessionStorage.removeItem(PAINEL_PROFILE_KEY);
+        localStorage.removeItem(PAINEL_PROFILE_KEY);
     }
 
     // Compatibilidade temporária com código antigo do mobilemoodle.
@@ -1180,7 +1217,13 @@ export class PainelAvaService {
     }
 
     getProfile(): Record<string, unknown> | null {
-        const raw = sessionStorage.getItem(PAINEL_PROFILE_KEY);
+        let raw = sessionStorage.getItem(PAINEL_PROFILE_KEY);
+        if (!raw) {
+            raw = localStorage.getItem(PAINEL_PROFILE_KEY);
+            if (raw) {
+                sessionStorage.setItem(PAINEL_PROFILE_KEY, raw);
+            }
+        }
 
         if (!raw) {
             return null;
@@ -1192,6 +1235,7 @@ export class PainelAvaService {
             return isPlainObject(parsed) ? parsed : null;
         } catch {
             sessionStorage.removeItem(PAINEL_PROFILE_KEY);
+            localStorage.removeItem(PAINEL_PROFILE_KEY);
 
             return null;
         }

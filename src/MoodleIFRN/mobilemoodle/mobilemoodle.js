@@ -100,20 +100,56 @@
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/oauth-profile.ts
   var OAUTH_PROFILE_KEY = "ifrn_suap_oauth_profile_v1";
+  var OAUTH_PROFILE_MAX_AGE_SECONDS = 30 * 24 * 3600;
   function profileIdentity(profile) {
     const value = profile["identificacao"];
     return typeof value === "string" || typeof value === "number" && Number.isSafeInteger(value) ? String(value).trim() : "";
   }
   function hasOAuthProfileMode() {
-    return sessionStorage.getItem(OAUTH_PROFILE_KEY) !== null;
+    return sessionStorage.getItem(OAUTH_PROFILE_KEY) !== null || localStorage.getItem(OAUTH_PROFILE_KEY) !== null;
   }
   function readOAuthProfile() {
     try {
-      const value = JSON.parse(sessionStorage.getItem(OAUTH_PROFILE_KEY) || "null");
-      if (!value || !value.profile || typeof value.profile !== "object" || Array.isArray(value.profile) || !value.identity || profileIdentity(value.profile) !== value.identity || !Number.isFinite(value.expiresAt) || value.expiresAt <= Date.now() || sessionStorage.getItem("ifrn_username") !== value.identity) {
+      let raw = sessionStorage.getItem(OAUTH_PROFILE_KEY);
+      if (!raw) {
+        raw = localStorage.getItem(OAUTH_PROFILE_KEY);
+      }
+      const value = JSON.parse(raw || "null");
+      const currentUsername = sessionStorage.getItem("ifrn_username") || localStorage.getItem("ifrn_username");
+      if (!value || !value.profile || typeof value.profile !== "object" || Array.isArray(value.profile) || !value.identity || profileIdentity(value.profile) !== value.identity || !Number.isFinite(value.expiresAt) || value.expiresAt <= Date.now() || currentUsername && currentUsername !== value.identity) {
         return null;
       }
+      if (!sessionStorage.getItem("ifrn_username")) {
+        sessionStorage.setItem("ifrn_username", value.identity);
+      }
+      if (raw) {
+        sessionStorage.setItem(OAUTH_PROFILE_KEY, raw);
+      }
       return value;
+    } catch {
+      return null;
+    }
+  }
+  function readOAuthDashboard() {
+    const snapshot = readOAuthProfile();
+    if (!snapshot) {
+      return null;
+    }
+    try {
+      const storage = sessionStorage.getItem("ifrn_painel_dashboard") !== null ? sessionStorage : localStorage;
+      const raw = storage.getItem("ifrn_painel_dashboard");
+      const owner = storage.getItem("ifrn_painel_owner");
+      if (!raw || !owner || owner.trim().toLowerCase() !== snapshot.identity.trim().toLowerCase()) {
+        return null;
+      }
+      const dashboard = JSON.parse(raw);
+      if (!dashboard || typeof dashboard !== "object") {
+        return null;
+      }
+      sessionStorage.setItem("ifrn_painel_dashboard", raw);
+      sessionStorage.setItem("ifrn_painel_owner", owner);
+      sessionStorage.setItem("ifrn_painel_profile", JSON.stringify(snapshot.profile));
+      return dashboard;
     } catch {
       return null;
     }
@@ -201,13 +237,20 @@
     return true;
   }
   function clearToken() {
-    sessionStorage.removeItem(OAUTH_PROFILE_KEY);
-    sessionStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(TOKEN_KEY);
-    sessionStorage.removeItem("ifrn_painel_token");
-    sessionStorage.removeItem("ifrn_painel_profile");
-    sessionStorage.removeItem("ifrn_painel_dashboard");
-    sessionStorage.removeItem("ifrn_painel_owner");
+    for (const storage of [sessionStorage, localStorage]) {
+      for (const key of [
+        OAUTH_PROFILE_KEY,
+        TOKEN_KEY,
+        "ifrn_refresh_token",
+        "ifrn_username",
+        "ifrn_painel_token",
+        "ifrn_painel_profile",
+        "ifrn_painel_dashboard",
+        "ifrn_painel_owner"
+      ]) {
+        storage.removeItem(key);
+      }
+    }
     sessionStorage.removeItem("ifrn_moodle_pending_open_course");
     sessionStorage.removeItem("ifrn_moodle_poc_oauth_pending");
     sessionStorage.removeItem("ifrn_moodle_poc_resume_oauth");
@@ -667,6 +710,9 @@
     return (value || "").trim().toLowerCase();
   }
   function readPainelDashboard() {
+    if (hasOAuthProfileMode()) {
+      return readOAuthDashboard();
+    }
     const raw = sessionStorage.getItem(PAINEL_DASHBOARD_KEY);
     if (!raw) {
       return null;
