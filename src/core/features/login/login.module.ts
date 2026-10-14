@@ -1,4 +1,4 @@
-import { ifrnReconnectGuard } from '@/MoodleIFRN/navigation/navigation.guard';
+import { ifrnReconnectGuard, ifrnMarketplaceGuard } from '@/MoodleIFRN/navigation/navigation.guard';
 import { NgModule, Type, provideAppInitializer } from '@angular/core';
 import { Routes } from '@angular/router';
 
@@ -35,6 +35,7 @@ const appRoutes: Routes = [
             // BEGIN MoodleIFRN login routes
             {
                 path: 'marketplace-ifrn',
+                canActivate: [ifrnMarketplaceGuard],
                 loadComponent: () =>
                     import('@/MoodleIFRN/marketplace-ifrn/marketplace-ifrn')
                         .then(m => m.MarketplaceIfrnPage),

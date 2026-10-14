@@ -1,4 +1,6 @@
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { createAnimation } from '@ionic/core';
+import type { Animation } from '@ionic/core';
 import { CoreSharedModule } from '@/core/shared.module';
 import { ContextLevel } from '@/core/constants';
 import { CoreSites } from '@services/sites';
@@ -30,6 +32,10 @@ interface A11yToggle {
     imports: [CoreSharedModule],
     templateUrl: './course-menu.html',
     styleUrls: ['./course-menu.scss'],
+    host: {
+        '[attr.data-menu-ready]': 'visible ? "true" : null',
+        '[attr.data-index-ready]': 'visible && indexEnabled ? "true" : null',
+    },
 })
 export class IfrnCourseMenuComponent implements OnChanges, OnDestroy {
 
@@ -43,6 +49,11 @@ export class IfrnCourseMenuComponent implements OnChanges, OnDestroy {
     messagesEnabled = false;
     notificationsEnabled = false;
     environment = '';
+
+    readonly menuEnterAnimation = (element: HTMLElement): Animation => this.drawerAnimation(element, true, 'left');
+    readonly menuLeaveAnimation = (element: HTMLElement): Animation => this.drawerAnimation(element, false, 'left');
+    readonly a11yEnterAnimation = (element: HTMLElement): Animation => this.drawerAnimation(element, true, 'right');
+    readonly a11yLeaveAnimation = (element: HTMLElement): Animation => this.drawerAnimation(element, false, 'right');
 
     readonly a11yToggles: A11yToggle[] = [
         {
@@ -96,6 +107,32 @@ export class IfrnCourseMenuComponent implements OnChanges, OnDestroy {
     private pendingAction?: CourseMenuAction;
 
     constructor(readonly a11y: IfrnCourseAccessibilityService) {}
+
+    /** Desliza o próprio modal: mantém foco, backdrop e botão Voltar do Ionic. */
+    private drawerAnimation(element: HTMLElement, entering: boolean, side: 'left' | 'right'): Animation {
+        const root = element.shadowRoot || element;
+        const reducedMotion = this.a11y.isEnabled('stop_animations')
+            || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const outside = side === 'left' ? 'translateX(-100%)' : 'translateX(100%)';
+        const animation = createAnimation().addElement(element)
+            .duration(reducedMotion ? 0 : entering ? 280 : 220)
+            .easing('cubic-bezier(0.0, 0.0, 0.2, 1)');
+        const wrapper = root.querySelector('.modal-wrapper');
+        const backdrop = root.querySelector('ion-backdrop');
+
+        if (wrapper) {
+            animation.addAnimation(createAnimation().addElement(wrapper)
+                .beforeStyles({ opacity: '1' })
+                .fromTo('transform', entering ? outside : 'translateX(0)', entering ? 'translateX(0)' : outside));
+        }
+        if (backdrop) {
+            animation.addAnimation(createAnimation().addElement(backdrop)
+                .fromTo('opacity', entering ? '0' : 'var(--backdrop-opacity)',
+                    entering ? 'var(--backdrop-opacity)' : '0'));
+        }
+
+        return animation;
+    }
 
     get visible(): boolean {
         try {

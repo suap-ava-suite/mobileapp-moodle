@@ -1,8 +1,6 @@
 <ion-header [collapsible]="(tabsComponent()?.selectedIndex === 0 || tabsComponent()?.selectedIndex === undefined)">
     <ion-toolbar>
-        <ion-buttons slot="start">
-            <ion-back-button [text]="'core.back' | translate" />
-        </ion-buttons>
+        
         <ion-title>
             <h1>
                 <core-format-text [text]="title" contextLevel="course" [contextInstanceId]="course?.id" />
@@ -24,6 +22,11 @@
                 </core-context-menu>
             }
         </ion-buttons>
+    <!-- BEGIN MoodleIFRN course back -->
+        <ion-buttons slot="start" class="ifrn-course-back">
+            <ion-back-button text="" defaultHref="/main/home" aria-label="Voltar" />
+        </ion-buttons>
+        <!-- END MoodleIFRN course back -->
     </ion-toolbar>
 </ion-header>
 <div class="core-course-header">

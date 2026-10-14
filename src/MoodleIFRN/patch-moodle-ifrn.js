@@ -53,6 +53,7 @@ const MARKER = {
 const IFRN_LOGIN_ROUTES = `            ${MARKER.loginRoutesStart}
             {
                 path: 'marketplace-ifrn',
+                canActivate: [ifrnMarketplaceGuard],
                 loadComponent: () =>
                     import('@/MoodleIFRN/marketplace-ifrn/marketplace-ifrn')
                         .then(m => m.MarketplaceIfrnPage),
@@ -160,7 +161,9 @@ function isLoginModulePatched(content) {
 
 function patchLoginModule() {
     let content = readFile(FILES.loginModule);
-    const guardImport = "import { ifrnReconnectGuard } from '@/MoodleIFRN/navigation/navigation.guard';";
+    const oldGuardImport = "import { ifrnReconnectGuard } from '@/MoodleIFRN/navigation/navigation.guard';";
+    const guardImport = "import { ifrnReconnectGuard, ifrnMarketplaceGuard } from '@/MoodleIFRN/navigation/navigation.guard';";
+    content = content.replace(oldGuardImport, guardImport);
     if (!content.includes(guardImport)) {
         content = guardImport + '\n' + content;
     }
@@ -176,6 +179,13 @@ function patchLoginModule() {
         }
         return `${route}\n                canActivate: [${guards.join(', ')}],`;
     });
+    // Atualiza também uma instalação que já contém as rotas IFRN.
+    content = content.replace(/(path:\s*'marketplace-ifrn'\s*,)(?:\s*canActivate:\s*\[([^\]]*)\],)?/,
+        (_match, route, existing = '') => {
+            const guards = existing.split(',').map(guard => guard.trim()).filter(Boolean);
+            if (!guards.includes('ifrnMarketplaceGuard')) guards.unshift('ifrnMarketplaceGuard');
+            return `${route}\n                canActivate: [${guards.join(', ')}],`;
+        });
     writeFile(FILES.loginModule, content);
 
     if (isLoginModulePatched(content)) {

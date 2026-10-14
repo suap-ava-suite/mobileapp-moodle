@@ -1020,6 +1020,32 @@ export class MoodleSiteService {
     }
 
     /** Mesmo destino do goBack() da ponte moodle-open-course. */
+    returnToPainelOnCourseExit(): boolean {
+        // Os guards executam antes de NavigationEnd. Tratar aqui a saída evita
+        // que a landing nativa seja redirecionada primeiro para o marketplace.
+        const courseId = Number(sessionStorage.getItem(COURSE_ORIGIN_ID_KEY));
+        const currentPath = normalizeAppPath(this.router.url || CoreNavigator.getCurrentPath() || '');
+        const site = CoreSites.getCurrentSite();
+
+        if (this.redirectingToPainel || this.isNativeCourseHandoffActive() || this.oauthFlowActive
+            || this.identityMismatchPending || !this.courseOpenedFromPainel
+            || sessionStorage.getItem(COURSE_ORIGIN_KEY) !== 'painel'
+            || !Number.isSafeInteger(courseId) || courseId <= 0
+            || !isCourseIndexPath(currentPath, courseId)
+            || !site || site.isLoggedOut() || !this.isCurrentSiteIfrn()
+            || !this.authService.isAuthenticated() || !this.painelAva.hasDashboard()) {
+            return false;
+        }
+
+        this.redirectingToPainel = true;
+        this.hideNativeCourseHandoff();
+        this.clearCourseOriginFlags();
+        this.redirectToPainelAva();
+
+        return true;
+    }
+
+    /** Abre o painel na mesma origem, preservando a sessão existente. */
     private redirectToPainelAva(): void {
         const base = document.querySelector('base')?.getAttribute('href') || '/';
         const root = base.endsWith('/') ? base : `${base}/`;

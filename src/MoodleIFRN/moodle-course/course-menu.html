@@ -1,19 +1,21 @@
 @if (visible) {
     <button type="button" class="ifrn-ava-menu-trigger" (click)="openMenu()" [disabled]="busy"
         aria-haspopup="dialog" [attr.aria-expanded]="menuOpen || a11yOpen"
-        aria-label="Abrir menu do curso">
+        aria-label="Abrir menu do curso" aria-controls="ifrn-course-drawer">
         <!-- Ícone <> igual ao sidebar-toggle do Painel AVA -->
         <svg class="ifrn-ava-menu-trigger__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 11" aria-hidden="true" focusable="false">
             <path fill="currentColor" d="M9.81,8.218a1.191,1.191,0,0,0,0,1.684l3.319,3.323L9.807,16.548a1.191,1.191,0,0,0,1.684,1.684l4.163-4.163a1.191,1.191,0,0,0,0-1.684L11.49,8.222a1.191,1.191,0,0,0-1.684,0Zm-3.613,0a1.191,1.191,0,0,0-1.684,0L.35,12.381a1.191,1.191,0,0,0,0,1.684l4.163,4.163A1.191,1.191,0,0,0,6.2,16.544L2.874,13.225,6.2,9.9A1.191,1.191,0,0,0,6.2,8.218Z" transform="translate(0 -7.87)"/>
         </svg>
     </button>
 
-    <ion-modal [isOpen]="menuOpen" (didDismiss)="menuDismissed()"
+    <ion-modal id="ifrn-course-drawer" [isOpen]="menuOpen" (didDismiss)="menuDismissed()"
+        [enterAnimation]="menuEnterAnimation" [leaveAnimation]="menuLeaveAnimation"
+        aria-labelledby="ifrn-course-drawer-title"
         class="ifrn-ava-side-modal ifrn-ava-side-modal--left">
         <ng-template>
             <div class="ifrn-ava-sidebar">
                 <div class="ifrn-ava-sidebar__header">
-                    <h1 class="ifrn-ava-sidebar__title">Menu do curso</h1>
+                    <h1 id="ifrn-course-drawer-title" class="ifrn-ava-sidebar__title">Menu do curso</h1>
                     <button type="button" class="ifrn-ava-sidebar__toggle" (click)="closeMenu()"
                         aria-label="Fechar menu">
                         <svg class="ifrn-ava-menu-trigger__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 11" aria-hidden="true" focusable="false">
@@ -79,6 +81,8 @@
     </ion-modal>
 
     <ion-modal [isOpen]="a11yOpen" (didDismiss)="a11yDismissed()"
+        [enterAnimation]="a11yEnterAnimation" [leaveAnimation]="a11yLeaveAnimation"
+        aria-label="Acessibilidade"
         class="ifrn-ava-side-modal ifrn-ava-side-modal--a11y">
         <ng-template>
             <div class="ifrn-ava-a11y">

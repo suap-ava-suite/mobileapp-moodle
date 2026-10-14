@@ -5,11 +5,37 @@ const importLine = "import { IfrnCourseMenuComponent } from '@/MoodleIFRN/moodle
 const start = '<!-- BEGIN MoodleIFRN course menu -->';
 const end = '<!-- END MoodleIFRN course menu -->';
 
+/** Move apenas o Voltar do índice; atividades mantêm sua própria pilha nativa. */
+function patchCourseBackButton(html) {
+    const marker = '<!-- BEGIN MoodleIFRN course back -->';
+    const endMarker = '<!-- END MoodleIFRN course back -->';
+    const markedBlock = /<!-- BEGIN MoodleIFRN course back -->[\s\S]*?<!-- END MoodleIFRN course back -->/;
+    const button = `${marker}\n        <ion-buttons slot="start" class="ifrn-course-back">\n            <ion-back-button text="" defaultHref="/main/home" aria-label="Voltar" />\n        </ion-buttons>\n        ${endMarker}`;
+
+    if (html.includes(marker) || html.includes(endMarker)) {
+        if (!markedBlock.test(html)) throw new Error('Marcadores incompletos do botão Voltar IFRN.');
+        return html.replace(markedBlock, button);
+    }
+
+    const toolbar = html.match(/<ion-toolbar(?:\s[^>]*)?>[\s\S]*?<\/ion-toolbar>/);
+    const nativeBack = /<ion-buttons\s+slot="start"\s*>\s*<ion-back-button\b[^>]*(?:\/>|>\s*<\/ion-back-button>)\s*<\/ion-buttons>/;
+    if (!toolbar || !nativeBack.test(toolbar[0])) {
+        throw new Error('Toolbar nativa do curso incompatível: botão Voltar IFRN não aplicado.');
+    }
+    const updated = toolbar[0].replace(nativeBack, '')
+        .replace('</ion-toolbar>', `${button}\n    </ion-toolbar>`);
+
+    return html.replace(toolbar[0], updated);
+}
+
 /** Adaptação mínima do núcleo, reaplicável e validada antes de gravar. */
 function patchCourseMenu(projectRoot) {
     const base = path.join(projectRoot, 'src/core/features/course/pages/contents');
     const tsPath = path.join(base, 'contents.ts');
     const htmlPath = path.join(base, 'contents.html');
+    const indexHtmlPath = path.join(projectRoot, 'src/core/features/course/pages/index/index.html');
+    const previousIndexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
+    const indexHtml = patchCourseBackButton(previousIndexHtml);
     let source = fs.readFileSync(tsPath, 'utf8');
     let html = fs.readFileSync(htmlPath, 'utf8');
     const previousSource = source;
@@ -49,7 +75,8 @@ function patchCourseMenu(projectRoot) {
     }
     if (source !== previousSource) fs.writeFileSync(tsPath, source);
     if (html !== previousHtml) fs.writeFileSync(htmlPath, html);
-    return source !== previousSource || html !== previousHtml;
+    if (indexHtml !== previousIndexHtml) fs.writeFileSync(indexHtmlPath, indexHtml);
+    return source !== previousSource || html !== previousHtml || indexHtml !== previousIndexHtml;
 }
 
-module.exports = { patchCourseMenu };
+module.exports = { patchCourseMenu, patchCourseBackButton };

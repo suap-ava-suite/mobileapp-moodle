@@ -34,9 +34,24 @@ export const ifrnMainMenuGuard: CanActivateFn & CanActivateChildFn = (_route, st
         return true;
     }
 
+    if (service.returnToPainelOnCourseExit()) {
+        return false;
+    }
+
     return inject(Router).createUrlTree(['/login/marketplace-ifrn'], {
         queryParams: { ifrnEntry: true },
     });
+};
+
+/** Cobre também pilhas antigas cujo Voltar aponta diretamente para a entrada. */
+export const ifrnMarketplaceGuard: CanActivateFn = (route) => {
+    // Login/troca de conta explícitos e retorno OAuth continuam no fluxo original.
+    if (readNativeSuapEntry() || ['forceLogin', 'nativeSuapReturn', 'directSuap']
+        .some(key => route.queryParamMap.get(key) === 'true')) {
+        return true;
+    }
+
+    return !inject(MoodleSiteService).returnToPainelOnCourseExit();
 };
 
 /** Registro global, inclusive antes de uma sessão Moodle ser restaurada ao iniciar. */

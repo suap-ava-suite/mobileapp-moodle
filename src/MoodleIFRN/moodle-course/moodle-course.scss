@@ -115,14 +115,20 @@ page-core-course-index ion-back-button {
     --icon-font-size: 22px;
 }
 
-/* Espaço à esquerda da toolbar para o botão <> do menu IFRN */
+/* O menu fica abaixo das abas. Não reservar espaço vazio na toolbar. */
 page-core-course-index.ion-page > ion-header ion-toolbar,
 page-core-course-index > ion-header ion-toolbar {
-    --padding-start: 48px;
+    --padding-start: 0;
 }
 
-page-core-course-index ion-toolbar ion-buttons[slot="start"] {
-    margin-inline-start: 4px;
+page-core-course-index ion-toolbar ion-buttons.ifrn-course-back {
+    margin-inline: max(8px, env(safe-area-inset-left, 0px)) 4px;
+    flex-shrink: 0;
+}
+
+page-core-course-index ion-toolbar .ifrn-course-back ion-back-button {
+    min-width: 44px;
+    min-height: 44px;
 }
 
 page-core-course-index ion-title h1,
@@ -558,6 +564,13 @@ body.highlight_links a[href] {
 
 body.highlight_links a[href] * {
     color: rgba(255, 255, 100, 1) !important;
+}
+
+/* O índice já está no menu IFRN. Oculta só o atalho duplicado quando
+   o menu pode abri-lo; preserva a sala de comunicação e os demais FABs. */
+page-core-course-contents:has(ifrn-course-menu[data-index-ready="true"])
+    ion-fab-button:has(ion-icon[name="fas-list-ul"]) {
+    display: none !important;
 }
 
 /* Menu lateral esquerdo — igual Painel AVA (.ava-menu) */
