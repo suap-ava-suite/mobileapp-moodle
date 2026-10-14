@@ -115,6 +115,16 @@ page-core-course-index ion-back-button {
     --icon-font-size: 22px;
 }
 
+/* Espaço à esquerda da toolbar para o botão <> do menu IFRN */
+page-core-course-index.ion-page > ion-header ion-toolbar,
+page-core-course-index > ion-header ion-toolbar {
+    --padding-start: 48px;
+}
+
+page-core-course-index ion-toolbar ion-buttons[slot="start"] {
+    margin-inline-start: 4px;
+}
+
 page-core-course-index ion-title h1,
 page-core-course-index ion-toolbar ion-title {
     color: var(--ifrn-text);
@@ -508,3 +518,269 @@ page-core-course-index ion-router-outlet > * ion-content {
 }
 
 /* Marcador DevTools: computed style de page-core-course-index deve ter --ifrn-ava: #098e95 */
+
+/* =========================================================
+ * Acessibilidade do curso (espelho do Painel AVA / VLibras)
+ * Preferências aplicadas no body pelo IfrnCourseAccessibilityService
+ * ========================================================= */
+@font-face {
+    font-family: "opendyslexic";
+    src: url("https://ava-painel-statics.pages.dev/vendors/OpenDyslexic/OpenDyslexic-Regular.otf") format("opentype");
+    font-style: normal;
+    font-weight: normal;
+}
+
+@font-face {
+    font-family: "opendyslexic";
+    src: url("https://ava-painel-statics.pages.dev/vendors/OpenDyslexic/OpenDyslexic-Bold.otf") format("opentype");
+    font-weight: bold;
+    font-style: normal;
+}
+
+body.dyslexia_friendly,
+body.dyslexia_friendly ion-app {
+    --ion-font-family: "opendyslexic", var(--ion-font-family, sans-serif);
+    font-family: "opendyslexic", sans-serif !important;
+}
+
+body.big_cursor,
+body.big_cursor * {
+    cursor: url("https://cdn.userway.org/widgetapp/images/arrow_w.svg"), auto !important;
+}
+
+body.highlight_links a[href] {
+    background-color: #1b2a2b !important;
+    border: 2px solid #f90 !important;
+    color: rgba(255, 255, 100, 1) !important;
+    padding: 0.25em 0.5em;
+    border-radius: 10px;
+}
+
+body.highlight_links a[href] * {
+    color: rgba(255, 255, 100, 1) !important;
+}
+
+/* Menu lateral esquerdo — igual Painel AVA (.ava-menu) */
+ion-modal.ifrn-ava-side-modal--left {
+    --width: min(255px, 86vw);
+    --height: calc(100% - 16px);
+    --max-width: 86vw;
+    --border-radius: 0 20px 20px 0;
+    --box-shadow: 0 0 20px rgb(0 0 0 / 15%);
+    --backdrop-opacity: 0.35;
+    --background: #1351b4;
+}
+
+ion-modal.ifrn-ava-side-modal--left::part(content) {
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    left: 0;
+    right: auto;
+    margin: 0;
+    width: var(--width);
+    height: auto;
+    max-width: 86vw;
+    border-radius: 0 20px 20px 0;
+    overflow: hidden;
+    background: #1351b4;
+}
+
+/* Painel de acessibilidade — igual .sidebar-modal do painel (direita) */
+ion-modal.ifrn-ava-side-modal--a11y {
+    --width: min(320px, 92vw);
+    --height: 100%;
+    --max-width: 92vw;
+    --border-radius: 16px 0 0 16px;
+    --box-shadow: -6px 0 24px rgb(0 0 0 / 18%);
+    --backdrop-opacity: 0.35;
+    --background: #f6f6f6;
+}
+
+ion-modal.ifrn-ava-side-modal--a11y::part(content) {
+    position: absolute;
+    inset: 0 0 0 auto;
+    margin: 0;
+    width: var(--width);
+    height: 100%;
+    max-width: 92vw;
+    border-radius: 16px 0 0 16px;
+    overflow: hidden;
+    background: #f6f6f6;
+}
+
+/* VLibras compacto — não cobre a tela inteira do app */
+div[vw].enabled,
+div[vw].ifrn-vlibras-compact.enabled {
+    display: none !important;
+    margin: 0 !important;
+    top: auto !important;
+    bottom: max(10px, env(safe-area-inset-bottom, 0px)) !important;
+    left: max(6px, env(safe-area-inset-left, 0px)) !important;
+    right: auto !important;
+    width: auto !important;
+    max-width: min(220px, 58vw) !important;
+    max-height: min(280px, 42vh) !important;
+    z-index: 9000 !important;
+    transform: scale(0.48);
+    transform-origin: left bottom;
+    pointer-events: auto !important;
+}
+
+body.vlibras_active div[vw].enabled {
+    display: block !important;
+}
+
+body.vlibras_active div[vw] [vw-access-button],
+body.vlibras_active div[vw] [vw-access-button].active {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    transform: none !important;
+}
+
+/* Painel do avatar: janela pequena, nunca fullscreen sobre o app */
+body.vlibras_active div[vw] [vw-plugin-wrapper],
+body.vlibras_active div[vw] .vw-plugin-wrapper,
+body.vlibras_active div[vw] .vpw-settings-btn,
+body.vlibras_active div[vw] .vpw-box,
+body.vlibras_active div[vw] iframe {
+    max-width: min(240px, 64vw) !important;
+    max-height: min(320px, 48vh) !important;
+}
+
+body.vlibras_active div[vw] [vw-plugin-wrapper],
+body.vlibras_active div[vw] .vw-plugin-wrapper {
+    position: relative !important;
+    inset: auto !important;
+    width: min(240px, 64vw) !important;
+    height: min(320px, 48vh) !important;
+    overflow: hidden !important;
+    border-radius: 12px !important;
+    box-shadow: 0 6px 18px rgb(0 0 0 / 25%) !important;
+}
+
+/* Botão de emergência acima de qualquer overlay do VLibras */
+.ifrn-vlibras-escape {
+    position: fixed !important;
+    top: max(12px, env(safe-area-inset-top, 0px)) !important;
+    right: max(12px, env(safe-area-inset-right, 0px)) !important;
+    z-index: 2147483646 !important;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 10px 14px;
+    border: 0;
+    border-radius: 999px;
+    background: #06686e !important;
+    color: #fff !important;
+    font: 600 0.875rem/1.2 system-ui, sans-serif;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 35%);
+    cursor: pointer;
+    pointer-events: auto !important;
+    touch-action: manipulation;
+}
+
+.ifrn-vlibras-escape[hidden] {
+    display: none !important;
+}
+
+.ifrn-vlibras-escape:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+body.stop_animations *,
+body.stop_animations *::before,
+body.stop_animations *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+}
+
+body.hidden_illustrative_image img:not([alt]),
+body.hidden_illustrative_image img[alt=""] {
+    visibility: hidden !important;
+}
+
+body.hidden_illustrative_image * {
+    background-image: none !important;
+}
+
+body.high_line_height p,
+body.high_line_height li,
+body.high_line_height td,
+body.high_line_height th,
+body.high_line_height blockquote,
+body.high_line_height ion-label {
+    line-height: 1.8 !important;
+}
+
+body[data-zoom="120"] page-core-course-index,
+body[data-zoom="120"] page-core-course-contents {
+    font-size: 120%;
+}
+
+body[data-zoom="130"] page-core-course-index,
+body[data-zoom="130"] page-core-course-contents {
+    font-size: 130%;
+}
+
+body[data-zoom="150"] page-core-course-index,
+body[data-zoom="150"] page-core-course-contents {
+    font-size: 150%;
+}
+
+body[data-zoom="160"] page-core-course-index,
+body[data-zoom="160"] page-core-course-contents {
+    font-size: 160%;
+}
+
+body.color_mode_low_contrast ion-app,
+body.color_mode_low_contrast page-core-course-index,
+body.color_mode_low_contrast page-core-course-contents {
+    filter: saturate(0.5);
+}
+
+body.color_mode_grayscale ion-app,
+body.color_mode_grayscale page-core-course-index,
+body.color_mode_grayscale page-core-course-contents {
+    filter: grayscale(100%);
+}
+
+body.color_mode_colorblind page-core-course-index,
+body.color_mode_colorblind page-core-course-contents {
+    --primary: #1f77b4;
+    --ifrn-ava: #1f77b4;
+    --ifrn-ava-dark: #144e75;
+    --ion-color-primary: #1f77b4;
+}
+
+body.color_mode_high_contrast,
+body.color_mode_high_contrast ion-app {
+    background-color: #000 !important;
+    color: #fff !important;
+    --ion-background-color: #000;
+    --ion-text-color: #fff;
+    --ion-item-background: #111;
+    --background-color: #000;
+    --text-color: #fff;
+}
+
+body.color_mode_high_contrast page-core-course-index,
+body.color_mode_high_contrast page-core-course-contents {
+    --ifrn-surface: #111;
+    --ifrn-canvas: #000;
+    --ifrn-text: #fff;
+    --ifrn-muted: #ccc;
+    --ifrn-border: #555;
+    --ion-background-color: #000;
+    --ion-text-color: #fff;
+}
+
+body.color_mode_high_contrast a {
+    color: #ff0 !important;
+}
+

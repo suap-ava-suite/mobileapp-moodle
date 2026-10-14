@@ -1,0 +1,134 @@
+@if (visible) {
+    <button type="button" class="ifrn-ava-menu-trigger" (click)="openMenu()" [disabled]="busy"
+        aria-haspopup="dialog" [attr.aria-expanded]="menuOpen || a11yOpen"
+        aria-label="Abrir menu do curso">
+        <!-- Ícone <> igual ao sidebar-toggle do Painel AVA -->
+        <svg class="ifrn-ava-menu-trigger__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 11" aria-hidden="true" focusable="false">
+            <path fill="currentColor" d="M9.81,8.218a1.191,1.191,0,0,0,0,1.684l3.319,3.323L9.807,16.548a1.191,1.191,0,0,0,1.684,1.684l4.163-4.163a1.191,1.191,0,0,0,0-1.684L11.49,8.222a1.191,1.191,0,0,0-1.684,0Zm-3.613,0a1.191,1.191,0,0,0-1.684,0L.35,12.381a1.191,1.191,0,0,0,0,1.684l4.163,4.163A1.191,1.191,0,0,0,6.2,16.544L2.874,13.225,6.2,9.9A1.191,1.191,0,0,0,6.2,8.218Z" transform="translate(0 -7.87)"/>
+        </svg>
+    </button>
+
+    <ion-modal [isOpen]="menuOpen" (didDismiss)="menuDismissed()"
+        class="ifrn-ava-side-modal ifrn-ava-side-modal--left">
+        <ng-template>
+            <div class="ifrn-ava-sidebar">
+                <div class="ifrn-ava-sidebar__header">
+                    <h1 class="ifrn-ava-sidebar__title">Menu do curso</h1>
+                    <button type="button" class="ifrn-ava-sidebar__toggle" (click)="closeMenu()"
+                        aria-label="Fechar menu">
+                        <svg class="ifrn-ava-menu-trigger__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 11" aria-hidden="true" focusable="false">
+                            <path fill="currentColor" d="M9.81,8.218a1.191,1.191,0,0,0,0,1.684l3.319,3.323L9.807,16.548a1.191,1.191,0,0,0,1.684,1.684l4.163-4.163a1.191,1.191,0,0,0,0-1.684L11.49,8.222a1.191,1.191,0,0,0-1.684,0Zm-3.613,0a1.191,1.191,0,0,0-1.684,0L.35,12.381a1.191,1.191,0,0,0,0,1.684l4.163,4.163A1.191,1.191,0,0,0,6.2,16.544L2.874,13.225,6.2,9.9A1.191,1.191,0,0,0,6.2,8.218Z" transform="translate(0 -7.87)"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="ifrn-ava-sidebar__body">
+                    <p class="ifrn-ava-sidebar__env">{{ environment }}</p>
+
+                    <nav class="ifrn-ava-sidebar__nav" aria-label="Atalhos do curso">
+                        <button type="button" class="ifrn-ava-nav-btn"
+                            [disabled]="!indexEnabled || busy" (click)="choose('index')">
+                            <ion-icon name="fas-list-ul" aria-hidden="true" />
+                            <span>
+                                <strong>Índice da disciplina</strong>
+                                <small>{{ indexEnabled ? 'Unidades, conteúdos e atividades' : 'Indisponível neste formato' }}</small>
+                            </span>
+                        </button>
+
+                        <button type="button" class="ifrn-ava-nav-btn"
+                            [disabled]="!notificationsEnabled || busy" (click)="choose('notifications')">
+                            <ion-icon name="fas-bell" aria-hidden="true" />
+                            <span>
+                                <strong>Notificações</strong>
+                                <small>{{ notificationsEnabled ? 'Avisos deste ambiente' : 'Desativadas neste ambiente' }}</small>
+                            </span>
+                        </button>
+
+                        <button type="button" class="ifrn-ava-nav-btn"
+                            [disabled]="!messagesEnabled || checkingMessages || busy" (click)="choose('messages')">
+                            <ion-icon name="fas-comments" aria-hidden="true" />
+                            <span>
+                                <strong>Mensagens</strong>
+                                <small>{{ checkingMessages ? 'Verificando…' : (messagesEnabled ? 'Conversas e contatos' : 'Indisponível') }}</small>
+                            </span>
+                        </button>
+
+                        <button type="button" class="ifrn-ava-nav-btn"
+                            [disabled]="!blocksEnabled || busy" (click)="choose('blocks')">
+                            <ion-icon name="fas-table-cells-large" aria-hidden="true" />
+                            <span>
+                                <strong>Blocos do curso</strong>
+                                <small>{{ blocksEnabled ? 'Recursos adicionais' : 'Sem blocos no app' }}</small>
+                            </span>
+                        </button>
+
+                        <div class="ifrn-ava-sidebar__divider" aria-hidden="true"></div>
+
+                        <button type="button" class="ifrn-ava-nav-btn" [disabled]="busy"
+                            (click)="choose('accessibility')">
+                            <ion-icon name="fas-universal-access" aria-hidden="true" />
+                            <span>
+                                <strong>Acessibilidade</strong>
+                                <small>Contraste, zoom e VLibras</small>
+                            </span>
+                        </button>
+                    </nav>
+                </div>
+            </div>
+        </ng-template>
+    </ion-modal>
+
+    <ion-modal [isOpen]="a11yOpen" (didDismiss)="a11yDismissed()"
+        class="ifrn-ava-side-modal ifrn-ava-side-modal--a11y">
+        <ng-template>
+            <div class="ifrn-ava-a11y">
+                <header class="ifrn-ava-a11y__header">
+                    <div class="ifrn-ava-a11y__title">
+                        <ion-icon name="fas-universal-access" aria-hidden="true" />
+                        <span>Acessibilidade</span>
+                    </div>
+                    <button type="button" class="ifrn-ava-a11y__close" (click)="closeA11y()"
+                        aria-label="Fechar acessibilidade">
+                        <ion-icon name="fas-xmark" aria-hidden="true" />
+                    </button>
+                </header>
+
+                <div class="ifrn-ava-a11y__body">
+                    <div class="ifrn-ava-a11y__options">
+                        @for (opt of a11yToggles; track opt.key) {
+                            <label class="ifrn-ava-check" [class.is-on]="a11y.isEnabled(opt.key)">
+                                <input type="checkbox" class="ifrn-ava-check__input"
+                                    [checked]="a11y.isEnabled(opt.key)"
+                                    (change)="toggleA11y(opt.key, $any($event.target).checked)" />
+                                <span class="ifrn-ava-check__label">
+                                    <span class="ifrn-ava-check__text">
+                                        <ion-icon [name]="opt.icon" aria-hidden="true" />
+                                        {{ opt.label }}
+                                    </span>
+                                    <ion-icon class="ifrn-ava-check__ok" name="fas-circle-check" aria-hidden="true" />
+                                </span>
+                            </label>
+                        }
+                    </div>
+
+                    <div class="ifrn-ava-cycles">
+                        <div class="ifrn-ava-cycle" [class.is-on]="a11y.zoomLevel > 100">
+                            <span class="ifrn-ava-cycle__caption">Zoom</span>
+                            <button type="button" class="ifrn-ava-cycle__btn" (click)="cycleZoom()">
+                                <ion-icon name="fas-magnifying-glass" aria-hidden="true" />
+                                <span>{{ zoomLabel }}</span>
+                            </button>
+                        </div>
+                        <div class="ifrn-ava-cycle" [class.is-on]="a11y.colorMode !== 'default'">
+                            <span class="ifrn-ava-cycle__caption">Modo de cor</span>
+                            <button type="button" class="ifrn-ava-cycle__btn" (click)="cycleColorMode()">
+                                <ion-icon name="fas-eye" aria-hidden="true" />
+                                <span>{{ colorModeLabel }}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </ng-template>
+    </ion-modal>
+}

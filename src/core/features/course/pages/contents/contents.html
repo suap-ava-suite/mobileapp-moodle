@@ -1,4 +1,9 @@
 <ion-content>
+    <!-- BEGIN MoodleIFRN course menu -->
+    @if (dataLoaded && course) {
+        <ifrn-course-menu [courseId]="course.id" [format]="formatComponent()" />
+    }
+    <!-- END MoodleIFRN course menu -->
     <ion-refresher slot="fixed" [disabled]="!dataLoaded || updatingData || !displayRefresher" (ionRefresh)="doRefresh($event.target)">
         <ion-refresher-content pullingText="{{ 'core.pulltorefresh' | translate }}" />
     </ion-refresher>

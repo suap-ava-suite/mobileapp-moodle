@@ -14,6 +14,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { patchCourseMenu } = require('./moodle-course/patch-course-menu.cjs');
 
 const SCRIPT_DIR = __dirname;
 const PROJECT_ROOT = path.resolve(SCRIPT_DIR, '..', '..');
@@ -422,6 +423,8 @@ function main() {
     patchGulpfile();
     patchPackageScripts();
     patchIndexEarlyHandoff();
+    const menuChanged = patchCourseMenu(PROJECT_ROOT);
+    console.log(menuChanged ? '✔ Menu IFRN registrado no curso nativo' : '• Menu IFRN do curso já estava atualizado');
 
     console.log('\n✔ Patch concluído.');
     console.log('  Rotas: /login → marketplace-ifrn, /login/ifrn-login, /login/moodle-open-course');

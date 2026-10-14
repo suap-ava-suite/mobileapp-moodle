@@ -1,0 +1,369 @@
+:host { display: contents; }
+
+/* Tokens iguais ao Painel AVA / DS-GOV */
+:host,
+.ifrn-ava-sidebar,
+.ifrn-ava-a11y {
+    --ifrn-primary: #1351b4;
+    --ifrn-primary-dark: #0c326f;
+    --ifrn-primary-light: #eaeff8;
+    --ifrn-primary-soft: #c5d6f5;
+    --ifrn-text-light: #ffffff;
+    --ifrn-text-dark: #333333;
+    --ifrn-muted: #666666;
+    --ifrn-radius: 20px;
+}
+
+/* Botão <> no topo — alinhado à toolbar, sem cobrir Voltar/ações */
+.ifrn-ava-menu-trigger {
+    position: fixed;
+    top: calc(var(--ion-safe-area-top, env(safe-area-inset-top, 0px)) + 8px);
+    left: max(8px, env(safe-area-inset-left, 0px));
+    z-index: 10050;
+    width: 36px;
+    height: 36px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: var(--ifrn-primary-dark, #0c326f);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 6px rgb(7 29 65 / 22%);
+    cursor: pointer;
+    touch-action: manipulation;
+
+    .ifrn-ava-menu-trigger__icon {
+        width: 16px;
+        height: 11px;
+        display: block;
+    }
+
+    &:disabled {
+        opacity: 0.55;
+        cursor: default;
+    }
+
+    &:focus-visible {
+        outline: 2px solid #1351b4;
+        outline-offset: 2px;
+    }
+}
+
+/* Sidebar azul esquerda — espelho do .ava-menu / .sidebar-container */
+.ifrn-ava-sidebar {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--ifrn-primary, #1351b4);
+    color: var(--ifrn-text-light, #fff);
+}
+
+.ifrn-ava-sidebar__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-shrink: 0;
+    margin: 0 1rem 0.75rem;
+    padding-top: calc(1rem + var(--ion-safe-area-top, env(safe-area-inset-top, 0px)));
+}
+
+.ifrn-ava-sidebar__title {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ifrn-ava-sidebar__toggle {
+    width: 32px;
+    height: 32px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: var(--ifrn-primary-dark, #0c326f);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+
+    .ifrn-ava-menu-trigger__icon {
+        width: 16px;
+        height: 11px;
+        display: block;
+    }
+}
+
+.ifrn-ava-sidebar__body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 0.5rem max(1.25rem, env(safe-area-inset-bottom));
+}
+
+.ifrn-ava-sidebar__env {
+    margin: 0 0.5rem 1rem;
+    padding: 0.55rem 0.85rem;
+    border-radius: 14px;
+    background: rgb(255 255 255 / 12%);
+    color: rgb(255 255 255 / 92%);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.ifrn-ava-sidebar__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.ifrn-ava-sidebar__divider {
+    height: 1px;
+    margin: 0.75rem 0.5rem;
+    background: rgb(255 255 255 / 22%);
+}
+
+.ifrn-ava-nav-btn {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    width: 100%;
+    margin: 0;
+    padding: 0.7rem 0.9rem;
+    border: 0;
+    border-radius: 18px;
+    background: transparent;
+    color: #fff;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+    transition: background 0.15s ease-in;
+
+    ion-icon {
+        flex-shrink: 0;
+        margin-top: 2px;
+        font-size: 1.1rem;
+        color: var(--ifrn-primary-soft, #c5d6f5);
+    }
+
+    span {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    strong {
+        font-size: 0.95rem;
+        font-weight: 600;
+        line-height: 1.25;
+    }
+
+    small {
+        font-size: 0.75rem;
+        line-height: 1.35;
+        color: rgb(255 255 255 / 78%);
+    }
+
+    &:hover:not(:disabled),
+    &:focus-visible:not(:disabled) {
+        background: var(--ifrn-primary-dark, #0c326f);
+    }
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: default;
+    }
+}
+
+/* Modal de acessibilidade — igual ao sidebar-modal do painel */
+.ifrn-ava-a11y {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #f6f6f6;
+    color: var(--ifrn-text-dark, #333);
+}
+
+.ifrn-ava-a11y__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-shrink: 0;
+    padding: 16px;
+    padding-top: calc(16px + var(--ion-safe-area-top, env(safe-area-inset-top, 0px)));
+    background: var(--ifrn-primary, #1351b4);
+    color: #fff;
+}
+
+.ifrn-ava-a11y__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+
+    ion-icon {
+        font-size: 1.2rem;
+        color: #fff;
+    }
+
+    span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.ifrn-ava-a11y__close {
+    width: 32px;
+    height: 32px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid rgb(255 255 255 / 35%);
+    border-radius: 8px;
+    background: var(--ifrn-primary-dark, #0c326f);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+
+    ion-icon {
+        font-size: 0.95rem;
+        color: #fff;
+    }
+}
+
+.ifrn-ava-a11y__body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 1rem 1rem max(1.25rem, env(safe-area-inset-bottom));
+}
+
+.ifrn-ava-a11y__options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.ifrn-ava-check {
+    display: block;
+    margin: 0;
+    cursor: pointer;
+}
+
+.ifrn-ava-check__input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.ifrn-ava-check__label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 72px;
+    background: #fff;
+    color: var(--ifrn-text-dark, #333);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+
+.ifrn-ava-check__text {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+
+    ion-icon {
+        flex-shrink: 0;
+        font-size: 1rem;
+        color: inherit;
+    }
+}
+
+.ifrn-ava-check__ok {
+    display: none;
+    font-size: 1.1rem;
+    color: var(--ifrn-primary, #1351b4);
+    flex-shrink: 0;
+}
+
+.ifrn-ava-check.is-on .ifrn-ava-check__label,
+.ifrn-ava-check__input:checked + .ifrn-ava-check__label {
+    color: var(--ifrn-primary, #1351b4);
+    border-color: var(--ifrn-primary, #1351b4);
+    box-shadow: 0 0 0 2px rgb(19 81 180 / 18%);
+}
+
+.ifrn-ava-check.is-on .ifrn-ava-check__ok,
+.ifrn-ava-check__input:checked + .ifrn-ava-check__label .ifrn-ava-check__ok {
+    display: block;
+}
+
+.ifrn-ava-cycles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-top: 1rem;
+}
+
+.ifrn-ava-cycle__caption {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: var(--ifrn-text-dark, #333);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.ifrn-ava-cycle__btn {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    width: 100%;
+    margin: 0;
+    padding: 0.75rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 72px;
+    background: #fff;
+    color: var(--ifrn-text-dark, #333);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+
+    ion-icon {
+        font-size: 1rem;
+        color: inherit;
+    }
+}
+
+.ifrn-ava-cycle.is-on .ifrn-ava-cycle__btn {
+    color: var(--ifrn-primary, #1351b4);
+    border-color: var(--ifrn-primary, #1351b4);
+    box-shadow: 0 0 0 2px rgb(19 81 180 / 18%);
+}

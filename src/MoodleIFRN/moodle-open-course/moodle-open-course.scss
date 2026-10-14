@@ -351,8 +351,24 @@
     gap: 8px;
     background: #ffffff;
 }
-.moodle-open-course__header h1 { color: var(--moodle-open-accent-dark); line-height: 1.35; }
-.moodle-open-course__back { --color: var(--moodle-open-accent-dark); margin: 0; min-width: 44px; min-height: 44px; flex-shrink: 0; }
+.moodle-open-course__header h1 {
+    color: var(--moodle-open-accent-dark);
+    line-height: 1.35;
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.moodle-open-course__back {
+    --color: var(--moodle-open-accent-dark);
+    --padding-start: 0;
+    --padding-end: 0;
+    margin: 0;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    min-height: 44px;
+    flex: 0 0 44px;
+}
 .moodle-open-course__content { padding-bottom: calc(32px + max(var(--ion-safe-area-bottom, 0px), env(safe-area-inset-bottom, 0px))); }
 .moodle-open-course__button {
     --background: var(--moodle-open-accent);

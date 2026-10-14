@@ -42,7 +42,11 @@
                     <dd>{{ issue.actualLogin }}</dd>
                 </dl>
                 <p class="moodle-open-course__account-help">
-                    As contas são diferentes. Saia da conta errada no navegador e entre de novo com a matrícula
+                    @if (issue.source === 'painel') {
+                        Vamos reiniciar o acesso ao Painel. Na autenticação, use a matrícula
+                    } @else {
+                        Saia da conta incorreta no Moodle e entre novamente com a matrícula
+                    }
                     <strong>{{ issue.expectedLogin }}</strong>. Seus dados anteriores foram mantidos.
                 </p>
                 @if (accountSwitchStarted) {
@@ -59,8 +63,9 @@
                         </ion-button>
                     }
                     <ion-button expand="block" class="moodle-open-course__button"
-                        (click)="openWebLogout()" [disabled]="showTransition">
-                        {{ accountSwitchStarted ? 'Abrir saída no navegador de novo' : 'Sair da conta no navegador' }}
+                        (click)="recoverAccount()" [disabled]="showTransition">
+                        {{ issue.source === 'painel' ? 'Entrar com a matrícula correta' :
+                            (accountSwitchStarted ? 'Abrir saída do Moodle novamente' : 'Sair da conta do Moodle') }}
                     </ion-button>
                     <ion-button expand="block" fill="outline" class="moodle-open-course__button"
                         (click)="dismissAccountIssue()" [disabled]="showTransition">

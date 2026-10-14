@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { IfrnCourseMenuComponent } from '@/MoodleIFRN/moodle-course/course-menu';
 import { Component, OnInit, OnDestroy, forwardRef, ChangeDetectorRef, inject, viewChild, HostBinding } from '@angular/core';
 import { IonContent } from '@ionic/angular';
 
@@ -62,6 +63,7 @@ import { CoreSharedModule } from '@/core/shared.module';
             useExisting: forwardRef(() => CoreCourseContentsPage),
         }],
     imports: [
+        IfrnCourseMenuComponent,
         CoreSharedModule,
         CoreCourseFormatComponent,
     ],
