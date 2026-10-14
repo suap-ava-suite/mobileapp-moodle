@@ -76,15 +76,44 @@ const JWT_SHAPE = /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/;
 const MAX_TOKEN_LENGTH = 4096;
 const SUAP_ORIGIN = 'https://suap.ifrn.edu.br';
 
-/** Opções do IAB: sem barra de URL e toolbar clara (evita tela preta padrão do Cordova). */
+/** Opções do IAB: sem barra de URL; login SUAP continua usável quando exibido. */
 const PAINEL_IAB_CHROME = {
     location: 'no' as const,
     hidden: 'yes' as const,
     footer: 'no' as const,
+    hideurlbar: 'yes' as const,
+    hidenavigationbuttons: 'yes' as const,
     toolbarcolor: '#ffffff',
     closebuttoncolor: '#19743c',
     navigationbuttoncolor: '#19743c',
 };
+
+/**
+ * Cobre redirects intermediários (AVA/Moodle/web): sem logos antigos nem conteúdo
+ * HTML visível se o hide() falhar. Não aplicar no login/autorização do SUAP.
+ */
+const IAB_MASK_INTERMEDIATE_CSS = `
+html, body {
+  background: #ffffff !important;
+  min-height: 100% !important;
+}
+img, picture, video, iframe, object, embed, svg,
+[style*="background-image"],
+.logo, .navbar, .navbar-brand, .login-logo, .sitelogo, .site-logo,
+.moodle-logo, #page-header, #page-navbar, header, .header,
+.activity-item img, .course-content img {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  background: #ffffff;
+  pointer-events: none;
+}
+`;
 
 /** Páginas em que o usuário precisa interagir (login/autorização). Demais URLs ficam ocultas. */
 function needsSuapUserInteraction(url: string): boolean {
@@ -92,6 +121,19 @@ function needsSuapUserInteraction(url: string): boolean {
         return false;
     }
     return /\/(accounts\/login|login\/?(\?|$)|o\/authorize|oauth\/?2?\/authorize|authorize\/?(\?|$))/i.test(url);
+}
+
+/** Esconde chrome web + imagens Moodle/AVA nos passos sem interação SUAP. */
+function maskIntermediateWebPage(
+    browser: { insertCSS: (css: { code: string }) => Promise<unknown> },
+    url: string,
+): void {
+    if (!url || needsSuapUserInteraction(url)) {
+        return;
+    }
+    browser.insertCSS({ code: IAB_MASK_INTERMEDIATE_CSS }).catch(() => {
+        // Plataforma sem insertCSS: hide() + overlay Ionic já cobrem o retorno.
+    });
 }
 
 /** Campos que o time quer inspecionar — só entram no resumo se existirem. */
@@ -507,18 +549,22 @@ export class PainelAvaService {
 
             // Inicia oculto; só mostra login/autorização SUAP. Esconde no loadstart
             // (antes do paint) ao voltar ao Painel ou em redirects sem interação.
+            // Páginas intermediárias também recebem CSS que oculta logos Moodle/web.
             const loadStartSubscription = browser.on('loadstart').subscribe((event) => {
                 const url = event.url || '';
 
                 if (url.startsWith(`${suapOrigin}/`)) {
                     if (awaitingSuapIdentity || !needsSuapUserInteraction(url)) {
                         hideBrowser();
+                        maskIntermediateWebPage(browser, url);
                     }
+                    // Login/autorização SUAP: não mascara — deixa a UI nativa do SUAP.
                     return;
                 }
 
-                // Qualquer saída do SUAP (callback OAuth, AVA, etc.): esconde antes do paint.
+                // Qualquer saída do SUAP (callback OAuth, AVA/Moodle, etc.): esconde antes do paint.
                 hideBrowser();
+                maskIntermediateWebPage(browser, url);
             });
 
             const loadStopSubscription = browser.on('loadstop').subscribe((event) => {
@@ -526,6 +572,8 @@ export class PainelAvaService {
 
                 // Coleta de identidade após diários: permanece oculta; não reabre o login.
                 if (!finished && awaitingSuapIdentity && url.startsWith(`${suapOrigin}/`)) {
+                    hideBrowser();
+                    maskIntermediateWebPage(browser, url);
                     const identityScript = `
                         (function () {
                             var probeLog = ${JSON.stringify(pendingProbeLog)};
@@ -593,6 +641,7 @@ export class PainelAvaService {
 
                 // Mostrar só login/autorização; redirects intermediários ficam ocultos.
                 // Com cookies válidos, o Painel permanece oculto desde a criação.
+                // SUAP login: sem máscara de imagens — UI intacta para o usuário.
                 if (!finished && !awaitingSuapIdentity && needsSuapUserInteraction(url)) {
                     showBrowserForLogin();
                     return;
@@ -600,7 +649,14 @@ export class PainelAvaService {
 
                 if (!finished && url.startsWith(`${suapOrigin}/`)) {
                     hideBrowser();
+                    maskIntermediateWebPage(browser, url);
                     return;
+                }
+
+                // AVA/Moodle/web intermediário: sem URL visível e sem logos antigos.
+                if (!finished) {
+                    hideBrowser();
+                    maskIntermediateWebPage(browser, url);
                 }
 
                 if (finished || probing || awaitingSuapIdentity || !url.startsWith(baseUrl)) {
@@ -927,8 +983,26 @@ export class PainelAvaService {
                 fail('A autoinscrição demorou demais. Entre novamente no Painel AVA e tente de novo.');
             }, REQUEST_TIMEOUT_MS);
 
+            const loadStartSubscription = browser.on('loadstart').subscribe((event) => {
+                const url = event.url || '';
+                try {
+                    browser.hide();
+                } catch {
+                    // Overlay Ionic cobre se hide não existir.
+                }
+                maskIntermediateWebPage(browser, url);
+            });
+
             const loadStopSubscription = browser.on('loadstop').subscribe((event) => {
-                if (finished || started || !event.url.startsWith(baseUrl)) {
+                const url = event.url || '';
+                try {
+                    browser.hide();
+                } catch {
+                    // Overlay Ionic cobre se hide não existir.
+                }
+                maskIntermediateWebPage(browser, url);
+
+                if (finished || started || !url.startsWith(baseUrl)) {
                     return;
                 }
                 started = true;
@@ -1036,6 +1110,7 @@ export class PainelAvaService {
 
             return () => {
                 window.clearTimeout(timeout);
+                loadStartSubscription.unsubscribe();
                 loadStopSubscription.unsubscribe();
                 messageSubscription.unsubscribe();
                 exitSubscription.unsubscribe();
