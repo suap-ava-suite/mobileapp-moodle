@@ -16,11 +16,6 @@
     <link rel="icon" type="image/png" sizes="16x16" href="static/theme/ifrn/favicon/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="static/theme/ifrn/favicon/apple-touch-icon.png">
     <link rel="manifest" href="static/theme/ifrn/favicon/site.webmanifest">
-    <link rel="preconnect" href="https://fonts.cdnfonts.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/rawline">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <style>
         html, body {
             margin: 0;
@@ -32,18 +27,6 @@
         }
         ion-app {
             height: calc(100% - var(--keyboard-height, 0px));
-        }
-        /* ion-menu só ganha display:none no shadow CSS após hidratar —
-           sem isso o sidebar azul pisca no 1º paint (login / reload). */
-        ion-menu:not(.show-menu) {
-            display: none !important;
-            visibility: hidden !important;
-            pointer-events: none !important;
-        }
-        ion-menu.show-menu {
-            display: block !important;
-            visibility: visible !important;
-            pointer-events: auto !important;
         }
         .boot-loading.ava-splash {
             display: flex;
@@ -138,80 +121,27 @@
 </head>
 <body>
     <ion-app>
-        <ion-menu content-id="main-content" type="overlay" class="ava-menu">
-            <ion-content class="menu-content" scroll-y="true">
-                <div id="sidebar-container" class="sidebar-container">
-                    <div class="sidebar-content-header">
-                        <h1 class="sidebar-title">Painel AVA</h1>
-                        <ion-menu-toggle>
-                            <button type="button" id="btn-toggle-sidebar" class="btn-toggle-sidebar" aria-label="Toggle Sidebar">
-                                <img src="static/theme/ifrn/img/sidebar-toggle.svg" alt="">
-                            </button>
-                        </ion-menu-toggle>
-                    </div>
-
-                    <div class="sidebar-content-body">
-                        <div class="sidebar-user-content">
-                            <button type="button" class="sidebar-user-content-profile" id="btn-toggle-profile" aria-label="Perfil">
-                                <div class="profile-image profile-image--initials" id="menu-user-avatar" aria-hidden="true">U</div>
-                                <span id="sidebar-user-name">Estudante</span>
-                            </button>
-
-                            <div class="sidebar-user-content-options">
-                                <button type="button" class="sidebar-modal-button" id="btn-toggle-accessibility">
-                                    <ion-icon name="accessibility" aria-hidden="true"></ion-icon>
-                                    <span>Acessibilidade</span>
-                                </button>
-                                <button type="button" class="sidebar-modal-button" id="btn-toggle-help">
-                                    <ion-icon name="help-circle" aria-hidden="true"></ion-icon>
-                                    <span>Ajuda</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="sidebar-content-divider"></div>
-
-                        <div class="sidebar-course-content">
-                            <div class="sidebar-course-content-filter-modal-button-area">
-                                <button type="button" class="sidebar-modal-button" id="btn-toggle-filter">
-                                    <ion-icon name="filter" aria-hidden="true"></ion-icon>
-                                    <span class="sidebar-modal-button-text-contracted">FILTRO</span>
-                                    <span>Adicionar filtros</span>
-                                </button>
-                            </div>
-
-                            <div class="sidebar-course-content-filters">
-                                <button type="button" class="sidebar-course-content-filter-title" id="btn-open-filter-label">
-                                    <ion-icon name="options-outline" aria-hidden="true"></ion-icon>
-                                    <span>FILTRADO POR:</span>
-                                </button>
-                                <div class="sidebar-course-content-filters-list" id="sidebar-active-filters">
-                                    <div class="sidebar-course-content-filters-list-item" data-filter="situacao">
-                                        <div class="sidebar-course-content-filters-list-item-divider">
-                                            <ion-icon name="book-outline" aria-hidden="true"></ion-icon>
-                                            <span class="sidebar-course-content-filters-list-item-text" id="sidebar-filter-situacao">
-                                                Todos os diários (lento)
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </ion-content>
-        </ion-menu>
-
-        <div class="ion-page" id="main-content">
+<div class="ion-page" id="main-content">
             <ion-header class="ava-header">
                 <ion-toolbar class="ava-toolbar">
                     <div class="ava-toolbar-inner">
-                        <ion-menu-button class="ava-menu-trigger" auto-hide="false" color="primary" aria-label="Abrir menu"></ion-menu-button>
+                        <img class="ava-header-logo" src="static/theme/ifrn/img/ifrn-logo.png" alt="IFRN">
                         <div class="ava-header-brand">
                             <span class="ava-header-title" id="page-title">Painel AVA</span>
-                            <span class="ava-header-subtitle" id="page-subtitle">IFRN</span>
+                            <span class="ava-header-subtitle" id="page-subtitle">Ambiente Virtual de Aprendizagem</span>
                         </div>
-                        <button type="button" class="toolbar-avatar" id="toolbar-avatar" aria-label="Abrir perfil"></button>
+                        <nav class="ava-header-actions" aria-label="Opções do painel">
+                            <button type="button" class="ava-header-action" id="btn-toggle-accessibility" aria-label="Acessibilidade" aria-haspopup="dialog" aria-controls="sidebar-modal" aria-expanded="false">
+                                <ion-icon name="accessibility-outline" aria-hidden="true"></ion-icon>
+                            </button>
+                            <button type="button" class="ava-header-action" id="btn-toggle-help" aria-label="Ajuda" aria-haspopup="dialog" aria-controls="sidebar-modal" aria-expanded="false">
+                                <ion-icon name="help-circle-outline" aria-hidden="true"></ion-icon>
+                            </button>
+                            <button type="button" class="ava-header-action ava-header-profile" id="btn-toggle-profile" aria-label="Abrir perfil" aria-haspopup="dialog" aria-controls="sidebar-modal" aria-expanded="false">
+                                <div class="profile-image profile-image--initials" id="menu-user-avatar" aria-hidden="true">U</div>
+                                <span id="sidebar-user-name">Estudante</span>
+                            </button>
+                        </nav>
                     </div>
                 </ion-toolbar>
             </ion-header>

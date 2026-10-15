@@ -20,6 +20,17 @@
             </button>
         </div>
 
+        <div class="painel-filters" aria-label="Filtros de cursos">
+            <button type="button" class="painel-filter-button" id="btn-toggle-filter" aria-haspopup="dialog" aria-controls="sidebar-modal" aria-expanded="false">
+                <ion-icon name="options-outline" aria-hidden="true"></ion-icon>
+                Filtros
+            </button>
+            <button type="button" class="painel-filter-chip" id="sidebar-active-filters" aria-label="Alterar filtro de cursos" aria-haspopup="dialog" aria-controls="sidebar-modal" aria-expanded="false">
+                <span id="sidebar-filter-situacao">Todos os diários</span>
+                <ion-icon name="chevron-down-outline" aria-hidden="true"></ion-icon>
+            </button>
+        </div>
+
         <section class="page-intro" id="painel-intro">
             <h2 id="painel-intro-title">Meus Diários</h2>
         </section>
@@ -28,7 +39,7 @@
     </div>
 </template>
 
-<!-- Card de diário / curso matriculado (theme_ifrn25) -->
+<!-- Card de diário / curso matriculado (IFRN26) -->
 <template id="tpl-painel-card">
     <ion-card class="painel-card">
         <ion-card-content>
@@ -55,7 +66,7 @@
     </ion-card>
 </template>
 
-<!-- Card de autoinscrição (theme_ifrn25) -->
+<!-- Card de autoinscrição (IFRN26) -->
 <template id="tpl-painel-card-autoinscricao">
     <ion-card class="painel-card painel-card--autoinscricao">
         <ion-card-content>

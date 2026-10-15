@@ -1,18 +1,18 @@
 /*!
  * app-sidebar.ts
  * ----------------------------------------------------------------------------
- * Menu lateral estilo AVA + modais (perfil, ajuda, acessibilidade, filtros).
+ * Cabeçalho IFRN26 + painéis laterais (perfil, ajuda, acessibilidade, filtros).
  *
  * openModal(type) clona o template correspondente (tpl-modal-*) e preenche
  * o painel #sidebar-modal. bindSidebar() liga os botões uma vez no boot.
  */
-import { MM, App } from './namespace';
+import { App } from './namespace';
 
 
     /** Rótulos exibidos no chip “FILTRADO POR:”. */
     const FILTER_LABELS: Record<string, string> = {
         inprogress: 'Em andamento',
-        allincludinghidden: 'Todos os diários (lento)',
+        allincludinghidden: 'Todos os diários',
         favourites: 'Favoritos',
         hidden: 'Ocultos',
     };
@@ -33,6 +33,9 @@ import { MM, App } from './namespace';
     };
 
     let userSelectedFilter = false;
+    let bound = false;
+    let modalTrigger: HTMLElement | null = null;
+    const actionSelector = '[aria-controls="sidebar-modal"]';
 
     App.activeFilter = {
         situacao: 'allincludinghidden',
@@ -44,31 +47,35 @@ import { MM, App } from './namespace';
     }
 
     function setActiveButton(type: SidebarModalType): void {
-        document.querySelectorAll('.sidebar-modal-button, .sidebar-user-content-profile').forEach((el) => {
+        document.querySelectorAll(actionSelector).forEach((el) => {
             el.classList.remove('active');
+            el.setAttribute('aria-expanded', 'false');
         });
 
         const btn = getEl(BUTTON_IDS[type]);
 
         if (btn) {
             btn.classList.add('active');
+            btn.setAttribute('aria-expanded', 'true');
         }
     }
 
     function clearActiveButtons(): void {
-        document.querySelectorAll('.sidebar-modal-button, .sidebar-user-content-profile').forEach((el) => {
+        document.querySelectorAll(actionSelector).forEach((el) => {
             el.classList.remove('active');
+            el.setAttribute('aria-expanded', 'false');
         });
     }
 
     function closeModal(): void {
         const modal = getEl('sidebar-modal');
 
-        if (modal) {
-            modal.hidden = true;
-        }
-
+        if (!modal || modal.hidden) return;
+        modal.hidden = true;
+        getEl('main-content')?.removeAttribute('inert');
         clearActiveButtons();
+        if (modalTrigger?.isConnected) modalTrigger.focus();
+        modalTrigger = null;
     }
 
     function bindAccessibilityControls(): void {
@@ -157,10 +164,13 @@ import { MM, App } from './namespace';
             icon.setAttribute('name', meta.icon);
         }
 
+        if (modal.hidden) modalTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         body.innerHTML = '';
         body.appendChild(fragment);
         setActiveButton(type);
         modal.hidden = false;
+        getEl('main-content')?.setAttribute('inert', '');
+        getEl('sidebar-modal-close')?.focus();
 
         if (type === 'profile') {
             const nameEl = getEl('modal-profile-name');
@@ -208,24 +218,24 @@ import { MM, App } from './namespace';
 
     /** Liga cliques do menu, avatar do header, fechar (X / backdrop / Esc). */
     function bindSidebar(): void {
-        ([
-            ['btn-toggle-profile', 'profile'],
-            ['btn-toggle-help', 'help'],
-            ['btn-toggle-accessibility', 'accessibility'],
-            ['btn-toggle-filter', 'filter'],
-            ['btn-open-filter-label', 'filter'],
-            ['sidebar-active-filters', 'filter'],
-            ['toolbar-avatar', 'profile'],
-        ] as [string, SidebarModalType][]).forEach((pair) => {
-            const el = getEl(pair[0]);
-
-            if (!el) {
-                return;
+        if (bound) return;
+        bound = true;
+        // Delegação: os filtros são recriados ao renderizar/atualizar o painel.
+        const triggers: Record<string, SidebarModalType> = {
+            'btn-toggle-profile': 'profile',
+            'btn-toggle-help': 'help',
+            'btn-toggle-accessibility': 'accessibility',
+            'btn-toggle-filter': 'filter',
+            'sidebar-active-filters': 'filter',
+        };
+        document.addEventListener('click', (event) => {
+            const button = event.target instanceof Element
+                ? event.target.closest<HTMLElement>(actionSelector)
+                : null;
+            if (button && triggers[button.id]) {
+                openModal(triggers[button.id]);
+                button.setAttribute('aria-expanded', 'true');
             }
-
-            el.addEventListener('click', () => {
-                openModal(pair[1]);
-            });
         });
 
         const closeBtn = getEl('sidebar-modal-close');
@@ -240,8 +250,23 @@ import { MM, App } from './namespace';
         }
 
         document.addEventListener('keydown', (event: KeyboardEvent) => {
+            const modal = getEl('sidebar-modal');
+            if (!modal || modal.hidden) return;
             if (event.key === 'Escape') {
                 closeModal();
+            } else if (event.key === 'Tab') {
+                const controls = Array.from(modal.querySelectorAll<HTMLElement>(
+                    'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), [tabindex="0"]',
+                )).filter(el => !el.closest('[hidden]') && el.getClientRects().length > 0);
+                const first = controls[0];
+                const last = controls[controls.length - 1];
+                if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault();
+                    last?.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault();
+                    first?.focus();
+                }
             }
         });
     }

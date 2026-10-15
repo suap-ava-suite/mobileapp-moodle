@@ -1,3 +1,15 @@
+// Fonte compartilhada com o painel, publicada pelo patch de assets existente.
+@each $weight in 400, 500, 600, 700 {
+    @font-face {
+        font-family: "Rawline";
+        src: url("/mobilemoodle/static/theme/ifrn/fonts/rawline-#{$weight}.woff2") format("woff2");
+        font-weight: $weight;
+        font-style: normal;
+        font-display: swap;
+    }
+}
+page-core-course-index, page-core-course-contents { --ion-font-family: "Rawline", sans-serif; font-family: var(--ion-font-family); }
+
 /*
  * MoodleIFRN — reforma visual FORTE do curso NATIVO.
  *
@@ -18,19 +30,19 @@
  * ========================================================= */
 page-core-course-index.ion-page,
 page-core-course-index {
-    --ifrn-ava: #098e95;
-    --ifrn-ava-dark: #06686e;
-    --ifrn-ava-mid: #0aa6ae;
-    --ifrn-ava-soft: #e6f5f6;
-    --ifrn-ava-softer: #f3fafb;
+    --ifrn-ava: #1351b4;
+    --ifrn-ava-dark: #0c326f;
+    --ifrn-ava-mid: #155bcb;
+    --ifrn-ava-soft: #eaeff8;
+    --ifrn-ava-softer: #f0f5ff;
     --ifrn-surface: #ffffff;
-    --ifrn-canvas: #eef3f3;
-    --ifrn-border: #cfe0e2;
-    --ifrn-text: #1b2a2b;
-    --ifrn-muted: #5f7173;
+    --ifrn-canvas: #f6f6f6;
+    --ifrn-border: #cccccc;
+    --ifrn-text: #333333;
+    --ifrn-muted: #666666;
     --ifrn-success: #2f9e44;
-    --ifrn-shadow: 0 6px 18px rgb(9 75 79 / 10%);
-    --ifrn-radius: 14px;
+    --ifrn-shadow: 0 6px 18px rgb(7 29 65 / 8%);
+    --ifrn-radius: 4px;
 
     /* Tokens oficiais do Moodle / Ionic usados pelos componentes nativos */
     --primary: var(--ifrn-ava);
@@ -39,7 +51,7 @@ page-core-course-index {
     --primary-contrast: #ffffff;
 
     --ion-color-primary: var(--ifrn-ava);
-    --ion-color-primary-rgb: 9, 142, 149;
+    --ion-color-primary-rgb: 19, 81, 180;
     --ion-color-primary-contrast: #ffffff;
     --ion-color-primary-contrast-rgb: 255, 255, 255;
     --ion-color-primary-shade: var(--ifrn-ava-dark);
@@ -72,7 +84,7 @@ page-core-course-index {
     --core-tabs-height: 52px;
 
     --core-progressbar-color: var(--ifrn-ava);
-    --core-progressbar-background: #cfeced;
+    --core-progressbar-background: #c5d6f5;
     --core-progressbar-text-color: var(--ifrn-ava-dark);
     --core-progressbar-height: 10px;
 
@@ -201,7 +213,7 @@ page-core-course-index .core-course-progress {
 
 page-core-course-index .core-course-progress core-progress-bar {
     --progressbar-color: var(--ifrn-ava) !important;
-    --progressbar-background: #cfeced !important;
+    --progressbar-background: #c5d6f5 !important;
     --text-color: var(--ifrn-ava-dark) !important;
     --height: 10px !important;
     --line-height: 28px;
@@ -523,7 +535,7 @@ page-core-course-index ion-router-outlet > * ion-content {
     }
 }
 
-/* Marcador DevTools: computed style de page-core-course-index deve ter --ifrn-ava: #098e95 */
+/* Marcador DevTools: computed style de page-core-course-index deve ter --ifrn-ava: #1351b4 */
 
 /* =========================================================
  * Acessibilidade do curso (espelho do Painel AVA / VLibras)
@@ -555,7 +567,7 @@ body.big_cursor * {
 }
 
 body.highlight_links a[href] {
-    background-color: #1b2a2b !important;
+    background-color: #333333 !important;
     border: 2px solid #f90 !important;
     color: rgba(255, 255, 100, 1) !important;
     padding: 0.25em 0.5em;
@@ -575,39 +587,39 @@ page-core-course-contents:has(ifrn-course-menu[data-index-ready="true"])
 
 /* Menu lateral esquerdo — igual Painel AVA (.ava-menu) */
 ion-modal.ifrn-ava-side-modal--left {
-    --width: min(255px, 86vw);
-    --height: calc(100% - 16px);
-    --max-width: 86vw;
-    --border-radius: 0 20px 20px 0;
+    --width: min(400px, 100vw);
+    --height: 100%;
+    --max-width: 100vw;
+    --border-radius: 0;
     --box-shadow: 0 0 20px rgb(0 0 0 / 15%);
     --backdrop-opacity: 0.35;
-    --background: #1351b4;
+    --background: #ffffff;
 }
 
 ion-modal.ifrn-ava-side-modal--left::part(content) {
     position: absolute;
-    top: 8px;
-    bottom: 8px;
+    top: 0;
+    bottom: 0;
     left: 0;
     right: auto;
     margin: 0;
     width: var(--width);
     height: auto;
-    max-width: 86vw;
-    border-radius: 0 20px 20px 0;
+    max-width: 100vw;
+    border-radius: 0;
     overflow: hidden;
-    background: #1351b4;
+    background: #ffffff;
 }
 
 /* Painel de acessibilidade — igual .sidebar-modal do painel (direita) */
 ion-modal.ifrn-ava-side-modal--a11y {
-    --width: min(320px, 92vw);
+    --width: min(400px, 100vw);
     --height: 100%;
-    --max-width: 92vw;
-    --border-radius: 16px 0 0 16px;
+    --max-width: 100vw;
+    --border-radius: 0;
     --box-shadow: -6px 0 24px rgb(0 0 0 / 18%);
     --backdrop-opacity: 0.35;
-    --background: #f6f6f6;
+    --background: #ffffff;
 }
 
 ion-modal.ifrn-ava-side-modal--a11y::part(content) {
@@ -616,10 +628,10 @@ ion-modal.ifrn-ava-side-modal--a11y::part(content) {
     margin: 0;
     width: var(--width);
     height: 100%;
-    max-width: 92vw;
-    border-radius: 16px 0 0 16px;
+    max-width: 100vw;
+    border-radius: 0;
     overflow: hidden;
-    background: #f6f6f6;
+    background: #ffffff;
 }
 
 /* VLibras compacto — não cobre a tela inteira do app */
@@ -687,7 +699,7 @@ body.vlibras_active div[vw] .vw-plugin-wrapper {
     padding: 10px 14px;
     border: 0;
     border-radius: 999px;
-    background: #06686e !important;
+    background: #0c326f !important;
     color: #fff !important;
     font: 600 0.875rem/1.2 system-ui, sans-serif;
     box-shadow: 0 4px 16px rgb(0 0 0 / 35%);
@@ -797,3 +809,16 @@ body.color_mode_high_contrast a {
     color: #ff0 !important;
 }
 
+
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--left,
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--a11y {
+    --background: #111;
+    .ifrn-ava-sidebar, .ifrn-ava-a11y, .ifrn-ava-a11y__header,
+    .ifrn-ava-sidebar__env, .ifrn-ava-check__label, .ifrn-ava-cycle__btn {
+        background: #111; color: #fff; border-color: #777;
+    }
+    .ifrn-ava-sidebar__title, .ifrn-ava-nav-btn, .ifrn-ava-nav-btn ion-icon,
+    .ifrn-ava-a11y__title, .ifrn-ava-a11y__title ion-icon { color: #ff0; }
+    .ifrn-ava-nav-btn small { color: #ddd; }
+    .ifrn-ava-nav-btn:hover { background: #222; }
+}

@@ -287,7 +287,6 @@ body[data-zoom="160"] {
 
 body.color_mode_low_contrast {
     ion-app,
-    .sidebar-container,
     ion-content,
     &.vlibras_active div[vw].enabled {
         filter: saturate(0.5);
@@ -331,7 +330,6 @@ body.color_mode_colorblind {
 
 body.color_mode_grayscale {
     ion-app,
-    .sidebar-container,
     ion-content,
     &.vlibras_active div[vw].enabled {
         filter: grayscale(100%);
@@ -358,7 +356,6 @@ body.color_mode_high_contrast {
         color: #fff;
     }
 
-    .sidebar-container,
     ion-toolbar,
     .painel-card,
     .curso-card,
@@ -368,7 +365,7 @@ body.color_mode_high_contrast {
         border: 1px solid var(--dark-light) !important;
     }
 
-    .sidebar-user-content-profile {
+    .ava-header-profile {
         color: var(--dark);
 
         &:hover,
@@ -399,4 +396,21 @@ body.color_mode_high_contrast {
         background-color: #1a1a1a;
         color: #fff;
     }
+}
+
+// Superfícies IFRN26 em alto contraste (inclusive o conteúdo do toolbar Ionic).
+body.color_mode_high_contrast {
+    --primary: #ffff00;
+    --primary-dark: #ffff00;
+    --primary-light: #222222;
+    --branco-primario: #111111;
+    --muted: #dddddd;
+    --cinza-primario: #888888;
+    --success-light: #17251a;
+    --success-dark: #afffb6;
+    #main-content ion-toolbar { --background: #111; --color: #fff; }
+    .ava-header-title, #main-content .ava-header-title { color: #fff; }
+    .sidebar-modal__header { background: #111; }
+    .ava-modal-body__user, .filter-select-area, .filter-select-area select { background: #111; color: #fff; }
+    .modal-button-option, .modal-content-body-help-link { background: #111; }
 }

@@ -59,115 +59,56 @@ html.plt-android.plt-mobile {
 // Reaplica explicitamente no toolbar: não depende do CSS que o ion-header
 // injeta em tempo de execução.
 ion-header ion-toolbar:first-of-type {
-    padding-top: var(--ifrn-safe-area-top);
+    padding-top: max(var(--ifrn-safe-area-top), var(--ion-safe-area-top, 0px));
 }
 
-.toolbar-avatar {
-    width: 32px;
-    height: 32px;
-    margin-right: 0;
-    margin-left: 4px;
-    flex: 0 0 auto;
-    background: var(--primary-light);
-    color: var(--primary-dark);
-    font-size: 0.8rem;
-    font-weight: 700;
-    display: grid;
-    place-items: center;
-    border: none;
-    border-radius: 50%;
-    padding: 0;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-
-    &:hover,
-    &:focus-visible {
-        outline: 2px solid var(--dsgov-focus-ring-blue, rgba(19, 81, 180, 0.35));
-        outline-offset: 2px;
-    }
-}
-
-// Header estilo AVA (br-header) — compacto e fluido no mobile
-.ava-header {
-    box-shadow: var(--dsgov-shadow-header, 0 2px 8px rgba(0, 0, 0, 0.2));
-}
-
+.ava-header { box-shadow: 0 2px 8px rgb(0 0 0 / 8%); }
 .ava-toolbar {
-    --background: var(--branco-primario);
-    --color: var(--dark);
+    --background: #fff;
+    --color: var(--primary-dark);
     --border-width: 0;
-    --min-height: 48px;
-    // Sem piso fixo: 0 no browser; no nativo o JS preenche --ion-safe-area-top
-    --padding-top: var(--ion-safe-area-top, 0px);
-    --padding-bottom: 0px;
+    --min-height: 72px;
+    --padding-top: 0;
+    --padding-bottom: 0;
     --padding-start: 0;
     --padding-end: 0;
 }
-
 .ava-toolbar-inner {
     display: flex;
     align-items: center;
-    gap: 4px;
-    width: 100%;
-    min-height: 48px;
-    height: 48px;
-    padding: 0 10px 0 4px;
-    box-sizing: border-box;
+    gap: 16px;
+    min-height: 72px;
+    max-width: 1200px;
+    margin: auto;
+    padding: 8px 24px;
 }
-
-.ava-menu-trigger {
-    --padding-start: 8px;
-    --padding-end: 8px;
-    color: var(--ion-color-primary);
-    width: 40px;
-    height: 40px;
-    margin: 0;
-    flex: 0 0 auto;
-    border-radius: 50%;
-}
-
-.ava-header-brand {
-    display: flex;
-    flex-direction: column;
+.ava-header-logo { width: auto; height: 36px; flex-shrink: 0; object-fit: contain; }
+.ava-header-brand { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ava-header-title { font-size: 1.25rem; font-weight: 700; color: var(--primary-dark); }
+.ava-header-subtitle { font-size: .75rem; color: var(--muted); }
+.ava-header-title, .ava-header-subtitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ava-header-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.ava-header-action {
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
-    align-items: flex-start;
-    min-width: 0;
-    flex: 1 1 auto;
-    padding: 2px 4px;
-    overflow: hidden;
+    gap: 8px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 6px;
+    background: transparent;
+    color: var(--primary);
+    border: 0;
+    border-radius: 999px;
+    font: inherit;
+    cursor: pointer;
+    ion-icon { font-size: 24px; }
+    &:hover, &.active { background: var(--primary-light); }
 }
-
-.ava-header-title {
-    display: block;
-    max-width: 100%;
-    margin: 0;
-    font-family: var(--dsgov-font-family, "Rawline", "Noto Sans", sans-serif);
-    font-size: clamp(1rem, 0.35rem + 2.6vw, 1.35rem);
-    font-weight: 500;
-    line-height: 1.15;
-    color: var(--dark);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.ava-header-subtitle {
-    display: block;
-    max-width: 100%;
-    margin: 1px 0 0;
-    font-family: var(--dsgov-font-family, "Rawline", "Noto Sans", sans-serif);
-    font-size: clamp(0.6875rem, 0.55rem + 0.6vw, 0.8rem);
-    font-weight: 400;
-    line-height: 1.2;
-    color: var(--muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-ion-menu-button {
-    color: var(--ion-color-primary);
-}
+.ava-header-profile span { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .875rem; }
+.profile-image { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.profile-image--initials { display: grid; place-items: center; font-size: .875rem; font-weight: 700; background: var(--primary-light); color: var(--primary-dark); }
+button:focus-visible, a:focus-visible, select:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 
 .page-error,
 .empty-state,
@@ -215,7 +156,8 @@ ion-menu-button {
 .painel-page,
 .curso-page {
     padding: 8px 16px 32px;
-    max-width: 100%;
+    max-width: 1200px;
+    margin-inline: auto;
     overflow-x: hidden;
 }
 
@@ -224,8 +166,7 @@ ion-content#page-content {
 }
 
 body.keyboard-is-open {
-    ion-content#page-content,
-    ion-content.menu-content {
+    ion-content#page-content {
         --keyboard-offset: var(--keyboard-height, 0px);
         --padding-bottom: max(12px, var(--keyboard-height, 0px));
     }

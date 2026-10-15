@@ -529,7 +529,7 @@ let currentLists: PainelLists;
         }
 
         if (App.subtitle) {
-            App.subtitle.textContent = 'IFRN';
+            App.subtitle.textContent = 'Ambiente Virtual de Aprendizagem';
             App.subtitle.hidden = false;
         }
 
@@ -557,6 +557,7 @@ let currentLists: PainelLists;
         App.content.innerHTML = '';
         App.content.appendChild(page);
 
+        App.updateFilterChip?.();
         bindTabs(lists);
         setActiveTab(initialTab, lists);
 
