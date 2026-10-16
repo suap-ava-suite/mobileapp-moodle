@@ -41,6 +41,12 @@ const appRoutes: Routes = [
                         .then(m => m.MarketplaceIfrnPage),
             },
             {
+                path: 'painel',
+                loadComponent: () =>
+                    import('@/MoodleIFRN/painel/painel')
+                        .then(m => m.PainelPage),
+            },
+            {
                 path: 'ifrn-login',
                 loadComponent: () =>
                     import('@/MoodleIFRN/ifrn-login/ifrn-login')
@@ -59,6 +65,7 @@ const appRoutes: Routes = [
                         .then(m => m.PainelEnrolPage),
             },
             // END MoodleIFRN login routes
+            
 
             
             {

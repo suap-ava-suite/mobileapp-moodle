@@ -1,0 +1,149 @@
+## DEVICE
+List of devices attached
+ZF523NR2XV	device
+
+moto g(20)
+11
+Physical size: 720x1600
+Physical density: 280
+## F01 config
+42:    <preference name="android-targetSdkVersion" value="36" />
+55:    <preference name="StatusBarOverlaysWebView" value="false" />
+58:    <preference name="AndroidEdgeToEdge" value="true" />
+ * Enables edge-to-edge support on Android.
+ */
+export default async function(): Promise<void> {
+    await CorePlatform.ready();
+
+    if (!CorePlatform.isAndroid()) {
+        return;
+    }
+
+    // Enable edge-to-edge. Required on Android 14 and previous versions.
+    StatusBar.overlaysWebView(true);
+
+    // Listener for system bars and cutout inset changes.
+    const systemInsetListener = await Inset.create({
+        // eslint-disable-next-line no-bitwise
+        mask: InsetMask.SYSTEM_BARS | InsetMask.DISPLAY_CUTOUT,
+        includeRoundedCorners: false,
+    });
+
+    // Listener for keyboard height changes.
+    // We need to update safe area and keyboard height CSS variables at the same time.
+    const imeInsetListener = await Inset.create({
+        mask: InsetMask.IME,
+        includeRoundedCorners: false,
+    });
+
+3::root.force-safe-area-margins {
+4:    --ion-safe-area-left: 40px;
+5:    --ion-safe-area-right: 40px;
+6:    --ion-safe-area-top: 40px;
+7:    --ion-safe-area-bottom: 40px;
+20:    // Also, store safe area variables as --root-safe-area-*.
+21:    // Contrary to the --ion-safe-area-* variables, these are never overridden.
+22:    --root-safe-area-left: calc(var(--ion-safe-area-left, 0px) / var(--zoom-ratio));
+23:    --root-safe-area-right: calc(var(--ion-safe-area-right, 0px) / var(--zoom-ratio));
+24:    --root-safe-area-top: calc(var(--ion-safe-area-top, 0px) / var(--zoom-ratio));
+## F02 dark
+src/core/static/colors.ts:34:    DARK = 'dark',
+src/core/features/settings/services/settings-helper.ts:51:    DARK = 'dark',
+src/core/features/settings/services/settings-helper.ts:471:        return CoreHTMLClasses.hasModeClass('dark');
+src/core/features/settings/services/settings-helper.ts:483:            CoreHTMLClasses.toggleModeClass('dark', enable);
+src/core/features/viewer/constants.ts:23:    DARK: 'dark', // eslint-disable-line @typescript-eslint/naming-convention
+207::root.dark {
+## F03 assign
+src/MoodleIFRN/mobilemoodle/mobilemoodle.js:1216:    window.location.assign(resolveMoodleOpenUrl(id, courseName, siteUrl));
+src/MoodleIFRN/mobilemoodle/mobilemoodle.js:1243:    window.location.assign(resolvePainelEnrolUrl(id, envId));
+src/MoodleIFRN/mobilemoodle/mobilemoodle.js:1657:      window.location.assign(
+src/MoodleIFRN/mobilemoodle/mobilemoodle.js:1712:        window.location.assign(App.resolvePainelEnrolUrl(courseId, ambienteId));
+src/MoodleIFRN/mobilemoodle/mobilemoodle.js:1738:        window.location.assign(
+src/MoodleIFRN/mobilemoodle/core_mobile/app-views.ts:304:            window.location.assign(
+src/MoodleIFRN/mobilemoodle/core_mobile/app-views.ts:381:                window.location.assign(App.resolvePainelEnrolUrl(courseId, ambiente
+src/MoodleIFRN/mobilemoodle/core_mobile/app-views.ts:420:                window.location.assign(
+src/MoodleIFRN/mobilemoodle/core_mobile/app-utils.ts:206:        window.location.assign(resolveMoodleOpenUrl(id, courseName, siteUrl));
+src/MoodleIFRN/mobilemoodle/core_mobile/app-utils.ts:239:        window.location.assign(resolvePainelEnrolUrl(id, envId));
+## F04 cdn
+## F05
+src/MoodleIFRN/services_mobile/ifrn-language.ts
+  2818 196965 src/MoodleIFRN/services_mobile/ifrn-language.ts
+src/MoodleIFRN/services_mobile/moodle-site.service.ts:39:import { useIfrnBrazilianPortuguese } from './ifrn-language';
+## F06/F14
+src/MoodleIFRN/mobilemoodle/core_mobile/app.ts:29:        // O OAuth Moodle roda no navegador do sistema (_system). A sessão web desse
+src/MoodleIFRN/mobilemoodle/core_mobile/app.ts:50:            window.open(webLogoutUrl, '_system');
+src/MoodleIFRN/moodle-open-course/moodle-open-course.ts:85:        window.open(`${origin}/auth/suap/logout.php`, '_system');
+src/MoodleIFRN/marketplace-ifrn/marketplace-ifrn.ts:217:        window.open('https://academico.ava.ifrn.edu.br/auth/suap/logout.php', '_syst
+src/MoodleIFRN/services_mobile/painel-ava.service.ts:454:            const browser = CoreOpener.openInApp(`${baseUrl}/`, {
+src/MoodleIFRN/services_mobile/painel-ava.service.ts:969:            const browser = CoreOpener.openInApp(`${baseUrl}/`, {
+src/MoodleIFRN/services_mobile/painel-ava.service.ts:971:            } as Parameters<typeof CoreOpener.openInApp>[1]);
+## F07
+        // O núcleo precisa passar pela landing para tratar course/{id}/OAuth.
+        // Ela fica invisível e sem interação durante essa passagem interna.
+        service.showNativeCourseHandoff();
+
+        return true;
+    }
+
+    if (service.returnToPainelOnCourseExit(false)) {
+        return inject(Router).createUrlTree(['/login/painel']);
+    }
+
+    return inject(Router).createUrlTree(['/login/marketplace-ifrn'], {
+        queryParams: { ifrnEntry: true },
+    });
+};
+
+/** Cobre também pilhas antigas cujo Voltar aponta diretamente para a entrada. */
+## F09
+833 src/MoodleIFRN/moodle-course/moodle-course.scss
+43
+## F10 cores
+src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/_status-page.scss:37:#1351b4
+src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/_status-page.scss:45:#1351b4
+src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/dsgov/_variables.scss:9:#1351b4
+src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/dsgov/_variables.scss:14:#04122b
+src/MoodleIFRN/moodle-open-course/moodle-open-course.scss:10:#1351b4
+src/MoodleIFRN/marketplace-ifrn/marketplace-ifrn.scss:2:#fbfcfa
+src/MoodleIFRN/marketplace-ifrn/marketplace-ifrn.scss:3:#1e3427
+src/MoodleIFRN/marketplace-ifrn/marketplace-ifrn.scss:6:#19743c
+src/MoodleIFRN/marketplace-ifrn/marketplace-ifrn.scss:422:#19743c
+src/MoodleIFRN/moodle-course/moodle-course.scss:34:#1351b4
+src/MoodleIFRN/moodle-course/moodle-course.scss:539:#1351b4
+src/MoodleIFRN/moodle-course/course-menu.scss:19:#1351b4
+## F11
+77-              ],
+78:              "optimization": {
+79-                "scripts": false,
+80-                "styles": true
+81-              },
+--
+93-              "buildOptimizer": false,
+94:              "optimization": false,
+95-              "vendorChunk": true,
+96-              "extractLicenses": false,
+97-              "sourceMap": true,
+--
+f56fdfabb  fix: Correção do carregamento da tela
+3c298a143 começando estilizar os cursos
+3dce3eda4 tratativa de erros
+## F13
+src/MoodleIFRN/mobilemoodle/core_mobile/global.d.ts:35:    /** Origem do AVA (ex.: https://presencial.ava.ifrn.edu.br). 
+src/MoodleIFRN/mobilemoodle/core_mobile/api-painel.ts:5: *   GET https://ava.ifrn.edu.br/api/v1/diarios/
+src/MoodleIFRN/mobilemoodle/core_mobile/api-painel.ts:212:        return `https://ava.ifrn.edu.br${trimmed}`;
+src/MoodleIFRN/mobilemoodle/core_mobile/api-painel.ts:313:    // O Angular obtém este JSON dentro de ava.ifrn.edu.br vi
+src/MoodleIFRN/mobilemoodle/core_mobile/app-views.ts:374:                // O POST real é executado dentro da origem av
+src/MoodleIFRN/mobilemoodle/core_mobile/app.ts:93:     * Painel: https://ava.ifrn.edu.br/api/v2/sala/tipo/diario/*/
+src/MoodleIFRN/mobilemoodle/core_mobile/api-http.ts:36:            if (parsed.origin === 'https://ava.ifrn.edu.br') {
+src/MoodleIFRN/marketplace-ifrn/marketplace-ifrn.ts:217:        window.open('https://academico.ava.ifrn.edu.br/auth/suap
+src/MoodleIFRN/marketplace-ifrn/marketplace-ifrn.ts:255:        window.open('https://ajuda.ead.ifrn.edu.br/', '_blank', 
+src/MoodleIFRN/moodle-course/course-menu.ts:143:                && (host === 'ava.ifrn.edu.br' || host.endsWith('.ava.if
+src/MoodleIFRN/services_mobile/suap-entry.service.ts:28:const AVA = 'https://academico.ava.ifrn.edu.br';
+src/MoodleIFRN/services_mobile/suap-entry.service.ts:69:        return `https://ava.ifrn.edu.br${trimmed}`;
+src/MoodleIFRN/services_mobile/painel-ava.config.ts:25:    baseUrl: 'https://ava.ifrn.edu.br',
+src/MoodleIFRN/services_mobile/moodle-site.service.ts:42:export const IFRN_MOODLE_PRESENCIAL_URL = 'https://presencial.a
+src/MoodleIFRN/services_mobile/moodle-site.service.ts:685:            return host === 'ava.ifrn.edu.br' || host.endsWith
+src/MoodleIFRN/services_mobile/moodle-site.service.ts:805:                && site.getURL().replace(/\/$/, '') === 'https
+src/MoodleIFRN/services_mobile/painel-ava.service.ts:408:     * https://ava.ifrn.edu.br, sem copiar cookie, código OAut
+## CONTRASTE
+637266/fbfcfa 4.94 666666/f6f6f6 5.31
