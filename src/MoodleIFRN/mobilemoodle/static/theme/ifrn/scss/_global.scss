@@ -2,7 +2,7 @@
 
 :root {
     --keyboard-height: 0px;
-    --ion-safe-area-top: 0px;
+    --ion-safe-area-top: env(safe-area-inset-top, 0px);
     --ion-safe-area-right: 0px;
     --ion-safe-area-bottom: 0px;
     --ion-safe-area-left: 0px;
@@ -36,30 +36,14 @@ ion-app {
 // ---------------------------------------------------------------------------
 // Safe area do topo (barra de status)
 // ---------------------------------------------------------------------------
-// Em WebView (Android/iOS) a página é desenhada atrás da barra de status.
-// O Ionic já traz a regra `ion-header ion-toolbar:first-of-type { padding-top:
-// var(--ion-safe-area-top, 0) }`, mas ela só tem efeito se --ion-safe-area-top
-// tiver valor — e esse valor vem de env(safe-area-inset-top), que o WebView do
-// Android costuma reportar como 0 mesmo desenhando em edge-to-edge.
-//
-// No navegador desktop env() vale 0, então nada muda lá.
-
+// O Ionic aplica --ion-safe-area-top no primeiro toolbar do ion-header.
+// O valor padrão vem de env(); no app, app-keyboard.ts ou o wrapper do
+// painel fornecem o inset nativo nessa mesma variável, inclusive quando é 0.
+// Não impor um piso por user agent: o navegador Android e a orientação
+// horizontal podem legitimamente informar zero, sem barra sobreposta.
+// O fallback nativo de 24px continua restrito ao Cordova em app-keyboard.ts.
 :root {
-    --ifrn-safe-area-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
-    --ion-safe-area-top: var(--ifrn-safe-area-top);
-}
-
-// WebView/navegador Android: garante o piso de 24px (altura padrão da barra de
-// status). O max() preserva o valor real quando o WebView expõe o inset.
-// As classes plt-* são adicionadas ao <html> pelo próprio @ionic/core.
-html.plt-android.plt-mobile {
-    --ifrn-safe-area-top: max(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)), 24px);
-}
-
-// Reaplica explicitamente no toolbar: não depende do CSS que o ion-header
-// injeta em tempo de execução.
-ion-header ion-toolbar:first-of-type {
-    padding-top: max(var(--ifrn-safe-area-top), var(--ion-safe-area-top, 0px));
+    --ifrn-safe-area-top: var(--ion-safe-area-top);
 }
 
 .ava-header { box-shadow: 0 2px 8px rgb(0 0 0 / 8%); }
