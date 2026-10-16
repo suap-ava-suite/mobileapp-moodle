@@ -542,8 +542,9 @@ page-core-course-index ion-router-outlet > * ion-content {
  * Acessibilidade do curso (espelho do Painel AVA / VLibras)
  * Preferências aplicadas no body pelo IfrnCourseAccessibilityService
  *
- * NOTA: Os !important nesta seção são necessários para sobrescrever
- * estilos inline e CSS de terceiros (VLibras, OpenDyslexic, etc.).
+ * Exceções de prioridade: preferências de acessibilidade precisam prevalecer
+ * sobre o conteúdo do curso; o widget VLibras também injeta estilos inline.
+ * Elementos criados pelo app usam a cascata normal, sem prioridade forçada.
  * ========================================================= */
 @font-face {
     font-family: "opendyslexic";
@@ -579,7 +580,7 @@ body.highlight_links a[href] {
 }
 
 body.highlight_links a[href] * {
-    color: rgba(255, 255, 100, 1) !important; /* herança não propaga por shadow dom */
+    color: rgba(255, 255, 100, 1) !important; /* sobrescreve cores explícitas nos descendentes do link */
 }
 
 /* O índice já está no menu IFRN. Oculta só o atalho duplicado quando
@@ -692,33 +693,35 @@ body.vlibras_active div[vw] .vw-plugin-wrapper {
 }
 
 /* Botão de emergência acima de qualquer overlay do VLibras.
- * Usa position:fixed + z-index máximo para ficar sempre acessível. */
-.ifrn-vlibras-escape {
-    position: fixed !important;
-    top: max(12px, env(safe-area-inset-top, 0px)) !important;
-    right: max(12px, env(safe-area-inset-right, 0px)) !important;
-    z-index: 2147483646 !important;
-    display: inline-flex !important;
+ * Criado pelo app como filho direto do body, sem estilos inline.
+ * O escopo abaixo vence regras genéricas de botão sem prioridade forçada.
+ * A regra [hidden] vem depois para respeitar o fechamento pelo serviço. */
+body > button.ifrn-vlibras-escape {
+    position: fixed;
+    top: max(12px, env(safe-area-inset-top, 0px));
+    right: max(12px, env(safe-area-inset-right, 0px));
+    z-index: 2147483646;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
     margin: 0;
     padding: 10px 14px;
     border: 0;
     border-radius: 999px;
-    background: #0c326f !important;
-    color: #fff !important;
+    background: #0c326f;
+    color: #fff;
     font: 600 0.875rem/1.2 system-ui, sans-serif;
     box-shadow: 0 4px 16px rgb(0 0 0 / 35%);
     cursor: pointer;
-    pointer-events: auto !important;
+    pointer-events: auto;
     touch-action: manipulation;
 }
 
-.ifrn-vlibras-escape[hidden] {
-    display: none !important;
+body > button.ifrn-vlibras-escape[hidden] {
+    display: none;
 }
 
-.ifrn-vlibras-escape:focus-visible {
+body > button.ifrn-vlibras-escape:focus-visible {
     outline: 2px solid #fff;
     outline-offset: 2px;
 }
