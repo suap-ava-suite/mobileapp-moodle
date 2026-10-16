@@ -1,3 +1,5 @@
+@use "../theme/ifrn-dsgov-tokens";
+
 // Fonte compartilhada com o painel, publicada pelo patch de assets existente.
 @each $weight in 400, 500, 600, 700 {
     @font-face {
@@ -31,19 +33,19 @@ page-core-course-index, page-core-course-contents { --ion-font-family: "Rawline"
  * ========================================================= */
 page-core-course-index.ion-page,
 page-core-course-index {
-    --ifrn-ava: #1351b4;
-    --ifrn-ava-dark: #0c326f;
-    --ifrn-ava-mid: #155bcb;
-    --ifrn-ava-soft: #eaeff8;
-    --ifrn-ava-softer: #f0f5ff;
-    --ifrn-surface: #ffffff;
-    --ifrn-canvas: #f6f6f6;
-    --ifrn-border: #cccccc;
-    --ifrn-text: #333333;
-    --ifrn-muted: #666666;
-    --ifrn-success: #2f9e44;
-    --ifrn-shadow: 0 6px 18px rgb(7 29 65 / 8%);
-    --ifrn-radius: 4px;
+    --ifrn-ava: var(--ifrn-primary, #1351b4);
+    --ifrn-ava-dark: var(--ifrn-active, #0c326f);
+    --ifrn-ava-mid: var(--ifrn-selected-mid, #155bcb);
+    --ifrn-ava-soft: var(--ifrn-selected, #eaeff8);
+    --ifrn-ava-softer: var(--ifrn-hover-bg, #f0f5ff);
+    --ifrn-surface: var(--ifrn-surface, #ffffff);
+    --ifrn-canvas: var(--ifrn-canvas, #f6f6f6);
+    --ifrn-border: var(--ifrn-border, #cccccc);
+    --ifrn-text: var(--ifrn-text, #333333);
+    --ifrn-muted: var(--ifrn-muted, #666666);
+    --ifrn-success: var(--ifrn-success, #2d8a45);
+    --ifrn-shadow: var(--ifrn-shadow, 0 4px 16px rgba(0, 0, 0, 0.04));
+    --ifrn-radius: var(--ifrn-radius, 4px);
 
     /* Tokens oficiais do Moodle / Ionic usados pelos componentes nativos */
     --primary: var(--ifrn-ava);
@@ -85,7 +87,7 @@ page-core-course-index {
     --core-tabs-height: 52px;
 
     --core-progressbar-color: var(--ifrn-ava);
-    --core-progressbar-background: #c5d6f5;
+    --core-progressbar-background: var(--ifrn-border-blue, #c5d6f5);
     --core-progressbar-text-color: var(--ifrn-ava-dark);
     --core-progressbar-height: 10px;
 
@@ -163,7 +165,7 @@ page-core-course-index .core-course-header {
         linear-gradient(180deg, var(--ifrn-ava-soft) 0%, var(--ifrn-surface) 100%);
     border-bottom: 1px solid var(--ifrn-border);
     padding: 4px 0 10px;
-    box-shadow: inset 0 -1px 0 rgb(9 142 149 / 8%);
+    box-shadow: inset 0 -1px 0 rgba(7, 29, 65, 0.08);
 }
 
 page-core-course-index .core-format-progress-list,
@@ -209,12 +211,12 @@ page-core-course-index .core-course-progress {
     background: var(--ifrn-surface);
     border: 1px solid var(--ifrn-border);
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgb(9 75 79 / 6%);
+    box-shadow: 0 2px 8px rgba(7, 29, 65, 0.06);
 }
 
 page-core-course-index .core-course-progress core-progress-bar {
     --progressbar-color: var(--ifrn-ava);
-    --progressbar-background: #c5d6f5;
+    --progressbar-background: var(--ifrn-border-blue, #c5d6f5);
     --text-color: var(--ifrn-ava-dark);
     --height: 10px;
     --line-height: 28px;
@@ -249,7 +251,7 @@ page-core-course-index .core-tabs-bar {
     color: var(--ifrn-muted);
     border-bottom: 1px solid var(--ifrn-border);
     height: 52px;
-    box-shadow: 0 2px 8px rgb(9 75 79 / 5%);
+    box-shadow: 0 2px 8px rgba(7, 29, 65, 0.05);
 }
 
 page-core-course-index .core-tabs-bar swiper-slide {
@@ -383,7 +385,7 @@ page-core-course-contents core-course-module {
     --card-border-width: 0px;
     --card-radius: 0px;
     --card-background: transparent;
-    --activity-border: 1px solid #e5efef;
+    --activity-border: 1px solid var(--ifrn-border-inner, #e6e6e6);
     --card-padding-bottom: 8px;
     display: block;
     background: var(--ifrn-surface);
@@ -453,7 +455,7 @@ page-core-course-contents .core-course-module-completion {
 page-core-course-index .core-course-section-nav-buttons ion-button,
 page-core-course-contents .core-course-section-nav-buttons ion-button {
     --background: var(--ifrn-ava-soft);
-    --background-activated: #d5eef0;
+    --background-activated: var(--ifrn-selected, #eaeff8);
     --color: var(--ifrn-ava-dark);
     --border-radius: 12px;
     font-weight: 700;
@@ -465,7 +467,7 @@ page-core-course-contents ion-fab-button {
     --background-activated: var(--ifrn-ava-dark);
     --background-focused: var(--ifrn-ava-dark);
     --color: #fff;
-    --box-shadow: 0 8px 18px rgb(9 142 149 / 35%);
+    --box-shadow: 0 8px 18px rgba(19, 81, 180, 0.35);
 }
 
 page-core-course-index a,
