@@ -1,0 +1,108 @@
+/* ==========================================================================
+   Design System Gov.br (v3.0) — Tokens Centralizados IFRN
+   Fonte da verdade: theme_ifrn_dsgov (_variables.scss, pre.scss, _fonts.scss)
+   ========================================================================== */
+
+:root {
+    /* 1. Tipografia DS Gov.br */
+    --ifrn-font: "Rawline", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+    /* 2. Cores Institucionais e Azuis DS Gov.br */
+    --ifrn-primary: #1351b4;
+    --ifrn-interactive: #1351b4;
+    --ifrn-active: #0c326f;
+    --ifrn-selected: #eaeff8;
+    --ifrn-selected-mid: #155bcb;
+    --ifrn-dark: #071d41;
+    --ifrn-night: #04122b;
+    --ifrn-border-blue: #c5d6f5;
+
+    /* 3. Compatibilidade: tokens existentes do Curso / AVA */
+    --ifrn-ava: #1351b4;
+    --ifrn-ava-dark: #0c326f;
+    --ifrn-ava-mid: #155bcb;
+    --ifrn-ava-soft: #eaeff8;
+    --ifrn-ava-softer: #f0f5ff;
+
+    /* 4. Compatibilidade: tokens existentes do Marketplace */
+    --ifrn-paper: #ffffff;
+    --ifrn-ink: #333333;
+    --ifrn-soft: #eaeff8;
+    --ifrn-accent: #1351b4;
+    --ifrn-line: #e6e6e6;
+
+    /* 5. Superfícies e Neutros */
+    --ifrn-surface: #ffffff;
+    --ifrn-canvas: #f6f6f6;
+    --ifrn-border: #cccccc;
+    --ifrn-border-inner: #e6e6e6;
+    --ifrn-text: #333333;
+    --ifrn-secondary: #444444;
+    --ifrn-muted: #666666;
+
+    /* 6. Estados e Alertas */
+    --ifrn-success: #2d8a45;
+    --ifrn-success-hover: #184f16;
+    --ifrn-warning: #DDAA01;
+    --ifrn-warning-bright: #FFCD07;
+    --ifrn-error: #d93514;
+    --ifrn-error-hover: #a8250b;
+
+    /* 7. Foco, Raios e Sombras */
+    --ifrn-focus: 0 0 0 3px rgba(19, 81, 180, 0.35);
+    --ifrn-radius: 4px;
+    --ifrn-radius-lg: 8px;
+    --ifrn-radius-pill: 24px;
+    --ifrn-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+/* ==========================================================================
+   Modo Escuro (Variantes :root.dark derivadas do dark-palette do Moodle)
+   Marcado como: "derivado, não oficial" (o tema web DS Gov oficial não possui modo escuro)
+   ========================================================================== */
+:root.dark {
+    /* Superfícies e Neutros (derivados com alto contraste) */
+    --ifrn-surface: #1e1e1e;
+    --ifrn-canvas: #121212;
+    --ifrn-border: #3e3e3e;
+    --ifrn-border-inner: #2e2e2e;
+    --ifrn-text: #f8f9fa;
+    --ifrn-secondary: #dee2e6;
+    --ifrn-muted: #a6a6a6;
+
+    /* Azuis e Elementos Interativos (derivados aprovados por contraste WCAG >= 4.5:1) */
+    --ifrn-primary: #82b1ff;
+    --ifrn-interactive: #82b1ff;
+    --ifrn-active: #b3d1ff;
+    --ifrn-selected: #1e293b;
+    --ifrn-selected-mid: #3b82f6;
+    --ifrn-dark: #0a1120;
+    --ifrn-night: #050913;
+    --ifrn-border-blue: #2c426b;
+
+    /* Compatibilidade AVA / Curso */
+    --ifrn-ava: #82b1ff;
+    --ifrn-ava-dark: #b3d1ff;
+    --ifrn-ava-mid: #64b5f6;
+    --ifrn-ava-soft: #162438;
+    --ifrn-ava-softer: #101c2e;
+
+    /* Compatibilidade Marketplace */
+    --ifrn-paper: #1e1e1e;
+    --ifrn-ink: #f8f9fa;
+    --ifrn-soft: #162438;
+    --ifrn-accent: #82b1ff;
+    --ifrn-line: #3e3e3e;
+
+    /* Estados no escuro (derivados de alto contraste) */
+    --ifrn-success: #69db7c;
+    --ifrn-success-hover: #8ce99a;
+    --ifrn-warning: #ffd43b;
+    --ifrn-warning-bright: #ffe066;
+    --ifrn-error: #ff6b6b;
+    --ifrn-error-hover: #ffa8a8;
+
+    /* Foco e Sombra no escuro */
+    --ifrn-focus: 0 0 0 3px rgba(130, 177, 255, 0.45);
+    --ifrn-shadow: 0 4px 16px rgba(0, 0, 0, 0.40);
+}

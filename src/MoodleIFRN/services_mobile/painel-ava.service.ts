@@ -84,8 +84,8 @@ const PAINEL_IAB_CHROME = {
     hideurlbar: 'yes' as const,
     hidenavigationbuttons: 'yes' as const,
     toolbarcolor: '#ffffff',
-    closebuttoncolor: '#19743c',
-    navigationbuttoncolor: '#19743c',
+    closebuttoncolor: '#1351b4',
+    navigationbuttoncolor: '#1351b4',
 };
 
 /**

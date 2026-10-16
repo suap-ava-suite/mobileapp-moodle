@@ -1,11 +1,13 @@
+@use "../theme/ifrn-dsgov-tokens";
+
 .marketplace-ifrn {
-    --ifrn-paper: #fbfcfa;
-    --ifrn-ink: #1e3427;
-    --ifrn-muted: #637266;
-    --ifrn-soft: #eaf2e8;
-    --ifrn-accent: #19743c;
-    --ifrn-line: #e5eae3;
-    --ifrn-font: "Segoe UI", Roboto, Arial, sans-serif;
+    --ifrn-paper: var(--ifrn-surface, #ffffff);
+    --ifrn-ink: var(--ifrn-text, #333333);
+    --ifrn-muted: var(--ifrn-muted, #666666);
+    --ifrn-soft: var(--ifrn-selected, #eaeff8);
+    --ifrn-accent: var(--ifrn-interactive, #1351b4);
+    --ifrn-line: var(--ifrn-border-inner, #e6e6e6);
+    --ifrn-font: var(--ifrn-font, ("Rawline", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif));
     --ifrn-gutter: clamp(24px, 6.9vw, 32px);
     --ifrn-safe-top: var(--ion-safe-area-top, env(safe-area-inset-top, 0px));
     --ifrn-safe-bottom: var(--ion-safe-area-bottom, env(safe-area-inset-bottom, 0px));
@@ -122,8 +124,8 @@
 
     .ava-label {
         background: var(--ifrn-soft);
-        border: 1px solid #d7e6d8;
-        border-radius: 8px;
+        border: 1px solid var(--ifrn-border-blue, #c5d6f5);
+        border-radius: var(--ifrn-radius-lg, 8px);
         padding: 9px 10px;
         color: var(--ifrn-accent);
         flex-shrink: 0;
@@ -218,11 +220,20 @@
     }
 
     ion-button.btn-enter {
-        --background: var(--ifrn-accent);
-        --background-activated: #145e31;
-        --background-focused: #145e31;
-        --background-hover: #176b37;
+        --background: var(--ifrn-interactive, #1351b4);
+        --background-activated: var(--ifrn-active, #0c326f);
+        --background-focused: var(--ifrn-active, #0c326f);
+        --background-hover: var(--ifrn-active, #0c326f);
         --color: #ffffff;
+    }
+
+    ion-button.btn-enter:hover {
+        --background: var(--ifrn-active, #0c326f);
+    }
+
+    ion-button.btn-enter:focus-visible {
+        outline: var(--ifrn-focus, 0 0 0 3px rgba(19, 81, 180, 0.35));
+        outline-offset: 2px;
     }
 
     .btn-enter__content {
@@ -257,8 +268,18 @@
         --border-color: var(--ifrn-line);
         --border-style: solid;
         --border-width: 1px;
-        --color: var(--ifrn-accent);
+        --color: var(--ifrn-interactive, #1351b4);
         margin-bottom: 10px;
+    }
+
+    ion-button.btn-continue:hover {
+        --background: var(--ifrn-soft);
+        --border-color: var(--ifrn-border-blue, #c5d6f5);
+    }
+
+    ion-button.btn-continue:focus-visible {
+        outline: var(--ifrn-focus, 0 0 0 3px rgba(19, 81, 180, 0.35));
+        outline-offset: 2px;
     }
 
     .btn-continue span {
@@ -294,6 +315,12 @@
         text-align: start;
         width: 100%;
         -webkit-tap-highlight-color: transparent;
+        transition: color 0.15s ease;
+    }
+
+    .help-link:hover,
+    .help-link:active {
+        color: var(--ifrn-interactive, #1351b4);
     }
 
     .help-link ion-icon {
@@ -301,11 +328,17 @@
         flex-shrink: 0;
         font-size: 16px;
         transform: rotate(45deg);
+        transition: color 0.15s ease;
+    }
+
+    .help-link:hover ion-icon,
+    .help-link:active ion-icon {
+        color: var(--ifrn-interactive, #1351b4);
     }
 
     .help-link:focus-visible {
-        border-radius: 4px;
-        outline: 2px solid var(--ifrn-accent);
+        border-radius: var(--ifrn-radius, 4px);
+        outline: var(--ifrn-focus, 0 0 0 3px rgba(19, 81, 180, 0.35));
         outline-offset: 4px;
     }
 
@@ -388,9 +421,9 @@
 }
 
 .welcome__error {
-    color: #8b1e2d;
+    color: var(--ifrn-error, #d93514);
     background: #fff0f2;
-    border: 1px solid #e4b6bd;
+    border: 1px solid #f5c2c7;
     border-radius: 12px;
     padding: 12px;
     margin: 12px 0;
@@ -400,11 +433,11 @@
 
 // Indicador unificado padrão Ionic (F08).
 :host .marketplace-transition {
-    background: #fff;
-    color: #2b2b2b;
+    background: var(--ifrn-paper, #ffffff);
+    color: var(--ifrn-ink, #333333);
     gap: 1rem;
     text-align: center;
-    font-family: Rawline, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: var(--ifrn-font);
     padding: max(24px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
 }
 .marketplace-transition__brand {
@@ -419,7 +452,7 @@
     inset: 0;
     width: 100%;
     height: 100%;
-    --color: #19743c;
+    --color: var(--ifrn-interactive, #1351b4);
 }
 .marketplace-transition__logo {
     position: relative;
@@ -428,13 +461,13 @@
     aspect-ratio: 1;
     border-radius: 50%;
     object-fit: cover;
-    background: #fff;
+    background: var(--ifrn-surface, #ffffff);
     box-shadow: 0 2px 10px rgba(7, 29, 65, 0.12);
     z-index: 1;
 }
 .marketplace-transition__caption { font-size: 1rem; font-weight: 600; margin: 0; padding-inline: 12px; }
 .marketplace-transition__hint {
-    color: #526b6a;
+    color: var(--ifrn-muted, #666666);
     font-size: 0.875rem;
     line-height: 1.45;
     margin: 0;
@@ -446,9 +479,19 @@
     bottom: max(32px, env(safe-area-inset-bottom));
     border: 0;
     background: transparent;
-    color: #526b6a;
+    color: var(--ifrn-muted, #666666);
     padding: 12px 24px;
     font: inherit;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+.marketplace-transition__cancel:hover,
+.marketplace-transition__cancel:active {
+    color: var(--ifrn-interactive, #1351b4);
+}
+.marketplace-transition__cancel:focus-visible {
+    border-radius: var(--ifrn-radius, 4px);
+    outline: var(--ifrn-focus, 0 0 0 3px rgba(19, 81, 180, 0.35));
 }
 @media (max-width: 767.98px) {
     :host .marketplace-transition { gap: 0.85rem; }
@@ -459,5 +502,38 @@
     :host .marketplace-transition { flex-direction: row; flex-wrap: wrap; align-content: center; }
     .marketplace-transition__brand { width: 108px; }
     .marketplace-transition__logo { width: 84%; height: 84%; }
+}
+
+/* Modo escuro derivado (:host-context(.dark)) */
+:host-context(.dark) {
+    .marketplace-ifrn {
+        color-scheme: dark;
+        --background: var(--ifrn-paper);
+        color: var(--ifrn-ink);
+    }
+
+    .welcome {
+        background: var(--ifrn-paper);
+    }
+
+    .welcome__content {
+        background: var(--ifrn-paper);
+    }
+
+    .welcome__error {
+        background: #2c1517;
+        border-color: #58151c;
+        color: var(--ifrn-error, #ff6b6b);
+    }
+
+    :host .marketplace-transition,
+    .marketplace-transition {
+        background: var(--ifrn-paper);
+        color: var(--ifrn-ink);
+    }
+
+    .marketplace-transition__logo {
+        background: var(--ifrn-surface);
+    }
 }
 
