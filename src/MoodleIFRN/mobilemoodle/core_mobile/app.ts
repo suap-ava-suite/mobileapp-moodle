@@ -60,6 +60,17 @@ import { MM, App } from './namespace';
         sessionStorage.removeItem('ifrn_moodle_last_site_url');
         App.dashboardCache = null;
 
+        const bridge = (window.parent as unknown as { MoodleIfrnBridge?: { logout?: () => void } })?.MoodleIfrnBridge;
+        if (window.parent && window.parent !== window && bridge?.logout) {
+            bridge.logout();
+            return;
+        }
+
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'MOODLE_IFRN_LOGOUT' }, '*');
+            return;
+        }
+
         const loginUrl = typeof App.resolveLoginUrl === 'function'
             ? App.resolveLoginUrl()
             : '/login/marketplace-ifrn';

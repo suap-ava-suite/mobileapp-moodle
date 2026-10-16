@@ -217,9 +217,7 @@ export class MoodleOpenCoursePage implements OnInit {
     cancelOpening(): void {
         this.moodleSite.dismissCourseRecovery();
         this.moodleSite.hideNativeCourseHandoff();
-        const base = document.querySelector('base')?.getAttribute('href') || '/';
-        const root = base.endsWith('/') ? base : `${base}/`;
-        window.location.assign(`${root}mobilemoodle/index.html#/painel`);
+        void CoreNavigator.navigate('/login/painel');
     }
 
     goBack(): void {
@@ -229,10 +227,7 @@ export class MoodleOpenCoursePage implements OnInit {
 
         this.moodleSite.dismissCourseRecovery();
         this.moodleSite.hideNativeCourseHandoff();
-
-        const base = document.querySelector('base')?.getAttribute('href') || '/';
-        const root = base.endsWith('/') ? base : `${base}/`;
-        window.location.assign(`${root}mobilemoodle/index.html#/painel`);
+        void CoreNavigator.navigate('/login/painel');
     }
 
     /**

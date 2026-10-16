@@ -15,6 +15,7 @@
 import { HttpBackend, HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { CoreLang } from '@services/lang';
+import { CoreNavigator } from '@services/navigator';
 import { Observable, firstValueFrom, map, timeout } from 'rxjs';
 import { clearOAuthProfile, hasOAuthProfileMode, OAUTH_PROFILE_KEY, readOAuthProfile, saveOAuthProfile, profileIdentity }
     from '../mobilemoodle/core_mobile/oauth-profile';
@@ -379,21 +380,7 @@ export class AuthService {
             localStorage.setItem(TOKEN_KEY, token);
         }
 
-        const targetHash = hash.startsWith('#')
-            ? hash
-            : `#${hash.startsWith('/') ? hash : `/${hash}`}`;
-        const base = document.querySelector('base')?.getAttribute('href') || '/';
-        const root = base.endsWith('/') ? base : `${base}/`;
-        const url = new URL(`${root}mobilemoodle/index.html`, window.location.origin);
-
-        const language = CoreLang.getCurrentLanguageSync();
-        if (language) {
-            url.searchParams.set('lang', language);
-        }
-
-        url.hash = targetHash.replace(/^#/, '');
-
-        window.location.assign(url.toString());
+        void CoreNavigator.navigate('/login/painel');
     }
 
 }

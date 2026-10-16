@@ -53,6 +53,7 @@ const dependencies = {
     '@services/lang': { CoreLang: { getCurrentLanguageSync: () => 'pt-br' } },
     '@services/navigator': { CoreNavigator: {
         getRouteBooleanParam: k => !!params[k], getRouteParam: k => params[k],
+        navigate: async url => { navigation.push(url); return true; },
     } },
 };
 const m = { exports: {} };
@@ -80,7 +81,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerO
     valid = true;
     await page.ngOnInit();
     page.continueSession();
-    assert.match(navigation[0], /mobilemoodle\/index.html/);
+    assert.match(navigation[0], /painel/);
     page.openingPainel = false;
     params.forceLogin = true; params.directSuap = true; params.username = '00123';
     fail = false; calls = 0;

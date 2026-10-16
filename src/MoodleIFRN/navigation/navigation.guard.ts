@@ -34,8 +34,8 @@ export const ifrnMainMenuGuard: CanActivateFn & CanActivateChildFn = (_route, st
         return true;
     }
 
-    if (service.returnToPainelOnCourseExit()) {
-        return false;
+    if (service.returnToPainelOnCourseExit(false)) {
+        return inject(Router).createUrlTree(['/login/painel']);
     }
 
     return inject(Router).createUrlTree(['/login/marketplace-ifrn'], {
@@ -51,7 +51,11 @@ export const ifrnMarketplaceGuard: CanActivateFn = (route) => {
         return true;
     }
 
-    return !inject(MoodleSiteService).returnToPainelOnCourseExit();
+    if (inject(MoodleSiteService).returnToPainelOnCourseExit(false)) {
+        return inject(Router).createUrlTree(['/login/painel']);
+    }
+
+    return true;
 };
 
 /** Registro global, inclusive antes de uma sessão Moodle ser restaurada ao iniciar. */

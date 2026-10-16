@@ -195,17 +195,8 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
      * A fonte de autenticação agora é a sessão web criada pelo OAuth oficial.
      */
     private openPainel(): void {
-        const base = document.querySelector('base')?.getAttribute('href') || '/';
-        const root = base.endsWith('/') ? base : `${base}/`;
-        const url = new URL(`${root}mobilemoodle/index.html`, window.location.origin);
-        const language = CoreLang.getCurrentLanguageSync();
-
-        if (language) {
-            url.searchParams.set('lang', language);
-        }
-
-        url.hash = '/painel';
-        window.location.assign(url.toString());
+        this.openingPainel = false;
+        void CoreNavigator.navigate('/login/painel');
     }
 
     /**

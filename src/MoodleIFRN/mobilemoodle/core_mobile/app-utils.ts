@@ -252,10 +252,91 @@ import { MM, App } from './namespace';
         return resolveIonicAppUrl('/login/moodle-open-course');
     }
 
+    function openMoodleCourse(courseId: number | string, courseName?: string, siteUrl?: string): void {
+        const id = Number(courseId);
+
+        if (!Number.isFinite(id) || id <= 0) {
+            return;
+        }
+
+        try {
+            // eslint-disable-next-line no-console
+            console.log('[IFRN-COURSE] courseId recebido do Painel =', id);
+
+            sessionStorage.setItem(
+                'ifrn_moodle_pending_open_course',
+                JSON.stringify({
+                    courseId: id,
+                    courseName: courseName || undefined,
+                    siteUrl: siteUrl || undefined,
+                }),
+            );
+
+            if (siteUrl && /^https:\/\//i.test(siteUrl)) {
+                sessionStorage.setItem('ifrn_moodle_last_site_url', new URL(siteUrl).origin);
+            }
+        } catch {
+            // ignore quota
+        }
+
+        const bridge = (window.parent as unknown as { MoodleIfrnBridge?: { openCourse?: (id: number, name?: string, url?: string) => void } })?.MoodleIfrnBridge;
+        if (window.parent && window.parent !== window && bridge?.openCourse) {
+            bridge.openCourse(id, courseName, siteUrl);
+            return;
+        }
+
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+                type: 'MOODLE_IFRN_OPEN_COURSE',
+                courseId: id,
+                courseName,
+                siteUrl,
+            }, '*');
+            return;
+        }
+
+        window.location.assign(resolveMoodleOpenUrl(id, courseName, siteUrl));
+    }
+
+    function openPainelEnrol(courseId: number | string, ambienteId: number | string = 2): void {
+        const id = Number(courseId);
+        const envId = Number(ambienteId);
+
+        if (Number.isFinite(id) && id > 0 && Number.isFinite(envId) && envId > 0) {
+            try {
+                sessionStorage.setItem(
+                    'ifrn_painel_pending_enrol',
+                    JSON.stringify({ courseId: id, ambienteId: envId }),
+                );
+            } catch {
+                // ignore quota
+            }
+        }
+
+        const bridge = (window.parent as unknown as { MoodleIfrnBridge?: { openEnrol?: (id: number, env: number) => void } })?.MoodleIfrnBridge;
+        if (window.parent && window.parent !== window && bridge?.openEnrol) {
+            bridge.openEnrol(id, envId);
+            return;
+        }
+
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+                type: 'MOODLE_IFRN_OPEN_ENROL',
+                courseId: id,
+                ambienteId: envId,
+            }, '*');
+            return;
+        }
+
+        window.location.assign(resolvePainelEnrolUrl(id, envId));
+    }
+
     App.ASSET_BASE = resolveAssetBase();
     App.resolveLoginUrl = resolveLoginUrl;
     App.resolvePainelEnrolUrl = resolvePainelEnrolUrl;
     App.resolveMoodleOpenUrl = resolveMoodleOpenUrl;
+    App.openMoodleCourse = openMoodleCourse;
+    App.openPainelEnrol = openPainelEnrol;
     App.escapeHtml = escapeHtml;
     App.initials = initials;
     App.cloneTemplate = cloneTemplate;

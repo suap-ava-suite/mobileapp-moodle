@@ -59,6 +59,12 @@ const IFRN_LOGIN_ROUTES = `            ${MARKER.loginRoutesStart}
                         .then(m => m.MarketplaceIfrnPage),
             },
             {
+                path: 'painel',
+                loadComponent: () =>
+                    import('@/MoodleIFRN/painel/painel')
+                        .then(m => m.PainelPage),
+            },
+            {
                 path: 'ifrn-login',
                 loadComponent: () =>
                     import('@/MoodleIFRN/ifrn-login/ifrn-login')
@@ -125,7 +131,7 @@ function stripLegacyIfrnRoutes(content) {
 
     next = replaceBetweenMarkers(next, MARKER.loginRoutesStart, MARKER.loginRoutesEnd, '') ?? next;
 
-    const legacyPaths = ['marketplace-ifrn', 'ifrn-login', 'moodle-open-course', 'moodle-course/:courseId', 'painel-enrol', 'ifrn'];
+    const legacyPaths = ['marketplace-ifrn', 'painel', 'ifrn-login', 'moodle-open-course', 'moodle-course/:courseId', 'painel-enrol', 'ifrn'];
     for (const routePath of legacyPaths) {
         const pattern = new RegExp(
             `\\{[^{}]*path:\\s*'${routePath}'[\\s\\S]*?\\n\\s*\\},?\\s*`,
@@ -148,12 +154,14 @@ function isLoginModulePatched(content) {
     return content.includes(MARKER.loginRoutesStart)
         && content.includes(MARKER.loginRoutesEnd)
         && content.includes("path: 'marketplace-ifrn'")
+        && content.includes("path: 'painel'")
         && content.includes("path: 'ifrn-login'")
         && content.includes("path: 'moodle-open-course'")
         && content.includes("path: 'painel-enrol'")
         && !content.includes("path: 'moodle-course/:courseId'")
         && /redirectTo:\s*'marketplace-ifrn'/.test(content)
         && content.includes('@/MoodleIFRN/marketplace-ifrn/marketplace-ifrn')
+        && content.includes('@/MoodleIFRN/painel/painel')
         && content.includes('@/MoodleIFRN/ifrn-login/ifrn-login')
         && content.includes('@/MoodleIFRN/moodle-open-course/moodle-open-course')
         && content.includes('@/MoodleIFRN/painel-enrol/painel-enrol');

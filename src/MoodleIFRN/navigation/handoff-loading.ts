@@ -1,3 +1,5 @@
+import { CoreNavigator } from '@services/navigator';
+
 const HANDOFF_PENDING_KEY = 'ifrn_course_handoff_pending';
 const PENDING_OPEN_COURSE_KEY = 'ifrn_moodle_pending_open_course';
 
@@ -72,7 +74,7 @@ export function showHandoffLoading(): void {
         sessionStorage.removeItem(PENDING_OPEN_COURSE_KEY);
         sessionStorage.removeItem('ifrn_moodle_poc_oauth_pending');
         sessionStorage.removeItem('ifrn_moodle_poc_resume_oauth');
-        window.location.assign(painelUrl.toString());
+        void CoreNavigator.navigate('/login/painel');
     });
     document.body.appendChild(element);
     // Overlay DOM já cobre; libera o splash nativo para não empilhar camadas.

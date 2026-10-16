@@ -1,0 +1,11 @@
+<ion-content [fullscreen]="true" class="painel-page-content">
+    <iframe
+        #painelFrame
+        *ngIf="safePainelUrl"
+        [src]="safePainelUrl"
+        class="painel-iframe"
+        title="Painel AVA"
+        allow="fullscreen"
+        (load)="onIframeLoad()">
+    </iframe>
+</ion-content>

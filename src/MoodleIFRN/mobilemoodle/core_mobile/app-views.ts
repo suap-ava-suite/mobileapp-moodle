@@ -280,6 +280,15 @@ let currentLists: PainelLists;
                 return;
             }
 
+            if (typeof App.openMoodleCourse === 'function') {
+                App.openMoodleCourse(
+                    moodleCourseId,
+                    course.name || course.fullname,
+                    moodleSiteUrl,
+                );
+                return;
+            }
+
             if (typeof App.resolveMoodleOpenUrl !== 'function') {
                 // eslint-disable-next-line no-console
                 console.warn('[IFRN-COURSE] resolveMoodleOpenUrl ausente no bundle');
@@ -364,6 +373,11 @@ let currentLists: PainelLists;
 
                 // O POST real é executado dentro da origem ava.ifrn.edu.br,
                 // preservando cookie/CSRF apenas no InAppBrowser do Painel.
+                if (typeof App.openPainelEnrol === 'function') {
+                    App.openPainelEnrol(courseId, ambienteId);
+                    return;
+                }
+
                 window.location.assign(App.resolvePainelEnrolUrl(courseId, ambienteId));
             });
         }
@@ -384,8 +398,20 @@ let currentLists: PainelLists;
                 if (
                     !Number.isFinite(moodleCourseId)
                     || moodleCourseId <= 0
-                    || typeof App.resolveMoodleOpenUrl !== 'function'
                 ) {
+                    return;
+                }
+
+                if (typeof App.openMoodleCourse === 'function') {
+                    App.openMoodleCourse(
+                        moodleCourseId,
+                        course.name || course.fullname,
+                        siteUrlFromCourse(course),
+                    );
+                    return;
+                }
+
+                if (typeof App.resolveMoodleOpenUrl !== 'function') {
                     return;
                 }
 

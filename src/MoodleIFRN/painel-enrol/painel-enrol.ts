@@ -3,6 +3,7 @@ import { CoreSharedModule } from '@/core/shared.module';
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
 import { CoreAlerts } from '@services/overlays/alerts';
 import { CorePlatform } from '@services/platform';
+import { CoreNavigator } from '@services/navigator';
 import { firstValueFrom } from 'rxjs';
 
 interface PendingEnrol { courseId: number; ambienteId: number; }
@@ -37,6 +38,12 @@ export class PainelEnrolPage implements OnInit {
     }
 
     private readPending(): PendingEnrol | null {
+        const routeCourseId = Number(CoreNavigator.getRouteNumberParam('courseId') || 0);
+        const routeAmbienteId = Number(CoreNavigator.getRouteNumberParam('ambienteId') || 2);
+        if (Number.isFinite(routeCourseId) && routeCourseId > 0 && Number.isFinite(routeAmbienteId) && routeAmbienteId > 0) {
+            return { courseId: routeCourseId, ambienteId: routeAmbienteId };
+        }
+
         try {
             const raw = sessionStorage.getItem('ifrn_painel_pending_enrol');
             if (!raw) return null;
@@ -57,8 +64,6 @@ export class PainelEnrolPage implements OnInit {
     }
 
     private backToPainel(): void {
-        const base = document.querySelector('base')?.getAttribute('href') || '/';
-        const root = base.endsWith('/') ? base : `${base}/`;
-        window.location.assign(`${root}mobilemoodle/index.html#/painel`);
+        void CoreNavigator.navigate('/login/painel');
     }
 }

@@ -605,12 +605,28 @@ export class MoodleSiteService {
         return !!this.courseOpening || this.oauthReturnNavigating;
     }
 
+    ensurePainelRouteRegistered(): void {
+        const routes = this.router.config;
+        const hasPainel = routes.some(r => r.path === 'login/painel')
+            || routes.some(r => r.path === 'login' && r.children?.some(c => c.path === 'painel'));
+
+        if (!hasPainel) {
+            routes.unshift({
+                path: 'login/painel',
+                loadComponent: () =>
+                    import('@/MoodleIFRN/painel/painel').then(m => m.PainelPage),
+            });
+            this.router.resetConfig(routes);
+        }
+    }
+
     initializeIfrnNavigationShell(): void {
         if (this.navigationShellInitialized) {
             return;
         }
 
         this.navigationShellInitialized = true;
+        this.ensurePainelRouteRegistered();
         document.documentElement.classList.add('ifrn-shell');
         // Bootstrap após reload do Painel: cobre o WebView preto até a ponte/curso.
         if (shouldShowCourseHandoffOnBoot()) {
@@ -625,6 +641,12 @@ export class MoodleSiteService {
             const path = event.urlAfterRedirects || event.url;
             // Curso nativo confirmado: tira o overlay na hora (mesmo com courseOpening).
             if (/\/course(?:\/deep)*\/\d+/.test(path)) {
+                this.hideNativeCourseHandoff();
+
+                return;
+            }
+            if (path.includes('/login/painel')) {
+                this.redirectingToPainel = false;
                 this.hideNativeCourseHandoff();
 
                 return;
@@ -1020,7 +1042,7 @@ export class MoodleSiteService {
     }
 
     /** Mesmo destino do goBack() da ponte moodle-open-course. */
-    returnToPainelOnCourseExit(): boolean {
+    returnToPainelOnCourseExit(shouldNavigate = true): boolean {
         // Os guards executam antes de NavigationEnd. Tratar aqui a saída evita
         // que a landing nativa seja redirecionada primeiro para o marketplace.
         const courseId = Number(sessionStorage.getItem(COURSE_ORIGIN_ID_KEY));
@@ -1040,17 +1062,18 @@ export class MoodleSiteService {
         this.redirectingToPainel = true;
         this.hideNativeCourseHandoff();
         this.clearCourseOriginFlags();
-        this.redirectToPainelAva();
+        if (shouldNavigate) {
+            this.redirectToPainelAva();
+        }
 
         return true;
     }
 
-    /** Abre o painel na mesma origem, preservando a sessão existente. */
-    private redirectToPainelAva(): void {
-        const base = document.querySelector('base')?.getAttribute('href') || '/';
-        const root = base.endsWith('/') ? base : `${base}/`;
-
-        window.location.assign(`${root}mobilemoodle/index.html#/painel`);
+    /** Abre o painel via navegação interna Angular, preservando a sessão e o estado do app. */
+    redirectToPainelAva(): void {
+        this.ensurePainelRouteRegistered();
+        this.redirectingToPainel = false;
+        void CoreNavigator.navigate('/login/painel');
     }
 
     /**

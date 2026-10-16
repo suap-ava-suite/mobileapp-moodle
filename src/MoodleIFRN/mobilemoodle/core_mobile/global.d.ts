@@ -163,6 +163,8 @@ interface MobileMoodleApp {
     resolveLoginUrl?: () => string;
     resolvePainelEnrolUrl?: (courseId: number | string, ambienteId?: number | string) => string;
     resolveMoodleOpenUrl?: (courseId: number | string, courseName?: string, siteUrl?: string) => string;
+    openMoodleCourse?: (courseId: number | string, courseName?: string, siteUrl?: string) => void;
+    openPainelEnrol?: (courseId: number | string, ambienteId?: number | string) => void;
     A11y?: A11yModule;
     FILTER_LABELS?: Record<string, string>;
     logout?: () => void;

@@ -1251,10 +1251,75 @@
     showLeavingCourseSplash();
     return resolveIonicAppUrl("/login/moodle-open-course");
   }
+  function openMoodleCourse(courseId, courseName, siteUrl) {
+    const id = Number(courseId);
+    if (!Number.isFinite(id) || id <= 0) {
+      return;
+    }
+    try {
+      console.log("[IFRN-COURSE] courseId recebido do Painel =", id);
+      sessionStorage.setItem(
+        "ifrn_moodle_pending_open_course",
+        JSON.stringify({
+          courseId: id,
+          courseName: courseName || void 0,
+          siteUrl: siteUrl || void 0
+        })
+      );
+      if (siteUrl && /^https:\/\//i.test(siteUrl)) {
+        sessionStorage.setItem("ifrn_moodle_last_site_url", new URL(siteUrl).origin);
+      }
+    } catch {
+    }
+    const bridge = window.parent?.MoodleIfrnBridge;
+    if (window.parent && window.parent !== window && bridge?.openCourse) {
+      bridge.openCourse(id, courseName, siteUrl);
+      return;
+    }
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: "MOODLE_IFRN_OPEN_COURSE",
+        courseId: id,
+        courseName,
+        siteUrl
+      }, "*");
+      return;
+    }
+    window.location.assign(resolveMoodleOpenUrl(id, courseName, siteUrl));
+  }
+  function openPainelEnrol(courseId, ambienteId = 2) {
+    const id = Number(courseId);
+    const envId = Number(ambienteId);
+    if (Number.isFinite(id) && id > 0 && Number.isFinite(envId) && envId > 0) {
+      try {
+        sessionStorage.setItem(
+          "ifrn_painel_pending_enrol",
+          JSON.stringify({ courseId: id, ambienteId: envId })
+        );
+      } catch {
+      }
+    }
+    const bridge = window.parent?.MoodleIfrnBridge;
+    if (window.parent && window.parent !== window && bridge?.openEnrol) {
+      bridge.openEnrol(id, envId);
+      return;
+    }
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: "MOODLE_IFRN_OPEN_ENROL",
+        courseId: id,
+        ambienteId: envId
+      }, "*");
+      return;
+    }
+    window.location.assign(resolvePainelEnrolUrl(id, envId));
+  }
   App.ASSET_BASE = resolveAssetBase();
   App.resolveLoginUrl = resolveLoginUrl;
   App.resolvePainelEnrolUrl = resolvePainelEnrolUrl;
   App.resolveMoodleOpenUrl = resolveMoodleOpenUrl;
+  App.openMoodleCourse = openMoodleCourse;
+  App.openPainelEnrol = openPainelEnrol;
   App.escapeHtml = escapeHtml;
   App.initials = initials;
   App.cloneTemplate = cloneTemplate;
@@ -1647,6 +1712,14 @@
         );
         return;
       }
+      if (typeof App.openMoodleCourse === "function") {
+        App.openMoodleCourse(
+          moodleCourseId,
+          course.name || course.fullname,
+          moodleSiteUrl
+        );
+        return;
+      }
       if (typeof App.resolveMoodleOpenUrl !== "function") {
         console.warn("[IFRN-COURSE] resolveMoodleOpenUrl ausente no bundle");
         return;
@@ -1704,6 +1777,10 @@
           window.alert("N\xE3o foi poss\xEDvel identificar este curso para autoinscri\xE7\xE3o.");
           return;
         }
+        if (typeof App.openPainelEnrol === "function") {
+          App.openPainelEnrol(courseId, ambienteId);
+          return;
+        }
         window.location.assign(App.resolvePainelEnrolUrl(courseId, ambienteId));
       });
     }
@@ -1715,7 +1792,18 @@
         event.stopPropagation();
         console.log("[IFRN-COURSE] card-click");
         const moodleCourseId = course.moodle_course_id ?? (course.source === "painel" ? Number(course.id) : NaN);
-        if (!Number.isFinite(moodleCourseId) || moodleCourseId <= 0 || typeof App.resolveMoodleOpenUrl !== "function") {
+        if (!Number.isFinite(moodleCourseId) || moodleCourseId <= 0) {
+          return;
+        }
+        if (typeof App.openMoodleCourse === "function") {
+          App.openMoodleCourse(
+            moodleCourseId,
+            course.name || course.fullname,
+            siteUrlFromCourse(course)
+          );
+          return;
+        }
+        if (typeof App.resolveMoodleOpenUrl !== "function") {
           return;
         }
         console.log("[IFRN-COURSE] leaving-mobilemoodle");
@@ -2884,6 +2972,15 @@
     sessionStorage.removeItem("ifrn_username");
     sessionStorage.removeItem("ifrn_moodle_last_site_url");
     App.dashboardCache = null;
+    const bridge = window.parent?.MoodleIfrnBridge;
+    if (window.parent && window.parent !== window && bridge?.logout) {
+      bridge.logout();
+      return;
+    }
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: "MOODLE_IFRN_LOGOUT" }, "*");
+      return;
+    }
     const loginUrl = typeof App.resolveLoginUrl === "function" ? App.resolveLoginUrl() : "/login/marketplace-ifrn";
     window.location.replace(loginUrl);
   }
