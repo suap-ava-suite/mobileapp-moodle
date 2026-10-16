@@ -26,41 +26,41 @@ import { NO_SITE_ID } from '@features/login/constants';
  */
 export const redirectGuard: CanActivateFn = async () => {
     const redirect = CoreRedirects.consumeMemoryRedirect();
-        if (!redirect) {
-            return true;
+    if (!redirect) {
+        return true;
+    }
+
+    // Redirect to site path.
+    if (redirect.siteId && redirect.siteId !== NO_SITE_ID) {
+        const redirectData: CoreRedirectPayload = {
+            urlToOpen: redirect.urlToOpen,
+        };
+
+        if (redirect.redirectPath !== 'main') {
+            // Only pass redirect path if the page to load isn't the main menu.
+            redirectData.redirectPath = redirect.redirectPath;
+            redirectData.redirectOptions = redirect.redirectOptions;
         }
 
-        // Redirect to site path.
-        if (redirect.siteId && redirect.siteId !== NO_SITE_ID) {
-            const redirectData: CoreRedirectPayload = {
-                urlToOpen: redirect.urlToOpen,
-            };
+        const loggedIn = await CoreSites.loadSite(
+            redirect.siteId,
+            redirectData,
+        );
+        const route = Router.parseUrl('/main');
 
-            if (redirect.redirectPath !== 'main') {
-                // Only pass redirect path if the page to load isn't the main menu.
-                redirectData.redirectPath = redirect.redirectPath;
-                redirectData.redirectOptions = redirect.redirectOptions;
-            }
+        route.queryParams = redirectData;
 
-            const loggedIn = await CoreSites.loadSite(
-                redirect.siteId,
-                redirectData,
-            );
-            const route = Router.parseUrl('/main');
+        return loggedIn ? route : true;
+    }
 
-            route.queryParams = redirectData;
+    // Abort redirect.
+    if (!redirect.redirectPath) {
+        return true;
+    }
 
-            return loggedIn ? route : true;
-        }
+    // Redirect to non-site path.
+    const route = Router.parseUrl(redirect.redirectPath);
+    route.queryParams = redirect.redirectOptions?.params || {};
 
-        // Abort redirect.
-        if (!redirect.redirectPath) {
-            return true;
-        }
-
-        // Redirect to non-site path.
-        const route = Router.parseUrl(redirect.redirectPath);
-        route.queryParams = redirect.redirectOptions?.params || {};
-
-        return route;
+    return route;
 };

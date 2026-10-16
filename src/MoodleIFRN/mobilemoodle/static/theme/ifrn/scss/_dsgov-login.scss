@@ -1,0 +1,117 @@
+@use "dsgov/variables" as ds;
+
+// Login IFRN — estilos DS-GOV (usado no Angular e no bundle do painel)
+
+.ifrn-login {
+    --background: var(--dsgov-bg-gray);
+    color: var(--dsgov-text-dark);
+    font-family: var(--dsgov-font-family);
+
+    &__header {
+        background: var(--dsgov-bg-white);
+        box-shadow: var(--dsgov-shadow-header);
+    }
+
+    &__card {
+        background: var(--dsgov-bg-white);
+        border: ds.$border-width-thin solid ds.$border-medium;
+        border-top: ds.$border-width-login solid ds.$blue-warm-vivid-70;
+        border-radius: var(--dsgov-radius-md);
+        box-shadow: var(--dsgov-shadow-login-card);
+    }
+
+    h1 {
+        color: var(--dsgov-blue-90);
+        font-size: var(--dsgov-font-size-2xl);
+        font-weight: var(--dsgov-font-weight-bold);
+    }
+
+    &__field label {
+        color: var(--dsgov-text-dark);
+        font-weight: var(--dsgov-font-weight-semibold);
+        font-size: var(--dsgov-font-size-base);
+    }
+
+    &__field p {
+        color: var(--dsgov-text-muted);
+        font-size: var(--dsgov-font-size-sm);
+        font-style: normal;
+    }
+
+    &__input {
+        border: ds.$border-width-thin solid ds.$border-default;
+        border-radius: var(--dsgov-radius-sm);
+        height: 44px;
+
+        input {
+            font-size: var(--dsgov-font-size-md);
+        }
+
+        &:focus-within {
+            border-color: ds.$border-default;
+            box-shadow: var(--dsgov-focus-ring-blue);
+        }
+
+        &--invalid {
+            border-color: var(--dsgov-error);
+            box-shadow: var(--dsgov-focus-ring-error);
+        }
+    }
+
+    &__error {
+        background: #fdecea;
+        border: ds.$border-width-thin solid #f5c2c0;
+        border-radius: var(--dsgov-radius-default);
+        color: var(--dsgov-error);
+        font-size: var(--dsgov-font-size-sm);
+        font-weight: var(--dsgov-font-weight-medium);
+    }
+
+    &__status {
+        color: var(--dsgov-blue-70);
+        font-weight: var(--dsgov-font-weight-semibold);
+    }
+
+    &__button {
+        border-radius: var(--dsgov-radius-pill);
+        font-size: var(--dsgov-font-size-lg);
+        font-weight: var(--dsgov-font-weight-semibold);
+        min-height: 44px;
+        transition: var(--dsgov-transition-fast);
+
+        &--primary {
+            background: var(--dsgov-blue-70);
+            border-color: var(--dsgov-blue-70);
+            box-shadow: none;
+            color: var(--dsgov-text-light);
+
+            &:hover:not(:disabled),
+            &:active:not(:disabled) {
+                background: var(--dsgov-blue-90);
+                border-color: var(--dsgov-blue-90);
+            }
+        }
+
+        &--secondary {
+            background: transparent;
+            border: ds.$border-width-thin solid var(--dsgov-blue-70);
+            color: var(--dsgov-blue-70);
+
+            &:hover:not(:disabled) {
+                background: var(--dsgov-blue-10);
+                color: var(--dsgov-blue-90);
+            }
+        }
+
+        &--govbr {
+            background: var(--dsgov-bg-disabled);
+            border-color: var(--dsgov-bg-disabled);
+            color: var(--dsgov-blue-70);
+        }
+    }
+
+    &__link {
+        color: var(--dsgov-blue-70);
+        font-size: var(--dsgov-font-size-sm);
+    }
+}

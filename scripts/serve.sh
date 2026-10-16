@@ -8,10 +8,11 @@
 #     "ionic:serve": "gulp watch & NODE_OPTIONS=--max-old-space-size=4096 ng serve"
 #
 
-# Run gulp watch.
-echo "> gulp watch &"
-gulp watch &
 
+
+
+# This script is necessary because @ionic/cli is passing one argument to the ionic:serve hook
+# that is unsupported by angular cli...
 # Remove unknown arguments and prepare angular target.
 args=("$@")
 angulartarget="serve"

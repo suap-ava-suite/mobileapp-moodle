@@ -1,0 +1,288 @@
+@use "variables";
+
+// Abas + cards do Painel AVA (theme_ifrn25) + Ionic
+
+.ava-topbar,
+.tabs-row {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    margin: 8px 0 16px;
+    padding: 0.75rem 0.25rem;
+    border-radius: 8px;
+    box-shadow: 0 3px 6px #00000029;
+    background: var(--branco-primario);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.ava-topbar .ava-tab,
+.tabs-row .ava-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    padding: 0.25rem 0.75rem;
+    border: none;
+    border-radius: 1.5rem;
+    background: transparent;
+    color: var(--primary);
+    font: var(--font-button2);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease;
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+
+    &.is-active {
+        color: var(--dsgov-text-light);
+        background-color: var(--primary);
+        font-weight: 600;
+    }
+}
+
+.ava-tab__label-desktop {
+    display: none;
+}
+
+.ava-tab__label-mobile {
+    display: inline;
+}
+
+@media (min-width: 768px) {
+    .ava-tab__label-desktop {
+        display: inline;
+    }
+
+    .ava-tab__label-mobile {
+        display: none;
+    }
+}
+
+.ava-tab__badge {
+    display: inline-grid;
+    place-items: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 1px 6px;
+    border-radius: 50%;
+    background: var(--secondary-light);
+    color: var(--secondary-dark);
+    font: var(--font-heading5);
+}
+
+.ava-tab.is-active .ava-tab__badge {
+    background: rgba(255, 255, 255, 0.22);
+    color: var(--dsgov-text-light);
+}
+
+.card-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 5px 0;
+}
+
+.painel-card {
+    margin: 0 auto 1rem;
+    width: 100%;
+    max-width: 1360px;
+    min-height: 100px;
+    border: 1px solid var(--light);
+    box-shadow: 1px 1px 8px rgba(20, 20, 20, 0.25);
+    border-radius: 8px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:active {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+}
+
+.painel-card ion-card-content {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.painel-card-title {
+    margin: 0;
+    font: var(--font-heading1);
+    color: var(--dark);
+    letter-spacing: 0;
+    width: fit-content;
+}
+
+.painel-card-header-shortname {
+    display: block;
+    margin-top: 4px;
+    font: var(--font-button2);
+    color: var(--dark);
+}
+
+.painel-card-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.painel-card-details--autoinscricao {
+    margin-top: 0.25rem;
+    align-items: flex-start;
+}
+
+.painel-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    flex: 1;
+    min-width: 160px;
+
+    ion-button {
+        margin: 0;
+        text-transform: none;
+        font: var(--font-button3);
+        --border-radius: 8px;
+        flex: 1 1 auto;
+        max-width: 220px;
+    }
+}
+
+.painel-card-details-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 140px;
+}
+
+.painel-progress-bar-container {
+    background: var(--dsgov-bg-progress-track);
+    border-radius: 50px;
+    height: 4px;
+    max-width: 187px;
+    width: 20vw;
+    overflow: hidden;
+    flex: 1;
+}
+
+.painel-progress-bar {
+    background: var(--dsgov-blue-70);
+    border-radius: 50px;
+    height: 100%;
+}
+
+.painel-card-details-progress span,
+.painel-progress-label {
+    font-family: var(--font-family);
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.painel-card-details-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+}
+
+.painel-card-info-icon,
+.painel-card-details-info-published,
+.painel-card-details-info-unpublished {
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 8px;
+    height: 24px;
+    font: var(--font-heading6);
+    transition: all 0.2s ease-out;
+}
+
+.painel-card-info-icon,
+.painel-card-details-info-published,
+.painel-card-info-enrolled {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+.painel-card-details-info-unpublished {
+    background: var(--light);
+    color: var(--dark);
+}
+
+.painel-card-info-icon ion-icon,
+.painel-card-details-info-published ion-icon,
+.painel-card-details-info-unpublished ion-icon,
+.painel-card-info-enrolled ion-icon {
+    font-size: 12px;
+}
+
+.painel-card-details-info-favourite,
+.painel-card-details-info-unfavourite {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    display: grid;
+    place-items: center;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.2s ease-out;
+
+    &:active {
+        color: var(--primary-light);
+        background-color: var(--primary-dark);
+    }
+}
+
+.painel-card-details-info-favourite ion-icon,
+.painel-card-details-info-unfavourite ion-icon {
+    font-size: 12px;
+}
+
+.painel-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.no-data__hint {
+    margin: 0;
+    max-width: 28rem;
+}
+
+@media (max-width: 767.98px) {
+    .painel-card-details {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .painel-card-details-info {
+        gap: 0.5rem;
+        margin-left: 0;
+    }
+
+    .painel-progress-bar-container {
+        width: 40vw;
+    }
+
+    .painel-card-actions ion-button {
+        max-width: none;
+    }
+}

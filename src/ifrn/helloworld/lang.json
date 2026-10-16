@@ -1,0 +1,5 @@
+{
+    "content": "You signed in using FastAPI authentication.",
+    "success": "Authentication completed successfully.",
+    "title": "Hello World"
+}

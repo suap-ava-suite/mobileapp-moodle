@@ -1,0 +1,149 @@
+// ==================================================
+// MIXINS — Tema IFRN DS-GOV (v3.0)
+// ==================================================
+
+@use "variables" as *;
+
+// ---------------------------------------------------------
+// Foco Acessível (Gov.br / WCAG 2.4.7)
+// ---------------------------------------------------------
+// Aplica um anel de foco visível apenas via teclado,
+// preservando a aparência limpa para interações com mouse.
+@mixin focus-visible-ring($color: $blue-warm-vivid-70, $offset: 2px) {
+  &:focus-visible {
+    outline: $border-width-medium solid $color !important;
+    outline-offset: $offset !important;
+    box-shadow: none !important;
+  }
+
+  &:focus:not(:focus-visible) {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+}
+
+// ---------------------------------------------------------
+// Layouts Flex
+// ---------------------------------------------------------
+@mixin flex-center($direction: row) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  @if $direction != row {
+    flex-direction: $direction !important;
+  }
+}
+
+@mixin flex-between {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+@mixin flex-start {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+}
+
+// ---------------------------------------------------------
+// Resets
+// ---------------------------------------------------------
+@mixin button-reset {
+  background: none !important;
+  border: none !important;
+  outline: none !important;
+  cursor: pointer;
+  padding: 0;
+}
+
+@mixin link-reset {
+  text-decoration: none !important;
+  color: inherit !important;
+}
+
+@mixin list-reset {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+// ---------------------------------------------------------
+// Componentes
+// ---------------------------------------------------------
+
+// Ícone circular (botões de ação no header, tabelas, etc.)
+@mixin icon-circle($size: $icon-size-md, $bg: transparent) {
+  @include flex-center;
+  width: $size !important;
+  height: $size !important;
+  border-radius: $border-radius-circle !important;
+  background-color: $bg !important;
+}
+
+// Card elevado com hover (Gov.br)
+@mixin card-elevated($radius: $border-radius-sm) {
+  background: $bg-white !important;
+  border: $border-width-thin solid $border-light !important;
+  border-radius: $radius !important;
+  transition: transform $transition-base, box-shadow $transition-base !important;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-card !important;
+  }
+}
+
+// ---------------------------------------------------------
+// Transições
+// ---------------------------------------------------------
+@mixin transition-base($properties: all) {
+  transition: $properties $transition-base !important;
+}
+
+@mixin transition-fast($properties: all) {
+  transition: $properties $transition-fast !important;
+}
+
+// ---------------------------------------------------------
+// Breakpoints Responsivos
+// ---------------------------------------------------------
+@mixin respond-to($breakpoint) {
+  @if $breakpoint == sm {
+    @media (max-width: $breakpoint-sm) { @content; }
+  } @else if $breakpoint == md {
+    @media (max-width: $breakpoint-md) { @content; }
+  } @else if $breakpoint == lg {
+    @media (max-width: $breakpoint-lg) { @content; }
+  } @else if $breakpoint == xl {
+    @media (max-width: $breakpoint-xl) { @content; }
+  }
+}
+
+@mixin respond-from($breakpoint) {
+  @if $breakpoint == sm {
+    @media (min-width: $breakpoint-sm) { @content; }
+  } @else if $breakpoint == md {
+    @media (min-width: $breakpoint-md) { @content; }
+  } @else if $breakpoint == lg {
+    @media (min-width: $breakpoint-lg) { @content; }
+  } @else if $breakpoint == xl {
+    @media (min-width: $breakpoint-xl) { @content; }
+  }
+}
+
+// ---------------------------------------------------------
+// Texto
+// ---------------------------------------------------------
+@mixin text-truncate($lines: 1) {
+  @if $lines == 1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  } @else {
+    display: -webkit-box;
+    -webkit-line-clamp: $lines;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}

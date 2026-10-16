@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<!-- saved from url=(0067)https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html -->
+<html lang="en-US"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Especificação da Nova API v2 | djangoapp-painel_ava</title>
+<meta name="generator" content="Jekyll v3.10.0">
+<meta property="og:title" content="Especificação da Nova API v2">
+<meta property="og:locale" content="en_US">
+<meta name="description" content="O Painel AVA é um dashboard com todos os cursos e inscrições que dos AVA que com os quais ele integra, desta forma cada usuário tem acesso aos cursos/diários em que está inscrito sem precisar procurar em vários Moodles.">
+<meta property="og:description" content="O Painel AVA é um dashboard com todos os cursos e inscrições que dos AVA que com os quais ele integra, desta forma cada usuário tem acesso aos cursos/diários em que está inscrito sem precisar procurar em vários Moodles.">
+<link rel="canonical" href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html">
+<meta property="og:url" content="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html">
+<meta property="og:site_name" content="djangoapp-painel_ava">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta property="twitter:title" content="Especificação da Nova API v2">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"O Painel AVA é um dashboard com todos os cursos e inscrições que dos AVA que com os quais ele integra, desta forma cada usuário tem acesso aos cursos/diários em que está inscrito sem precisar procurar em vários Moodles.","headline":"Especificação da Nova API v2","url":"https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <style class="anchorjs"></style><link rel="stylesheet" href="./Especificação da Nova API v2 _ djangoapp-painel_ava_files/style.css">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/djangoapp-painel_ava/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <div class="container-lg px-3 my-5 markdown-body">
+      
+      <h1><a href="https://suap-ava-suite.github.io/djangoapp-painel_ava/">djangoapp-painel_ava</a></h1>
+      
+
+      <h1 id="especificação-da-nova-api-v2">Especificação da Nova API v2</h1>
+
+<p>O documento especifica a v2 da API para atuar como uma camada BFF (Backend For Frontend) do Painel AVA (<code class="language-plaintext highlighter-rouge">/api/v2/</code>),
+integrando os frontends (web e mobile) e as diferentes instâncias do Moodle (AVAs). A API utiliza autenticação
+baseada em JWT (<code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;token&gt;</code>) com suporte a revogação e renovação em cascata para quando for
+mobile e session para quando for web.</p>
+
+<h2 id="estrutura-dos-módulos-e-endpoints-22-endpoints">Estrutura dos Módulos e Endpoints (22 Endpoints)<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#estrutura-dos-m%C3%B3dulos-e-endpoints-22-endpoints" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h2>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Módulo</th>
+      <th style="text-align: left">Endpoints</th>
+      <th style="text-align: left">Descrição Resumida</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><strong>Autenticação</strong></td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">POST /token/pair/</code><br><code class="language-plaintext highlighter-rouge">POST /token/refresh/</code><br><code class="language-plaintext highlighter-rouge">POST /token/verify/</code><br><code class="language-plaintext highlighter-rouge">POST /token/revoke/</code></td>
+      <td style="text-align: left">Gerenciamento de ciclo de vida do JWT (emissão, refresh, verificação e revogação em cascata no Painel e nos AVAs).</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><strong>Usuário</strong></td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">GET /usuario/info/</code><br><code class="language-plaintext highlighter-rouge">GET /usuario/preferencia/</code><br><code class="language-plaintext highlighter-rouge">PATCH /usuario/preferencia/</code></td>
+      <td style="text-align: left">Informações de perfil e preferências globais do usuário no Painel.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><strong>Sala de Aula</strong></td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">GET /sala/tipo/</code><br><code class="language-plaintext highlighter-rouge">GET /sala/tipo/&lt;tipo&gt;/</code><br><code class="language-plaintext highlighter-rouge">GET /sala/tipo/quantidades/</code><br><code class="language-plaintext highlighter-rouge">GET /sala/tipo/&lt;tipo&gt;/&lt;ava&gt;/</code><br><code class="language-plaintext highlighter-rouge">GET /sala/progresso/...</code><br><code class="language-plaintext highlighter-rouge">PATCH /sala/favorito/...</code><br><code class="language-plaintext highlighter-rouge">PATCH /sala/visivel/...</code></td>
+      <td style="text-align: left">Listagem de tipos de salas (Home, Diários, Coordenações, Laboratórios, Auto-inscrições, Backups), filtros dinâmicos, progresso e ações de favoritar/ocultar salas.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><strong>Notificação</strong></td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">GET /notificacao/</code><br><code class="language-plaintext highlighter-rouge">GET /notificacao/&lt;ava&gt;/</code><br><code class="language-plaintext highlighter-rouge">GET /notificacao/&lt;ava&gt;/&lt;ids&gt;</code><br><code class="language-plaintext highlighter-rouge">PATCH /notificacao/&lt;ava&gt;/&lt;ids&gt;</code></td>
+      <td style="text-align: left">Sumário por AVA, listagem, detalhamento e marcação de lido/não lido.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><strong>Conversa</strong></td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">GET /conversa/</code><br><code class="language-plaintext highlighter-rouge">GET /conversa/&lt;ava&gt;/</code><br><code class="language-plaintext highlighter-rouge">GET /conversa/&lt;ava&gt;/&lt;ids&gt;</code><br><code class="language-plaintext highlighter-rouge">PATCH /conversa/&lt;ava&gt;/&lt;id&gt;/</code></td>
+      <td style="text-align: left">Sumário por AVA, conversas, mensagens e alteração de status de leitura.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="autenticação">Autenticação<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#autentica%C3%A7%C3%A3o" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h2>
+
+<h3 id="1-post-tokenpair">1. <code class="language-plaintext highlighter-rouge">POST /token/pair/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#1-post-tokenpair" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Gera um novo par de tokens</p>
+
+<h4 id="requisição-de-exemplo">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+  <li><code class="language-plaintext highlighter-rouge">Content-Type: application/json</code></li>
+</ul>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"password"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h4 id="respostas-de-exemplo">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"refresh"</span><span class="p">:</span><span class="w"> </span><span class="s2">"jwt"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"access"</span><span class="p">:</span><span class="w"> </span><span class="s2">"jwt"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"No active account found with the given credentials"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"authentication_failed"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Invalid input."</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"invalid"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"username is required"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"password"</span><span class="p">:</span><span class="w"> </span><span class="s2">"password is required"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="2-post-tokenrefresh">2. <code class="language-plaintext highlighter-rouge">POST /token/refresh/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#2-post-tokenrefresh" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Gera um novo par de tokens no Painel AVA e nos AVA em que ocorreu a autenticação usando este token</p>
+
+<h4 id="requisição-de-exemplo-1">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-1" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+  <li><code class="language-plaintext highlighter-rouge">Content-Type: application/json</code></li>
+</ul>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"refresh"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h4 id="respostas-de-exemplo-1">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-1" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"refresh"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"access"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Token is invalid or expired"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"token_not_valid"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Invalid input."</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"invalid"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"refresh"</span><span class="p">:</span><span class="w"> </span><span class="s2">"token is required"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="3-post-tokenverify">3. <code class="language-plaintext highlighter-rouge">POST /token/verify/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#3-post-tokenverify" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Verifica se o token é válido</p>
+
+<h4 id="requisição-de-exemplo-2">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-2" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+  <li><code class="language-plaintext highlighter-rouge">Content-Type: application/json</code></li>
+</ul>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"token"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h4 id="respostas-de-exemplo-2">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-2" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"refresh"</span><span class="p">:</span><span class="w"> </span><span class="s2">"jwt"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"access"</span><span class="p">:</span><span class="w"> </span><span class="s2">"jwt"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Token is invalid or expired"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"token_not_valid"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Invalid input."</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"invalid"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"token"</span><span class="p">:</span><span class="w"> </span><span class="s2">"token is required"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="4-post-tokenrevoke">4. <code class="language-plaintext highlighter-rouge">POST /token/revoke/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#4-post-tokenrevoke" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Revoga o token no Painel AVA e nos AVA em que ocorreu a autenticação usando este token</p>
+
+<h4 id="requisição-de-exemplo-3">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-3" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+  <li><code class="language-plaintext highlighter-rouge">Content-Type: application/json</code></li>
+</ul>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"token"</span><span class="p">:</span><span class="w"> </span><span class="s2">"jwt"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h4 id="respostas-de-exemplo-3">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-3" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Token revoked"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"revoke_list"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"service_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;string&gt;"</span><span class="p">,</span><span class="w"> </span><span class="nl">"url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;string&gt;"</span><span class="p">,</span><span class="w"> </span><span class="nl">"revoked"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nl">"duration"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;duration in ISO 8601 format&gt;"</span><span class="p">}</span><span class="w">
+    </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Token is invalid or expired"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"token_not_valid"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Invalid input."</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"invalid"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"token"</span><span class="p">:</span><span class="w"> </span><span class="s2">"token is required"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h2 id="usuário">Usuário<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#usu%C3%A1rio" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h2>
+
+<h3 id="5-get-usuarioinfo">5. <code class="language-plaintext highlighter-rouge">GET /usuario/info/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#5-get-usuarioinfo" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Retorna informações do usuário</p>
+
+<h4 id="requisição-de-exemplo-4">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-4" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+</ul>
+
+<h4 id="respostas-de-exemplo-4">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-4" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"matricula"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"identificacao"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"nome_social"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"nome_registro"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ultimo_nome"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"nome_usual"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"cpf"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"rg"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"passaporte"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"filiacao"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="s2">""</span><span class="p">,</span><span class="w">
+    </span><span class="s2">""</span><span class="w">
+  </span><span class="p">],</span><span class="w">
+  </span><span class="nl">"sexo"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"data_nascimento"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"data_de_nascimento"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"naturalidade"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"email"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"email_secundario"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"email_google_classroom"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"email_academico"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"email_preferencial"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"foto"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"url_foto_75x100"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"url_foto_150x200"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"tipo_vinculo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Servidor"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"tipo_usuario"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Servidor (Técnico-Administrativo)"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"vinculo"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"turno"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"campus_curso"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ZL: 123456 - ASDF"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"campus"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"curso"</span><span class="p">:</span><span class="w"> </span><span class="s2">"123456 - ASDF"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"matriz"</span><span class="p">:</span><span class="w"> </span><span class="s2">"000 - ASDF"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"cargo"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"ingresso"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2015/2"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"ira"</span><span class="p">:</span><span class="w"> </span><span class="s2">"100,00"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"categoria"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tecnico_administrativo"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"situacao"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"situacao_sistemica"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"matricula_regular"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"vinculos"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"detalhamento"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"modalidade"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"nivel_ensino"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"ativo"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"cargo"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"categoria"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Técnico Administrativo"</span><span class="w">
+      </span><span class="p">},</span><span class="w">
+      </span><span class="nl">"estrangeiro"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="6-get-usuariopreferencia">6. <code class="language-plaintext highlighter-rouge">GET /usuario/preferencia/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#6-get-usuariopreferencia" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Retorna preferências do usuário</p>
+
+<h4 id="requisição-de-exemplo-5">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-5" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+</ul>
+
+<h4 id="respostas-de-exemplo-5">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-5" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"zoom"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"100%"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"configuracao"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Padrão"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="7-patch-usuariopreferencia">7. <code class="language-plaintext highlighter-rouge">PATCH /usuario/preferencia/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#7-patch-usuariopreferencia" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Atualiza preferências do usuário</p>
+
+<h4 id="requisição-de-exemplo-6">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-6" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+  <li><code class="language-plaintext highlighter-rouge">Content-Type: application/json</code></li>
+</ul>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"zoom"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"100%"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h4 id="respostas-de-exemplo-6">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-6" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"zoom"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"100%"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h2 id="sala-de-aula-virtual">Sala de aula virtual<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#sala-de-aula-virtual" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h2>
+
+<h3 id="8-get-salatipo">8. <code class="language-plaintext highlighter-rouge">GET /sala/tipo/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#8-get-salatipo" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Retorna os tipos de sala, sendo que <code class="language-plaintext highlighter-rouge">/sala/tipo/*/</code> é o mesmo que <code class="language-plaintext highlighter-rouge">/sala/tipo/</code> e <code class="language-plaintext highlighter-rouge">/sala/tipo/&lt;ava&gt;/</code> é o mesmo que
+<code class="language-plaintext highlighter-rouge">/sala/tipo/</code> com o campo <code class="language-plaintext highlighter-rouge">&lt;ava&gt;</code> sempre <code class="language-plaintext highlighter-rouge">*</code>. Se for informado o campo <code class="language-plaintext highlighter-rouge">&lt;ava&gt;</code> serão consultados apenas os dados
+daquele AVA pelo <code class="language-plaintext highlighter-rouge">slug</code> informado, <code class="language-plaintext highlighter-rouge">inicio</code>, <code class="language-plaintext highlighter-rouge">backup</code> e <code class="language-plaintext highlighter-rouge">autoinscricoes</code> ignoram este filtro e sempre mostrarão todos
+os dados.</p>
+
+<h4 id="requisição-de-exemplo-7">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-7" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+</ul>
+
+<h4 id="respostas-de-exemplo-7">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-7" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="w">
+  </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"inicio"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"rotulo_curto"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Início"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"rotulo_longo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Início"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"dica"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Continue de onde você parou"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"icon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-regular fa-house"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"ordem"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"selecionado"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"ativo"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"diario"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"rotulo_curto"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Diários"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"rotulo_longo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Meus diários"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"dica"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Diários de classe"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"icon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;svg xmlns=</span><span class="se">\"</span><span class="s2">http://www.w3.org/2000/svg</span><span class="se">\"</span><span class="s2"> width=</span><span class="se">\"</span><span class="s2">24</span><span class="se">\"</span><span class="s2"> height=</span><span class="se">\"</span><span class="s2">24</span><span class="se">\"</span><span class="s2"> viewBox=</span><span class="se">\"</span><span class="s2">0 0 24 24</span><span class="se">\"</span><span class="s2"> fill=</span><span class="se">\"</span><span class="s2">none</span><span class="se">\"</span><span class="s2"> stroke=</span><span class="se">\"</span><span class="s2">currentColor</span><span class="se">\"</span><span class="s2"> stroke-width=</span><span class="se">\"</span><span class="s2">2</span><span class="se">\"</span><span class="s2"> stroke-linecap=</span><span class="se">\"</span><span class="s2">round</span><span class="se">\"</span><span class="s2"> stroke-linejoin=</span><span class="se">\"</span><span class="s2">round</span><span class="se">\"</span><span class="s2"> class=</span><span class="se">\"</span><span class="s2">lucide lucide-book-open h-4 w-4</span><span class="se">\"</span><span class="s2"> aria-hidden=</span><span class="se">\"</span><span class="s2">true</span><span class="se">\"</span><span class="s2"> data-tsd-source=</span><span class="se">\"</span><span class="s2">/src/components/govbr/BrNavbar.tsx:42:17</span><span class="se">\"</span><span class="s2">&gt;&lt;path d=</span><span class="se">\"</span><span class="s2">M12 7v14</span><span class="se">\"</span><span class="s2">&gt;&lt;/path&gt;&lt;path d=</span><span class="se">\"</span><span class="s2">M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z</span><span class="se">\"</span><span class="s2">&gt;&lt;/path&gt;&lt;/svg&gt;"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"ordem"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"selecionado"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"ativo"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"coordenacao"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"rotulo_curto"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Coordenações"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"rotulo_longo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Salas de coordenações"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"dica"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Salas de coordenações dos cursos"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"icon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;svg xmlns=</span><span class="se">\"</span><span class="s2">http://www.w3.org/2000/svg</span><span class="se">\"</span><span class="s2"> width=</span><span class="se">\"</span><span class="s2">24</span><span class="se">\"</span><span class="s2"> height=</span><span class="se">\"</span><span class="s2">24</span><span class="se">\"</span><span class="s2"> viewBox=</span><span class="se">\"</span><span class="s2">0 0 24 24</span><span class="se">\"</span><span class="s2"> fill=</span><span class="se">\"</span><span class="s2">none</span><span class="se">\"</span><span class="s2"> stroke=</span><span class="se">\"</span><span class="s2">currentColor</span><span class="se">\"</span><span class="s2"> stroke-width=</span><span class="se">\"</span><span class="s2">2</span><span class="se">\"</span><span class="s2"> stroke-linecap=</span><span class="se">\"</span><span class="s2">round</span><span class="se">\"</span><span class="s2"> stroke-linejoin=</span><span class="se">\"</span><span class="s2">round</span><span class="se">\"</span><span class="s2"> class=</span><span class="se">\"</span><span class="s2">lucide lucide-book-open h-4 w-4</span><span class="se">\"</span><span class="s2"> aria-hidden=</span><span class="se">\"</span><span class="s2">true</span><span class="se">\"</span><span class="s2"> data-tsd-source=</span><span class="se">\"</span><span class="s2">/src/components/govbr/BrNavbar.tsx:42:17</span><span class="se">\"</span><span class="s2">&gt;&lt;path d=</span><span class="se">\"</span><span class="s2">M12 7v14</span><span class="se">\"</span><span class="s2">&gt;&lt;/path&gt;&lt;path d=</span><span class="se">\"</span><span class="s2">M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z</span><span class="se">\"</span><span class="s2">&gt;&lt;/path&gt;&lt;/svg&gt;"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"ordem"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"selecionado"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"ativo"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"laboratorio"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"rotulo_curto"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Laboratórios"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"rotulo_longo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Laboratórios de EaD"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"dica"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Laboratórios para práticas de EaD disponibilizados no Ambiente Virtual de Aprendizagem"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"icon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-flask"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"ordem"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"selecionado"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"ativo"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"autoinscricoes"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"rotulo_curto"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Auto-inscrições"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"rotulo_longo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Auto-inscrições"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"dica"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Cursos para auto-inscrição"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"subtitulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Cursos abertos em que você pode se inscrever sem aprovação prévia."</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"icon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-brands fa-stripe-s"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"ordem"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"selecionado"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"ativo"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"backup"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"rotulo_curto"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Backups"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"rotulo_longo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Meus backups"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"dica"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Backups"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"subtitulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Backups dos seus diários ou compartilhados com você."</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"icon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-box-archive"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"ordem"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"selecionado"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"ativo"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+</span><span class="p">]</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="9-get-salatipotipo">9. <code class="language-plaintext highlighter-rouge">GET /sala/tipo/&lt;tipo&gt;/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#9-get-salatipotipo" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Retorna as salas do tipo informado.</p>
+
+<h4 id="requisição-de-exemplo-8">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-8" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+</ul>
+
+<h4 id="respostas-de-exemplo-8">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-8" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<h5 id="home">Home<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#home" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h5>
+
+<p>A home é uma aba especial que server para orientar o usuário, não tem salas vinculadas a ela.</p>
+
+<ul>
+  <li>Pode mostrar as últimas N salas que o usuário acessou.</li>
+  <li>Pode ter cards com links rápidos para as outras abas (usuários não costumam olhar para as abas), servindo de CTA.</li>
+  <li>Não possui filtros.</li>
+  <li>Não possui ordenação.</li>
+  <li>Não possui quantidade de salas.</li>
+</ul>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"inicio"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"rotulo_curto"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Início"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"rotulo_longo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Início"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"dica"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Continue de onde você parou"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"icon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-regular fa-house"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ordem"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"selecionado"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ativo"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"quantidade_salas"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"suprimir"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"filtros"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ordenacao"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h5 id="meus-diários">Meus diários<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#meus-di%C3%A1rios" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h5>
+
+<p>Em meus diários são listados os cursos que geram diário nos quais o usuário está vinculado. Eles vêm do Suap via
+Integrador AVA.</p>
+
+<ul>
+  <li>Possui filtros.</li>
+  <li>Possui ordenação.</li>
+  <li>Possui quantidade de salas.</li>
+  <li>A quantidade para alunos costuma ficar abaixo de 10, mas para professores fica acima de 100, chegando a 800.</li>
+  <li>Os maiores nomes dos cursos e disciplinas tem quase 250 caracteres.</li>
+  <li>O nome das turmas segue um padrão como “20261.1.0028.ZL.1E”, sempre tendo 5 segmentos separados por ponto.</li>
+  <li>Minicursos com ou sem auto-inscrição não têm diários, apenas turma, o código pode ser como 20261.1.0028.ZL.1E.20261.1.0028.ZL.1E#1689</li>
+  <li>O código de salas do tipo “diários” são como 20301.1.03905.1E.POS.0364#123456, onde 20301.1.03905.1E é a turma,
+POS.0364 é o código da disciplina, 20301.1.03905.1E.POS.0364 é o código do diário, #123456 é o ID do diário,
+isso se dá pois diários podem ser divididos então o código do diário pode gerar ambiguidade.</li>
+</ul>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"diario"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"rotulo_curto"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Diários"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"rotulo_longo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Meus diários"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"dica"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Diários de classe"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"icon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;svg xmlns=</span><span class="se">\"</span><span class="s2">http://www.w3.org/2000/svg</span><span class="se">\"</span><span class="s2"> width=</span><span class="se">\"</span><span class="s2">24</span><span class="se">\"</span><span class="s2"> height=</span><span class="se">\"</span><span class="s2">24</span><span class="se">\"</span><span class="s2"> viewBox=</span><span class="se">\"</span><span class="s2">0 0 24 24</span><span class="se">\"</span><span class="s2"> fill=</span><span class="se">\"</span><span class="s2">none</span><span class="se">\"</span><span class="s2"> stroke=</span><span class="se">\"</span><span class="s2">currentColor</span><span class="se">\"</span><span class="s2"> stroke-width=</span><span class="se">\"</span><span class="s2">2</span><span class="se">\"</span><span class="s2"> stroke-linecap=</span><span class="se">\"</span><span class="s2">round</span><span class="se">\"</span><span class="s2"> stroke-linejoin=</span><span class="se">\"</span><span class="s2">round</span><span class="se">\"</span><span class="s2"> class=</span><span class="se">\"</span><span class="s2">lucide lucide-book-open h-4 w-4</span><span class="se">\"</span><span class="s2"> aria-hidden=</span><span class="se">\"</span><span class="s2">true</span><span class="se">\"</span><span class="s2"> data-tsd-source=</span><span class="se">\"</span><span class="s2">/src/components/govbr/BrNavbar.tsx:42:17</span><span class="se">\"</span><span class="s2">&gt;&lt;path d=</span><span class="se">\"</span><span class="s2">M12 7v14</span><span class="se">\"</span><span class="s2">&gt;&lt;/path&gt;&lt;path d=</span><span class="se">\"</span><span class="s2">M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z</span><span class="se">\"</span><span class="s2">&gt;&lt;/path&gt;&lt;/svg&gt;"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ordem"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"selecionado"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ativo"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"quantidade_salas"</span><span class="p">:</span><span class="w"> </span><span class="mi">503</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"suprimir"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"filtros"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"situacao"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"select"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-book"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Situação"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionado"</span><span class="p">:</span><span class="w"> </span><span class="s2">"inprogress"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Em andamento"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"inprogress"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Favoritos"</span><span class="p">,</span><span class="w">     </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"favourites"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Não iniciados"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"future"</span><span class="w">     </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Arquivados"</span><span class="p">,</span><span class="w">    </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"hidden"</span><span class="w">     </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Todos (lento)"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"all"</span><span class="w">        </span><span class="p">},</span><span class="w">
+      </span><span class="p">]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"semestres"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-calendar-days"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Semestres"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026.2"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026.2"</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2023.1"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2023.1"</span><span class="w"> </span><span class="p">}]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"periodos"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-calendar-week"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Períodos"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1º"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1º"</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"8º"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"8º"</span><span class="w"> </span><span class="p">}]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"disciplinas"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-book-open"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Disciplinas"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Disciplina 1"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Disciplina 8"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"8"</span><span class="p">}]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cursos"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-graduation-cap"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Cursos"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Curso 1"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Curso 8"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"8"</span><span class="p">}]},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"papeis"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-user-tag"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Papéis"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Aluno"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"student"</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Professor"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"editingteacher"</span><span class="p">}]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ambientes"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-person-military-to-person"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Ambientes"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Acadêmico"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"academico"</span><span class="p">,</span><span class="w">  </span><span class="nl">"cor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#0d6efd"</span><span class="p">,</span><span class="w"> </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-door-open"</span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Presencial"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"presencial"</span><span class="p">,</span><span class="w"> </span><span class="nl">"cor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#0dcaf0"</span><span class="p">,</span><span class="w"> </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-chalkboard-user"</span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Projetos"</span><span class="p">,</span><span class="w">   </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"projetos"</span><span class="p">,</span><span class="w">   </span><span class="nl">"cor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#198754"</span><span class="p">,</span><span class="w"> </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-flask"</span><span class="p">},</span><span class="w">
+      </span><span class="p">]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+  </span><span class="p">],</span><span class="w">
+  </span><span class="nl">"ordenacao"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"selecionada"</span><span class="p">:</span><span class="w"> </span><span class="s2">"data_acesso"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"data_acesso"</span><span class="p">,</span><span class="w"> </span><span class="nl">"direcao"</span><span class="p">:</span><span class="w"> </span><span class="s2">"DESC"</span><span class="p">,</span><span class="w"> </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Acesso mais recente"</span><span class="w">   </span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"data_inicio"</span><span class="p">,</span><span class="w"> </span><span class="nl">"direcao"</span><span class="p">:</span><span class="w"> </span><span class="s2">"DESC"</span><span class="p">,</span><span class="w"> </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Início mais recente"</span><span class="w">   </span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"data_fim"</span><span class="p">,</span><span class="w">    </span><span class="nl">"direcao"</span><span class="p">:</span><span class="w"> </span><span class="s2">"DESC"</span><span class="p">,</span><span class="w"> </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Final mais recente"</span><span class="w">    </span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"titulo"</span><span class="p">,</span><span class="w">      </span><span class="nl">"direcao"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ASC"</span><span class="p">,</span><span class="w">  </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Título"</span><span class="w">                </span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"codigo"</span><span class="p">,</span><span class="w">      </span><span class="nl">"direcao"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ASC"</span><span class="p">,</span><span class="w">  </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Código"</span><span class="w">                </span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"semestre"</span><span class="p">,</span><span class="w">    </span><span class="nl">"direcao"</span><span class="p">:</span><span class="w"> </span><span class="s2">"DESC"</span><span class="p">,</span><span class="w"> </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Semestre mais recente"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">]</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h5 id="salas-de-coordenações">Salas de coordenações<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#salas-de-coordena%C3%A7%C3%B5es" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h5>
+
+<p>Todo curso tem uma sala de coordenação, elas são usadas para reuniões, discussões e outras atividades administrativas.</p>
+
+<ul>
+  <li>Possui filtros.</li>
+  <li>Possui ordenação.</li>
+  <li>Possui quantidade de salas.</li>
+  <li>No AVA as salas são prefixadas com “Sala da Coordenação do Curso de “, mas aqui não faz sentido, por isso
+suprimimos esse prefixo.</li>
+  <li>O código das salas são como ZL.15806 , ou seja, sigla do campus e código do curso. Eles são usados como filtro.</li>
+  <li>Os nomes dos cursos podem chegar a 250 caracteres.</li>
+</ul>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"coordenacao"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"rotulo_curto"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Coordenações"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"rotulo_longo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Salas de coordenações"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"dica"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Salas de coordenações dos cursos"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"icon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-arrows-to-circle"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ordem"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"selecionado"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ativo"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"quantidade_salas"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"suprimir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Sala da Coordenação do Curso de "</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"filtros"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cursos"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-graduation-cap"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Cursos"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Curso 1"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Curso 8"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"8"</span><span class="p">}]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"papeis"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-user-tag"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Papéis"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Aluno"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"student"</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Professor"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"editingteacher"</span><span class="p">}]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ambientes"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-person-military-to-person"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Ambientes"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Acadêmico"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"academico"</span><span class="p">,</span><span class="w">  </span><span class="nl">"cor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#0d6efd"</span><span class="p">,</span><span class="w"> </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-door-open"</span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Presencial"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"presencial"</span><span class="p">,</span><span class="w"> </span><span class="nl">"cor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#0dcaf0"</span><span class="p">,</span><span class="w"> </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-chalkboard-user"</span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Projetos"</span><span class="p">,</span><span class="w">   </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"projetos"</span><span class="p">,</span><span class="w">   </span><span class="nl">"cor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#198754"</span><span class="p">,</span><span class="w"> </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-flask"</span><span class="p">},</span><span class="w">
+      </span><span class="p">]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+  </span><span class="p">],</span><span class="w">
+  </span><span class="nl">"ordenacao"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h5 id="laboratórios-de-ead">Laboratórios de EaD<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#laborat%C3%B3rios-de-ead" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h5>
+
+<p>Para todo aluno do curso de Formação em EaD é criado um laboratório de EaD, ou seja, um curso dentro do AVA em que
+o aluno é professor editor e pode exercer a prática docente.</p>
+
+<ul>
+  <li>Possui filtros.</li>
+  <li>Possui ordenação.</li>
+  <li>Possui quantidade de salas.</li>
+  <li>O nome da sala é o nome do aluno.</li>
+  <li>O código da sala é a matrícula do aluno.</li>
+</ul>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"laboratorio"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"rotulo_curto"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Laboratórios"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"rotulo_longo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Laboratórios de EaD"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"dica"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Laboratórios para práticas de EaD disponibilizados no Ambiente Virtual de Aprendizagem"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"icon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-flask"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ordem"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"selecionado"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ativo"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"quantidade_salas"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"suprimir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Laboratório do aluno "</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"filtros"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"aluno"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"autocomplete"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-user-graduate"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Aluno"</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"situacao"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"select"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-book"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Situação"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionado"</span><span class="p">:</span><span class="w"> </span><span class="s2">"inprogress"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Em andamento"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"inprogress"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Favoritos"</span><span class="p">,</span><span class="w">     </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"favourites"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Não iniciados"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"future"</span><span class="w">     </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Arquivados"</span><span class="p">,</span><span class="w">    </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"hidden"</span><span class="w">     </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Todos (lento)"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"all"</span><span class="w">        </span><span class="p">},</span><span class="w">
+      </span><span class="p">]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"semestres"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-calendar-days"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Semestres"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026.2"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026.2"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026.1"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026.1"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025.2"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025.2"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025.1"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025.1"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2024.2"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2024.2"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2024.1"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2024.1"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2023.2"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2023.2"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2023.1"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2023.1"</span><span class="w"> </span><span class="p">},</span><span class="w">
+      </span><span class="p">]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"periodos"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-calendar-week"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Períodos"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1º"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1º"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2º"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2º"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"3º"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"3º"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"4º"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"4º"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5º"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5º"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"6º"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"6º"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"7º"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"7º"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"8º"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"8º"</span><span class="w"> </span><span class="p">},</span><span class="w">
+      </span><span class="p">]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"papeis"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-user-tag"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Papéis"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Gestor"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Professor"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2"</span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Aluno"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"3"</span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Orientador"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"4"</span><span class="p">},</span><span class="w">
+      </span><span class="p">]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ambientes"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-person-military-to-person"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Ambientes"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Acadêmico"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"academico"</span><span class="p">,</span><span class="w">  </span><span class="nl">"cor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#0d6efd"</span><span class="p">,</span><span class="w"> </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-door-open"</span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Presencial"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"presencial"</span><span class="p">,</span><span class="w"> </span><span class="nl">"cor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#0dcaf0"</span><span class="p">,</span><span class="w"> </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-chalkboard-user"</span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Projetos"</span><span class="p">,</span><span class="w">   </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"projetos"</span><span class="p">,</span><span class="w">   </span><span class="nl">"cor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#198754"</span><span class="p">,</span><span class="w"> </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-flask"</span><span class="p">},</span><span class="w">
+      </span><span class="p">]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+  </span><span class="p">],</span><span class="w">
+  </span><span class="nl">"ordenacao"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"selecionada"</span><span class="p">:</span><span class="w"> </span><span class="s2">"data_acesso"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"data_acesso"</span><span class="p">,</span><span class="w"> </span><span class="nl">"direcao"</span><span class="p">:</span><span class="w"> </span><span class="s2">"DESC"</span><span class="p">,</span><span class="w"> </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Acesso mais recente"</span><span class="w">   </span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"data_inicio"</span><span class="p">,</span><span class="w"> </span><span class="nl">"direcao"</span><span class="p">:</span><span class="w"> </span><span class="s2">"DESC"</span><span class="p">,</span><span class="w"> </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Início mais recente"</span><span class="w">   </span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"data_fim"</span><span class="p">,</span><span class="w">    </span><span class="nl">"direcao"</span><span class="p">:</span><span class="w"> </span><span class="s2">"DESC"</span><span class="p">,</span><span class="w"> </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Final mais recente"</span><span class="w">    </span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"titulo"</span><span class="p">,</span><span class="w">      </span><span class="nl">"direcao"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ASC"</span><span class="p">,</span><span class="w">  </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Título"</span><span class="w">                </span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"codigo"</span><span class="p">,</span><span class="w">      </span><span class="nl">"direcao"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ASC"</span><span class="p">,</span><span class="w">  </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Código"</span><span class="w">                </span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"semestre"</span><span class="p">,</span><span class="w">    </span><span class="nl">"direcao"</span><span class="p">:</span><span class="w"> </span><span class="s2">"DESC"</span><span class="p">,</span><span class="w"> </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Semestre mais recente"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">]</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h5 id="auto-inscrições">Auto-inscrições<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#auto-inscri%C3%A7%C3%B5es" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h5>
+
+<p>São cursos em que qualquer aluno pode se inscrever sem aprovação prévia.</p>
+
+<ul>
+  <li>Não possui filtros.</li>
+  <li>Não possui ordenação.</li>
+  <li>Possui quantidade de salas.</li>
+  <li>O nome da sala é o nome do curso.</li>
+  <li>O código da sala é o código da turma.</li>
+</ul>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"autoinscricoes"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"rotulo_curto"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Auto-inscrições"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"rotulo_longo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Auto-inscrições"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"dica"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Cursos para auto-inscrição"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"subtitulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Cursos abertos em que você pode se inscrever sem aprovação prévia."</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"icon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-brands fa-stripe-s"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ordem"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"selecionado"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ativo"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"quantidade_salas"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"suprimir"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"filtros"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ordenacao"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h5 id="backup-dos-cursos">Backup dos cursos<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#backup-dos-cursos" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h5>
+
+<p>Dos cursos podem ser feitos backup, automáticos ou pelos professores, professores podem compartilhar os backups
+com outros professores.</p>
+
+<ul>
+  <li>Possui filtros.</li>
+  <li>Possui ordenação.</li>
+  <li>Possui quantidade de salas.</li>
+  <li>Os nomes e códigos seguem as regras dos diários, afinal, são apenas backups.</li>
+</ul>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"backup"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"rotulo_curto"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Backups"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"rotulo_longo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Meus backups"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"dica"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Backups"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"subtitulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Backups dos seus diários ou compartilhados com você."</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"icon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-box-archive"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ordem"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"selecionado"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ativo"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"quantidade_salas"</span><span class="p">:</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"suprimir"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"filtros"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"posse"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"select"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-box-archive"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Posse"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionado"</span><span class="p">:</span><span class="w"> </span><span class="s2">"meu"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Meus backups"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"meu"</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Compartilhados comigo"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"compartilhados"</span><span class="p">}]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"semestres"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-calendar-days"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Semestres"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026.2"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026.2"</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2023.1"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2023.1"</span><span class="w"> </span><span class="p">}]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"periodos"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-calendar-week"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Períodos"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1º"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1º"</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"8º"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"8º"</span><span class="w"> </span><span class="p">}]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"disciplinas"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-book-open"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Disciplinas"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Disciplina 1"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Disciplina 8"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"8"</span><span class="p">}]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cursos"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-graduation-cap"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Cursos"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Curso 1"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Curso 800"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"800"</span><span class="p">}]</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"slug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"papeis"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multiselect"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"autocomplete"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-user-tag"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Papéis"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"selecionados"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+      </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Aluno"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"student"</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Professor"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"editingteacher"</span><span class="p">}]</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">],</span><span class="w">
+  </span><span class="nl">"ordenacao"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"selecionada"</span><span class="p">:</span><span class="w"> </span><span class="s2">"data_acesso"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"opcoes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"data_inicio"</span><span class="p">,</span><span class="w"> </span><span class="nl">"direcao"</span><span class="p">:</span><span class="w"> </span><span class="s2">"DESC"</span><span class="p">,</span><span class="w"> </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Início mais recente"</span><span class="w">   </span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"data_fim"</span><span class="p">,</span><span class="w">    </span><span class="nl">"direcao"</span><span class="p">:</span><span class="w"> </span><span class="s2">"DESC"</span><span class="p">,</span><span class="w"> </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Final mais recente"</span><span class="w">    </span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"data_backup"</span><span class="p">,</span><span class="w"> </span><span class="nl">"direcao"</span><span class="p">:</span><span class="w"> </span><span class="s2">"DESC"</span><span class="p">,</span><span class="w"> </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Backup mais recente"</span><span class="w">   </span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"titulo"</span><span class="p">,</span><span class="w">      </span><span class="nl">"direcao"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ASC"</span><span class="p">,</span><span class="w">  </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Título"</span><span class="w">                </span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"codigo"</span><span class="p">,</span><span class="w">      </span><span class="nl">"direcao"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ASC"</span><span class="p">,</span><span class="w">  </span><span class="nl">"rotulo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Código"</span><span class="w">                </span><span class="p">},</span><span class="w">
+    </span><span class="p">]</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="10-get-salatipoquantidades">10. <code class="language-plaintext highlighter-rouge">GET /sala/tipo/quantidades/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#10-get-salatipoquantidades" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<h4 id="requisição-de-exemplo-9">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-9" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+</ul>
+
+<h4 id="respostas-de-exemplo-9">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-9" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"inicio"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"diario"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"coordenacao"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"laboratorio"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"autoinscricoes"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"backup"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="11-get-salatipotipoava">11. <code class="language-plaintext highlighter-rouge">GET /sala/tipo/&lt;tipo&gt;/&lt;ava&gt;/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#11-get-salatipotipoava" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Retorna as salas do tipo informado no AVA informado.</p>
+
+<h4 id="requisição-de-exemplo-10">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-10" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+</ul>
+
+<h4 id="respostas-de-exemplo-10">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-10" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="w">
+  </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"sala_tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"fullname"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"shortname"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"progress"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"hasprogress"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"isfavourite"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"visible"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"can_set_visibility"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"can_check_grades"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"viewurl"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"checkgradesurl"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"mensagemurl"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"suapsurl"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"gradesurl"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"disciplina"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w"> </span><span class="nl">"descricao"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w"> </span><span class="nl">"sigla"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">},</span><span class="w">
+      </span><span class="nl">"curso"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"codigo"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w"> </span><span class="nl">"nome"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">},</span><span class="w">
+      </span><span class="nl">"turma"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"codigo"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w"> </span><span class="nl">"ano_periodo"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">},</span><span class="w">
+      </span><span class="nl">"diario"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w"> </span><span class="nl">"id_clean"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">},</span><span class="w">
+      </span><span class="nl">"autoinscricao"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"restricoes"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w"> </span><span class="nl">"details_url"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w"> </span><span class="nl">"is_enrolled"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">},</span><span class="w">
+      </span><span class="nl">"ambiente"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Acadêmico"</span><span class="p">,</span><span class="w">  </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"academico"</span><span class="p">,</span><span class="w">  </span><span class="nl">"cor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#0d6efd"</span><span class="p">,</span><span class="w"> </span><span class="nl">"icone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fa-solid fa-door-open"</span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">]</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="12-get-salaprogressoavaididid">12. <code class="language-plaintext highlighter-rouge">GET /sala/progresso/&lt;ava&gt;/&lt;id&gt;{,&lt;id&gt;/}{,&lt;id&gt;}/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#12-get-salaprogressoavaididid" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Retorna o progresso das salas solicitadas no AVA informado</p>
+
+<h4 id="requisição-de-exemplo-11">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-11" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+</ul>
+
+<h4 id="respostas-de-exemplo-11">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-11" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="w">
+  </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"progress"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"hasprogress"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">]</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="13-patch-salafavoritoavaid">13. <code class="language-plaintext highlighter-rouge">PATCH /sala/favorito/&lt;ava&gt;/&lt;id&gt;/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#13-patch-salafavoritoavaid" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Adiciona ou remove a sala da lista de favoritos</p>
+
+<h4 id="requisição-de-exemplo-12">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-12" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+  <li><code class="language-plaintext highlighter-rouge">Content-Type: application/json</code></li>
+</ul>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"favorite"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h4 id="respostas-de-exemplo-12">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-12" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"favorite"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="14-patch-salavisivelavaid">14. <code class="language-plaintext highlighter-rouge">PATCH /sala/visivel/&lt;ava&gt;/&lt;id&gt;/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#14-patch-salavisivelavaid" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Oculta ou mostra a sala</p>
+
+<h4 id="requisição-de-exemplo-13">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-13" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+  <li><code class="language-plaintext highlighter-rouge">Content-Type: application/json</code></li>
+</ul>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"visible"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h4 id="respostas-de-exemplo-13">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-13" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"visible"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h2 id="notificação">Notificação<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#notifica%C3%A7%C3%A3o" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h2>
+
+<h3 id="15-get-notificacao">15. <code class="language-plaintext highlighter-rouge">GET /notificacao/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#15-get-notificacao" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Retorna o sumário das notificações do usuário.</p>
+
+<h4 id="requisição-de-exemplo-14">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-14" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+</ul>
+
+<h4 id="respostas-de-exemplo-14">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-14" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"ava"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;string&gt;"</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"unreadcount"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+</span><span class="p">]</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="16-get-notificacaoava">16. <code class="language-plaintext highlighter-rouge">GET /notificacao/&lt;ava&gt;/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#16-get-notificacaoava" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Retorna as notificações do usuário no AVA informado</p>
+
+<h4 id="requisição-de-exemplo-15">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-15" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+</ul>
+
+<h4 id="respostas-de-exemplo-15">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-15" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"result"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+            </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"useridfrom"</span><span class="p">:</span><span class="w"> </span><span class="mi">-10</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"useridto"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"subject"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"shortenedsubject"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"text"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"fullmessage"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"fullmessageformat"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"fullmessagehtml"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"smallmessage"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"contexturl"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"contexturlname"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"timecreated"</span><span class="p">:</span><span class="w"> </span><span class="s2">"iso 8601"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"timecreatedpretty"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;relative_time&gt;"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"timeread"</span><span class="p">:</span><span class="w"> </span><span class="s2">"iso 8601 or null"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"read"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"deleted"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"iconurl"</span><span class="p">:</span><span class="w"> </span><span class="s2">"url"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"eventtype"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"customdata"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string or null"</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">],</span><span class="w">
+    </span><span class="nl">"unreadcount"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="17-get-notificacaoavaididid">17. <code class="language-plaintext highlighter-rouge">GET /notificacao/&lt;ava&gt;/&lt;id&gt;{,&lt;id&gt;/}{,&lt;id&gt;}/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#17-get-notificacaoavaididid" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Retorna o conteúdo das notificações solicitadas no AVA informado</p>
+
+<h4 id="requisição-de-exemplo-16">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-16" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+</ul>
+
+<h4 id="respostas-de-exemplo-16">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-16" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"useridfrom"</span><span class="p">:</span><span class="w"> </span><span class="mi">-10</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"useridto"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"subject"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"shortenedsubject"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"text"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"fullmessage"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"fullmessageformat"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"fullmessagehtml"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"smallmessage"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"contexturl"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"contexturlname"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"timecreated"</span><span class="p">:</span><span class="w"> </span><span class="s2">"iso 8601"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"timecreatedpretty"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;relative_time&gt;"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"timeread"</span><span class="p">:</span><span class="w"> </span><span class="s2">"iso 8601 or null"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"read"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"deleted"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"iconurl"</span><span class="p">:</span><span class="w"> </span><span class="s2">"url"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"eventtype"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"customdata"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string or null"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="18-patch-notificacaoavaididid">18. <code class="language-plaintext highlighter-rouge">PATCH /notificacao/&lt;ava&gt;/&lt;id&gt;{,&lt;id&gt;/}{,&lt;id&gt;}/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#18-patch-notificacaoavaididid" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Marca as notificações como lida ou não lida no AVA informado</p>
+
+<h4 id="requisição-de-exemplo-17">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-17" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+  <li><code class="language-plaintext highlighter-rouge">Content-Type: application/json</code></li>
+</ul>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"is_read"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h4 id="respostas-de-exemplo-17">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-17" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"error"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"data"</span><span class="p">:{</span><span class="w">
+            </span><span class="nl">"notificationid"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"warnings"</span><span class="p">:[]</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+</span><span class="p">]</span><span class="w">
+</span></code></pre></div></div>
+
+<h2 id="conversa">Conversa<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#conversa" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h2>
+
+<h3 id="19-get-conversa">19. <code class="language-plaintext highlighter-rouge">GET /conversa/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#19-get-conversa" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Retorna o sumário das mensagens do usuário.</p>
+
+<h4 id="requisição-de-exemplo-18">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-18" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+</ul>
+
+<h4 id="respostas-de-exemplo-18">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-18" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"ava"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;string&gt;"</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"unreadcount"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"favourites"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+</span><span class="p">]</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="20-get-conversaava">20. <code class="language-plaintext highlighter-rouge">GET /conversa/&lt;ava&gt;/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#20-get-conversaava" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Retorna as mensagens do usuário no AVA informado</p>
+
+<h4 id="requisição-de-exemplo-19">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-19" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+</ul>
+
+<h4 id="respostas-de-exemplo-19">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-19" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="w">
+  </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"subname"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"imageurl"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"membercount"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"ismuted"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"isfavourite"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"isread"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"unreadcount"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"members"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+      </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"fullname"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"profileurl"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"profileimageurl"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"profileimageurlsmall"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"isonline"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"showonlinestatus"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"isblocked"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"iscontact"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"isdeleted"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"canmessageevenifblocked"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"canmessage"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"requirescontact"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"cancreatecontact"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"contactrequests"</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span><span class="w">
+      </span><span class="p">}</span><span class="w">
+    </span><span class="p">],</span><span class="w">
+    </span><span class="nl">"messages"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+      </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">13259</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"useridfrom"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"text"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"timecreated"</span><span class="p">:</span><span class="w"> </span><span class="mi">1677887869</span><span class="w">
+      </span><span class="p">}</span><span class="w">
+    </span><span class="p">],</span><span class="w">
+    </span><span class="nl">"candeletemessagesforallusers"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">]</span><span class="w">
+
+</span></code></pre></div></div>
+
+<h3 id="21-get-conversaavaididid">21. <code class="language-plaintext highlighter-rouge">GET /conversa/&lt;ava&gt;/&lt;id&gt;{,&lt;id&gt;}{,&lt;id&gt;}/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#21-get-conversaavaididid" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Retorna o conteúdo das mensagens solicitadas no AVA informado</p>
+
+<h4 id="requisição-de-exemplo-20">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-20" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+</ul>
+
+<h4 id="respostas-de-exemplo-20">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-20" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="w">
+  </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">5309</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"members"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+      </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"fullname"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"profileurl"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"profileimageurl"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"profileimageurlsmall"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"isonline"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"showonlinestatus"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"isblocked"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"iscontact"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"isdeleted"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"canmessageevenifblocked"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"canmessage"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"requirescontact"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"cancreatecontact"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"contactrequests"</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span><span class="w">
+      </span><span class="p">}</span><span class="w">
+    </span><span class="p">],</span><span class="w">
+    </span><span class="nl">"messages"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+      </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">14330</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"useridfrom"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"text"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;p&gt;Novo testes p</span><span class="se">\u</span><span class="s2">00f3s DIGTI&lt;</span><span class="se">\/</span><span class="s2">p&gt;"</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"timecreated"</span><span class="p">:</span><span class="w"> </span><span class="mi">1678147989</span><span class="w">
+      </span><span class="p">}</span><span class="w">
+    </span><span class="p">]</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">]</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="22-patch-conversaavaid">22. <code class="language-plaintext highlighter-rouge">PATCH /conversa/&lt;ava&gt;/&lt;id&gt;/</code><a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#22-patch-conversaavaid" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h3>
+
+<p>Marca as mensagens como lida ou não lida no AVA informado</p>
+
+<h4 id="requisição-de-exemplo-21">Requisição de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#requisi%C3%A7%C3%A3o-de-exemplo-21" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<p>Headers:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;seu_token_jwt&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">accept: application/json</code></li>
+  <li><code class="language-plaintext highlighter-rouge">Content-Type: application/json</code></li>
+</ul>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"is_read"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h4 id="respostas-de-exemplo-21">Respostas de exemplo<a class="anchorjs-link " href="https://suap-ava-suite.github.io/djangoapp-painel_ava/nova-api.html#respostas-de-exemplo-21" aria-label="Anchor" data-anchorjs-icon="" style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em;"></a></h4>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[{</span><span class="nl">"error"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nl">"data"</span><span class="p">:</span><span class="kc">null</span><span class="p">}]</span><span class="w">
+</span></code></pre></div></div>
+
+
+      
+      <div class="footer border-top border-gray-light mt-5 pt-3 text-right text-gray">
+        This site is open source. <a href="https://github.com/suap-ava-suite/djangoapp-painel_ava/edit/main/docs/nova-api.md">Improve this page</a>.
+      </div>
+      
+    </div>
+    <script src="./Especificação da Nova API v2 _ djangoapp-painel_ava_files/anchor.min.js" integrity="sha256-lZaRhKri35AyJSypXXs4o6OPFTbTmUoltBbDCbdzegg=" crossorigin="anonymous"></script>
+    <script>anchors.add();</script>
+  
+
+</body></html>

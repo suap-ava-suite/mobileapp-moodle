@@ -1,0 +1,170 @@
+// ==================================================
+// Edit Course — Tema IFRN DS-GOV (v3.0)
+// ==================================================
+// EDIÇÃO DE CURSO — Acordeões no padrão Gov.br DS
+// Alvo: /course/edit.php e formulários Moodle (mform)
+
+.mform {
+
+    // ---------------------------------------------------------
+    // Zera espaçamentos e raios de borda entre seções/fieldsets
+    // Acordeões com linhas 100% retas no padrão Gov.br DS
+    // ---------------------------------------------------------
+    &,
+    fieldset,
+    fieldset.collapsible,
+    fieldset.mform-fieldset,
+    .fheader-container,
+    .ftoggler,
+    .fcontainer,
+    .card {
+        border-radius: 0 !important;
+        border-top-left-radius: 0 !important;
+        border-top-right-radius: 0 !important;
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+    }
+
+    fieldset.collapsible,
+    fieldset.mform-fieldset,
+    .fheader-container {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        border: none !important;
+    }
+
+    // Zera margens das divs que envolvem o header do acordeão
+    .d-flex.align-items-center.mb-2,
+    div:has(> .ftoggler) {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        border-radius: 0 !important;
+    }
+
+    // ---------------------------------------------------------
+    // Header do acordeão (ftoggler)
+    // Borda superior em TODOS os acordeões ($border-outer #CCCCCC)
+    // ---------------------------------------------------------
+    .ftoggler {
+        border-top: $border-width-thin solid $border-outer !important; // #CCCCCC Borda externa
+        border-bottom: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-radius: 0 !important;
+        padding: 14px $spacing-md !important;
+        margin: 0 !important;
+        width: 100% !important;
+        background-color: $bg-white !important;
+        transition: background-color $transition-fast !important;
+
+        // Hover — Estado C do DS Gov.br (fundo azul claro suave)
+        &:hover {
+            background-color: $blue-warm-vivid-10 !important;
+        }
+
+        // Título h3
+        h3 {
+            font-size: $font-size-md !important;
+            font-weight: $font-weight-medium !important; // Peso normal/medium quando fechado (Estado A)
+            color: $blue-warm-vivid-70 !important;
+            margin-bottom: 0 !important;
+            letter-spacing: 0.01em !important;
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Quando a seção está ABERTA (a.fheader sem a classe .collapsed)
+    // ---------------------------------------------------------
+    .ftoggler:has(a.fheader:not(.collapsed)) {
+        h3 {
+            font-weight: $font-weight-bold !important; // Destaque em negrito quando aberto (Estado B)
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Botão toggle (link) e Ícones da seta
+    // ---------------------------------------------------------
+    a.fheader {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+        color: $blue-warm-vivid-70 !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        margin-right: 12px !important;
+        padding: 0 !important;
+
+        &:hover,
+        &:active {
+            background-color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+            color: $blue-warm-vivid-70 !important;
+        }
+        @include focus-visible-ring;
+
+        // ESCONDE DEFINITIVAMENTE a seta para a direita (collapsed-icon: t/collapsedchevron >)
+        .collapsed-icon {
+            display: none !important;
+        }
+
+        // MANTÉM APENAS a seta apontando para baixo (expanded-icon: t/expandedchevron v)
+        .expanded-icon {
+            @include flex-center;
+            color: $blue-warm-vivid-70 !important;
+            transition: transform $transition-base !important;
+            transform: rotate(0deg) !important; // Aponta para BAIXO quando FECHADO (collapsed)
+
+            svg, img {
+                width: $icon-size-xs !important;
+                height: $icon-size-xs !important;
+                fill: $blue-warm-vivid-70 !important;
+            }
+        }
+
+        // Quando ABERTO (not .collapsed), rotaciona 180° para apontar para CIMA (^)
+        &:not(.collapsed) {
+            .expanded-icon {
+                transform: rotate(180deg) !important;
+            }
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Painel colapsável (corpo do acordeão aberto)
+    // Sem borda inferior por padrão (o próximo acordeão proverá a borda superior)
+    // ---------------------------------------------------------
+    .fcontainer.collapseable {
+        background-color: $bg-white !important;
+        border-bottom: none !important;
+        border-radius: 0 !important;
+        padding: 1.25rem 1rem !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+
+    // ---------------------------------------------------------
+    // Borda inferior exclusiva para o ÚLTIMO acordeão (last-of-type)
+    // Garante fechamento uniforme do grupo na parte inferior
+    // ---------------------------------------------------------
+    fieldset:last-of-type {
+        .ftoggler {
+            border-bottom: $border-width-thin solid $border-outer !important;
+        }
+
+        .ftoggler:has(a.fheader:not(.collapsed)) {
+            border-bottom: none !important;
+        }
+
+        .fcontainer.collapseable {
+            border-bottom: $border-width-thin solid $border-outer !important;
+        }
+    }
+}

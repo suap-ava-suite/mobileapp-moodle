@@ -1,0 +1,577 @@
+// ============================================================
+// CONTROLES DE FORMULÁRIO — Design System Gov.br v3.0
+// Inputs, Selects, Checkboxes, Radios, Switches, Labels e Validação
+// ============================================================
+
+// ---------------------------------------------------------
+// Busca e Filtros Customizados IFRN
+// ---------------------------------------------------------
+.ifrn-search-container {
+    position: relative;
+    border-radius: $border-radius-none !important;
+
+    i {
+        position: absolute !important;
+        left: 14px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        z-index: 5 !important;
+        color: $text-muted !important;
+        font-size: $font-size-base !important;
+    }
+
+    input,
+    .form-control,
+    .ifrn-search-input {
+        border: $border-width-thin solid $border-default !important;
+        border-radius: $border-radius-none !important;
+        background-color: $bg-white !important;
+        padding-left: 38px !important;
+        height: $spacing-2xl !important;
+        font-size: $font-size-base !important;
+
+        &:focus,
+        &:focus-visible {
+            @include focus-visible-ring;
+            border-color: $border-default !important;
+        }
+    }
+}
+
+.ifrn-filter-group,
+.ifrn-search-group {
+    border-radius: $border-radius-none !important;
+
+    .input-group-text {
+        background-color: $bg-white !important;
+        border-right: none !important;
+        border-color: $border-default !important;
+        border-radius: $border-radius-none !important;
+        padding: 0 0 0 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+
+        i {
+            color: $text-muted !important;
+            width: 18px !important;
+            text-align: center !important;
+            font-size: $font-size-base !important;
+        }
+    }
+
+    .form-select,
+    .form-control,
+    .ifrn-search-input,
+    input,
+    select {
+        border-left: none !important;
+        border-color: $border-default !important;
+        border-radius: $border-radius-none !important;
+        background-color: $bg-white !important;
+        color: $text-medium !important;
+        height: $spacing-2xl !important;
+        font-size: $font-size-base !important;
+        padding-left: $spacing-sm !important;
+
+        &:focus,
+        &:focus-visible {
+            @include focus-visible-ring;
+            border-color: $border-default !important;
+            border-left: none !important;
+        }
+    }
+
+    &:focus-within {
+        .input-group-text,
+        .form-select,
+        .form-control,
+        .ifrn-search-input,
+        input,
+        select {
+            border-color: $border-default !important;
+        }
+
+        .input-group-text {
+            border-right: none !important;
+        }
+
+        .form-select,
+        .form-control,
+        .ifrn-search-input,
+        input,
+        select {
+            border-left: none !important;
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// Barra de Busca Simples do Moodle (Pesquisar usuários / Combobox Search)
+// ---------------------------------------------------------
+.simplesearchform {
+    .searchbar {
+        position: relative;
+        display: flex;
+        align-items: center;
+
+        .form-control.withclear {
+            border: $border-width-thin solid $border-default !important;
+            border-radius: $border-radius-default !important;
+            background-color: $bg-white !important;
+            padding: 6px 36px 6px 12px !important;
+            font-size: $font-size-sm !important;
+            height: 38px !important;
+            color: $text-dark !important;
+
+            &:focus,
+            &:focus-visible {
+                border-color: $blue-warm-vivid-70 !important;
+                box-shadow: $focus-ring-blue !important;
+                outline: none !important;
+            }
+        }
+
+        .btn-clear {
+            position: absolute !important;
+            right: 4px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            z-index: 4 !important;
+            background: transparent !important;
+            border: none !important;
+            padding: 4px 6px !important;
+            color: $text-muted !important;
+
+            &:hover {
+                color: $blue-warm-vivid-70 !important;
+            }
+        }
+    }
+}
+
+.user-search {
+    .dropdown-toggle {
+        font-size: $font-size-base !important;
+    }
+}
+
+// ---------------------------------------------------------
+// Labels e Campos Globais do Moodle (mform, modais, admin, etc.)
+// ---------------------------------------------------------
+label,
+.col-form-label,
+.form-label,
+.mform label {
+    font-weight: $font-weight-semibold !important;
+    color: $text-dark !important;
+    font-size: $font-size-base !important;
+}
+
+// Indicadores de obrigatoriedade
+.req,
+.text-danger,
+.initialism {
+    color: $color-error !important;
+}
+
+// Campos de Entrada de Texto, Textareas e Inputs Globais
+:is(.form-control, input[type="text"], input[type="password"], input[type="email"], input[type="url"], input[type="number"], input[type="search"], input[type="tel"], input[type="date"], input[type="datetime-local"], textarea):not(.ifrn-search-input):not(.ifrn-filter-group *):not(.ifrn-search-group *):not(.ifrn-inline-filter-section *):not(.withclear) {
+    border: $border-width-thin solid $border-outer !important; // #CCCCCC Borda externa
+    background-color: $bg-white !important;
+    color: $text-dark !important;
+    font-size: $font-size-base !important;
+    padding: $spacing-sm 14px !important;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+
+    &:focus,
+    &:active,
+    &:focus-visible {
+        @include focus-visible-ring;
+        border-color: $border-default !important;
+    }
+
+    &:disabled,
+    &[readonly] {
+        background-color: $bg-disabled !important;
+        color: $text-muted !important;
+        border-color: $border-default !important;
+        cursor: not-allowed !important;
+        opacity: 0.8 !important;
+    }
+
+    // Estado de Erro / Inválido
+    &.is-invalid,
+    &.error,
+    &:invalid {
+        border-color: $color-error !important;
+        box-shadow: $focus-ring-error !important;
+    }
+}
+
+// Selects Globais (Dropdowns, Custom Selects e Seletores de Data/Hora)
+:is(.custom-select, .form-select, select, .mform select, .path-course-edit select):not(.ifrn-filter-group *):not(.ifrn-search-group *):not(.ifrn-inline-filter-section *) {
+    border: $border-width-thin solid $border-outer !important; // #CCCCCC Borda externa
+    background-color: $bg-white !important;
+    color: $text-dark !important;
+    font-size: $font-size-base !important;
+    padding: $spacing-sm 36px $spacing-sm 14px !important;
+    background-position: right 10px center !important;
+    background-repeat: no-repeat !important;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+
+    &:focus,
+    &:active,
+    &:focus-visible {
+        @include focus-visible-ring;
+        border-color: $border-default !important;
+    }
+
+    &:disabled,
+    &[readonly] {
+        background-color: $bg-disabled !important;
+        color: $text-muted !important;
+        border-color: $border-default !important;
+        cursor: not-allowed !important;
+        opacity: 0.8 !important;
+    }
+}
+
+// Grupos de Seleção de Data e Hora em Formulários (mform / course/edit.php)
+.fdate_selector,
+.fdate_time_selector,
+.felement.fgroup {
+    select {
+        padding: 6px 32px 6px 12px !important;
+        background-position: right 8px center !important;
+    }
+}
+
+// Checkboxes, Radios e Switches Globais
+.form-check-input,
+input[type="checkbox"],
+input[type="radio"] {
+    border: $border-width-thin solid $border-medium !important;
+    accent-color: $blue-warm-vivid-70 !important;
+    cursor: pointer !important;
+
+    &:checked {
+        background-color: $blue-warm-vivid-70 !important;
+        border-color: $blue-warm-vivid-70 !important;
+    }
+
+    &:focus,
+    &:active,
+    &:focus-visible {
+        @include focus-visible-ring;
+    }
+
+    &:disabled {
+        cursor: not-allowed !important;
+        opacity: 0.6 !important;
+    }
+}
+
+// Textos de Ajuda e Dicas
+.form-text,
+.text-muted,
+.form-default,
+.form-description {
+    font-size: $font-size-sm !important;
+    color: $text-muted !important;
+    margin-top: $spacing-xs !important;
+}
+
+// Mensagens de Feedback de Erro
+.invalid-feedback,
+.form-control-feedback.text-danger {
+    font-size: $font-size-sm !important;
+    color: $color-error !important;
+    margin-top: $spacing-xs !important;
+    font-weight: $font-weight-medium !important;
+}
+
+// ---------------------------------------------------------
+// Rodapé de botões de Ação de Formulários (mform)
+// Layout e Alinhamento à direita no padrão DS Gov.br
+// ---------------------------------------------------------
+.mform,
+.path-course-edit,
+.path-admin,
+.path-grade,
+.path-grade-edit,
+.path-grade-edit-settings,
+.path-grade-report,
+.path-grade-report-grader,
+.path-grade-import,
+.path-grade-export,
+.path-admin-filters,
+[class*="path-grade"] {
+    #fgroup_id_buttonar,
+    .fitem_actionbuttons,
+    div[id^="fgroup_id_button"],
+    .form-buttons,
+    [data-region="action-buttons"] {
+        margin-top: 2rem !important;
+        padding-top: 1.5rem !important;
+        width: 100% !important;
+
+        .col-md-3 {
+            display: none !important;
+        }
+
+        .felement,
+        .col-md-9 {
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        span,
+        div {
+            border: none !important;
+            padding: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+
+        .felement > div,
+        .felement {
+            display: flex !important;
+            justify-content: flex-end !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 12px !important;
+            margin-left: auto !important;
+        }
+
+        input[type="submit"],
+        input[type="button"],
+        button,
+        a.btn {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            margin-bottom: 0 !important;
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// Ajustes de Linhas Divisórias em Edição de Configurações (Task 3)
+// ---------------------------------------------------------
+:is(.path-grade-edit, .path-grade-edit-settings, [class*="path-grade-edit"]) {
+    .mform {
+        fieldset {
+            border: none !important;
+            border-bottom: $border-width-thin solid $border-inner !important;
+            padding-bottom: $spacing-md !important;
+            margin-bottom: $spacing-md !important;
+        }
+
+        .fitem,
+        .form-group {
+            border-bottom: none !important;
+            border-top: none !important;
+        }
+
+        hr,
+        .divider {
+            border: none !important;
+            border-top: $border-width-thin solid $border-inner !important;
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// Busca do Fórum e Formulário de Busca Avançada (mod/forum)
+// ---------------------------------------------------------
+.path-mod-forum,
+.path-mod-forum-search,
+.path-mod-forum-view {
+    // Barra de busca rápida do fórum
+    .forumsearch,
+    .forum-actionbar .simplesearchform,
+    .tertiary-navigation .simplesearchform,
+    .simplesearchform {
+        position: relative !important;
+
+        .input-group,
+        .searchbar {
+            position: relative !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            width: 100% !important;
+            max-width: 320px !important;
+
+            .form-control,
+            input[type="text"],
+            input[type="search"] {
+                padding-left: 12px !important;
+                padding-right: 38px !important; // Espaço para a lupa à direita
+                border: $border-width-thin solid $border-default !important;
+                border-radius: $border-radius-default !important;
+                height: 38px !important;
+                font-size: $font-size-sm !important;
+                background-color: $bg-white !important;
+                color: $text-dark !important;
+
+                &:focus {
+                    border-color: $blue-warm-vivid-70 !important;
+                    box-shadow: $focus-ring-blue !important;
+                }
+            }
+
+            // Botão de lupa posicionado à DIREITA dentro do input
+            button[type="submit"],
+            .btn[type="submit"],
+            .btn-submit,
+            .search-icon {
+                position: absolute !important;
+                right: 4px !important; // À DIREITA
+                left: auto !important;
+                top: 50% !important;
+                transform: translateY(-50%) !important;
+                background: transparent !important;
+                border: none !important;
+                color: $text-muted !important;
+                padding: 4px 6px !important;
+                z-index: 5 !important;
+                box-shadow: none !important;
+                cursor: pointer !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+
+                &:hover,
+                &:focus {
+                    color: $blue-warm-vivid-70 !important;
+                    background: transparent !important;
+                }
+
+                .icon,
+                i {
+                    font-size: 14px !important;
+                    margin: 0 !important;
+                }
+            }
+        }
+    }
+
+    // Formulário de busca avançada do fórum (mod/forum/search.php)
+    #searchform.mform,
+    form#searchform {
+        display: block !important;
+        width: 100% !important;
+        max-width: 900px !important;
+        margin: 0 auto !important;
+
+        .row,
+        .mb-3.row {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            width: 100% !important;
+            margin-bottom: 1.25rem !important;
+            align-items: center !important;
+        }
+
+        .col-sm-4,
+        label.col-sm-4,
+        legend.col-sm-4 {
+            flex: 0 0 35% !important;
+            max-width: 35% !important;
+            width: 35% !important;
+            text-align: right !important;
+            padding-right: 15px !important;
+            margin-bottom: 0 !important;
+            font-weight: $font-weight-semibold !important;
+            color: $text-dark !important;
+        }
+
+        .col-sm-8 {
+            flex: 0 0 65% !important;
+            max-width: 65% !important;
+            width: 65% !important;
+
+            .form-control,
+            .form-select,
+            select,
+            input[type="text"] {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: 38px !important;
+                border: $border-width-thin solid $border-default !important;
+                border-radius: $border-radius-default !important;
+            }
+
+            .fdate_time_selector {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                align-items: center !important;
+                gap: 8px !important;
+
+                select {
+                    width: auto !important;
+                    min-width: 65px !important;
+                    height: 38px !important;
+                }
+
+                .form-check-label {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 4px !important;
+                    margin-right: 8px !important;
+                }
+            }
+        }
+
+        button[type="submit"].btn-primary,
+        input[type="submit"] {
+            position: static !important;
+            transform: none !important;
+            margin-top: $spacing-sm !important;
+            border-radius: $border-radius-pill !important;
+            padding: 8px 24px !important;
+            height: 38px !important;
+            background-color: $blue-warm-vivid-70 !important;
+            color: $text-light !important;
+            border: none !important;
+            cursor: pointer !important;
+
+            &:hover,
+            &:focus {
+                background-color: $blue-warm-vivid-90 !important;
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// Gerenciamento de Filtros (Task 12: filter/manage)
+// ---------------------------------------------------------
+:is(.path-admin-filters, .path-filter) {
+    table {
+        width: 100% !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    .buttons,
+    .form-buttons,
+    div.buttons,
+    #filtersform > div:last-child {
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        width: 100% !important;
+        margin-top: $spacing-lg !important;
+
+        input[type="submit"],
+        button {
+            margin-left: auto !important;
+        }
+    }
+}

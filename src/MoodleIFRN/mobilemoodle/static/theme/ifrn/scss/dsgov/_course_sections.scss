@@ -1,0 +1,266 @@
+// ==================================================
+// Course Sections — Tema IFRN DS-GOV (v3.0)
+// ==================================================
+// Estilização de seções de cursos, tópicos, acordeões de conteúdo e índice do curso
+
+.course-content {
+
+    // ---------------------------------------------------------
+    // 1. Seção Principal do Curso (section.course-section.main / .section.main)
+    // Borda externa em #CCCCCC ($border-outer) e raio de 4px
+    // ---------------------------------------------------------
+    section.course-section.main,
+    section.section.main,
+    .course-section.main,
+    .section.main,
+    li.section.main,
+    .course-section:not(.img-text) {
+        background-color: $bg-white !important;
+        border: $border-width-thin solid $border-outer !important; // #CCCCCC para a seção main principal
+        border-radius: $border-radius-default !important; // 4px
+        margin-bottom: $spacing-md !important;
+        padding: $spacing-md !important;
+        transition: background-color $transition-fast !important;
+
+        &:hover {
+            box-shadow: none !important;
+        }
+
+        // Zerando anéis de foco persistentes no clique e adicionando anel de foco acessível
+        &:active {
+            box-shadow: none !important;
+            outline: none !important;
+        }
+        @include focus-visible-ring;
+    }
+
+    // ---------------------------------------------------------
+    // 2. Subseções Interiores (.section.img-text) e Blocos (section.block)
+    // Borda interna em #e6e6e6 ($border-inner) e raio de 4px
+    // ---------------------------------------------------------
+    .section.img-text,
+    .section.m-0.p-0.img-text,
+    section.section.img-text,
+    div.section.img-text,
+    .course-section .section,
+    section.block,
+    .section.block,
+    .section .block,
+    .activity,
+    .course-section .block,
+    [class*="block_"] {
+        background-color: $bg-white !important;
+    }
+
+    li.activity.label {
+        border-top: 0 !important;
+    }
+
+    .section-item {
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+
+        &:hover,
+        &:active {
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+        @include focus-visible-ring;
+    }
+
+    // ---------------------------------------------------------
+    // Destaque da Seção Atual (Seção destacada pelo professor / Moodle .current)
+    // ---------------------------------------------------------
+    .section.current,
+    .course-section.current,
+    li.section.current {
+        border-left: $border-width-accent solid $blue-warm-vivid-70 !important;
+        background-color: $bg-white !important;
+
+        .sectionname,
+        .section-name,
+        h3.sectionname {
+            color: $blue-warm-vivid-90 !important;
+            font-weight: $font-weight-bold !important;
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Título das Seções (.sectionname, .section-title, a)
+    // ---------------------------------------------------------
+    .sectionname,
+    .section-title,
+    .course-section-header,
+    h3.sectionname {
+        font-weight: $font-weight-semibold !important;
+        color: $blue-warm-vivid-70 !important;
+        font-size: $font-size-lg !important;
+        margin-bottom: $spacing-sm !important;
+
+        a {
+            color: $blue-warm-vivid-70 !important;
+            text-decoration: none !important;
+            transition: none !important;
+
+            &:hover,
+            &:active {
+                color: $blue-warm-vivid-70 !important;
+                text-decoration: none !important;
+                box-shadow: none !important;
+                outline: none !important;
+            }
+            @include focus-visible-ring;
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Cabeçalho e Toggles de Seção em formato Colapsável / Acordeão
+    // ---------------------------------------------------------
+    .course-section-header,
+    .section-toggler {
+        @include flex-between;
+        width: 100% !important;
+        background-color: transparent !important;
+        color: $blue-warm-vivid-70 !important;
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        font-weight: $font-weight-semibold !important;
+        transition: none !important;
+
+        &:hover,
+        &:active {
+            background-color: transparent !important;
+            color: $blue-warm-vivid-70 !important;
+            box-shadow: none !important;
+            outline: none !important;
+            border: none !important;
+            text-decoration: none !important;
+        }
+        @include focus-visible-ring;
+    }
+
+    // ---------------------------------------------------------
+    // Botão de Recolher / Expandir Seção (Collapse Button)
+    // Exibe apenas o ícone, sem bordas ou cor de fundo (inclusive no hover)
+    // ---------------------------------------------------------
+    .icons-collapse-expand,
+    .btn-icon.icons-collapse-expand,
+    button.icons-collapse-expand,
+    a.icons-collapse-expand {
+        width: $icon-size-md !important;
+        height: $icon-size-md !important;
+        min-width: $icon-size-md !important;
+        min-height: $icon-size-md !important;
+        padding: 0 !important;
+        @include flex-center;
+        line-height: 1 !important;
+        flex-shrink: 0 !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+        color: $blue-warm-vivid-70 !important;
+        transition: color $transition-fast !important;
+
+        &:hover,
+        &:active {
+            background-color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+            color: $blue-warm-vivid-90 !important;
+        }
+        @include focus-visible-ring;
+
+        .expanded-icon,
+        .collapsed-icon {
+            padding: 0 !important;
+            margin: 0 !important;
+            background-color: transparent !important;
+            border: none !important;
+        }
+
+        .expanded-icon {
+            @include flex-center;
+        }
+
+        .collapsed-icon {
+            display: none !important;
+        }
+
+        &.collapsed {
+            .expanded-icon {
+                display: none !important;
+            }
+            .collapsed-icon {
+                @include flex-center;
+            }
+        }
+    }
+
+    // Ícones de seta/chevron nos toggles de seção
+    .toggle-icon,
+    .icons-collapse-expand .icon,
+    .course-section-header i.fa-chevron-down {
+        color: $blue-warm-vivid-70 !important;
+        transition: transform $transition-base !important;
+    }
+
+    // Estado expandido (não colapsado) — rotaciona APENAS o chevron do toggle
+    .icons-collapse-expand[aria-expanded="true"] .icon,
+    .icons-collapse-expand[aria-expanded="true"] .toggle-icon,
+    .course-section-header[aria-expanded="true"] i.fa-chevron-down,
+    a[aria-expanded="true"] > .toggle-icon,
+    button[aria-expanded="true"] > .toggle-icon {
+        transform: rotate(180deg) !important;
+    }
+}
+
+// ---------------------------------------------------------
+// Navegação do Índice do Curso (Drawer lateral do curso / Course Index)
+// ---------------------------------------------------------
+.courseindex {
+    .courseindex-item,
+    .courseindex-section {
+        transition: background-color $transition-fast !important;
+
+        a.courseindex-link {
+            color: $text-dark !important;
+            font-size: $font-size-base !important;
+
+            &:hover {
+                color: $blue-warm-vivid-70 !important;
+                background-color: $blue-warm-vivid-10 !important;
+                text-decoration: none !important;
+            }
+
+            &:active {
+                box-shadow: none !important;
+                outline: none !important;
+            }
+            @include focus-visible-ring;
+        }
+
+        // Seção atual selecionada no índice lateral
+        &.pageitem,
+        &.current,
+        &.active {
+            background-color: $blue-warm-vivid-10 !important;
+            border-left: $spacing-xs solid $blue-warm-vivid-70 !important;
+
+            a.courseindex-link {
+                color: $blue-warm-vivid-90 !important;
+                font-weight: $font-weight-bold !important;
+            }
+        }
+
+        &:active {
+            border-bottom: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+    }
+}

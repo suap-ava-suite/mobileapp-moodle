@@ -1,0 +1,250 @@
+// ==================================================
+// [Tabs] — Tema IFRN DS-GOV (v3.0)
+// ==================================================
+
+.br-tabs-navigation {
+    display: block;
+    background-color: $bg-white;
+    border-bottom: 1px solid $border-light;
+    height: $tab-nav-height;
+    width: 100%;
+    
+    .container-fluid {
+        height: 100%;
+        padding: 0 $spacing-2xl;
+        @include respond-to(sm) {
+            padding: 0 15px;
+        }
+    }
+    
+    .nav-tabs-container {
+        display: flex;
+        align-items: center;
+        height: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        &::-webkit-scrollbar {
+            display: none;
+        }
+    }
+    
+    .tab-item {
+        display: inline-flex;
+        align-items: center;
+        height: 100%;
+        padding: 0 $spacing-lg;
+        text-decoration: none !important;
+        color: $text-medium;
+        font-family: $font-family-rawline;
+        font-size: $font-size-base;
+        font-weight: $font-weight-medium;
+        border: none !important;
+        border-bottom: $border-width-thick solid transparent !important;
+        border-radius: 0 !important;
+        border-top-left-radius: 0 !important;
+        border-top-right-radius: 0 !important;
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        transition: all 0.15s ease-in-out;
+
+        &, &::before, &::after, * {
+            border-radius: 0 !important;
+            border-top-left-radius: 0 !important;
+            border-top-right-radius: 0 !important;
+            border-bottom-left-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+        }
+        
+        i {
+            margin-right: $spacing-sm;
+            font-size: 1.1rem;
+            color: $text-medium;
+            transition: color 0.15s ease-in-out;
+        }
+        
+        &:hover {
+            color: $blue-warm-vivid-70;
+            border-bottom: $border-width-thick solid $blue-warm-vivid-70 !important;
+            border-radius: 0 !important;
+            border-top-left-radius: 0 !important;
+            border-top-right-radius: 0 !important;
+            border-bottom-left-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+
+            i {
+                color: $blue-warm-vivid-70;
+            }
+        }
+        
+        &.active {
+            color: $blue-warm-vivid-70;
+            font-weight: $font-weight-semibold;
+            border-bottom: $border-width-thick solid $blue-warm-vivid-70 !important;
+            border-radius: 0 !important;
+            border-top-left-radius: 0 !important;
+            border-top-right-radius: 0 !important;
+            border-bottom-left-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+            
+            i {
+                color: $blue-warm-vivid-70;
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// Navegação Secundária (Secondary Navigation / Moremenu)
+// Centralizada com linha divisora contínua permanentemente visível
+// ---------------------------------------------------------
+.secondary-navigation {
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+    margin-bottom: $spacing-lg !important;
+    padding: 0 !important;
+    padding-bottom: 0 !important; // Sobrescreve o padding-bottom de 15px do Boost
+    border: none !important;
+    position: relative !important;
+    z-index: 1 !important;
+
+    .navigation,
+    .moremenu,
+    nav.moremenu,
+    nav.navigation,
+    nav.navigation.observed,
+    nav.moremenu.observed {
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        border-bottom: $border-width-thin solid $border-default !important; // Linha divisora contínua fixa e visível (#CCCCCC / 1px)
+    }
+
+    .nav-tabs,
+    ul.nav,
+    ul.more-nav,
+    ul.nav-tabs {
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        margin-bottom: -1px !important; // Encaixe perfeito: a borda de 3px do item ativo se sobrepõe diretamente à linha divisora
+        border: none !important;
+        border-bottom: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+}
+
+.moremenu,
+.moremenu.observed,
+.moremenu .nav-tabs,
+.navigation .nav-tabs {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+// Estilização dos itens de menu (menuitem / nav-link) da navegação secundária em páginas de curso
+:is(.secondary-navigation, .moremenu, .path-course-view .nav-tabs, .path-course .nav-tabs) {
+    // 1. Itens principais da barra horizontal (excluindo itens do dropdown submenu "Mais")
+    :is(.nav-link, [role="menuitem"]):not(.dropdown-item):not(.dropdown-menu *) {
+        border: none !important;
+        border-bottom: $border-width-thick solid transparent !important;
+        border-radius: 0 !important;
+        background-color: transparent !important;
+        color: $text-medium !important;
+        font-weight: $font-weight-medium !important;
+        padding: 10px 20px !important;
+        margin: 0 !important;
+        margin-bottom: 0 !important;
+        transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out !important;
+
+        &:hover {
+            background-color: $bg-hover !important;
+            border-bottom: $border-width-thick solid $blue-warm-vivid-70 !important;
+            color: $blue-warm-vivid-70 !important;
+            text-decoration: none !important;
+        }
+
+        &:focus,
+        &:active,
+        &:focus-visible,
+        &:focus-within {
+            @include focus-visible-ring;
+            border-top: none !important;
+            border-left: none !important;
+            border-right: none !important;
+        }
+
+        &.active {
+            color: $blue-warm-vivid-70 !important;
+            font-weight: $font-weight-semibold !important;
+            border-bottom: $border-width-thick solid $blue-warm-vivid-70 !important;
+            border-radius: 0 !important;
+            background-color: transparent !important;
+
+            &:hover {
+                background-color: $bg-hover !important;
+            }
+        }
+    }
+
+    // 2. Submenu suspenso do botão "Mais" (.dropdown-menu)
+    .dropdown-menu {
+        border: $border-width-thin solid $border-light !important;
+        border-radius: $border-radius-default !important;
+        box-shadow: $shadow-dropdown !important;
+        padding: $spacing-xs 0 !important;
+        background-color: $bg-white !important;
+
+        :is(.dropdown-item, .nav-link, [role="menuitem"], a) {
+            border: none !important;
+            border-bottom: none !important;
+            border-top: none !important;
+            border-left: none !important;
+            border-right: none !important;
+            border-radius: 0 !important;
+            background-color: transparent !important;
+            color: $text-dark !important;
+            font-weight: $font-weight-normal !important;
+            padding: $spacing-sm $spacing-md !important;
+            transition: background-color $transition-fast, color $transition-fast !important;
+            text-decoration: none !important;
+
+            &:hover,
+            &:focus,
+            &:active {
+                background-color: $bg-hover !important; // Apenas fundo cinza on hover
+                border: none !important;
+                border-bottom: none !important;
+                border-color: transparent !important;
+                color: $text-dark !important;
+                text-decoration: none !important;
+                outline: none !important;
+                box-shadow: none !important;
+            }
+
+            &.active {
+                background-color: $bg-hover !important;
+                color: $blue-warm-vivid-70 !important;
+                font-weight: $font-weight-semibold !important;
+                border: none !important;
+                border-bottom: none !important;
+
+                &:hover {
+                    background-color: $bg-hover !important;
+                    border: none !important;
+                    border-bottom: none !important;
+                }
+            }
+        }
+    }
+}

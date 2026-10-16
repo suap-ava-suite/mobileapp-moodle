@@ -1,0 +1,619 @@
+// ==================================================
+// Header — Tema IFRN DS-GOV (v3.0)
+// ==================================================
+// HEADER — Reset do navbar padrão do Boost
+// ============================================================
+.fixed-top.navbar {
+    display: none !important;
+}
+
+.br-header {
+    position: fixed !important;
+    width: 100%;
+    background: $bg-white;
+    box-shadow: $shadow-header !important;
+    top: 0;
+    left: 0;
+    z-index: $z-index-header;
+    height: $header-height;
+    display: flex;
+    align-items: center;
+
+    a, button, input, .dropdown-toggle {
+        &:focus, &:active, &:focus-visible, &.active, &.show {
+            @include focus-visible-ring;
+            -webkit-tap-highlight-color: transparent;
+        }
+    }
+}
+
+.font-rawline {
+    font-family: $font-family-rawline !important;
+}
+
+// ============================================================
+// HEADER — Containers de layout
+// ============================================================
+.header-left-container {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    height: 100%;
+}
+
+.brand-title {
+    font-family: $font-family-rawline !important;
+    font-weight: 500 !important;
+    color: $color-black !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+    margin-bottom: 0 !important;
+}
+
+.brand-subtitle {
+    font-family: $font-family-rawline !important;
+    font-weight: 400 !important;
+    color: $text-muted !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+    margin-bottom: 0 !important;
+}
+
+.header-action-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: $border-radius-circle !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+        background-color: $bg-blue-alpha-hover !important;
+    }
+}
+.header-top-row {
+    height: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 40px;
+}
+
+
+.header-brand-info {
+    display: flex;
+    align-items: center;
+    
+    .menu-trigger {
+        background: transparent;
+        border: none;
+        font-size: 1.5rem;
+        color: $blue-warm-vivid-70;
+        padding: 0;
+        cursor: pointer;
+    }
+    
+    .header-ava-text {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .header-ava-title {
+        font-size: 1.5rem;
+        font-weight: 400;
+        color: $text-dark;
+        line-height: 1.2;
+        margin-bottom: 0;
+    }
+    
+    .header-ava-subtitle {
+        padding: 0;
+        font-size: 0.8rem;
+        color: $text-muted;
+    }
+}
+.header-actions-container {
+    display: flex;
+    align-items: center;
+}
+.header-links {
+    display: flex !important;
+    align-items: center !important;
+    
+    a, a.nav-link {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        margin: 0 2px !important;
+        padding: 6px 14px !important;
+        text-decoration: none !important;
+        color: $blue-warm-vivid-70 !important;
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+        border-radius: $border-radius-pill-sm !important;
+        transition: background-color 0.15s ease-in-out !important;
+        
+        &:hover, &:focus, &:active {
+            background-color: $bg-blue-alpha-hover !important;
+            color: $blue-warm-vivid-90 !important;
+            text-decoration: none !important;
+        }
+    }
+}
+// ============================================================
+// HEADER — Ícones de ação rápida (notificações, etc.)
+// ============================================================
+.header-quick-icons {
+    display: flex;
+    align-items: center;
+    
+    [data-region="popover-region-messages"] {
+        display: none !important;
+    }
+    
+    .popover-region {
+        position: relative;
+        
+        &.collapsed {
+            .popover-region-container {
+                height: 0 !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
+            }
+        }
+        
+        .popover-region-toggle {
+            background: transparent !important;
+            border: none !important;
+            color: $blue-warm-vivid-70 !important;
+            font-size: 1.1rem !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border-radius: $border-radius-circle !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: background-color 0s !important;
+            height: 36px !important;
+            width: 36px !important;
+            box-sizing: border-box !important;
+            
+            &:hover, &:focus, &:active, &:focus-visible {
+                background-color: $bg-hover !important;
+                color: $blue-warm-vivid-70 !important;
+                text-decoration: none !important;
+            }
+            &:focus, &:focus-visible {
+                @include focus-visible-ring;
+            }
+            
+            &::before, &::after {
+                display: none !important;
+            }
+        }
+        
+        .count-container {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background-color: $color-error !important;
+            color: $text-light !important;
+            font-size: 0.65rem !important;
+            font-weight: 700 !important;
+            height: 16px;
+            min-width: 16px;
+            padding: 0 4px;
+            border-radius: $border-radius-sm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid $bg-white;
+            z-index: 2;
+        }
+        
+        .popover-region-container {
+            display: flex !important;
+            flex-direction: column !important;
+            position: absolute !important;
+            top: 40px !important;
+            right: 0 !important;
+            width: 360px !important;
+            height: 400px !important;
+            border-radius: $border-radius-sm !important;
+            border: 1px solid $border-medium !important;
+            box-shadow: $shadow-popover !important;
+            background-color: $bg-white !important;
+            overflow: hidden !important;
+            
+            .popover-region-header-container {
+                height: auto !important;
+                min-height: 56px !important;
+                line-height: normal !important;
+                border-bottom: 1px solid $border-light !important;
+                padding: 12px 16px !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                background-color: $bg-white !important;
+                box-sizing: border-box !important;
+                
+                .popover-region-header-text {
+                    float: none !important;
+                    color: $blue-warm-vivid-90 !important;
+                    font-family: $font-family-rawline !important;
+                    font-weight: 700 !important;
+                    font-size: 1.1rem !important;
+                    margin: 0 !important;
+                    line-height: 1.2 !important;
+                }
+                
+                .popover-region-header-actions {
+                    float: none !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    
+                    a, button {
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        color: $blue-warm-vivid-70 !important;
+                        background: transparent !important;
+                        border: none !important;
+                        padding: 6px !important;
+                        margin: 0 4px !important;
+                        border-radius: $border-radius-xs !important;
+                        width: auto !important;
+                        height: auto !important;
+                        min-width: 0 !important;
+                        min-height: 0 !important;
+                        font-size: 1rem !important;
+                        box-shadow: none !important;
+                        text-decoration: none !important;
+                        
+                        &:hover, &:focus, &:active {
+                            background-color: $bg-hover !important;
+                            color: $blue-warm-vivid-70 !important;
+                            text-decoration: none !important;
+                        }
+                    }
+                }
+            }
+            
+            .popover-region-content-container {
+                background-color: $bg-white !important;
+                flex-grow: 1 !important;
+                flex-shrink: 1 !important;
+                height: auto !important;
+                overflow-y: auto !important;
+                
+                .content-item-container.notification {
+                    height: auto !important;
+                    min-height: 0 !important;
+                    max-height: none !important;
+                    padding: 14px 16px !important;
+                    border-bottom: 1px solid $border-subtle !important;
+                    display: block !important;
+                    text-decoration: none !important;
+                    background-color: $bg-white !important;
+                    transition: background-color 0.2s ease !important;
+                    cursor: pointer !important;
+                    
+                    &:hover {
+                        background-color: $bg-hover !important;
+                    }
+                    
+                    &.unread {
+                        background-color: $bg-blue-light !important;
+                        border-left: 4px solid $blue-warm-vivid-70 !important;
+                    }
+                    
+                    .context-link, div[tabindex="0"] {
+                        display: flex !important;
+                        flex-direction: column !important;
+                        align-items: stretch !important;
+                        text-decoration: none !important;
+                        color: inherit !important;
+                        width: 100% !important;
+                        height: auto !important;
+                        min-height: 0 !important;
+                        max-height: none !important;
+                    }
+                    
+                    .content-item-body {
+                        width: 100% !important;
+                        margin-bottom: 4px !important;
+                        height: auto !important;
+                        min-height: 0 !important;
+                        max-height: none !important;
+                        display: block !important;
+                    }
+                    
+                    .notification-message {
+                        color: $text-dark !important;
+                        font-family: $font-family-rawline !important;
+                        font-size: 0.85rem !important;
+                        line-height: 1.4 !important;
+                        font-weight: 500 !important;
+                        word-wrap: break-word !important;
+                        overflow-wrap: break-word !important;
+                        white-space: normal !important;
+                        display: block !important;
+                        height: auto !important;
+                    }
+                    
+                    .content-item-footer {
+                        margin-top: 6px !important;
+                        width: 100% !important;
+                        height: auto !important;
+                        display: flex !important;
+                        justify-content: flex-start !important;
+                        
+                        .timestamp {
+                            font-size: 0.75rem !important;
+                            color: $text-muted !important;
+                            font-weight: 400 !important;
+                            display: block !important;
+                        }
+                    }
+                    
+                    .view-more {
+                        position: relative !important;
+                        top: auto !important;
+                        right: auto !important;
+                        transform: none !important;
+                        display: block !important;
+                        width: 100% !important;
+                        margin-top: 16px !important;
+                        font-size: 0.8rem !important;
+                        color: $blue-warm-vivid-70 !important;
+                        text-decoration: none !important;
+                        font-weight: 600 !important;
+                        
+                        &:hover {
+                            text-decoration: underline !important;
+                        }
+                    }
+                }
+                
+                .empty-message {
+                    padding: 30px 16px !important;
+                    text-align: center !important;
+                    color: $text-muted !important;
+                    font-size: 0.85rem !important;
+                }
+            }
+            
+            .see-all-link {
+                display: block !important;
+                text-align: center !important;
+                background-color: $bg-light-gray !important;
+                border-top: 1px solid $border-light !important;
+                padding: 12px 16px !important;
+                text-decoration: none !important;
+                color: $blue-warm-vivid-70 !important;
+                font-weight: 600 !important;
+                font-size: 0.85rem !important;
+                height: auto !important;
+                min-height: 0 !important;
+                
+                &:hover {
+                    background-color: $bg-gray-hover !important;
+                    text-decoration: underline !important;
+                }
+                
+                .popover-region-footer-container {
+                    height: auto !important;
+                    background-color: transparent !important;
+                    border-top: none !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                }
+            }
+        }
+    }
+    
+    > a, > button {
+        background: transparent !important;
+        border: none !important;
+        color: $blue-warm-vivid-70 !important;
+        font-size: 1.1rem !important;
+        padding: 0 !important;
+        border-radius: $border-radius-circle !important;
+        cursor: pointer !important;
+        transition: background-color 0s !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        height: 36px !important;
+        width: 36px !important;
+        box-sizing: border-box !important;
+        &:hover {
+            background-color: $bg-hover !important;
+            transition: background-color 0.1s ease-in-out !important;
+            color: $blue-warm-vivid-70 !important;
+            text-decoration: none !important;
+        }
+    }
+}
+// ============================================================
+// HEADER — Divisor vertical
+// ============================================================
+.br-divider-vertical {
+    height: 30px;
+    width: 1px;
+    background-color: $border-divider;
+}
+.header-search-container {
+    display: flex;
+    align-items: center;
+}
+.search-input-wrapper {
+    background: $bg-white;
+    border-radius: $border-radius-sm; 
+    padding: 8px 15px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    width: 250px;
+    input {
+        background: transparent;
+        border: none;
+        width: 100%;
+        outline: none;
+        font-size: 0.85rem;
+    }
+    input::placeholder {
+        color: $text-medium;
+        font-style: italic;
+    }
+    .search-btn {
+        background: transparent;
+        border: none;
+        color: $blue-warm-vivid-70;
+        padding: 4px;
+        cursor: pointer;
+        font-size: 1.1rem;
+        &:hover {
+            color: $blue-warm-vivid-90;
+        }
+    }
+}
+.usermenu-container {
+    display: flex;
+    align-items: center;
+    color: $blue-warm-vivid-70;
+}
+// ============================================================
+// HEADER — Menu do usuário
+// ============================================================
+#usernavigation {
+    .usermenu {
+        .dropdown-toggle {
+            text-decoration: none !important;
+            font-weight: 600;
+            color: $blue-warm-vivid-70 !important;
+            display: flex;
+            align-items: center;
+            padding: 5px 10px !important;
+            border-radius: $border-radius-xs;
+            &:hover {
+                background-color: $bg-blue-alpha-subtle;
+            }
+            .userpicture {
+                border-radius: $border-radius-circle;
+                margin-right: 8px;
+                width: 35px;
+                height: 35px;
+            }
+            .usertext {
+                display: none !important;
+            }
+        }
+        .dropdown-menu {
+            position: absolute !important;
+            right: 0;
+            left: auto;
+            margin-top: 10px;
+            box-shadow: $shadow-dropdown;
+            border: 1px solid $border-divider;
+            z-index: $z-index-dropdown;
+        }
+    }
+}
+// ============================================================
+// HEADER — Responsividade
+// ============================================================
+@include respond-to(lg) {
+    .header-links, .header-quick-icons {
+        display: none;
+    }
+}
+@include respond-to(sm) {
+    .header-top-row {
+        padding: 0 15px;
+    }
+    .header-brand-info {
+        display: none; 
+    }
+    .br-divider-vertical {
+        margin: 0 8px;
+    }
+}
+
+// ============================================================
+// HEADER — Switch de modo de edição
+// ============================================================
+
+// Ocultar toggle de edição e divisores verticais adjacentes quando desnecessário
+#page-my-courses,
+.path-my-courses,
+.pagelayout-mycourses,
+#page-my-index,
+.pagelayout-mydashboard,
+body.path-login {
+    .editmode-switch-container,
+    .editmode-divider {
+        display: none !important;
+    }
+}
+
+// Oculta o container e as barras divisoras quando o switch de edição não tiver formulário/estiver vazio (ex: alunos)
+.editmode-switch-container:empty,
+.editmode-switch-container:not(:has(form)),
+.editmode-switch-container:not(:has(input)) {
+    display: none !important;
+}
+
+.header-actions-container:has(.editmode-switch-container:empty) .editmode-divider,
+.header-actions-container:has(.editmode-switch-container:not(:has(form))) .editmode-divider,
+.header-actions-container:has(.editmode-switch-container:not(:has(input))) .editmode-divider {
+    display: none !important;
+}
+
+.editmode-switch-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    margin: 0 auto !important;
+    padding: 0 4px !important;
+    
+    .form-check.form-switch {
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex !important;
+        flex-direction: row-reverse !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 10px !important;
+        
+        .form-check-input {
+            cursor: pointer;
+            height: 1.5rem !important;
+            width: 2.75rem !important;
+            border-radius: 2rem !important;
+            margin: 0 !important;
+            float: none !important;
+            border: 1px solid $border-default !important;
+            
+            &:checked {
+                background-color: $blue-warm-vivid-70 !important;
+                border-color: $blue-warm-vivid-70 !important;
+            }
+        }
+        
+        .form-check-label {
+            cursor: pointer;
+            font-size: 0.95rem !important;
+            font-weight: 700 !important;
+            color: $text-dark !important;
+            margin: 0 !important;
+            white-space: nowrap !important;
+        }
+    }
+}
