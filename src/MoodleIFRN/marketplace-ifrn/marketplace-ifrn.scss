@@ -398,7 +398,7 @@
 }
 
 
-// Mesmo logo, gauge, velocidade e proporções do splash do painel.
+// Indicador unificado padrão Ionic (F08).
 :host .marketplace-transition {
     background: #fff;
     color: #2b2b2b;
@@ -414,24 +414,12 @@
     place-items: center;
     position: relative;
 }
-.marketplace-transition__ring {
+.marketplace-transition__spinner {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    animation: ifrn-entry-ring 1.1s linear infinite;
-}
-.marketplace-transition__track {
-    fill: none;
-    stroke: rgba(19, 81, 180, 0.14);
-    stroke-width: 4;
-}
-.marketplace-transition__arc {
-    fill: none;
-    stroke: url(#ifrn-entry-gauge-grad);
-    stroke-width: 5;
-    stroke-dasharray: 68 271;
-    stroke-linecap: round;
+    --color: #19743c;
 }
 .marketplace-transition__logo {
     position: relative;
@@ -462,12 +450,9 @@
     padding: 12px 24px;
     font: inherit;
 }
-@keyframes ifrn-entry-ring { to { transform: rotate(360deg); } }
 @media (max-width: 767.98px) {
     :host .marketplace-transition { gap: 0.85rem; }
     .marketplace-transition__brand { width: min(120px, 36vw); }
-    .marketplace-transition__track { stroke-width: 3.5; }
-    .marketplace-transition__arc { stroke-width: 4.5; }
     .marketplace-transition__caption { font-size: 0.9375rem; padding-inline: 8px; }
 }
 @media (max-width: 900px) and (orientation: landscape) {
@@ -475,6 +460,4 @@
     .marketplace-transition__brand { width: 108px; }
     .marketplace-transition__logo { width: 84%; height: 84%; }
 }
-@media (prefers-reduced-motion: reduce) {
-    .marketplace-transition__ring { animation: none; opacity: 0.9; }
-}
+

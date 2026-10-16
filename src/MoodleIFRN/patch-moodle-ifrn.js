@@ -395,16 +395,13 @@ function patchPackageScripts() {
 }
 
 /**
- * Injeta splash branco no index.html antes do Angular — evita tela preta no
- * reload Painel → /login/moodle-open-course (primeira abertura de curso).
+ * Remove splash/early handoff injetado no index.html (F08 - Camadas duplicadas).
+ * A navegação interna Angular (F03) eliminou a necessidade deste script.
  */
 function patchIndexEarlyHandoff() {
     let content = readFile(FILES.indexHtml);
-    const publishedScript = `${MARKER.earlyHandoffStart}
-    <script src="assets/MoodleIFRN/navigation/early-course-handoff.js"></script>
-    ${MARKER.earlyHandoffEnd}`;
 
-    // Copia o JS para assets públicos (angular.json já publica src/assets → assets/).
+    // Copia o script desativado para assets públicos caso ainda haja referência legada.
     const assetDir = path.join(PROJECT_ROOT, 'src/assets/MoodleIFRN/navigation');
     const srcScript = path.join(SCRIPT_DIR, 'navigation/early-course-handoff.js');
     fs.mkdirSync(assetDir, { recursive: true });
@@ -415,20 +412,12 @@ function patchIndexEarlyHandoff() {
             content,
             MARKER.earlyHandoffStart,
             MARKER.earlyHandoffEnd,
-            publishedScript,
+            `${MARKER.earlyHandoffStart}\n    ${MARKER.earlyHandoffEnd}`,
         ) ?? content;
         writeFile(FILES.indexHtml, content);
-        console.log('• index.html — early-course-handoff atualizado');
+        console.log('• index.html — early-course-handoff removido (F08)');
         return;
     }
-
-    if (!content.includes('<body>')) {
-        throw new Error('Não foi possível localizar <body> em index.html.');
-    }
-
-    content = content.replace('<body>', `<body>\n    ${publishedScript}`);
-    writeFile(FILES.indexHtml, content);
-    console.log('✔ index.html — early-course-handoff injetado (cobre tela preta do curso)');
 }
 
 function main() {

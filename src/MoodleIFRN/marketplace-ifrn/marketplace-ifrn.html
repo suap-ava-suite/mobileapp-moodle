@@ -2,17 +2,7 @@
     @if (showTransition) {
         <div class="marketplace-transition" role="status" aria-live="polite" aria-busy="true">
             <div class="marketplace-transition__brand" aria-hidden="true">
-                <svg class="marketplace-transition__ring" viewBox="0 0 120 120">
-                    <defs>
-                        <linearGradient id="ifrn-entry-gauge-grad" gradientUnits="userSpaceOnUse" x1="60" y1="6" x2="60" y2="114">
-                            <stop offset="0%" stop-color="#61c924" />
-                            <stop offset="55%" stop-color="#098e95" />
-                            <stop offset="100%" stop-color="#0b6064" />
-                        </linearGradient>
-                    </defs>
-                    <circle class="marketplace-transition__track" cx="60" cy="60" r="54" />
-                    <circle class="marketplace-transition__arc" cx="60" cy="60" r="54" />
-                </svg>
+                <ion-spinner name="crescent" class="marketplace-transition__spinner"></ion-spinner>
                 <img class="marketplace-transition__logo"
                     src="mobilemoodle/static/theme/ifrn/img/splash-logo.png" alt="" />
             </div>

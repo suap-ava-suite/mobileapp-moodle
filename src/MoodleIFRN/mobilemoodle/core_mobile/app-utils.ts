@@ -124,96 +124,6 @@ import { MM, App } from './namespace';
     }
 
     /**
-     * Splash nativo Cordova — sobrevive ao reload do WebView (mobilemoodle → Ionic).
-     * Sem isso, o documento some e o usuário vê a tela preta padrão do WebView.
-     */
-    function showNativeBridgeSplash(): void {
-        try {
-            sessionStorage.setItem('ifrn_course_handoff_pending', '1');
-        } catch {
-            // sessionStorage indisponível: segue só com o overlay DOM.
-        }
-
-        try {
-            const splash = (window.navigator as Navigator & {
-                splashscreen?: { show?: () => void };
-            }).splashscreen;
-
-            splash?.show?.();
-        } catch {
-            // Sem plugin: o overlay DOM + early handoff Ionic cobrem o gap.
-        }
-    }
-
-    /**
-     * Splash branco antes de sair da SPA — cobre o flash preto da troca de página.
-     * O overlay DOM some com o document no assign; o SplashScreen nativo e o
-     * early handoff Ionic (flag ifrn_course_handoff_pending) cobrem o bootstrap.
-     */
-    function showLeavingCourseSplash(): void {
-        showNativeBridgeSplash();
-
-        if (document.getElementById('ifrn-leaving-course-splash')) {
-            return;
-        }
-
-        const logoSrc = (App.ASSET_BASE || '') + 'static/theme/ifrn/img/splash-logo.png';
-        const element = document.createElement('div');
-        element.id = 'ifrn-leaving-course-splash';
-        element.setAttribute('role', 'status');
-        element.setAttribute('aria-live', 'polite');
-        element.setAttribute('aria-busy', 'true');
-        element.innerHTML = `
-            <style>
-                #ifrn-leaving-course-splash {
-                    position: fixed; inset: 0; z-index: 99999;
-                    display: flex; flex-direction: column; align-items: center; justify-content: center;
-                    gap: 1rem; background: #ffffff; color: #2b2b2b; text-align: center;
-                    font-family: Rawline, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-                    padding: max(24px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
-                }
-                #ifrn-leaving-course-splash .brand {
-                    width: min(132px, 34vw); aspect-ratio: 1; display: grid; place-items: center; position: relative;
-                }
-                #ifrn-leaving-course-splash .ring {
-                    position: absolute; inset: 0; width: 100%; height: 100%;
-                    animation: ifrn-leave-spin 1.1s linear infinite;
-                }
-                #ifrn-leaving-course-splash .track { fill: none; stroke: rgba(22, 136, 33, 0.14); stroke-width: 4; }
-                #ifrn-leaving-course-splash .arc {
-                    fill: none; stroke: url(#ifrn-leave-gauge-grad); stroke-width: 5;
-                    stroke-dasharray: 68 271; stroke-linecap: round;
-                }
-                #ifrn-leaving-course-splash img {
-                    position: relative; width: 86%; height: 86%; border-radius: 50%; object-fit: cover;
-                    background: #fff; box-shadow: 0 2px 10px rgba(11, 79, 27, 0.12); z-index: 1;
-                }
-                #ifrn-leaving-course-splash p { margin: 0; font-size: 1rem; font-weight: 600; }
-                @keyframes ifrn-leave-spin { to { transform: rotate(360deg); } }
-                @media (prefers-reduced-motion: reduce) {
-                    #ifrn-leaving-course-splash .ring { animation: none; opacity: 0.9; }
-                }
-            </style>
-            <div class="brand" aria-hidden="true">
-                <svg class="ring" viewBox="0 0 120 120">
-                    <defs>
-                        <linearGradient id="ifrn-leave-gauge-grad" gradientUnits="userSpaceOnUse" x1="60" y1="6" x2="60" y2="114">
-                            <stop offset="0%" stop-color="#168821" />
-                            <stop offset="55%" stop-color="#2d8a45" />
-                            <stop offset="100%" stop-color="#0b4f1b" />
-                        </linearGradient>
-                    </defs>
-                    <circle class="track" cx="60" cy="60" r="54"></circle>
-                    <circle class="arc" cx="60" cy="60" r="54"></circle>
-                </svg>
-                <img src="${logoSrc}" alt="" />
-            </div>
-            <p>Carregando curso...</p>
-        `;
-        document.body.appendChild(element);
-    }
-
-    /**
      * Abre a rota Ionic que estabelece sessão Moodle e abre o courseid nativo.
      * courseId/siteUrl/courseName ficam em sessionStorage (mesma origem) para
      * sobreviver ao OAuth / reload — o usuário não precisa clicar de novo.
@@ -246,8 +156,6 @@ import { MM, App } from './namespace';
                 // ignore quota
             }
         }
-
-        showLeavingCourseSplash();
 
         return resolveIonicAppUrl('/login/moodle-open-course');
     }
