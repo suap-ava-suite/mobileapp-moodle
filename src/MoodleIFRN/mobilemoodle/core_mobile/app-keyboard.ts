@@ -12,6 +12,8 @@
  * Browser / DevTools (“console mobile”):
  *   - NÃO força padding no topo (não há status bar sobrepondo o WebView)
  */
+import { readPainelHostLayout, PainelHostLayout } from '../../navigation/painel-host-layout';
+
 const KEYBOARD_THRESHOLD = 80;
 
 /** Só no Cordova Android, se o plugin de insets falhar. */
@@ -130,20 +132,36 @@ function resolveFallbackInsets(): SafeInsets {
 
 /** No iframe, o host Cordova é a autoridade; env() do documento filho costuma retornar zero. */
 function readHostInsets(): SafeInsets | null {
+    return readEmbeddedHostLayout()?.insets ?? null;
+}
+
+/**
+ * Obtém o layout do ion-app que contém o painel.
+ *
+ * @returns Medidas do host, ou null para janela independente/origem inacessível.
+ */
+function readEmbeddedHostLayout(): PainelHostLayout | null {
     try {
         if (window.parent === window) {
             return null;
         }
-        const style = window.parent.getComputedStyle(window.parent.document.documentElement);
-        const values = ['top', 'right', 'bottom', 'left'].map(side =>
-            parseFloat(style.getPropertyValue(`--ion-safe-area-${side}`)));
-        if (values.some(value => !Number.isFinite(value))) {
-            return null;
-        }
 
-        return { top: values[0], right: values[1], bottom: values[2], left: values[3] };
+        return readPainelHostLayout(window.parent);
     } catch {
         return null;
+    }
+}
+
+/**
+ * Verifica o runtime do host sem depender do user-agent do iPad.
+ *
+ * @returns Se o painel está dentro do Cordova iOS.
+ */
+function hasIOSHost(): boolean {
+    try {
+        return (window.parent as Window & { cordova?: { platformId?: string } }).cordova?.platformId === 'ios';
+    } catch {
+        return false;
     }
 }
 
@@ -152,6 +170,10 @@ function applySafeAreaVariables(): void {
 }
 
 async function initNativeSafeAreaInsets(): Promise<boolean> {
+    if (readHostInsets()) {
+        return false;
+    }
+
     await waitForCordova();
 
     const Inset = getCordovaInsetApi();
@@ -180,6 +202,21 @@ async function initNativeSafeAreaInsets(): Promise<boolean> {
 }
 
 function syncKeyboardHeight(): void {
+    const host = readEmbeddedHostLayout();
+
+    if (host && hasIOSHost()) {
+        // O ion-app do host já encolhe pela altura nativa do teclado (inclusive iOS).
+        // Subtrair a mesma altura no ion-app do iframe esconderia o conteúdo duas vezes.
+        setSafeAreaVars(host.insets);
+        document.documentElement.style.setProperty('--keyboard-height', '0px');
+        document.body.classList.toggle('keyboard-is-open', host.keyboardHeight >= KEYBOARD_THRESHOLD);
+        if (host.keyboardHeight >= KEYBOARD_THRESHOLD) {
+            document.documentElement.style.setProperty('--ion-safe-area-bottom', '0px');
+        }
+
+        return;
+    }
+
     const viewport = window.visualViewport;
     let keyboardHeight = 0;
 
@@ -223,6 +260,9 @@ export function initKeyboardInsets(): void {
             if (insets) {
                 setSafeAreaVars(insets);
             }
+            if (hasIOSHost()) {
+                syncKeyboardHeight();
+            }
         });
         observer.observe(window.parent.document.documentElement, { attributes: true, attributeFilter: ['style'] });
         window.addEventListener('pagehide', () => observer.disconnect(), { once: true });
@@ -235,6 +275,9 @@ export function initKeyboardInsets(): void {
         if (!nativeOk) {
             applySafeAreaVariables();
         }
+        syncKeyboardHeight();
+
+        return;
     });
 
     syncKeyboardHeight();

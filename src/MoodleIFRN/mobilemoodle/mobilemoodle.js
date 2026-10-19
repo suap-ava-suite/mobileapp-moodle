@@ -2699,6 +2699,40 @@
   App.bindSidebar = bindSidebar;
   App.FILTER_LABELS = FILTER_LABELS;
 
+  // src/MoodleIFRN/navigation/painel-host-layout.ts
+  function readPainelHostLayout(host) {
+    let probe;
+    try {
+      probe = host.document.createElement("div");
+      probe.style.cssText = [
+        "position:fixed",
+        "visibility:hidden",
+        "pointer-events:none",
+        "height:var(--keyboard-height, 0px)",
+        "padding-top:var(--ion-safe-area-top, env(safe-area-inset-top, 0px))",
+        "padding-right:var(--ion-safe-area-right, env(safe-area-inset-right, 0px))",
+        "padding-bottom:var(--ion-safe-area-bottom, env(safe-area-inset-bottom, 0px))",
+        "padding-left:var(--ion-safe-area-left, env(safe-area-inset-left, 0px))"
+      ].join(";");
+      host.document.documentElement.appendChild(probe);
+      const style = host.getComputedStyle(probe);
+      const pixels = (value) => Math.max(0, Number.parseFloat(value) || 0);
+      return {
+        insets: {
+          top: pixels(style.paddingTop),
+          right: pixels(style.paddingRight),
+          bottom: pixels(style.paddingBottom),
+          left: pixels(style.paddingLeft)
+        },
+        keyboardHeight: pixels(style.height)
+      };
+    } catch {
+      return null;
+    } finally {
+      probe?.remove();
+    }
+  }
+
   // src/MoodleIFRN/mobilemoodle/core_mobile/app-keyboard.ts
   /*!
    * app-keyboard.ts
@@ -2791,24 +2825,32 @@
     return insets;
   }
   function readHostInsets() {
+    return readEmbeddedHostLayout()?.insets ?? null;
+  }
+  function readEmbeddedHostLayout() {
     try {
       if (window.parent === window) {
         return null;
       }
-      const style = window.parent.getComputedStyle(window.parent.document.documentElement);
-      const values = ["top", "right", "bottom", "left"].map((side) => parseFloat(style.getPropertyValue(`--ion-safe-area-${side}`)));
-      if (values.some((value) => !Number.isFinite(value))) {
-        return null;
-      }
-      return { top: values[0], right: values[1], bottom: values[2], left: values[3] };
+      return readPainelHostLayout(window.parent);
     } catch {
       return null;
+    }
+  }
+  function hasIOSHost() {
+    try {
+      return window.parent.cordova?.platformId === "ios";
+    } catch {
+      return false;
     }
   }
   function applySafeAreaVariables() {
     setSafeAreaVars(resolveFallbackInsets());
   }
   async function initNativeSafeAreaInsets() {
+    if (readHostInsets()) {
+      return false;
+    }
     await waitForCordova();
     const Inset = getCordovaInsetApi();
     if (!Inset) {
@@ -2830,6 +2872,16 @@
     }
   }
   function syncKeyboardHeight() {
+    const host = readEmbeddedHostLayout();
+    if (host && hasIOSHost()) {
+      setSafeAreaVars(host.insets);
+      document.documentElement.style.setProperty("--keyboard-height", "0px");
+      document.body.classList.toggle("keyboard-is-open", host.keyboardHeight >= KEYBOARD_THRESHOLD);
+      if (host.keyboardHeight >= KEYBOARD_THRESHOLD) {
+        document.documentElement.style.setProperty("--ion-safe-area-bottom", "0px");
+      }
+      return;
+    }
     const viewport = window.visualViewport;
     let keyboardHeight = 0;
     if (viewport) {
@@ -2864,6 +2916,9 @@
         if (insets) {
           setSafeAreaVars(insets);
         }
+        if (hasIOSHost()) {
+          syncKeyboardHeight();
+        }
       });
       observer.observe(window.parent.document.documentElement, { attributes: true, attributeFilter: ["style"] });
       window.addEventListener("pagehide", () => observer.disconnect(), { once: true });
@@ -2874,6 +2929,8 @@
       if (!nativeOk) {
         applySafeAreaVariables();
       }
+      syncKeyboardHeight();
+      return;
     });
     syncKeyboardHeight();
     window.visualViewport?.addEventListener("resize", syncKeyboardHeight);

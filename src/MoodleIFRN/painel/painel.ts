@@ -6,6 +6,7 @@ import { CoreLang } from '@services/lang';
 import { CorePlatform } from '@services/platform';
 import { AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
+import { readPainelHostLayout } from '../navigation/painel-host-layout';
 
 export interface MoodleIfrnBridgeApi {
     openCourse: (courseId: number | string, courseName?: string, siteUrl?: string) => Promise<void>;
@@ -179,13 +180,16 @@ export class PainelPage implements OnInit, OnDestroy {
             const doc = frame?.contentDocument || frame?.contentWindow?.document;
             if (doc) {
                 doc.documentElement.classList.toggle('dark', document.documentElement.classList.contains('dark'));
-                const safeTop = getComputedStyle(document.documentElement).getPropertyValue('--ion-safe-area-top');
-                if (safeTop && safeTop.trim()) {
-                    doc.documentElement.style.setProperty('--ion-safe-area-top', safeTop);
+                const layout = readPainelHostLayout(window);
+                if (layout) {
+                    for (const side of ['top', 'right', 'bottom', 'left'] as const) {
+                        doc.documentElement.style.setProperty(`--ion-safe-area-${side}`, `${layout.insets[side]}px`);
+                    }
                 }
             }
         } catch {
             // ignore cross-origin restrictions in edge environments
         }
     }
+
 }

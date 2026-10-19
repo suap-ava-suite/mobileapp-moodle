@@ -6,6 +6,7 @@ const ts = require('typescript');
 class AuthService {}
 class PainelAvaService {}
 class SuapEntryService {}
+class SuapEntryAccountError extends Error {}
 class ActivatedRoute {}
 class Router {}
 let valid = false;
@@ -20,7 +21,7 @@ const instances = new Map([
     [AuthService, { isAuthenticated: () => valid }],
     [PainelAvaService, { hasDashboard: () => true }],
     [SuapEntryService, {
-        async login(identity, status) {
+        async loginWithSuap(identity, status) {
             calls++; expected = identity; status('Entrando');
             if (fail) throw new Error('Cancelado');
             return false;
@@ -47,7 +48,7 @@ const dependencies = {
     '@/core/shared.module': { CoreSharedModule: {} },
     '@/MoodleIFRN/services_mobile/auth.service': { AuthService },
     '@/MoodleIFRN/services_mobile/painel-ava.service': { PainelAvaService },
-    '@/MoodleIFRN/services_mobile/suap-entry.service': { SuapEntryService },
+    '@/MoodleIFRN/services_mobile/suap-entry.service': { SuapEntryService, SuapEntryAccountError },
     '../navigation/suap-entry-state': { readNativeSuapEntry: () => entryState },
     '@services/platform': { CorePlatform: { ready: async () => {} } },
     '@services/lang': { CoreLang: { getCurrentLanguageSync: () => 'pt-br' } },
