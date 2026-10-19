@@ -70,6 +70,15 @@ gulp.task('mobilemoodle-ts', (done) => {
     }
 });
 
+gulp.task('ifrn-theme', (done) => {
+    try {
+        execSync('npx sass src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/painel.scss src/MoodleIFRN/mobilemoodle/static/theme/ifrn/css/painel.css --no-source-map', { stdio: 'inherit' });
+        done();
+    } catch (error) {
+        done(error);
+    }
+});
+
 // Build a Moodle plugin to run Behat tests.
 if (BuildBehatPluginTask.isBehatConfigured()) {
     gulp.task('behat', (done) => {
@@ -83,6 +92,7 @@ gulp.task(
         gulp.series('lang', 'lang-custom'),
         'env',
         'icons',
+        'ifrn-theme',
         'mobilemoodle-ts',
         ...(BuildBehatPluginTask.isBehatConfigured() ? ['behat'] : [])
     ]),

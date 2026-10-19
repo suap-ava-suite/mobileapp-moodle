@@ -346,9 +346,11 @@ ion-app {
   font: inherit;
   cursor: pointer;
 }
+
 .ava-header-action ion-icon {
   font-size: 24px;
 }
+
 .ava-header-action:hover, .ava-header-action.active {
   background: var(--primary-light);
 }
@@ -414,10 +416,12 @@ button:focus-visible, a:focus-visible, select:focus-visible {
 .page-intro {
   padding: 8px 4px 16px;
 }
+
 .page-intro h2 {
   margin: 0 0 4px;
   font: var(--font-heading2);
 }
+
 .page-intro p {
   margin: 0;
   color: var(--cinza-secundario);
@@ -440,9 +444,11 @@ body.keyboard-is-open ion-content#page-content {
   --keyboard-offset: var(--keyboard-height, 0px);
   --padding-bottom: max(12px, var(--keyboard-height, 0px));
 }
+
 body.keyboard-is-open .sidebar-modal__panel {
   max-height: calc(100dvh - var(--keyboard-height, 0px));
 }
+
 body.keyboard-is-open .sidebar-modal__body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -520,10 +526,12 @@ body.keyboard-is-open .sidebar-modal__body {
   font: var(--font-heading2);
   min-width: 0;
 }
+
 .sidebar-modal__header-title ion-icon {
   font-size: 20px;
   flex-shrink: 0;
 }
+
 .sidebar-modal__header-title span {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -547,6 +555,7 @@ body.keyboard-is-open .sidebar-modal__body {
   line-height: 0;
   flex-shrink: 0;
 }
+
 .sidebar-modal__close ion-icon {
   display: block;
   font-size: 20px;
@@ -637,11 +646,13 @@ body.keyboard-is-open .sidebar-modal__body {
   border-radius: 4px;
   background: var(--light-lighter);
 }
+
 .filter-select-area ion-icon {
   color: var(--primary);
   font-size: 18px;
   flex-shrink: 0;
 }
+
 .filter-select-area select {
   flex: 1;
   border: none;
@@ -731,15 +742,18 @@ body.keyboard-is-open .sidebar-modal__body {
   transition: all 0.2s ease-in-out;
   color: var(--dark);
 }
+
 .checkbox-access-label:hover {
   border-color: var(--primary);
 }
+
 .checkbox-access-label .label-container {
   display: flex;
   align-items: center;
   gap: 0.35rem;
   min-width: 0;
 }
+
 .checkbox-access-label .icon-id {
   color: var(--dark);
   flex-shrink: 0;
@@ -747,6 +761,7 @@ body.keyboard-is-open .sidebar-modal__body {
   height: 16px;
   font-size: 16px;
 }
+
 .checkbox-access-label .icon-checked {
   display: none;
   color: var(--primary);
@@ -760,14 +775,17 @@ body.keyboard-is-open .sidebar-modal__body {
   width: 0;
   height: 0;
 }
+
 .checkbox-access-input:checked + .checkbox-access-label {
   color: var(--primary);
   border-color: var(--primary);
   box-shadow: 0 0 0 2px var(--primary-light);
 }
+
 .checkbox-access-input:checked + .checkbox-access-label .icon-checked {
   display: block;
 }
+
 .checkbox-access-input:focus-visible + .checkbox-access-label {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
@@ -776,16 +794,19 @@ body.keyboard-is-open .sidebar-modal__body {
 .selector-cycle-access {
   font: var(--font-button2);
 }
+
 .selector-cycle-access > label {
   display: block;
   margin-bottom: 0.35rem;
   color: var(--dark);
 }
+
 .selector-cycle-access.active .cycle-btn {
   color: var(--primary);
   border-color: var(--primary);
   box-shadow: 0 0 0 2px var(--primary-light);
 }
+
 .selector-cycle-access .cycle-btn {
   display: block;
   background-color: var(--light);
@@ -799,26 +820,31 @@ body.keyboard-is-open .sidebar-modal__body {
   cursor: pointer;
   transition: all 0.2s ease-in-out;
 }
+
 .selector-cycle-access .cycle-btn:hover {
   border-color: var(--primary);
 }
+
 .selector-cycle-access .cycle-btn .icon-id {
   color: var(--dark);
   vertical-align: middle;
   margin-right: 0.25rem;
   font-size: 16px;
 }
+
 .selector-cycle-access .cycle-indicators {
   display: flex;
   gap: 0.25rem;
   margin-top: 0.25rem;
 }
+
 .selector-cycle-access .cycle-indicators .cycle-indicator {
   height: 4px;
   width: 100%;
   background-color: var(--light-dark);
   border-radius: 4px;
 }
+
 .selector-cycle-access .cycle-indicators .cycle-indicator.active {
   background-color: var(--primary);
 }
@@ -839,13 +865,16 @@ body.highlight_links a[href] {
   padding: 0.25em 0.5em;
   border-radius: 10px;
 }
+
 body.highlight_links a[href]:hover {
   background-color: var(--dark) !important;
 }
+
 body.highlight_links a[href]:focus {
   outline: 3px solid #f90;
   outline-offset: 2px;
 }
+
 body.highlight_links a[href] * {
   color: rgb(255, 255, 100) !important;
 }
@@ -994,9 +1023,11 @@ body.color_mode_high_contrast {
   --ion-background-color: #000;
   --ion-text-color: #fff;
 }
+
 body.color_mode_high_contrast a {
   color: #ff0;
 }
+
 body.color_mode_high_contrast h1,
 body.color_mode_high_contrast h2,
 body.color_mode_high_contrast h3,
@@ -1005,6 +1036,7 @@ body.color_mode_high_contrast h5,
 body.color_mode_high_contrast h6 {
   color: #fff;
 }
+
 body.color_mode_high_contrast ion-toolbar,
 body.color_mode_high_contrast .painel-card,
 body.color_mode_high_contrast .curso-card,
@@ -1013,26 +1045,32 @@ body.color_mode_high_contrast .card {
   color: #fff;
   border: 1px solid var(--dark-light) !important;
 }
+
 body.color_mode_high_contrast .ava-header-profile {
   color: var(--dark);
 }
+
 body.color_mode_high_contrast .ava-header-profile:hover, body.color_mode_high_contrast .ava-header-profile.active {
   color: #fff !important;
 }
+
 body.color_mode_high_contrast .sidebar-modal__panel {
   background-color: var(--dark) !important;
   border: 1px solid var(--dark-light);
   color: #fff;
 }
+
 body.color_mode_high_contrast .sidebar-modal__header,
 body.color_mode_high_contrast .modal-content-body-title,
 body.color_mode_high_contrast .ava-modal-body {
   color: #fff !important;
 }
+
 body.color_mode_high_contrast .modal-content-body-help-link,
 body.color_mode_high_contrast .modal-button-option:not(.exit-button) {
   color: #ff0 !important;
 }
+
 body.color_mode_high_contrast .checkbox-access-label,
 body.color_mode_high_contrast .selector-cycle-access .cycle-btn {
   background-color: #1a1a1a;
@@ -1049,20 +1087,25 @@ body.color_mode_high_contrast {
   --success-light: #17251a;
   --success-dark: #afffb6;
 }
+
 body.color_mode_high_contrast #main-content ion-toolbar {
   --background: #111;
   --color: #fff;
 }
+
 body.color_mode_high_contrast .ava-header-title, body.color_mode_high_contrast #main-content .ava-header-title {
   color: #fff;
 }
+
 body.color_mode_high_contrast .sidebar-modal__header {
   background: #111;
 }
+
 body.color_mode_high_contrast .ava-modal-body__user, body.color_mode_high_contrast .filter-select-area, body.color_mode_high_contrast .filter-select-area select {
   background: #111;
   color: #fff;
 }
+
 body.color_mode_high_contrast .modal-button-option, body.color_mode_high_contrast .modal-content-body-help-link {
   background: #111;
 }
@@ -1173,6 +1216,7 @@ body.stop_animations .ava-splash__gauge {
   overscroll-behavior-x: contain;
   scrollbar-width: none;
 }
+
 .ava-topbar::-webkit-scrollbar, .tabs-row::-webkit-scrollbar {
   display: none;
 }
@@ -1194,15 +1238,18 @@ body.stop_animations .ava-splash__gauge {
   cursor: pointer;
   white-space: nowrap;
 }
+
 .ava-topbar .ava-tab:hover:not(:disabled), .tabs-row .ava-tab:hover:not(:disabled) {
   background: var(--primary-light);
   color: var(--primary);
 }
+
 .ava-topbar .ava-tab.is-active, .tabs-row .ava-tab.is-active {
   border-bottom-color: var(--primary);
   color: var(--primary);
   font-weight: 700;
 }
+
 .ava-topbar .ava-tab:disabled, .tabs-row .ava-tab:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -1251,6 +1298,7 @@ body.stop_animations .ava-splash__gauge {
   font: var(--font-button2);
   cursor: pointer;
 }
+
 .painel-filter-button:hover, .painel-filter-button.active, .painel-filter-chip:hover, .painel-filter-chip.active {
   background: var(--primary-light);
 }
@@ -1277,6 +1325,7 @@ body.stop_animations .ava-splash__gauge {
   box-shadow: none;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
+
 .painel-card:hover {
   border-color: var(--muted);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -1343,9 +1392,11 @@ body.stop_animations .ava-splash__gauge {
   font-size: calc(0.75rem * var(--font-scale));
   font-weight: 600;
 }
+
 .painel-card-info-icon span, .painel-card-details-info-published span, .painel-card-details-info-unpublished span {
   overflow-wrap: anywhere;
 }
+
 .painel-card-info-icon ion-icon, .painel-card-details-info-published ion-icon, .painel-card-details-info-unpublished ion-icon {
   flex-shrink: 0;
   font-size: 14px;
@@ -1374,16 +1425,20 @@ body.stop_animations .ava-splash__gauge {
   color: var(--primary);
   cursor: pointer;
 }
+
 .painel-card-details-info-favourite ion-icon, .painel-card-details-info-unfavourite ion-icon {
   font-size: 22px;
 }
+
 .painel-card-details-info-favourite:hover, .painel-card-details-info-unfavourite:hover {
   background: var(--primary-light);
 }
+
 .painel-card-details-info-favourite[aria-pressed=true], .painel-card-details-info-unfavourite[aria-pressed=true] {
   color: var(--primary-dark);
   background: var(--primary-light);
 }
+
 .painel-card-details-info-favourite:disabled, .painel-card-details-info-unfavourite:disabled {
   opacity: 0.45;
   cursor: default;
@@ -1395,6 +1450,7 @@ body.stop_animations .ava-splash__gauge {
   gap: 10px;
   width: 100%;
 }
+
 .painel-card-actions ion-button {
   margin: 0;
   min-height: 44px;
@@ -1439,11 +1495,13 @@ body.stop_animations .ava-splash__gauge {
   font-size: 0.8rem;
   color: var(--muted);
 }
+
 .breadcrumb a {
   color: var(--primary);
   text-decoration: none;
   font-weight: 600;
 }
+
 .breadcrumb strong {
   color: var(--dark);
 }
@@ -1496,6 +1554,7 @@ body.stop_animations .ava-splash__gauge {
   font: var(--font-paragraph2);
   color: var(--cinza-secundario);
 }
+
 .topic-item ion-icon {
   color: var(--secondary);
   font-size: 1rem;
@@ -1520,6 +1579,7 @@ body.stop_animations .ava-splash__gauge {
   list-style: none;
   color: var(--cinza-secundario);
 }
+
 .course-meta li {
   margin-bottom: 4px;
 }
@@ -1527,6 +1587,7 @@ body.stop_animations .ava-splash__gauge {
 .course-summary {
   margin: 1.25rem 0;
 }
+
 .course-summary h2 {
   margin: 0 0 0.5rem;
   font: var(--font-heading2);
@@ -1550,6 +1611,7 @@ body.stop_animations .ava-splash__gauge {
   gap: 8px;
   margin-bottom: 4px;
 }
+
 .course-progress ion-progress-bar {
   flex: 1;
   max-width: 187px;
@@ -1558,6 +1620,7 @@ body.stop_animations .ava-splash__gauge {
   --background: #e3e3e3;
   --progress-background: var(--dsgov-blue-70);
 }
+
 .course-progress span {
   font-size: 0.75rem;
   color: var(--muted);
@@ -1592,6 +1655,7 @@ body.stop_animations .ava-splash__gauge {
   color: inherit;
   font: inherit;
 }
+
 .topic-card__header:active {
   background: var(--bg-green);
 }
@@ -1665,19 +1729,24 @@ body.stop_animations .ava-splash__gauge {
   transition: background 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
+
 .activity-item:active, .activity-item:focus-visible {
   background: var(--bg-green);
   outline: none;
 }
+
 .activity-item--link {
   cursor: pointer;
 }
+
 .activity-item--link:hover {
   background: var(--primary-light);
 }
+
 .activity-item--link .activity-item__name {
   color: var(--primary-dark);
 }
+
 .activity-item--static {
   cursor: default;
   opacity: 0.92;
@@ -2002,15 +2071,18 @@ ion-content#page-content {
   color: var(--dsgov-text-dark);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
+
 .breadcrumb a {
   color: var(--dsgov-blue-70);
   font-weight: var(--dsgov-font-weight-semibold);
   text-decoration: none;
 }
+
 .breadcrumb a:hover {
   color: var(--dsgov-blue-90);
   text-decoration: underline;
 }
+
 .breadcrumb strong {
   color: var(--dsgov-text-medium);
   font-weight: var(--dsgov-font-weight-normal);
@@ -2052,6 +2124,7 @@ ion-button[color=primary] {
   border-radius: var(--dsgov-radius-default);
   font-size: var(--dsgov-font-size-base);
 }
+
 .filter-select-area select:focus {
   box-shadow: var(--dsgov-focus-ring-blue);
 }
@@ -2059,11 +2132,13 @@ ion-button[color=primary] {
 .checkbox-access-label {
   border-radius: var(--dsgov-radius-default);
 }
+
 .checkbox-access-label:focus-within:focus-visible {
   outline: 2px solid #1351b4 !important;
   outline-offset: 2px !important;
   box-shadow: none !important;
 }
+
 .checkbox-access-label:focus-within:focus:not(:focus-visible) {
   outline: none !important;
   box-shadow: none !important;
@@ -2100,11 +2175,13 @@ ion-button[color=primary] {
 .activity-item {
   border-radius: var(--dsgov-radius-default);
 }
+
 .activity-item:focus-visible:focus-visible {
   outline: 2px solid #1351b4 !important;
   outline-offset: 2px !important;
   box-shadow: none !important;
 }
+
 .activity-item:focus-visible:focus:not(:focus-visible) {
   outline: none !important;
   box-shadow: none !important;

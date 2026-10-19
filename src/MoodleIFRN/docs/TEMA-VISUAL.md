@@ -5,10 +5,10 @@ Tema visual inspirado no AVA IFRN (`theme_ifrn25` / DS-GOV).
 ```text
 ifrn/
 ├── css/
-│   └── painel.css      ← CSS usado pelo index.html (gerado do SCSS)
+│   └── painel.css      ← CSS gerado durante serve/build e ignorado pelo Git
 ├── favicon/            ← ícones do Painel AVA (PWA / aba)
 ├── scss/
-│   ├── painel.scss     ← entrada (importa os partials)
+│   ├── painel.scss     ← estilos consolidados em SCSS, convertidos do CSS servido
 │   ├── _variables.scss
 │   ├── _global.scss    ← base + header AVA (.ava-header)
 │   ├── _sidebar.scss   ← menu lateral (Painel AVA, perfil, filtros…)
@@ -108,9 +108,9 @@ Preferências ficam em `localStorage` (`ifrn_a11y_prefs`) e são reaplicadas ao 
 | `_cards.scss` | Cards de curso no painel |
 | `_curso.scss` | Curso, seções e atividades |
 | `_mobile.scss` | Layout mobile / safe-areas / landscape |
-| `painel.scss` | Arquivo que agrega os partials |
+| `painel.scss` | Folha consolidada do painel, com sintaxe CSS válida em SCSS |
 
-O `index.html` referencia `css/painel.css`. Se o SCSS for alterado, regenere o CSS:
+O `index.html` referencia `css/painel.css`. O Gulp gera esse arquivo automaticamente antes de servir ou compilar o app. Para gerar manualmente:
 
 ```bash
 npx sass src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/painel.scss \
