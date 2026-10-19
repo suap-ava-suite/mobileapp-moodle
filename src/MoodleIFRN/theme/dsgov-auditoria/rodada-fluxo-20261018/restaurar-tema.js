@@ -1,0 +1,1 @@
+(()=>{const el=document.querySelector('page-core-app-settings-general');const c=el&&window.ng?.getComponent(el);if(!c)return 'Configurações gerais não encontradas';c.selectedScheme=window.__ifrnThemeBefore || 'light';c.colorSchemeChanged(new Event('change'));return 'Preferência de tema restaurada pelo manipulador das configurações.';})()

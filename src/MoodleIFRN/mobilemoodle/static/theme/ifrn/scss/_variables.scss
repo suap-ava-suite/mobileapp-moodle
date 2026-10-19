@@ -96,3 +96,13 @@ body {
     --font-paragraph1: 400 calc(1rem * var(--font-scale)) / 1.5 var(--font-family);
     --font-paragraph2: 400 calc(0.875rem * var(--font-scale)) / 1.5 var(--font-family);
 }
+
+// Derivado, não oficial: contraste dos controles Ionic dentro do iframe.
+:root.dark {
+    --ion-color-primary-rgb: 130, 177, 255;
+    --ion-color-primary-contrast: #04122b;
+    --ion-color-primary-contrast-rgb: 4, 18, 43;
+    --ion-background-color: var(--dsgov-bg-white);
+    --ion-text-color: var(--dsgov-text-dark);
+    --ion-item-background: var(--dsgov-bg-white);
+}

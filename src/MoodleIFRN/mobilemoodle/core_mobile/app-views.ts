@@ -10,6 +10,7 @@
  */
 import { MM, App } from './namespace';
 import { createCourseFavourites, favouriteCourseKey } from './course-favourites';
+import { resolveCourseSite } from './course-target';
 
 let favourites: ReturnType<typeof createCourseFavourites>;
 let currentLists: PainelLists;
@@ -235,21 +236,7 @@ let currentLists: PainelLists;
      * troca para o AVA real; não bloquear o handoff aqui.
      */
     function siteUrlFromCourse(course: DashboardCourse): string | undefined {
-        if (course.moodle_site_url) {
-            return course.moodle_site_url;
-        }
-
-        const viewurl = course.viewurl || course.details_url;
-
-        if (!viewurl || !/^https?:\/\//i.test(viewurl)) {
-            return undefined;
-        }
-
-        try {
-            return new URL(viewurl).origin;
-        } catch {
-            return undefined;
-        }
+        return resolveCourseSite(course);
     }
 
     /**
@@ -266,6 +253,11 @@ let currentLists: PainelLists;
         link.addEventListener('click', (event) => {
             event.preventDefault();
             event.stopPropagation();
+            if (!moodleSiteUrl) {
+                window.alert('Não foi possível confirmar o ambiente deste curso. Atualize o Painel e tente novamente.');
+
+                return;
+            }
 
             // eslint-disable-next-line no-console
             console.log('[IFRN-COURSE] card-click');
@@ -394,6 +386,13 @@ let currentLists: PainelLists;
 
                 const moodleCourseId = course.moodle_course_id
                     ?? (course.source === 'painel' ? Number(course.id) : NaN);
+                const moodleSiteUrl = siteUrlFromCourse(course);
+
+                if (!moodleSiteUrl) {
+                    window.alert('Não foi possível confirmar o ambiente deste curso. Atualize o Painel e tente novamente.');
+
+                    return;
+                }
 
                 if (
                     !Number.isFinite(moodleCourseId)
@@ -406,7 +405,7 @@ let currentLists: PainelLists;
                     App.openMoodleCourse(
                         moodleCourseId,
                         course.name || course.fullname,
-                        siteUrlFromCourse(course),
+                        moodleSiteUrl,
                     );
                     return;
                 }
@@ -421,7 +420,7 @@ let currentLists: PainelLists;
                     App.resolveMoodleOpenUrl!(
                         moodleCourseId,
                         course.name || course.fullname,
-                        siteUrlFromCourse(course),
+                        moodleSiteUrl,
                     ),
                 );
             });

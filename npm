@@ -1,0 +1,5 @@
+      PID    PPID    PGID     WINPID   TTY         UID    STIME COMMAND
+      974     863     974      13816  cons1     197613 20:50:18 /usr/bin/PS
+      856     738     856      22040  cons0     197613 20:48:19 /c/Users/T-GAMER/AppData/Local/Author Software/nvm/installs/v22.17.0/node
+      738       1     738      16764  cons0     197613 20:47:29 /usr/bin/bash
+      863       1     863      19440  cons1     197613 20:48:40 /usr/bin/bash

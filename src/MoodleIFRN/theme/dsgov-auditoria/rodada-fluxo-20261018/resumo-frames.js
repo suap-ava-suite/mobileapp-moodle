@@ -1,0 +1,1 @@
+JSON.stringify((()=>{const rows=window.__ifrnThemeFrames||[];return {samples:rows.length,variants:[...new Map(rows.map(row=>[JSON.stringify(row),row])).values()],orange:rows.some(row=>/#f98012|249\s*,\s*128\s*,\s*18/i.test(row.primary))};})())

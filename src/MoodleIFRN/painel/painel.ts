@@ -29,6 +29,7 @@ export class PainelPage implements OnInit, OnDestroy {
     @ViewChild('painelFrame') painelFrame?: ElementRef<HTMLIFrameElement>;
 
     safePainelUrl?: SafeResourceUrl;
+    private hostAppearanceObserver?: MutationObserver;
 
     async ngOnInit(): Promise<void> {
         await CorePlatform.ready();
@@ -45,7 +46,13 @@ export class PainelPage implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.hostAppearanceObserver?.disconnect();
         this.unregisterBridge();
+    }
+
+    ionViewDidEnter(): void {
+        // O menu nativo só perde o contexto azul quando a entrada do painel terminou.
+        document.documentElement.classList.remove('ifrn-course-context');
     }
 
     private registerBridge(): void {
@@ -158,10 +165,20 @@ export class PainelPage implements OnInit, OnDestroy {
     }
 
     onIframeLoad(): void {
+        this.hostAppearanceObserver?.disconnect();
+        this.syncFrameAppearance();
+        this.hostAppearanceObserver = new MutationObserver(() => this.syncFrameAppearance());
+        this.hostAppearanceObserver.observe(document.documentElement, {
+            attributes: true, attributeFilter: ['style', 'class'],
+        });
+    }
+
+    private syncFrameAppearance(): void {
         try {
             const frame = this.painelFrame?.nativeElement;
             const doc = frame?.contentDocument || frame?.contentWindow?.document;
             if (doc) {
+                doc.documentElement.classList.toggle('dark', document.documentElement.classList.contains('dark'));
                 const safeTop = getComputedStyle(document.documentElement).getPropertyValue('--ion-safe-area-top');
                 if (safeTop && safeTop.trim()) {
                     doc.documentElement.style.setProperty('--ion-safe-area-top', safeTop);

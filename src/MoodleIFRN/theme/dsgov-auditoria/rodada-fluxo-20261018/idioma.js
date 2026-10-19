@@ -1,0 +1,1 @@
+(async()=>{const r=await fetch('/assets/lang/pt-br.json');const data=r.ok?await r.json():{};return JSON.stringify({status:r.status,entries:Object.keys(data).length,cordova:typeof window.cordova});})()

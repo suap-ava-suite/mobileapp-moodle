@@ -1,6 +1,6 @@
 :host {
-    --branco-primario: #ffffff;
-    --dark: #333333;
+    --branco-primario: var(--ifrn-surface, #ffffff);
+    --dark: var(--ifrn-text, #333333);
     --font-button1: 1rem var(--ifrn-font, ("Rawline", "Inter", sans-serif));
     --moodle-open-bg: var(--ifrn-canvas, #f6f6f6);
     --moodle-open-ink: var(--ifrn-text, #333333);
@@ -19,7 +19,7 @@
 }
 
 .moodle-open-course--busy {
-    --background: #ffffff;
+    --background: var(--ifrn-surface, #ffffff);
 }
 
 .moodle-open-course--connect {
@@ -38,7 +38,7 @@
     gap: 0.75rem;
     padding: max(2rem, env(safe-area-inset-top)) 1rem max(2rem, env(safe-area-inset-bottom));
     color: var(--moodle-open-muted);
-    background: #ffffff;
+    background: var(--ifrn-surface, #ffffff);
 }
 
 .moodle-open-course__brand {
@@ -48,6 +48,8 @@
     place-items: center;
     position: relative;
     width: min(132px, 34vw);
+    flex: 0 0 auto;
+    isolation: isolate;
 }
 
 .moodle-open-course__spinner {
@@ -63,10 +65,10 @@
     background: #ffffff;
     border-radius: 50%;
     box-shadow: 0 2px 10px rgba(7, 29, 65, 0.12);
-    height: 86%;
+    height: 68%;
     object-fit: cover;
     position: relative;
-    width: 86%;
+    width: 68%;
     z-index: 1;
 }
 
@@ -134,7 +136,7 @@
     }
 }
 
-.moodle-open-course__brand {
+.moodle-open-course__header .moodle-open-course__brand {
     align-items: center;
     display: inline-flex;
     gap: 10px;

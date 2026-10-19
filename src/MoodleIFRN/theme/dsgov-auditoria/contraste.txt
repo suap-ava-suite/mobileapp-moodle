@@ -1,0 +1,34 @@
+Contraste WCAG: valores extraídos do SCSS atual; texto normal >= 4.5, UI >= 3.
+O cálculo anterior em analise-aparelho usa valores fixos e não representa as correções atuais.
+
+claro
+text/surface: #333333/#ffffff = 12.63:1 | APROVADO
+secondary/surface: #444444/#ffffff = 9.74:1 | APROVADO
+muted/canvas: #666666/#f6f6f6 = 5.31:1 | APROVADO
+interactive/surface: #1351b4/#ffffff = 7.33:1 | APROVADO
+white/interactive: #ffffff/#1351b4 = 7.33:1 | APROVADO
+text/canvas: #333333/#f6f6f6 = 11.69:1 | APROVADO
+error/surface: #d93514/#ffffff = 4.70:1 | APROVADO
+success/surface: #2d8a45/#ffffff = 4.35:1 | PENDÊNCIA texto normal; permite UI/texto grande
+interactive/dark: #1351b4/#071d41 = 2.27:1 | PENDÊNCIA texto normal
+white/button-background: #ffffff/#1351b4 = 7.33:1 | APROVADO
+white/button-active: #ffffff/#0c326f = 12.34:1 | APROVADO
+
+escuro: derivado, não oficial
+text/surface: #ffffff/#282828 = 14.74:1 | APROVADO
+secondary/surface: #dee2e6/#282828 = 11.32:1 | APROVADO
+muted/canvas: #ced4da/#282828 = 9.87:1 | APROVADO
+interactive/surface: #82b1ff/#282828 = 6.80:1 | APROVADO
+white/interactive: #ffffff/#82b1ff = 2.17:1 | PENDÊNCIA texto normal
+text/canvas: #ffffff/#282828 = 14.74:1 | APROVADO
+error/surface: #ff6b6b/#282828 = 5.31:1 | APROVADO
+success/surface: #69db7c/#282828 = 8.44:1 | APROVADO
+interactive/dark: #82b1ff/#0a1120 = 8.69:1 | APROVADO
+white/button-background: #ffffff/#1351b4 = 7.33:1 | APROVADO
+white/button-active: #ffffff/#0c326f = 12.34:1 | APROVADO
+
+Pendências: sucesso claro não serve para texto normal. Usar success-hover para texto.
+Branco sobre interactive no escuro reprova. Sem os tokens button-background/button-active, a verificação de botão usa os tokens interactive/active efetivos.
+Interactive sobre dark no claro reprova. Nessas faixas usar branco ou border-blue.
+Todos os valores do escuro são derivados, não oficiais. Branco sobre button-background/button-active é verificado separadamente do azul claro de links.
+Este arquivo descreve as correções atuais, reaplicadas após resolver o empacotamento Cordova.

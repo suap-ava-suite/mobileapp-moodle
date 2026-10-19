@@ -108,6 +108,10 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         this.returnSubscription?.unsubscribe();
     }
 
+    ionViewDidEnter(): void {
+        document.documentElement.classList.remove('ifrn-course-context');
+    }
+
     private async completeNativeReturn(): Promise<void> {
         if (this.loading && !this.waitingBrowser) {
             this.nativeReturnQueued = true;

@@ -1434,6 +1434,28 @@
     return { canEdit, isFavourite, toggle };
   }
 
+  // src/MoodleIFRN/mobilemoodle/core_mobile/course-target.ts
+  function resolveCourseSite(course) {
+    const environment = [course.environment, course.moodle, course.ambiente?.titulo].filter(Boolean).join(" ");
+    const expected = /presencial/i.test(environment) ? "https://presencial.ava.ifrn.edu.br" : /acad[eê]mico/i.test(environment) ? "https://academico.ava.ifrn.edu.br" : void 0;
+    const raw = course.moodle_site_url || course.viewurl || course.details_url;
+    if (raw) {
+      try {
+        const url = new URL(raw);
+        if (url.protocol !== "https:" || url.username || url.password || !url.hostname.endsWith(".ava.ifrn.edu.br")) {
+          return void 0;
+        }
+        if (expected && url.origin !== expected) {
+          return void 0;
+        }
+        return url.origin;
+      } catch {
+        return void 0;
+      }
+    }
+    return expected;
+  }
+
   // src/MoodleIFRN/mobilemoodle/core_mobile/app-views.ts
   /*!
    * app-views.ts
@@ -1611,18 +1633,7 @@
     });
   }
   function siteUrlFromCourse(course) {
-    if (course.moodle_site_url) {
-      return course.moodle_site_url;
-    }
-    const viewurl = course.viewurl || course.details_url;
-    if (!viewurl || !/^https?:\/\//i.test(viewurl)) {
-      return void 0;
-    }
-    try {
-      return new URL(viewurl).origin;
-    } catch {
-      return void 0;
-    }
+    return resolveCourseSite(course);
   }
   function wireCourseCardOpen(link, course) {
     const moodleCourseId = course.moodle_course_id ?? (course.source === "painel" ? Number(course.id) : NaN);
@@ -1632,6 +1643,10 @@
     link.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
+      if (!moodleSiteUrl) {
+        window.alert("N\xE3o foi poss\xEDvel confirmar o ambiente deste curso. Atualize o Painel e tente novamente.");
+        return;
+      }
       console.log("[IFRN-COURSE] card-click");
       if (!Number.isFinite(moodleCourseId) || moodleCourseId <= 0) {
         console.warn(
@@ -1720,6 +1735,11 @@
         event.stopPropagation();
         console.log("[IFRN-COURSE] card-click");
         const moodleCourseId = course.moodle_course_id ?? (course.source === "painel" ? Number(course.id) : NaN);
+        const moodleSiteUrl = siteUrlFromCourse(course);
+        if (!moodleSiteUrl) {
+          window.alert("N\xE3o foi poss\xEDvel confirmar o ambiente deste curso. Atualize o Painel e tente novamente.");
+          return;
+        }
         if (!Number.isFinite(moodleCourseId) || moodleCourseId <= 0) {
           return;
         }
@@ -1727,7 +1747,7 @@
           App.openMoodleCourse(
             moodleCourseId,
             course.name || course.fullname,
-            siteUrlFromCourse(course)
+            moodleSiteUrl
           );
           return;
         }
@@ -1739,7 +1759,7 @@
           App.resolveMoodleOpenUrl(
             moodleCourseId,
             course.name || course.fullname,
-            siteUrlFromCourse(course)
+            moodleSiteUrl
           )
         );
       });
@@ -2751,12 +2771,16 @@
   }
   function setSafeAreaVars(insets) {
     const root = document.documentElement.style;
-    root.setProperty("--ion-safe-area-top", `${Math.max(0, Math.round(insets.top))}px`);
-    root.setProperty("--ion-safe-area-right", `${Math.max(0, Math.round(insets.right))}px`);
-    root.setProperty("--ion-safe-area-bottom", `${Math.max(0, Math.round(insets.bottom))}px`);
-    root.setProperty("--ion-safe-area-left", `${Math.max(0, Math.round(insets.left))}px`);
+    root.setProperty("--ion-safe-area-top", `${Math.max(0, insets.top)}px`);
+    root.setProperty("--ion-safe-area-right", `${Math.max(0, insets.right)}px`);
+    root.setProperty("--ion-safe-area-bottom", `${Math.max(0, insets.bottom)}px`);
+    root.setProperty("--ion-safe-area-left", `${Math.max(0, insets.left)}px`);
   }
   function resolveFallbackInsets() {
+    const hostInsets = readHostInsets();
+    if (hostInsets) {
+      return hostInsets;
+    }
     if (!isCordovaRuntime()) {
       return { top: 0, right: 0, bottom: 0, left: 0 };
     }
@@ -2765,6 +2789,21 @@
       insets.top = ANDROID_STATUS_BAR_FALLBACK_PX;
     }
     return insets;
+  }
+  function readHostInsets() {
+    try {
+      if (window.parent === window) {
+        return null;
+      }
+      const style = window.parent.getComputedStyle(window.parent.document.documentElement);
+      const values = ["top", "right", "bottom", "left"].map((side) => parseFloat(style.getPropertyValue(`--ion-safe-area-${side}`)));
+      if (values.some((value) => !Number.isFinite(value))) {
+        return null;
+      }
+      return { top: values[0], right: values[1], bottom: values[2], left: values[3] };
+    } catch {
+      return null;
+    }
   }
   function applySafeAreaVariables() {
     setSafeAreaVars(resolveFallbackInsets());
@@ -2819,6 +2858,16 @@
     }, 320);
   }
   function initKeyboardInsets() {
+    if (readHostInsets()) {
+      const observer = new MutationObserver(() => {
+        const insets = readHostInsets();
+        if (insets) {
+          setSafeAreaVars(insets);
+        }
+      });
+      observer.observe(window.parent.document.documentElement, { attributes: true, attributeFilter: ["style"] });
+      window.addEventListener("pagehide", () => observer.disconnect(), { once: true });
+    }
     setSafeAreaVars({ top: 0, right: 0, bottom: 0, left: 0 });
     applySafeAreaVariables();
     void initNativeSafeAreaInsets().then((nativeOk) => {

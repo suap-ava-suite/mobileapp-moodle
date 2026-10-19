@@ -1,0 +1,943 @@
+@charset "UTF-8";
+/* ==========================================================================
+   Design System Gov.br (v3.0) — Tokens Centralizados IFRN
+   Fonte da verdade: theme_ifrn_dsgov (_variables.scss, pre.scss, _fonts.scss)
+   ========================================================================== */
+:root {
+  /* 1. Tipografia DS Gov.br */
+  --ifrn-font: "Rawline", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* 2. Cores Institucionais e Azuis DS Gov.br */
+  --ifrn-primary: #1351b4;
+  --ifrn-interactive: #1351b4;
+  --ifrn-active: #0c326f;
+  --ifrn-button-background: #1351b4;
+  --ifrn-button-active: #0c326f;
+  --ifrn-selected: #eaeff8;
+  --ifrn-selected-mid: #155bcb;
+  --ifrn-dark: #071d41;
+  --ifrn-night: #04122b;
+  --ifrn-border-blue: #c5d6f5;
+  /* 3. Compatibilidade: tokens existentes do Curso / AVA */
+  --ifrn-ava: #1351b4;
+  --ifrn-ava-dark: #0c326f;
+  --ifrn-ava-mid: #155bcb;
+  --ifrn-ava-soft: #eaeff8;
+  --ifrn-ava-softer: #f0f5ff;
+  /* 4. Compatibilidade: tokens existentes do Marketplace */
+  --ifrn-paper: #ffffff;
+  --ifrn-ink: #333333;
+  --ifrn-soft: #eaeff8;
+  --ifrn-accent: #1351b4;
+  --ifrn-line: #e6e6e6;
+  /* 5. Superfícies e Neutros */
+  --ifrn-surface: #ffffff;
+  --ifrn-canvas: #f6f6f6;
+  --ifrn-border: #cccccc;
+  --ifrn-border-inner: #e6e6e6;
+  --ifrn-text: #333333;
+  --ifrn-secondary: #444444;
+  --ifrn-muted: #666666;
+  /* 6. Estados e Alertas */
+  --ifrn-success: #2d8a45;
+  --ifrn-success-hover: #184f16;
+  --ifrn-warning: #DDAA01;
+  --ifrn-warning-bright: #FFCD07;
+  --ifrn-error: #d93514;
+  --ifrn-error-hover: #d93514;
+  /* 7. Foco, Raios e Sombras */
+  --ifrn-focus: 0 0 0 3px rgba(19, 81, 180, 0.35);
+  --ifrn-radius: 4px;
+  --ifrn-radius-lg: 8px;
+  --ifrn-radius-pill: 24px;
+  --ifrn-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+/* ==========================================================================
+   Modo Escuro (Variantes :root.dark derivadas do dark-palette do Moodle)
+   Marcado como: "derivado, não oficial" (o tema web DS Gov oficial não possui modo escuro)
+   ========================================================================== */
+:root.dark {
+  /* Superfícies e Neutros (derivados com alto contraste) */
+  /* theme.dark.scss usa gray-900, white e gray-700 de globals.variables.scss. */
+  --ifrn-surface: #282828;
+  --ifrn-canvas: #282828;
+  --ifrn-border: #495057;
+  --ifrn-border-inner: #343a40;
+  --ifrn-text: #ffffff;
+  --ifrn-secondary: #dee2e6;
+  --ifrn-muted: #ced4da;
+  /* Azuis e Elementos Interativos (derivados aprovados por contraste WCAG >= 4.5:1) */
+  --ifrn-primary: #82b1ff;
+  --ifrn-interactive: #82b1ff;
+  --ifrn-active: #b3d1ff;
+  --ifrn-selected: #1e293b;
+  --ifrn-selected-mid: #3b82f6;
+  --ifrn-dark: #0a1120;
+  --ifrn-night: #050913;
+  --ifrn-border-blue: #2c426b;
+  /* Compatibilidade AVA / Curso */
+  --ifrn-ava: #82b1ff;
+  --ifrn-ava-dark: #b3d1ff;
+  --ifrn-ava-mid: #64b5f6;
+  --ifrn-ava-soft: #162438;
+  --ifrn-ava-softer: #101c2e;
+  /* Compatibilidade Marketplace */
+  --ifrn-paper: #282828;
+  --ifrn-ink: #ffffff;
+  --ifrn-soft: #162438;
+  --ifrn-accent: #82b1ff;
+  --ifrn-line: #495057;
+  /* Estados no escuro (derivados de alto contraste) */
+  --ifrn-success: #69db7c;
+  --ifrn-success-hover: #8ce99a;
+  --ifrn-warning: #ffd43b;
+  --ifrn-warning-bright: #ffe066;
+  --ifrn-error: #ff6b6b;
+  --ifrn-error-hover: #ffa8a8;
+  /* Foco e Sombra no escuro */
+  --ifrn-focus: 0 0 0 3px rgba(130, 177, 255, 0.45);
+  --ifrn-shadow: 0 4px 16px rgba(0, 0, 0, 0.40);
+}
+
+@font-face {
+  font-family: "Rawline";
+  src: url("/mobilemoodle/static/theme/ifrn/fonts/rawline-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Rawline";
+  src: url("/mobilemoodle/static/theme/ifrn/fonts/rawline-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Rawline";
+  src: url("/mobilemoodle/static/theme/ifrn/fonts/rawline-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Rawline";
+  src: url("/mobilemoodle/static/theme/ifrn/fonts/rawline-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+page-core-course-index, page-core-course-contents {
+  --ion-font-family: "Rawline", sans-serif;
+  font-family: var(--ion-font-family);
+}
+
+/*
+ * MoodleIFRN — reforma visual FORTE do curso NATIVO.
+ *
+ * Carregado globalmente via angular.json (não é style de componente).
+ * A lógica continua 100% Moodle:
+ *   getAndOpenCourse → page-core-course-index → contents/sections/modules
+ *
+ * Estratégia:
+ * 1) Sobrescrever tokens CSS que o Moodle já consome (--primary, --core-tab-*,
+ *    --core-progressbar-*, --ion-card-*, vars de core-course-module).
+ * 2) Seletores reais do DOM (não ion-segment — as abas usam ion-tab-bar + swiper).
+ * 3) Especificidade alta (page-core-course-index.ion-page) + !important apenas
+ *    onde inevitável: body.* (widgets de acessibilidade de terceiros) e
+ *    div[vw] (VLibras com inline styles).
+ */
+/* =========================================================
+ * Tokens AVA IFRN no host da página nativa
+ * ========================================================= */
+page-core-course-index.ion-page,
+page-core-course-index {
+  --ifrn-ava: var(--ifrn-primary, #1351b4);
+  --ifrn-ava-dark: var(--ifrn-active, #0c326f);
+  --ifrn-ava-mid: var(--ifrn-selected-mid, #155bcb);
+  --ifrn-ava-soft: var(--ifrn-selected, #eaeff8);
+  /* Tokens oficiais do Moodle / Ionic usados pelos componentes nativos */
+  --primary: var(--ifrn-ava);
+  --primary-shade: var(--ifrn-ava-dark);
+  --primary-tint: var(--ifrn-ava-soft);
+  --primary-contrast: #ffffff;
+  --ion-color-primary: var(--ifrn-ava);
+  --ion-color-primary-rgb: 19, 81, 180;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: var(--ifrn-ava-dark);
+  --ion-color-primary-tint: var(--ifrn-ava-mid);
+  --background-color: var(--ifrn-canvas);
+  --ion-background-color: var(--ifrn-canvas);
+  --ion-item-background: var(--ifrn-surface);
+  --ion-toolbar-background: var(--ifrn-surface);
+  --ion-toolbar-color: var(--ifrn-text);
+  --ion-text-color: var(--ifrn-text);
+  --text-color: var(--ifrn-text);
+  --subdued-text-color: var(--ifrn-muted);
+  --stroke: var(--ifrn-border);
+  --ion-border-color: var(--ifrn-border);
+  --ion-item-border-color: var(--ifrn-border);
+  --core-header-toolbar-background: var(--ifrn-surface);
+  --core-header-toolbar-color: var(--ifrn-text);
+  --core-header-toolbar-border-color: transparent;
+  --core-header-buttons-color: var(--ifrn-ava-dark);
+  --core-tabs-background: var(--ifrn-surface);
+  --core-tab-background: var(--ifrn-surface);
+  --core-tab-color: var(--ifrn-muted);
+  --core-tab-color-active: var(--ifrn-ava-dark);
+  --core-tab-border-color: var(--ifrn-border);
+  --core-tab-border-color-active: var(--ifrn-ava);
+  --core-tab-font-weight-active: 700;
+  --core-tabs-height: 52px;
+  --core-progressbar-color: var(--ifrn-ava);
+  --core-progressbar-background: var(--ifrn-border-blue, #c5d6f5);
+  --core-progressbar-text-color: var(--ifrn-ava-dark);
+  --core-progressbar-height: 10px;
+  --ion-card-background: var(--ifrn-surface);
+  --ion-card-border-color: var(--ifrn-border);
+  --ion-card-border-width: 1px;
+  --ion-card-radius: var(--ifrn-radius);
+  --core-courseimage-on-course-size: 88px;
+  --core-image-size: 88px;
+  --core-courseimage-radius: 12px;
+  --core-image-radius: 12px;
+  --mdl-spacing-4: 12px;
+  --mdl-spacing-8: 24px;
+  background: var(--ifrn-canvas);
+  color: var(--ifrn-text);
+}
+
+/* =========================================================
+ * Toolbar / cabeçalho limpo
+ * ========================================================= */
+page-core-course-index.ion-page > ion-header,
+page-core-course-index > ion-header {
+  box-shadow: none;
+}
+
+page-core-course-index.ion-page > ion-header ion-toolbar,
+page-core-course-index > ion-header ion-toolbar {
+  --background: var(--ifrn-surface);
+  --color: var(--ifrn-text);
+  --border-width: 0;
+  --min-height: 52px;
+  border-bottom: 3px solid var(--ifrn-ava);
+}
+
+page-core-course-index ion-back-button {
+  --color: var(--ifrn-ava-dark);
+  --icon-font-size: 22px;
+}
+
+/* O menu fica abaixo das abas. Não reservar espaço vazio na toolbar. */
+page-core-course-index.ion-page > ion-header ion-toolbar,
+page-core-course-index > ion-header ion-toolbar {
+  --padding-start: 0;
+}
+
+page-core-course-index ion-toolbar ion-buttons.ifrn-course-back {
+  margin-inline: max(8px, env(safe-area-inset-left, 0px)) 4px;
+  flex-shrink: 0;
+}
+
+page-core-course-index ion-toolbar .ifrn-course-back ion-back-button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+page-core-course-index ion-title h1,
+page-core-course-index ion-toolbar ion-title {
+  color: var(--ifrn-text);
+  font-weight: 700;
+}
+
+page-core-course-index ion-toolbar ion-button {
+  --color: var(--ifrn-ava-dark);
+}
+
+/* =========================================================
+ * Banner + nome + progresso (.core-course-header)
+ * ========================================================= */
+page-core-course-index.ion-page .core-course-header,
+page-core-course-index .core-course-header {
+  background: linear-gradient(180deg, var(--ifrn-ava-soft) 0%, var(--ifrn-surface) 100%);
+  border-bottom: 1px solid var(--ifrn-border);
+  padding: 4px 0 10px;
+  box-shadow: inset 0 -1px 0 rgba(7, 29, 65, 0.08);
+}
+
+page-core-course-index .core-format-progress-list,
+page-core-course-index ion-item.core-format-progress-list {
+  --background: transparent;
+  --background-activated: transparent;
+  --inner-border-width: 0;
+  --border-width: 0;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --min-height: 0;
+  align-items: flex-start;
+  width: min(100%, 960px);
+  margin: 0 auto;
+}
+
+page-core-course-index .core-course-header core-course-image {
+  --core-image-size: 88px;
+  --core-image-radius: 12px;
+  width: 88px;
+  min-width: 88px;
+  height: 88px;
+  margin: 10px 14px 10px 0;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  box-shadow: var(--ifrn-shadow);
+}
+
+page-core-course-index .core-course-header ion-label h1,
+page-core-course-index .core-course-header h1 {
+  color: var(--ifrn-text);
+  font-size: clamp(1.2rem, 1.05rem + 1.2vw, 1.55rem);
+  font-weight: 800;
+  line-height: 1.25;
+  margin: 8px 0 6px;
+  letter-spacing: -0.01em;
+}
+
+page-core-course-index .core-course-progress {
+  margin: 8px 0 4px;
+  padding: 10px 12px;
+  background: var(--ifrn-surface);
+  border: 1px solid var(--ifrn-border);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(7, 29, 65, 0.06);
+}
+
+page-core-course-index .core-course-progress core-progress-bar {
+  --progressbar-color: var(--ifrn-ava);
+  --progressbar-background: var(--ifrn-border-blue, #c5d6f5);
+  --text-color: var(--ifrn-ava-dark);
+  --height: 10px;
+  --line-height: 28px;
+  --bar-margin: 8px 0;
+  width: 100%;
+}
+
+page-core-course-index .core-course-progress core-progress-bar .core-progress-text {
+  font-weight: 700;
+  color: var(--ifrn-ava-dark);
+}
+
+/* =========================================================
+ * Abas nativas: Conteúdo / Participantes / Notas / Competências
+ * (DOM real: core-tabs-outlet > ion-tab-bar.core-tabs-bar > swiper-slide)
+ * ========================================================= */
+page-core-course-index core-tabs-outlet {
+  --tabs-background: var(--ifrn-surface);
+  --tabs-color: var(--ifrn-muted);
+  --color-active: var(--ifrn-ava-dark);
+  --border-color-active: var(--ifrn-ava);
+  --font-weight-active: 700;
+  --height: 52px;
+  display: block;
+  background: var(--ifrn-surface);
+}
+
+page-core-course-index ion-tab-bar.core-tabs-bar,
+page-core-course-index .core-tabs-bar {
+  --background: var(--ifrn-surface);
+  background: var(--ifrn-surface);
+  color: var(--ifrn-muted);
+  border-bottom: 1px solid var(--ifrn-border);
+  height: 52px;
+  box-shadow: 0 2px 8px rgba(7, 29, 65, 0.05);
+}
+
+page-core-course-index .core-tabs-bar swiper-slide {
+  min-width: 108px;
+  border-bottom-width: 3px;
+}
+
+page-core-course-index .core-tabs-bar swiper-slide.selected,
+page-core-course-index .core-tabs-bar swiper-slide[aria-selected=true] {
+  color: var(--ifrn-ava-dark);
+  border-bottom-color: var(--ifrn-ava);
+}
+
+page-core-course-index .core-tabs-bar ion-tab-button {
+  --color: var(--ifrn-muted);
+  --color-selected: var(--ifrn-ava-dark);
+  --ripple-color: var(--ifrn-ava-soft);
+  color: inherit;
+}
+
+page-core-course-index .core-tabs-bar ion-tab-button ion-label h2,
+page-core-course-index .core-tabs-bar ion-label h2 {
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+page-core-course-index .core-tabs-bar swiper-slide.selected ion-label h2,
+page-core-course-index .core-tabs-bar swiper-slide[aria-selected=true] ion-label h2 {
+  font-weight: 800;
+  color: var(--ifrn-ava-dark);
+}
+
+page-core-course-index .core-tabs-bar ion-button.arrow-button {
+  --color: var(--ifrn-ava-dark);
+}
+
+/* =========================================================
+ * Conteúdo do curso (página filha nativa)
+ * ========================================================= */
+page-core-course-index page-core-course-contents,
+page-core-course-contents {
+  --background: var(--ifrn-canvas);
+}
+
+page-core-course-index page-core-course-contents ion-content,
+page-core-course-contents ion-content {
+  --background: var(--ifrn-canvas);
+}
+
+page-core-course-index core-course-format,
+page-core-course-contents core-course-format {
+  display: block;
+  padding: 14px 10px 36px;
+  background: transparent;
+}
+
+page-core-course-index .list-item-limited-width,
+page-core-course-contents .list-item-limited-width {
+  width: min(100%, 960px);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+/* =========================================================
+ * Seções / unidades em cards
+ * ========================================================= */
+page-core-course-index core-course-section,
+page-core-course-contents core-course-section {
+  display: block;
+  margin: 0 0 14px;
+}
+
+page-core-course-index core-course-section.collapsible .core-course-module-list-wrapper,
+page-core-course-contents core-course-section.collapsible .core-course-module-list-wrapper,
+page-core-course-index core-course-section .core-course-module-list-wrapper,
+page-core-course-contents core-course-section .core-course-module-list-wrapper {
+  background: var(--ifrn-surface);
+  border: 1px solid var(--ifrn-border);
+  border-radius: var(--ifrn-radius);
+  margin: 0 4px 14px;
+  width: calc(100% - 8px);
+  overflow: hidden;
+  box-shadow: var(--ifrn-shadow);
+  border-left: 4px solid var(--ifrn-ava);
+}
+
+page-core-course-index core-course-section ion-item.course-section,
+page-core-course-contents core-course-section ion-item.course-section,
+page-core-course-index core-course-section ion-item.divider,
+page-core-course-contents core-course-section ion-item.divider {
+  --background: var(--ifrn-ava-softer);
+  --color: var(--ifrn-text);
+  --padding-start: 14px;
+  --padding-end: 14px;
+  --min-height: 58px;
+  --inner-border-width: 0;
+  border-bottom: 1px solid var(--ifrn-border);
+}
+
+page-core-course-index core-course-section ion-item.course-section h2,
+page-core-course-contents core-course-section ion-item.course-section h2,
+page-core-course-index core-course-section h2.big,
+page-core-course-contents core-course-section h2.big {
+  color: var(--ifrn-text);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+page-core-course-index core-course-section .section-summary,
+page-core-course-contents core-course-section .section-summary {
+  --background: var(--ifrn-surface);
+  color: var(--ifrn-muted);
+  font-size: 0.92rem;
+}
+
+page-core-course-index core-course-section ion-accordion,
+page-core-course-contents core-course-section ion-accordion {
+  background: transparent;
+}
+
+/* =========================================================
+ * Atividades / módulos — visual limpo e separado
+ * ========================================================= */
+page-core-course-index core-course-module,
+page-core-course-contents core-course-module {
+  --horizontal-spacing: 12px;
+  --vertical-spacing: 10px;
+  --card-border-width: 0px;
+  --card-radius: 0px;
+  --card-background: transparent;
+  --activity-border: 1px solid var(--ifrn-border-inner, #e6e6e6);
+  --card-padding-bottom: 8px;
+  display: block;
+  background: var(--ifrn-surface);
+}
+
+page-core-course-index core-course-module:last-child,
+page-core-course-contents core-course-module:last-child {
+  --activity-border: 0px;
+}
+
+page-core-course-index core-course-module ion-card.activity-card,
+page-core-course-contents core-course-module ion-card.activity-card,
+page-core-course-index core-course-module ion-card,
+page-core-course-contents core-course-module ion-card {
+  margin: 0;
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
+  --background: transparent;
+  --ion-card-background: transparent;
+}
+
+page-core-course-index core-course-module ion-item,
+page-core-course-contents core-course-module ion-item {
+  --background: transparent;
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  --min-height: 56px;
+}
+
+page-core-course-index core-course-module .activity-main,
+page-core-course-contents core-course-module .activity-main {
+  --min-height: 56px;
+  align-items: center;
+}
+
+page-core-course-index core-course-module .item-heading,
+page-core-course-contents core-course-module .item-heading,
+page-core-course-index core-course-module .activity-title,
+page-core-course-contents core-course-module .activity-title {
+  color: var(--ifrn-text);
+  font-weight: 650;
+}
+
+page-core-course-index core-course-module.ion-activatable:active,
+page-core-course-contents core-course-module.ion-activatable:active,
+page-core-course-index core-course-module ion-card.activity-card:active,
+page-core-course-contents core-course-module ion-card.activity-card:active {
+  background: var(--ifrn-ava-soft);
+}
+
+page-core-course-index core-course-module core-mod-icon,
+page-core-course-contents core-course-module core-mod-icon {
+  --module-icon-radius: 10px;
+}
+
+page-core-course-index core-course-module-completion,
+page-core-course-contents core-course-module-completion,
+page-core-course-index .core-course-module-completion,
+page-core-course-contents .core-course-module-completion {
+  --color: var(--ifrn-success);
+}
+
+/* =========================================================
+ * Navegação entre seções / FAB / botões
+ * ========================================================= */
+page-core-course-index .core-course-section-nav-buttons ion-button,
+page-core-course-contents .core-course-section-nav-buttons ion-button {
+  --background: var(--ifrn-ava-soft);
+  --background-activated: var(--ifrn-selected, #eaeff8);
+  --color: var(--ifrn-ava-dark);
+  --border-radius: 12px;
+  font-weight: 700;
+}
+
+page-core-course-index ion-fab-button,
+page-core-course-contents ion-fab-button {
+  --background: var(--ifrn-button-background);
+  --background-activated: var(--ifrn-button-active);
+  --background-focused: var(--ifrn-button-active);
+  --color: #fff;
+  --box-shadow: 0 8px 18px rgba(19, 81, 180, 0.35);
+}
+
+page-core-course-index a,
+page-core-course-contents a,
+page-core-course-index .core-course-module-handler,
+page-core-course-contents .core-course-module-handler {
+  --color: var(--ifrn-ava-dark);
+  color: var(--ifrn-ava-dark);
+}
+
+page-core-course-index ion-badge,
+page-core-course-contents ion-badge {
+  font-weight: 700;
+}
+
+/* =========================================================
+ * Outras abas do curso (participantes / notas / overview)
+ * ========================================================= */
+page-core-course-index page-core-course-overview ion-content,
+page-core-course-index page-core-user-participants ion-content,
+page-core-course-index page-core-grades-course ion-content,
+page-core-course-index ion-router-outlet > * ion-content {
+  --background: var(--ifrn-canvas);
+}
+
+/* =========================================================
+ * Mobile
+ * ========================================================= */
+@media (max-width: 767px) {
+  page-core-course-index.ion-page,
+  page-core-course-index {
+    --core-courseimage-on-course-size: 72px;
+    --core-image-size: 72px;
+  }
+  page-core-course-index .core-course-header core-course-image {
+    --core-image-size: 72px;
+    width: 72px;
+    min-width: 72px;
+    height: 72px;
+  }
+  page-core-course-index .core-course-header ion-label h1,
+  page-core-course-index .core-course-header h1 {
+    font-size: 1.18rem;
+  }
+  page-core-course-index core-course-format,
+  page-core-course-contents core-course-format {
+    padding: 12px 6px 40px;
+  }
+  page-core-course-index core-course-section.collapsible .core-course-module-list-wrapper,
+  page-core-course-contents core-course-section.collapsible .core-course-module-list-wrapper,
+  page-core-course-index core-course-section .core-course-module-list-wrapper,
+  page-core-course-contents core-course-section .core-course-module-list-wrapper {
+    margin: 0 2px 12px;
+    width: calc(100% - 4px);
+    border-radius: 12px;
+  }
+  page-core-course-index .core-tabs-bar swiper-slide {
+    min-width: 96px;
+  }
+  page-core-course-index .core-tabs-bar ion-tab-button ion-label h2 {
+    font-size: 0.84rem;
+  }
+}
+/* Marcador DevTools: computed style de page-core-course-index deve ter --ifrn-ava: #1351b4 */
+/* =========================================================
+ * Acessibilidade do curso (espelho do Painel AVA / VLibras)
+ * Preferências aplicadas no body pelo IfrnCourseAccessibilityService
+ *
+ * Exceções de prioridade: preferências de acessibilidade precisam prevalecer
+ * sobre o conteúdo do curso; o widget VLibras também injeta estilos inline.
+ * Elementos criados pelo app usam a cascata normal, sem prioridade forçada.
+ * ========================================================= */
+@font-face {
+  font-family: "opendyslexic";
+  src: url("https://ava-painel-statics.pages.dev/vendors/OpenDyslexic/OpenDyslexic-Regular.otf") format("opentype");
+  font-style: normal;
+  font-weight: normal;
+}
+@font-face {
+  font-family: "opendyslexic";
+  src: url("https://ava-painel-statics.pages.dev/vendors/OpenDyslexic/OpenDyslexic-Bold.otf") format("opentype");
+  font-weight: bold;
+  font-style: normal;
+}
+body.dyslexia_friendly,
+body.dyslexia_friendly ion-app {
+  --ion-font-family: "opendyslexic", var(--ion-font-family, sans-serif);
+  font-family: "opendyslexic", sans-serif !important; /* sobrescreve inline style do Ionic */
+}
+
+body.big_cursor,
+body.big_cursor * {
+  cursor: url("https://cdn.userway.org/widgetapp/images/arrow_w.svg"), auto !important; /* sobrescreve cursor de widgets de terceiros */
+}
+
+body.highlight_links a[href] {
+  background-color: #333333 !important; /* contraste forçado: cor original do link pode ter qualquer valor */
+  border: 2px solid #f90 !important;
+  color: rgb(255, 255, 100) !important;
+  padding: 0.25em 0.5em;
+  border-radius: 10px;
+}
+
+body.highlight_links a[href] * {
+  color: rgb(255, 255, 100) !important; /* sobrescreve cores explícitas nos descendentes do link */
+}
+
+/* O índice já está no menu IFRN. Oculta só o atalho duplicado quando
+   o menu pode abri-lo; preserva a sala de comunicação e os demais FABs. */
+page-core-course-contents:has(ifrn-course-menu[data-index-ready=true]) ion-fab-button:has(ion-icon[name=fas-list-ul]) {
+  display: none;
+}
+
+/* Menu lateral esquerdo — igual Painel AVA (.ava-menu) */
+ion-modal.ifrn-ava-side-modal--left {
+  --width: min(400px, 100vw);
+  --height: 100%;
+  --max-width: 100vw;
+  --border-radius: 0;
+  --box-shadow: 0 0 20px rgb(0 0 0 / 15%);
+  --backdrop-opacity: 0.35;
+  --background: #ffffff;
+}
+
+ion-modal.ifrn-ava-side-modal--left::part(content) {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: auto;
+  margin: 0;
+  width: var(--width);
+  height: auto;
+  max-width: 100vw;
+  border-radius: 0;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+/* Painel de acessibilidade — igual .sidebar-modal do painel (direita) */
+ion-modal.ifrn-ava-side-modal--a11y {
+  --width: min(400px, 100vw);
+  --height: 100%;
+  --max-width: 100vw;
+  --border-radius: 0;
+  --box-shadow: -6px 0 24px rgb(0 0 0 / 18%);
+  --backdrop-opacity: 0.35;
+  --background: #ffffff;
+}
+
+ion-modal.ifrn-ava-side-modal--a11y::part(content) {
+  position: absolute;
+  inset: 0 0 0 auto;
+  margin: 0;
+  width: var(--width);
+  height: 100%;
+  max-width: 100vw;
+  border-radius: 0;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+/* VLibras compacto — não cobre a tela inteira do app.
+ * !important necessário: VLibras injeta position/display/size via inline styles. */
+div[vw].enabled,
+div[vw].ifrn-vlibras-compact.enabled {
+  display: none !important;
+  margin: 0 !important;
+  top: auto !important;
+  bottom: max(10px, env(safe-area-inset-bottom, 0px)) !important;
+  left: max(6px, env(safe-area-inset-left, 0px)) !important;
+  right: auto !important;
+  width: auto !important;
+  max-width: min(220px, 58vw) !important;
+  max-height: min(280px, 42vh) !important;
+  z-index: 9000 !important;
+  transform: scale(0.48);
+  transform-origin: left bottom;
+  pointer-events: auto !important;
+}
+
+body.vlibras_active div[vw].enabled {
+  display: block !important;
+}
+
+body.vlibras_active div[vw] [vw-access-button],
+body.vlibras_active div[vw] [vw-access-button].active {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  min-height: 48px !important;
+  transform: none !important;
+}
+
+/* Painel do avatar: janela pequena, nunca fullscreen sobre o app */
+body.vlibras_active div[vw] [vw-plugin-wrapper],
+body.vlibras_active div[vw] .vw-plugin-wrapper,
+body.vlibras_active div[vw] .vpw-settings-btn,
+body.vlibras_active div[vw] .vpw-box,
+body.vlibras_active div[vw] iframe {
+  max-width: min(240px, 64vw) !important;
+  max-height: min(320px, 48vh) !important;
+}
+
+body.vlibras_active div[vw] [vw-plugin-wrapper],
+body.vlibras_active div[vw] .vw-plugin-wrapper {
+  position: relative !important;
+  inset: auto !important;
+  width: min(240px, 64vw) !important;
+  height: min(320px, 48vh) !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Botão de emergência acima de qualquer overlay do VLibras.
+ * Criado pelo app como filho direto do body, sem estilos inline.
+ * O escopo abaixo vence regras genéricas de botão sem prioridade forçada.
+ * A regra [hidden] vem depois para respeitar o fechamento pelo serviço. */
+body > button.ifrn-vlibras-escape {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  right: max(12px, env(safe-area-inset-right, 0px));
+  z-index: 2147483646;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: #0c326f;
+  color: #fff;
+  font: 600 0.875rem/1.2 system-ui, sans-serif;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+body > button.ifrn-vlibras-escape[hidden] {
+  display: none;
+}
+
+body > button.ifrn-vlibras-escape:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+body.stop_animations *,
+body.stop_animations *::before,
+body.stop_animations *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+body.hidden_illustrative_image img:not([alt]),
+body.hidden_illustrative_image img[alt=""] {
+  visibility: hidden !important;
+}
+
+body.hidden_illustrative_image * {
+  background-image: none !important;
+}
+
+body.high_line_height p,
+body.high_line_height li,
+body.high_line_height td,
+body.high_line_height th,
+body.high_line_height blockquote,
+body.high_line_height ion-label {
+  line-height: 1.8 !important;
+}
+
+body[data-zoom="120"] page-core-course-index,
+body[data-zoom="120"] page-core-course-contents {
+  font-size: 120%;
+}
+
+body[data-zoom="130"] page-core-course-index,
+body[data-zoom="130"] page-core-course-contents {
+  font-size: 130%;
+}
+
+body[data-zoom="150"] page-core-course-index,
+body[data-zoom="150"] page-core-course-contents {
+  font-size: 150%;
+}
+
+body[data-zoom="160"] page-core-course-index,
+body[data-zoom="160"] page-core-course-contents {
+  font-size: 160%;
+}
+
+body.color_mode_low_contrast ion-app,
+body.color_mode_low_contrast page-core-course-index,
+body.color_mode_low_contrast page-core-course-contents {
+  filter: saturate(0.5);
+}
+
+body.color_mode_grayscale ion-app,
+body.color_mode_grayscale page-core-course-index,
+body.color_mode_grayscale page-core-course-contents {
+  filter: grayscale(100%);
+}
+
+body.color_mode_colorblind page-core-course-index,
+body.color_mode_colorblind page-core-course-contents {
+  --primary: #1f77b4;
+  --ifrn-ava: #1f77b4;
+  --ifrn-ava-dark: #144e75;
+  --ion-color-primary: #1f77b4;
+}
+
+body.color_mode_high_contrast,
+body.color_mode_high_contrast ion-app {
+  background-color: #000 !important;
+  color: #fff !important;
+  --ion-background-color: #000;
+  --ion-text-color: #fff;
+  --ion-item-background: #111;
+  --background-color: #000;
+  --text-color: #fff;
+}
+
+body.color_mode_high_contrast page-core-course-index,
+body.color_mode_high_contrast page-core-course-contents {
+  --ifrn-surface: #111;
+  --ifrn-canvas: #000;
+  --ifrn-text: #fff;
+  --ifrn-muted: #ccc;
+  --ifrn-border: #555;
+  --ion-background-color: #000;
+  --ion-text-color: #fff;
+}
+
+body.color_mode_high_contrast a {
+  color: #ff0 !important; /* alto contraste forçado sobre qualquer cor de link herdada */
+}
+
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--left,
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--a11y {
+  --background: #111;
+}
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--left .ifrn-ava-sidebar, body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--left .ifrn-ava-a11y, body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--left .ifrn-ava-a11y__header,
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--left .ifrn-ava-sidebar__env, body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--left .ifrn-ava-check__label, body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--left .ifrn-ava-cycle__btn,
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--a11y .ifrn-ava-sidebar,
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--a11y .ifrn-ava-a11y,
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--a11y .ifrn-ava-a11y__header,
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--a11y .ifrn-ava-sidebar__env,
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--a11y .ifrn-ava-check__label,
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--a11y .ifrn-ava-cycle__btn {
+  background: #111;
+  color: #fff;
+  border-color: #777;
+}
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--left .ifrn-ava-sidebar__title, body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--left .ifrn-ava-nav-btn, body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--left .ifrn-ava-nav-btn ion-icon,
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--left .ifrn-ava-a11y__title, body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--left .ifrn-ava-a11y__title ion-icon,
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--a11y .ifrn-ava-sidebar__title,
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--a11y .ifrn-ava-nav-btn,
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--a11y .ifrn-ava-nav-btn ion-icon,
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--a11y .ifrn-ava-a11y__title,
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--a11y .ifrn-ava-a11y__title ion-icon {
+  color: #ff0;
+}
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--left .ifrn-ava-nav-btn small,
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--a11y .ifrn-ava-nav-btn small {
+  color: #ddd;
+}
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--left .ifrn-ava-nav-btn:hover,
+body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--a11y .ifrn-ava-nav-btn:hover {
+  background: #222;
+}

@@ -1,0 +1,72 @@
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+// ============================================================
+// DESIGN SYSTEM GOV.BR (v3.0) — Pre-SCSS Variables for Bootstrap
+// Injected BEFORE theme_boost presets and Bootstrap compilation
+// ============================================================
+
+// 1. Cores Institucionais DSGov v3
+$blue-warm-vivid-90: #071d41; // Azul Escuro Institucional (Contraste/Header/Footer)
+$blue-warm-vivid-80: #0c326f; // Azul Primário Dark
+$blue-warm-vivid-70: #1351b4; // Azul Primário Gov.br
+$blue-warm-vivid-60: #155bcb; // Azul Intermediário
+$blue-warm-vivid-20: #c5d6f5; // Azul Claro Borda
+$blue-warm-vivid-10: #eaeff8; // Azul Claro Suave
+$blue-darkest:       #04122b; // Azul Noturno
+
+$green-cool-vivid-60: #2d8a45; // Verde Sucesso Gov.br
+$green-cool-hover:    #184f16;
+$yellow-vivid-30:    #DDAA01; // Amarelo Alerta Dark
+$yellow-vivid-20:    #FFCD07; // Amarelo Alerta Bright
+$color-error:         #d93514; // Vermelho Erro Gov.br
+$color-error-hover:   #a8250b;
+
+// 2. Cores Neutras e Superfície
+$white:               #ffffff;
+$gray-100:            #f7f9fa;
+$gray-200:            #f0f2f5;
+$gray-300:            #e6e6e6;
+$gray-400:            #cccccc;
+$gray-600:            #666666;
+$gray-700:            #444444;
+$gray-800:            #333333;
+$gray-900:            #000000;
+
+// 3. Mapeamento para Variáveis Nativas do Bootstrap / Boost
+$primary:   $blue-warm-vivid-70;
+$secondary: $blue-warm-vivid-90;
+$success:   $green-cool-vivid-60;
+$info:      $blue-warm-vivid-60;
+$warning:   $yellow-vivid-30;
+$danger:    $color-error;
+$light:     $gray-100;
+$dark:      $blue-warm-vivid-90;
+
+$body-bg:          $white;
+$body-color:       $gray-800;
+$link-color:       $blue-warm-vivid-70;
+$link-hover-color: $blue-warm-vivid-80;
+
+// 4. Tipografia Gov.br
+$font-family-rawline: 'Rawline', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+$font-family-base:    $font-family-rawline;
+$font-family-sans-serif: $font-family-rawline;
+
+// 5. Bordas e Formas
+$border-color:     $gray-400;
+$border-radius:    4px;
+$border-radius-sm: 4px;
+$border-radius-lg: 8px;

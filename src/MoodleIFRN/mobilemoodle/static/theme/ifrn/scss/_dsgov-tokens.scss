@@ -3,6 +3,29 @@
 
 @use "dsgov/variables" as ds;
 
+// Derivado, não oficial: o tema web não fornece modo escuro.
+:root.dark {
+    --dsgov-bg-white: #282828;
+    --dsgov-bg-gray: #282828;
+    --dsgov-bg-light-gray: #282828;
+    --dsgov-bg-gray-hover: #343a40;
+    --dsgov-bg-hover: #343a40;
+    --dsgov-bg-blue-light: #162438;
+    --dsgov-text-darkest: #ffffff;
+    --dsgov-text-dark: #ffffff;
+    --dsgov-text-secondary: #dee2e6;
+    --dsgov-text-medium: #ced4da;
+    --dsgov-text-muted: #ced4da;
+    --dsgov-blue-70: #82b1ff;
+    --dsgov-blue-80: #b3d1ff;
+    --dsgov-blue-90: #c5d6f5;
+    --dsgov-blue-10: #162438;
+    --dsgov-border-outer: #495057;
+    --dsgov-border-inner: #343a40;
+    --dsgov-border-default: #495057;
+    color-scheme: dark;
+}
+
 :root {
     // Cores institucionais Gov.br
     --dsgov-blue-90: #{ds.$blue-warm-vivid-90};

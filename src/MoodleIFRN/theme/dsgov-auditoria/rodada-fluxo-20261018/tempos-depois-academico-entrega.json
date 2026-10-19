@@ -1,0 +1,31 @@
+{
+  "environment": "academico",
+  "kind": "observado no aparelho",
+  "stages": [
+    {
+      "stage": "session-and-identity",
+      "ms": 5,
+      "outcome": "ok"
+    },
+    {
+      "stage": "language",
+      "ms": 1,
+      "outcome": "ok"
+    },
+    {
+      "stage": "enrolments-cache-or-network",
+      "ms": 35,
+      "outcome": "ok"
+    },
+    {
+      "stage": "native-helper-and-navigation",
+      "ms": 2445,
+      "outcome": "ok"
+    },
+    {
+      "stage": "course-first-paint",
+      "ms": 52,
+      "outcome": "ok"
+    }
+  ]
+}

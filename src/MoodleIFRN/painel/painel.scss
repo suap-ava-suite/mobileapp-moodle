@@ -24,3 +24,9 @@
     padding: 0;
     background: transparent;
 }
+
+// A rolagem pertence ao ion-content interno do painel, não ao wrapper do iframe.
+.painel-page-content::part(scroll) {
+    overflow: hidden;
+    overscroll-behavior: none;
+}

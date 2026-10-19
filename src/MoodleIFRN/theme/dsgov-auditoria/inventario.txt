@@ -1,0 +1,169 @@
+Inventário atual: contagem de todas as cores/fontes em SCSS/CSS/HTML/TS.
+
+CORES POR ARQUIVO
+139	src\MoodleIFRN\mobilemoodle\static\theme\ifrn\css\painel.css
+76	src\MoodleIFRN\mobilemoodle\static\vendor\ionic\css\ionic.bundle.css
+68	src\MoodleIFRN\theme\ifrn-dsgov-tokens.scss
+66	src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\_accessibility.scss
+58	src\MoodleIFRN\moodle-course\moodle-course.scss
+53	src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss
+40	src\MoodleIFRN\moodle-course\course-menu.scss
+36	src\MoodleIFRN\moodle-open-course\moodle-open-course.scss
+29	src\MoodleIFRN\marketplace-ifrn\marketplace-ifrn.scss
+11	src\MoodleIFRN\mobilemoodle\index.html
+10	src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\_status-page.scss
+5	src\MoodleIFRN\services_mobile\painel-ava.service.ts
+3	src\MoodleIFRN\mobilemoodle\core_mobile\app-status.ts
+3	src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\_curso.scss
+3	src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\_splash.scss
+2	src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\_global.scss
+2	src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\_sidebar.scss
+2	src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\_variables.scss
+2	src\MoodleIFRN\painel-enrol\painel-enrol.scss
+1	src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\_cards.scss
+1	src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\_dsgov-components.scss
+0	src\MoodleIFRN\ifrn-login\ifrn-login.html
+0	src\MoodleIFRN\ifrn-login\ifrn-login.ts
+0	src\MoodleIFRN\marketplace-ifrn\marketplace-ifrn.html
+0	src\MoodleIFRN\marketplace-ifrn\marketplace-ifrn.ts
+0	src\MoodleIFRN\mobilemoodle\core_mobile\api-auth.ts
+0	src\MoodleIFRN\mobilemoodle\core_mobile\api-errors.ts
+0	src\MoodleIFRN\mobilemoodle\core_mobile\api-http.ts
+0	src\MoodleIFRN\mobilemoodle\core_mobile\api-painel.ts
+0	src\MoodleIFRN\mobilemoodle\core_mobile\api-suap.ts
+0	src\MoodleIFRN\mobilemoodle\core_mobile\api.ts
+0	src\MoodleIFRN\mobilemoodle\core_mobile\app-accessibility.ts
+0	src\MoodleIFRN\mobilemoodle\core_mobile\app-keyboard.ts
+0	src\MoodleIFRN\mobilemoodle\core_mobile\app-router.ts
+0	src\MoodleIFRN\mobilemoodle\core_mobile\app-sidebar.ts
+0	src\MoodleIFRN\mobilemoodle\core_mobile\app-utils.ts
+0	src\MoodleIFRN\mobilemoodle\core_mobile\app-views.ts
+0	src\MoodleIFRN\mobilemoodle\core_mobile\app.ts
+0	src\MoodleIFRN\mobilemoodle\core_mobile\course-favourites.ts
+0	src\MoodleIFRN\mobilemoodle\core_mobile\global.d.ts
+0	src\MoodleIFRN\mobilemoodle\core_mobile\namespace.ts
+0	src\MoodleIFRN\mobilemoodle\core_mobile\oauth-profile.ts
+0	src\MoodleIFRN\mobilemoodle\mobilemoodle.ts
+0	src\MoodleIFRN\mobilemoodle\pages\curso.html
+0	src\MoodleIFRN\mobilemoodle\pages\erros.html
+0	src\MoodleIFRN\mobilemoodle\pages\painel.html
+0	src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_mixins.scss
+0	src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\painel.scss
+0	src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\_dsgov-tokens.scss
+0	src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\_fonts.scss
+0	src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\_mobile.scss
+0	src\MoodleIFRN\moodle-course\course-accessibility.ts
+0	src\MoodleIFRN\moodle-course\course-menu.html
+0	src\MoodleIFRN\moodle-course\course-menu.ts
+0	src\MoodleIFRN\moodle-open-course\moodle-open-course.html
+0	src\MoodleIFRN\moodle-open-course\moodle-open-course.ts
+0	src\MoodleIFRN\navigation\handoff-loading.ts
+0	src\MoodleIFRN\navigation\navigation-policy.ts
+0	src\MoodleIFRN\navigation\navigation-shell.scss
+0	src\MoodleIFRN\navigation\navigation.guard.ts
+0	src\MoodleIFRN\navigation\suap-entry-state.ts
+0	src\MoodleIFRN\painel\painel.html
+0	src\MoodleIFRN\painel\painel.scss
+0	src\MoodleIFRN\painel\painel.ts
+0	src\MoodleIFRN\painel-enrol\painel-enrol.html
+0	src\MoodleIFRN\painel-enrol\painel-enrol.ts
+0	src\MoodleIFRN\services_mobile\auth.service.ts
+0	src\MoodleIFRN\services_mobile\biometric.service.ts
+0	src\MoodleIFRN\services_mobile\ifrn-language.ts
+0	src\MoodleIFRN\services_mobile\moodle-site.service.ts
+0	src\MoodleIFRN\services_mobile\painel-ava.config.ts
+0	src\MoodleIFRN\services_mobile\suap-browser.service.ts
+0	src\MoodleIFRN\services_mobile\suap-entry.service.ts
+
+CORES POR VALOR (40)
+54	#fff
+42	#ffffff
+35	#1351b4
+17	#000
+15	#e6e6e6
+14	#0c326f
+12	#111
+11	#1f77b4
+10	#333333
+9	#eaeff8
+9	#cccccc
+8	#c5d6f5
+7	#666666
+7	#144e75
+6	#ff0
+5	rgba(7, 29, 65, 0.12)
+5	#155bcb
+5	rgba(0, 0, 0, 0.04)
+5	#f90
+4	#d93514
+4	#2b2b2b
+4	#2d8a45
+4	#071d41
+4	#f6f6f6
+4	#dddddd
+4	rgba(0, 0, 0, 0.08)
+4	rgba(19, 81, 180, 0.35)
+4	#d5e8f5
+4	#ffff00
+4	#e8f1ff
+4	rgba(255, 255, 100, 1)
+4	#333
+4	#82b1ff
+3	rgba(255, 255, 255, 0.92)
+3	rgba(19, 81, 180, 0.14)
+3	#04122b
+3	#184f16
+3	#ddaa01
+3	#ffcd07
+3	#a8250b
+
+FONT-FAMILY POR VALOR
+10	"opendyslexic"
+6	var(--ifrn-font)
+6	"Rawline"
+5	inherit
+4	var(--dsgov-font-family)
+3	"opendyslexic", sans-serif !important
+2	var(--font-family, var(--dsgov-font-family))
+2	var(--ion-font-family)
+1	"Rawline", "Noto Sans", system-ui, sans-serif
+1	Rawline, Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif
+1	#{ds.$font-family-base
+1	monospace,monospace
+1	var(--ion-default-font)
+1	var(--ion-font-family, "Rawline", sans-serif)
+1	"Rawline", sans-serif
+1	"opendyslexic", var(--ion-font-family, sans-serif)
+1	var(--moodle-open-font)
+
+FONTES LOCAIS
+src\MoodleIFRN\mobilemoodle\static\theme\ifrn\fonts\rawline-400.woff2
+src\MoodleIFRN\mobilemoodle\static\theme\ifrn\fonts\rawline-500.woff2
+src\MoodleIFRN\mobilemoodle\static\theme\ifrn\fonts\rawline-600.woff2
+src\MoodleIFRN\mobilemoodle\static\theme\ifrn\fonts\rawline-700.woff2
+
+DIVERGÊNCIAS PAINEL
+Token | tema web | app | arquivo:linha
+$status-academic-bg | $blue-badge-bg | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-academic-color | $blue-warm-vivid-70 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-published-bg | $green-badge-bg | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-published-color | $green-cool-vivid-60 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-coordenacao-bg | #ede7f6 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-coordenacao-color | #512da8 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-autoinscricao-bg | #e0f2f1 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-autoinscricao-color | #00695c | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-oculto-bg | #f0f0f0 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-oculto-color | #666666 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-oculto-border | #dcdcdc | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$table-header-bg | #f1f4f9 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$table-subtle-bg | #f8f9fa | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$table-hover-bg | #f9fbfe | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$z-index-modal-backdrop | 1070 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$z-index-modal | 1080 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+
+Fonte web: 400,400i,500,600,600i,700,700i. App: 400,500,600,700 normais; itálicos não fornecidos.
+moodle-course.scss: entrada global em angular.json:59; sintaxe @use. Nenhum arquivo de configuração alterado.
+Comparação histórica: analise-aparelho/dsgov/inventario.txt (somente leitura).
+Correções atuais, reaplicadas após corrigir o empacotamento: removidas autorreferências que invalidavam tokens; foco usa box-shadow; Rawline herdada; botões preenchidos usam azul oficial com branco no escuro.
+Painel: divergências semânticas/estruturais ausentes preservadas. container-max-width já foi alterado por commit anterior; nenhuma alteração nova no painel.
+Cores de marca IFRN e modos de acessibilidade preexistentes preservados.

@@ -1,0 +1,1 @@
+(()=>{const page=[...document.querySelectorAll('page-core-course-index')].find(e=>!e.closest('.ion-page-hidden'));const back=page?.querySelector('ion-back-button');if(!back)return 'Seta indisponível';const b=back.getBoundingClientRect();(back.shadowRoot?.querySelector('button')||back).click();return JSON.stringify({action:'seta nativa',left:b.left,top:b.top,width:b.width});})()

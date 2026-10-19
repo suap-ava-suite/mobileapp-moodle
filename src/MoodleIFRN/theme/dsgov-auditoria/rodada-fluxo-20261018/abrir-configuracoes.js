@@ -1,0 +1,1 @@
+(async()=>{const el=document.querySelector('page-marketplace-ifrn');const c=el && window.ng?.getComponent(el);if(!c?.router)return 'Navegação indisponível';await c.router.navigate(['/settings/general']);return 'Configurações gerais abertas.';})()

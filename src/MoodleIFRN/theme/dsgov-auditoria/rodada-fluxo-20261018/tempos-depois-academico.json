@@ -1,0 +1,56 @@
+{
+  "environment": "academico",
+  "kind": "observado no aparelho",
+  "stages": [
+    {
+      "stage": "session-and-identity",
+      "ms": 328,
+      "outcome": "ok"
+    },
+    {
+      "stage": "language",
+      "ms": 291,
+      "outcome": "ok"
+    },
+    {
+      "stage": "enrolments-cache-or-network",
+      "ms": 75,
+      "outcome": "ok"
+    },
+    {
+      "stage": "native-helper-and-navigation",
+      "ms": 3009,
+      "outcome": "ok"
+    },
+    {
+      "stage": "course-first-paint",
+      "ms": 122,
+      "outcome": "ok"
+    },
+    {
+      "stage": "session-and-identity",
+      "ms": 23,
+      "outcome": "ok"
+    },
+    {
+      "stage": "language",
+      "ms": 1,
+      "outcome": "ok"
+    },
+    {
+      "stage": "enrolments-cache-or-network",
+      "ms": 178,
+      "outcome": "ok"
+    },
+    {
+      "stage": "native-helper-and-navigation",
+      "ms": 2876,
+      "outcome": "ok"
+    },
+    {
+      "stage": "course-first-paint",
+      "ms": 58,
+      "outcome": "ok"
+    }
+  ]
+}

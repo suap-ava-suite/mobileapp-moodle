@@ -1,0 +1,1 @@
+JSON.stringify((()=>{const el=document.querySelector('page-moodle-open-course:not(.ion-page-hidden)');const c=el && window.ng?.getComponent(el);return {bridge:!!c,phase:c?.phase,loading:!!c?.loading,error:!!c?.formError,environment:c?.moodleSiteUrl?.includes('presencial.')?'presencial':c?.moodleSiteUrl?.includes('academico.')?'academico':undefined};})())

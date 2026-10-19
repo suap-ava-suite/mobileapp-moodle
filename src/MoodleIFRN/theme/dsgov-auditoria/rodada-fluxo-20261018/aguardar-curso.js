@@ -1,0 +1,1 @@
+(async()=>{const end=performance.now()+15000;while(performance.now()<end){const el=[...document.querySelectorAll('page-core-course-index')].find(e=>!e.closest('.ion-page-hidden,.ion-page-invisible')&&e.getBoundingClientRect().height);if(el)return JSON.stringify({course:true});await new Promise(r=>requestAnimationFrame(r));}return JSON.stringify({course:false});})()

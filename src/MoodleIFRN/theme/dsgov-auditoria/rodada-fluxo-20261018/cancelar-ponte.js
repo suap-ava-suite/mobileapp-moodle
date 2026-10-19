@@ -1,0 +1,1 @@
+(()=>{const el=document.querySelector('page-moodle-open-course:not(.ion-page-hidden)');const c=el&&window.ng?.getComponent(el);if(!c)return 'Ponte indisponível';c.cancelOpening();return 'Cancelamento pela ação existente da ponte; sessão preservada.';})()

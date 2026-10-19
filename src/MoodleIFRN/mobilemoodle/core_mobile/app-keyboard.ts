@@ -102,13 +102,17 @@ function readCssEnvInsets(): SafeInsets {
 function setSafeAreaVars(insets: SafeInsets): void {
     const root = document.documentElement.style;
 
-    root.setProperty('--ion-safe-area-top', `${Math.max(0, Math.round(insets.top))}px`);
-    root.setProperty('--ion-safe-area-right', `${Math.max(0, Math.round(insets.right))}px`);
-    root.setProperty('--ion-safe-area-bottom', `${Math.max(0, Math.round(insets.bottom))}px`);
-    root.setProperty('--ion-safe-area-left', `${Math.max(0, Math.round(insets.left))}px`);
+    root.setProperty('--ion-safe-area-top', `${Math.max(0, insets.top)}px`);
+    root.setProperty('--ion-safe-area-right', `${Math.max(0, insets.right)}px`);
+    root.setProperty('--ion-safe-area-bottom', `${Math.max(0, insets.bottom)}px`);
+    root.setProperty('--ion-safe-area-left', `${Math.max(0, insets.left)}px`);
 }
 
 function resolveFallbackInsets(): SafeInsets {
+    const hostInsets = readHostInsets();
+    if (hostInsets) {
+        return hostInsets;
+    }
     // Console / browser (sem Cordova): zero no topo — não há status bar sobrepondo.
     if (!isCordovaRuntime()) {
         return { top: 0, right: 0, bottom: 0, left: 0 };
@@ -122,6 +126,25 @@ function resolveFallbackInsets(): SafeInsets {
     }
 
     return insets;
+}
+
+/** No iframe, o host Cordova é a autoridade; env() do documento filho costuma retornar zero. */
+function readHostInsets(): SafeInsets | null {
+    try {
+        if (window.parent === window) {
+            return null;
+        }
+        const style = window.parent.getComputedStyle(window.parent.document.documentElement);
+        const values = ['top', 'right', 'bottom', 'left'].map(side =>
+            parseFloat(style.getPropertyValue(`--ion-safe-area-${side}`)));
+        if (values.some(value => !Number.isFinite(value))) {
+            return null;
+        }
+
+        return { top: values[0], right: values[1], bottom: values[2], left: values[3] };
+    } catch {
+        return null;
+    }
 }
 
 function applySafeAreaVariables(): void {
@@ -194,6 +217,16 @@ function scrollFocusedFieldIntoView(): void {
 }
 
 export function initKeyboardInsets(): void {
+    if (readHostInsets()) {
+        const observer = new MutationObserver(() => {
+            const insets = readHostInsets();
+            if (insets) {
+                setSafeAreaVars(insets);
+            }
+        });
+        observer.observe(window.parent.document.documentElement, { attributes: true, attributeFilter: ['style'] });
+        window.addEventListener('pagehide', () => observer.disconnect(), { once: true });
+    }
     // Zera primeiro para não herdar padding fantasma do Ionic no console.
     setSafeAreaVars({ top: 0, right: 0, bottom: 0, left: 0 });
     applySafeAreaVariables();

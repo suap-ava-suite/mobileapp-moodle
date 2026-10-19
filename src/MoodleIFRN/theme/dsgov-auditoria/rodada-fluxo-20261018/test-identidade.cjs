@@ -1,0 +1,11 @@
+const fs=require('node:fs'),ts=require('typescript'),vm=require('node:vm'),assert=require('node:assert/strict');
+const name='src/MoodleIFRN/services_mobile/moodle-site.service.ts';const source=ts.createSourceFile(name,fs.readFileSync(name,'utf8'),ts.ScriptTarget.Latest,true);
+const cls=source.statements.find(s=>ts.isClassDeclaration(s)&&s.name.text==='MoodleSiteService');const method=cls.members.find(m=>m.name?.getText(source)==='ensureMatchingMoodleSession');
+const moduleObject={exports:{}};const js=ts.transpileModule(`class Harness{${method.getText(source)}};module.exports=Harness;`,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;
+vm.runInNewContext(js,{module:moduleObject,CoreSites:{getCurrentSite:()=>({getURL:()=>'',getId:()=>true}),getSiteIdsFromUrl:async()=>[],isLoggedIn:()=>true},resolveMoodleSiteUrl:x=>x,identityLog(){}});
+(async()=>{const c=new moduleObject.exports();c.logIdentityDiagnostics=()=>{};c.hasPresencialSession=()=>true;c.findStoredSiteIdForExpectedIdentities=async()=>undefined;c.reportCourseAccessIssue=()=>{};c.getPendingOpenCourse=()=>null;
+c.matchCurrentMoodleIdentity=()=>({hasExpected:false,matches:false});await assert.rejects(c.ensureMatchingMoodleSession('test'),/confirmar/);
+c.matchCurrentMoodleIdentity=()=>({hasExpected:true,matches:true});assert.equal(await c.ensureMatchingMoodleSession('test'),'matched-current');
+c.matchCurrentMoodleIdentity=()=>({hasExpected:true,matches:false});assert.equal(await c.ensureMatchingMoodleSession('test'),'oauth-mismatch');
+c.matchCurrentMoodleIdentity=()=>({hasExpected:true,matches:true});c.hasPresencialSession=()=>false;assert.equal(await c.ensureMatchingMoodleSession('test'),'need-oauth');
+console.log('PASS local: identidade ausente bloqueada; conta correta aceita; conta divergente bloqueada; sessão de outro ambiente não reutilizada. Não é teste de contas reais.');})().catch(e=>{console.error(e);process.exitCode=1;});

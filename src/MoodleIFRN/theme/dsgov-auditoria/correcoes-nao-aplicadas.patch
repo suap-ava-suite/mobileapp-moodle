@@ -1,0 +1,167 @@
+﻿diff --git a/src/MoodleIFRN/marketplace-ifrn/marketplace-ifrn.scss b/src/MoodleIFRN/marketplace-ifrn/marketplace-ifrn.scss
+index 2eb3f6f56..39897fa6d 100644
+--- a/src/MoodleIFRN/marketplace-ifrn/marketplace-ifrn.scss
++++ b/src/MoodleIFRN/marketplace-ifrn/marketplace-ifrn.scss
+@@ -1,13 +1,9 @@
+-@use "../theme/ifrn-dsgov-tokens";
+-
+ .marketplace-ifrn {
+     --ifrn-paper: var(--ifrn-surface, #ffffff);
+     --ifrn-ink: var(--ifrn-text, #333333);
+-    --ifrn-muted: var(--ifrn-muted, #666666);
+     --ifrn-soft: var(--ifrn-selected, #eaeff8);
+     --ifrn-accent: var(--ifrn-interactive, #1351b4);
+     --ifrn-line: var(--ifrn-border-inner, #e6e6e6);
+-    --ifrn-font: var(--ifrn-font, ("Rawline", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif));
+     --ifrn-gutter: clamp(24px, 6.9vw, 32px);
+     --ifrn-safe-top: var(--ion-safe-area-top, env(safe-area-inset-top, 0px));
+     --ifrn-safe-bottom: var(--ion-safe-area-bottom, env(safe-area-inset-bottom, 0px));
+@@ -109,7 +105,7 @@
+     }
+ 
+     .brand__name strong {
+-        font-family: Arial, sans-serif;
++        font-family: var(--ifrn-font);
+         font-size: 12px;
+         font-weight: 700;
+         letter-spacing: 0.15px;
+@@ -220,19 +216,19 @@
+     }
+ 
+     ion-button.btn-enter {
+-        --background: var(--ifrn-interactive, #1351b4);
+-        --background-activated: var(--ifrn-active, #0c326f);
+-        --background-focused: var(--ifrn-active, #0c326f);
+-        --background-hover: var(--ifrn-active, #0c326f);
++        --background: var(--ifrn-button-background);
++        --background-activated: var(--ifrn-button-active);
++        --background-focused: var(--ifrn-button-active);
++        --background-hover: var(--ifrn-button-active);
+         --color: #ffffff;
+     }
+ 
+     ion-button.btn-enter:hover {
+-        --background: var(--ifrn-active, #0c326f);
++        --background: var(--ifrn-button-active);
+     }
+ 
+     ion-button.btn-enter:focus-visible {
+-        outline: var(--ifrn-focus, 0 0 0 3px rgba(19, 81, 180, 0.35));
++        box-shadow: var(--ifrn-focus);
+         outline-offset: 2px;
+     }
+ 
+@@ -278,7 +274,7 @@
+     }
+ 
+     ion-button.btn-continue:focus-visible {
+-        outline: var(--ifrn-focus, 0 0 0 3px rgba(19, 81, 180, 0.35));
++        box-shadow: var(--ifrn-focus);
+         outline-offset: 2px;
+     }
+ 
+@@ -338,7 +334,7 @@
+ 
+     .help-link:focus-visible {
+         border-radius: var(--ifrn-radius, 4px);
+-        outline: var(--ifrn-focus, 0 0 0 3px rgba(19, 81, 180, 0.35));
++        box-shadow: var(--ifrn-focus);
+         outline-offset: 4px;
+     }
+ 
+@@ -491,7 +487,7 @@
+ }
+ .marketplace-transition__cancel:focus-visible {
+     border-radius: var(--ifrn-radius, 4px);
+-    outline: var(--ifrn-focus, 0 0 0 3px rgba(19, 81, 180, 0.35));
++    box-shadow: var(--ifrn-focus);
+ }
+ @media (max-width: 767.98px) {
+     :host .marketplace-transition { gap: 0.85rem; }
+@@ -536,4 +532,3 @@
+         background: var(--ifrn-surface);
+     }
+ }
+-
+diff --git a/src/MoodleIFRN/moodle-course/moodle-course.scss b/src/MoodleIFRN/moodle-course/moodle-course.scss
+index e65554001..70099b776 100644
+--- a/src/MoodleIFRN/moodle-course/moodle-course.scss
++++ b/src/MoodleIFRN/moodle-course/moodle-course.scss
+@@ -37,15 +37,6 @@ page-core-course-index {
+     --ifrn-ava-dark: var(--ifrn-active, #0c326f);
+     --ifrn-ava-mid: var(--ifrn-selected-mid, #155bcb);
+     --ifrn-ava-soft: var(--ifrn-selected, #eaeff8);
+-    --ifrn-ava-softer: var(--ifrn-hover-bg, #f0f5ff);
+-    --ifrn-surface: var(--ifrn-surface, #ffffff);
+-    --ifrn-canvas: var(--ifrn-canvas, #f6f6f6);
+-    --ifrn-border: var(--ifrn-border, #cccccc);
+-    --ifrn-text: var(--ifrn-text, #333333);
+-    --ifrn-muted: var(--ifrn-muted, #666666);
+-    --ifrn-success: var(--ifrn-success, #2d8a45);
+-    --ifrn-shadow: var(--ifrn-shadow, 0 4px 16px rgba(0, 0, 0, 0.04));
+-    --ifrn-radius: var(--ifrn-radius, 4px);
+ 
+     /* Tokens oficiais do Moodle / Ionic usados pelos componentes nativos */
+     --primary: var(--ifrn-ava);
+@@ -463,9 +454,9 @@ page-core-course-contents .core-course-section-nav-buttons ion-button {
+ 
+ page-core-course-index ion-fab-button,
+ page-core-course-contents ion-fab-button {
+-    --background: var(--ifrn-ava);
+-    --background-activated: var(--ifrn-ava-dark);
+-    --background-focused: var(--ifrn-ava-dark);
++    --background: var(--ifrn-button-background);
++    --background-activated: var(--ifrn-button-active);
++    --background-focused: var(--ifrn-button-active);
+     --color: #fff;
+     --box-shadow: 0 8px 18px rgba(19, 81, 180, 0.35);
+ }
+diff --git a/src/MoodleIFRN/theme/ifrn-dsgov-tokens.scss b/src/MoodleIFRN/theme/ifrn-dsgov-tokens.scss
+index 5a5161a5f..2c878d298 100644
+--- a/src/MoodleIFRN/theme/ifrn-dsgov-tokens.scss
++++ b/src/MoodleIFRN/theme/ifrn-dsgov-tokens.scss
+@@ -11,6 +11,8 @@
+     --ifrn-primary: #1351b4;
+     --ifrn-interactive: #1351b4;
+     --ifrn-active: #0c326f;
++    --ifrn-button-background: #1351b4;
++    --ifrn-button-active: #0c326f;
+     --ifrn-selected: #eaeff8;
+     --ifrn-selected-mid: #155bcb;
+     --ifrn-dark: #071d41;
+@@ -62,13 +64,14 @@
+    ========================================================================== */
+ :root.dark {
+     /* Superfícies e Neutros (derivados com alto contraste) */
+-    --ifrn-surface: #1e1e1e;
+-    --ifrn-canvas: #121212;
+-    --ifrn-border: #3e3e3e;
+-    --ifrn-border-inner: #2e2e2e;
+-    --ifrn-text: #f8f9fa;
++    /* theme.dark.scss usa gray-900, white e gray-700 de globals.variables.scss. */
++    --ifrn-surface: #282828;
++    --ifrn-canvas: #282828;
++    --ifrn-border: #495057;
++    --ifrn-border-inner: #343a40;
++    --ifrn-text: #ffffff;
+     --ifrn-secondary: #dee2e6;
+-    --ifrn-muted: #a6a6a6;
++    --ifrn-muted: #ced4da;
+ 
+     /* Azuis e Elementos Interativos (derivados aprovados por contraste WCAG >= 4.5:1) */
+     --ifrn-primary: #82b1ff;
+@@ -88,11 +91,11 @@
+     --ifrn-ava-softer: #101c2e;
+ 
+     /* Compatibilidade Marketplace */
+-    --ifrn-paper: #1e1e1e;
+-    --ifrn-ink: #f8f9fa;
++    --ifrn-paper: #282828;
++    --ifrn-ink: #ffffff;
+     --ifrn-soft: #162438;
+     --ifrn-accent: #82b1ff;
+-    --ifrn-line: #3e3e3e;
++    --ifrn-line: #495057;
+ 
+     /* Estados no escuro (derivados de alto contraste) */
+     --ifrn-success: #69db7c;

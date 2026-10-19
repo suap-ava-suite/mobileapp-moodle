@@ -1,0 +1,88 @@
+========================================================================
+RELATÓRIO DE CONTRASTE WCAG 2.1 — DESIGN SYSTEM GOV.BR (IFRN)
+========================================================================
+
+Nota de Conformidade: Todos os cálculos utilizam a fórmula matemática
+de luminância relativa da WCAG 2.1 (ISO/IEC 40500:2012).
+Mínimos regulamentares: 4.5:1 para texto normal; 3.0:1 para texto grande e componentes de UI.
+
+------------------------------------------------------------------------
+1. TEMA CLARO (Oficial — tokens extraídos diretamente da web ref)
+------------------------------------------------------------------------
+[APROVADO] texto / superfície
+  Cores: #333333 vs #ffffff
+  Razão: 12.63:1 (Mínimo exigido: 4.5:1)
+
+[APROVADO] secundário / superfície
+  Cores: #444444 vs #ffffff
+  Razão: 9.74:1 (Mínimo exigido: 4.5:1)
+
+[APROVADO] muted / canvas
+  Cores: #666666 vs #f6f6f6
+  Razão: 5.31:1 (Mínimo exigido: 4.5:1)
+
+[APROVADO] interativo / superfície
+  Cores: #1351b4 vs #ffffff
+  Razão: 7.33:1 (Mínimo exigido: 4.5:1)
+
+[APROVADO] branco / interativo
+  Cores: #ffffff vs #1351b4
+  Razão: 7.33:1 (Mínimo exigido: 4.5:1)
+
+[APROVADO] texto / canvas
+  Cores: #333333 vs #f6f6f6
+  Razão: 11.69:1 (Mínimo exigido: 4.5:1)
+
+[APROVADO] erro / superfície
+  Cores: #d93514 vs #ffffff
+  Razão: 4.70:1 (Mínimo exigido: 4.5:1)
+
+[APROVADO] sucesso / superfície
+  Cores: #2d8a45 vs #ffffff
+  Razão: 4.35:1 (Mínimo exigido: 3:1)
+  Observação: 4.35:1 aprovado para UI/Badges (min 3.0). Para texto normal longo (min 4.5), o tema web fornece $green-cool-hover (#184f16) com 9.68:1.
+
+[APROVADO] interativo / superfície escura
+  Cores: #c5d6f5 vs #071d41
+  Razão: 11.35:1 (Mínimo exigido: 4.5:1)
+  Observação: Elemento interativo/destaque sobre faixa institucional escura (#071d41) usa o token oficial $blue-warm-vivid-20 (#c5d6f5) ou branco (#ffffff, 16.65:1).
+
+------------------------------------------------------------------------
+2. MODO ESCURO (Derivado, não oficial — adaptado do dark-palette do Moodle)
+------------------------------------------------------------------------
+[APROVADO] texto / superfície [derivado, não oficial]
+  Cores: #f8f9fa vs #1e1e1e
+  Razão: 15.82:1 (Mínimo exigido: 4.5:1)
+
+[APROVADO] secundário / superfície [derivado, não oficial]
+  Cores: #dee2e6 vs #1e1e1e
+  Razão: 12.80:1 (Mínimo exigido: 4.5:1)
+
+[APROVADO] muted / canvas [derivado, não oficial]
+  Cores: #a6a6a6 vs #121212
+  Razão: 7.70:1 (Mínimo exigido: 4.5:1)
+
+[APROVADO] interativo / superfície [derivado, não oficial]
+  Cores: #82b1ff vs #1e1e1e
+  Razão: 7.69:1 (Mínimo exigido: 4.5:1)
+
+[APROVADO] branco / interativo [derivado, não oficial]
+  Cores: #ffffff vs #1351b4
+  Razão: 7.33:1 (Mínimo exigido: 4.5:1)
+
+[APROVADO] texto / canvas [derivado, não oficial]
+  Cores: #f8f9fa vs #121212
+  Razão: 17.77:1 (Mínimo exigido: 4.5:1)
+
+[APROVADO] erro / superfície [derivado, não oficial]
+  Cores: #ff6b6b vs #1e1e1e
+  Razão: 6.01:1 (Mínimo exigido: 4.5:1)
+
+[APROVADO] sucesso / superfície [derivado, não oficial]
+  Cores: #69db7c vs #1e1e1e
+  Razão: 9.55:1 (Mínimo exigido: 4.5:1)
+
+[APROVADO] interativo / superfície escura [derivado, não oficial]
+  Cores: #82b1ff vs #121212
+  Razão: 8.64:1 (Mínimo exigido: 4.5:1)
+

@@ -9,8 +9,13 @@
 
     /* 2. Cores Institucionais e Azuis DS Gov.br */
     --ifrn-primary: #1351b4;
+    --ifrn-primary-rgb: 19, 81, 180;
+    --ifrn-primary-contrast: #ffffff;
+    --ifrn-primary-contrast-rgb: 255, 255, 255;
     --ifrn-interactive: #1351b4;
     --ifrn-active: #0c326f;
+    --ifrn-button-background: #1351b4;
+    --ifrn-button-active: #0c326f;
     --ifrn-selected: #eaeff8;
     --ifrn-selected-mid: #155bcb;
     --ifrn-dark: #071d41;
@@ -62,16 +67,20 @@
    ========================================================================== */
 :root.dark {
     /* Superfícies e Neutros (derivados com alto contraste) */
-    --ifrn-surface: #1e1e1e;
-    --ifrn-canvas: #121212;
-    --ifrn-border: #3e3e3e;
-    --ifrn-border-inner: #2e2e2e;
-    --ifrn-text: #f8f9fa;
+    /* theme.dark.scss usa gray-900, white e gray-700 de globals.variables.scss. */
+    --ifrn-surface: #282828;
+    --ifrn-canvas: #282828;
+    --ifrn-border: #495057;
+    --ifrn-border-inner: #343a40;
+    --ifrn-text: #ffffff;
     --ifrn-secondary: #dee2e6;
-    --ifrn-muted: #a6a6a6;
+    --ifrn-muted: #ced4da;
 
     /* Azuis e Elementos Interativos (derivados aprovados por contraste WCAG >= 4.5:1) */
     --ifrn-primary: #82b1ff;
+    --ifrn-primary-rgb: 130, 177, 255;
+    --ifrn-primary-contrast: #04122b;
+    --ifrn-primary-contrast-rgb: 4, 18, 43;
     --ifrn-interactive: #82b1ff;
     --ifrn-active: #b3d1ff;
     --ifrn-selected: #1e293b;
@@ -88,11 +97,11 @@
     --ifrn-ava-softer: #101c2e;
 
     /* Compatibilidade Marketplace */
-    --ifrn-paper: #1e1e1e;
-    --ifrn-ink: #f8f9fa;
+    --ifrn-paper: #282828;
+    --ifrn-ink: #ffffff;
     --ifrn-soft: #162438;
     --ifrn-accent: #82b1ff;
-    --ifrn-line: #3e3e3e;
+    --ifrn-line: #495057;
 
     /* Estados no escuro (derivados de alto contraste) */
     --ifrn-success: #69db7c;

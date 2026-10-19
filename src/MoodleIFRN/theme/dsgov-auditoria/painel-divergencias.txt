@@ -1,0 +1,17 @@
+Token | tema web | app | arquivo:linha
+$status-academic-bg | $blue-badge-bg | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-academic-color | $blue-warm-vivid-70 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-published-bg | $green-badge-bg | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-published-color | $green-cool-vivid-60 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-coordenacao-bg | #ede7f6 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-coordenacao-color | #512da8 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-autoinscricao-bg | #e0f2f1 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-autoinscricao-color | #00695c | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-oculto-bg | #f0f0f0 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-oculto-color | #666666 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$status-oculto-border | #dcdcdc | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$table-header-bg | #f1f4f9 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$table-subtle-bg | #f8f9fa | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$table-hover-bg | #f9fbfe | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$z-index-modal-backdrop | 1070 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente
+$z-index-modal | 1080 | ausente | src\MoodleIFRN\mobilemoodle\static\theme\ifrn\scss\dsgov\_variables.scss:ausente

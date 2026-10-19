@@ -1,0 +1,26 @@
+ M src/MoodleIFRN/marketplace-ifrn/marketplace-ifrn.scss
+ M src/MoodleIFRN/marketplace-ifrn/marketplace-ifrn.ts
+ M src/MoodleIFRN/mobilemoodle/core_mobile/app-keyboard.ts
+ M src/MoodleIFRN/mobilemoodle/core_mobile/app-views.ts
+ M src/MoodleIFRN/mobilemoodle/mobilemoodle.js
+ M src/MoodleIFRN/mobilemoodle/static/theme/ifrn/css/painel.css
+ M src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/_dsgov-tokens.scss
+ M src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/_splash.scss
+ M src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/_variables.scss
+ M src/MoodleIFRN/moodle-course/moodle-course.scss
+ M src/MoodleIFRN/moodle-open-course/moodle-open-course.scss
+ M src/MoodleIFRN/moodle-open-course/moodle-open-course.ts
+ M src/MoodleIFRN/painel/painel.html
+ M src/MoodleIFRN/painel/painel.scss
+ M src/MoodleIFRN/painel/painel.ts
+ M src/MoodleIFRN/services_mobile/moodle-site.service.ts
+ M src/MoodleIFRN/theme/ifrn-dsgov-tokens.scss
+?? analise-aparelho/correcao/
+?? analise-aparelho/dsgov/
+?? m2.js
+?? npm
+?? shot.sh
+?? src/MoodleIFRN/build-native.mjs
+?? src/MoodleIFRN/mobilemoodle/core_mobile/course-target.ts
+?? src/MoodleIFRN/navigation/course-opening-attempt.ts
+?? src/MoodleIFRN/theme/dsgov-auditoria/

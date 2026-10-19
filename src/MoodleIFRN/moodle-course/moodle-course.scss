@@ -31,32 +31,25 @@ page-core-course-index, page-core-course-contents { --ion-font-family: "Rawline"
 /* =========================================================
  * Tokens AVA IFRN no host da página nativa
  * ========================================================= */
+html.ifrn-course-opening page-core-mainmenu,
+html.ifrn-course-context page-core-mainmenu,
 page-core-course-index.ion-page,
 page-core-course-index {
     --ifrn-ava: var(--ifrn-primary, #1351b4);
     --ifrn-ava-dark: var(--ifrn-active, #0c326f);
     --ifrn-ava-mid: var(--ifrn-selected-mid, #155bcb);
     --ifrn-ava-soft: var(--ifrn-selected, #eaeff8);
-    --ifrn-ava-softer: var(--ifrn-hover-bg, #f0f5ff);
-    --ifrn-surface: var(--ifrn-surface, #ffffff);
-    --ifrn-canvas: var(--ifrn-canvas, #f6f6f6);
-    --ifrn-border: var(--ifrn-border, #cccccc);
-    --ifrn-text: var(--ifrn-text, #333333);
-    --ifrn-muted: var(--ifrn-muted, #666666);
-    --ifrn-success: var(--ifrn-success, #2d8a45);
-    --ifrn-shadow: var(--ifrn-shadow, 0 4px 16px rgba(0, 0, 0, 0.04));
-    --ifrn-radius: var(--ifrn-radius, 4px);
 
     /* Tokens oficiais do Moodle / Ionic usados pelos componentes nativos */
     --primary: var(--ifrn-ava);
     --primary-shade: var(--ifrn-ava-dark);
     --primary-tint: var(--ifrn-ava-soft);
-    --primary-contrast: #ffffff;
+    --primary-contrast: var(--ifrn-primary-contrast);
 
     --ion-color-primary: var(--ifrn-ava);
-    --ion-color-primary-rgb: 19, 81, 180;
-    --ion-color-primary-contrast: #ffffff;
-    --ion-color-primary-contrast-rgb: 255, 255, 255;
+    --ion-color-primary-rgb: var(--ifrn-primary-rgb);
+    --ion-color-primary-contrast: var(--ifrn-primary-contrast);
+    --ion-color-primary-contrast-rgb: var(--ifrn-primary-contrast-rgb);
     --ion-color-primary-shade: var(--ifrn-ava-dark);
     --ion-color-primary-tint: var(--ifrn-ava-mid);
 
@@ -463,9 +456,9 @@ page-core-course-contents .core-course-section-nav-buttons ion-button {
 
 page-core-course-index ion-fab-button,
 page-core-course-contents ion-fab-button {
-    --background: var(--ifrn-ava);
-    --background-activated: var(--ifrn-ava-dark);
-    --background-focused: var(--ifrn-ava-dark);
+    --background: var(--ifrn-button-background);
+    --background-activated: var(--ifrn-button-active);
+    --background-focused: var(--ifrn-button-active);
     --color: #fff;
     --box-shadow: 0 8px 18px rgba(19, 81, 180, 0.35);
 }

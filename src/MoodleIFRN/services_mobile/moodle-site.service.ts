@@ -37,6 +37,7 @@ import { CoreUrl } from '@static/url';
 import { CoreEvents } from '@static/events';
 import { CoreLogger } from '@static/logger';
 import { useIfrnBrazilianPortuguese } from './ifrn-language';
+import { CourseOpeningAttempt } from '../navigation/course-opening-attempt';
 
 
 export const IFRN_MOODLE_PRESENCIAL_URL = 'https://presencial.ava.ifrn.edu.br';
@@ -559,50 +560,33 @@ export class MoodleSiteService {
 
     /** Uma única abertura IFRN por vez, inclusive durante o retorno do OAuth. */
     private courseOpening: { courseId: number; promise: Promise<number> } | null = null;
+    private openingAttempt?: CourseOpeningAttempt;
+    private sessionOpening?: Promise<'opened' | 'need-connect'>;
+    private oauthPreparation?: Promise<'switched' | 'opened' | 'already-active'>;
+    private cancelledCourseId?: number;
 
     private navigationShellInitialized = false;
     private oauthReturnNavigating = false;
     private oauthCallbackReceived = false;
 
-    private handoffTimeout: number | undefined;
-
-    /** Limite também para o intervalo OAuth → ponte, antes de abrir o curso. */
+    /** O overlay antigo foi removido; cada operação assíncrona tem seu próprio limite. */
     showNativeCourseHandoff(): void {
+        document.documentElement.classList.add('ifrn-course-opening');
         showHandoffLoading();
-        if (this.handoffTimeout !== undefined) {
-            return;
-        }
-        this.handoffTimeout = window.setTimeout(() => {
-            this.hideNativeCourseHandoff();
-            this.oauthReturnNavigating = false;
-            this.oauthCallbackReceived = false;
-            this.oauthFlowActive = false;
-            sessionStorage.removeItem(OAUTH_PENDING_KEY);
-            this.lastError = 'Não foi possível concluir a abertura do curso. Tente novamente ou volte ao Painel.';
-            const pending = this.getPendingOpenCourse();
-            void CoreNavigator.navigate('/login/moodle-open-course', {
-                animated: false,
-                params: { courseId: pending?.courseId, courseName: pending?.courseName, identityOnly: true },
-            }).catch((error) => {
-                logSiteError('Falha ao mostrar recuperação do carregamento', error);
-                this.redirectToPainelAva();
-            });
-        }, 60000);
     }
 
     hideNativeCourseHandoff(): void {
-        if (this.handoffTimeout !== undefined) {
-            window.clearTimeout(this.handoffTimeout);
-            this.handoffTimeout = undefined;
-        }
         hideHandoffLoading();
+        if (!this.isNativeCourseHandoffActive()) {
+            document.documentElement.classList.remove('ifrn-course-opening');
+        }
     }
 
     isNativeCourseHandoffActive(): boolean {
         // Somente enquanto a abertura nativa está em andamento.
         // Não amarrar a pending_open_course / oauthFlowActive: isso reexibia o
         // overlay após o curso abrir (ou no OAuth) e o usuário ficava em loading eterno.
-        return !!this.courseOpening || this.oauthReturnNavigating;
+        return !!this.courseOpening || !!this.sessionOpening || !!this.oauthPreparation || this.oauthReturnNavigating;
     }
 
     ensurePainelRouteRegistered(): void {
@@ -666,6 +650,8 @@ export class MoodleSiteService {
 
     /** Cancelamento explícito pelo usuário; nenhum redirecionamento automático. */
     dismissCourseRecovery(): void {
+        this.cancelledCourseId = this.courseOpening?.courseId;
+        this.openingAttempt?.cancel();
         this.clearPendingOpenCourse();
         this.clearCourseOriginFlags();
         this.setIdentityMismatchPending(false);
@@ -906,6 +892,7 @@ export class MoodleSiteService {
      * O observer de NavigationEnd só redireciona quando essas flags existem.
      */
     private markCourseOriginFromPainel(courseId: number): void {
+        document.documentElement.classList.add('ifrn-course-context');
         sessionStorage.setItem(COURSE_ORIGIN_KEY, 'painel');
         sessionStorage.setItem(COURSE_ORIGIN_ID_KEY, String(courseId));
         this.courseOpenedFromPainel = false;
@@ -956,6 +943,12 @@ export class MoodleSiteService {
      */
     private handleCourseNavEnd(url: string): void {
         const path = normalizeAppPath(url);
+        if (this.cancelledCourseId && isCourseIndexPath(path, this.cancelledCourseId)) {
+            this.clearCourseOriginFlags();
+            this.redirectToPainelAva();
+
+            return;
+        }
         const previousPath = this.previousCourseNavUrl;
 
         this.previousCourseNavUrl = path;
@@ -1085,10 +1078,36 @@ export class MoodleSiteService {
      * OAuth — a UI (moodle-open-course) mostra “Entrar com SUAP” e só então chama
      * startSuapOAuthLogin(). Assim a segunda autenticação fica explícita.
      */
-    async ensureSessionAndOpenCourse(
+    ensureSessionAndOpenCourse(
         courseId: number,
         siteUrl?: string,
         courseName?: string,
+    ): Promise<'opened' | 'need-connect'> {
+        if (this.sessionOpening) {
+            return Promise.reject(new Error('Uma abertura de curso já está em andamento. Aguarde ou cancele.'));
+        }
+        const attempt = new CourseOpeningAttempt();
+        this.openingAttempt = attempt;
+        this.cancelledCourseId = undefined;
+        const promise = this.performEnsureSessionAndOpenCourse(courseId, siteUrl, courseName, attempt)
+            .finally(() => {
+                if (this.sessionOpening === promise) {
+                    this.sessionOpening = undefined;
+                }
+                if (!this.isNativeCourseHandoffActive()) {
+                    document.documentElement.classList.remove('ifrn-course-opening');
+                }
+            });
+        this.sessionOpening = promise;
+
+        return promise;
+    }
+
+    private async performEnsureSessionAndOpenCourse(
+        courseId: number,
+        siteUrl: string | undefined,
+        courseName: string | undefined,
+        attempt: CourseOpeningAttempt,
     ): Promise<'opened' | 'need-connect'> {
         this.ensureLoginObserver();
         this.lastError = '';
@@ -1099,7 +1118,7 @@ export class MoodleSiteService {
 
         this.setPendingOpenCourse({ courseId, siteUrl, courseName });
 
-        const identityResult = await this.ensureMatchingMoodleSession(siteUrl);
+        const identityResult = await attempt.stage('session-and-identity', () => this.ensureMatchingMoodleSession(siteUrl));
 
         // eslint-disable-next-line no-console
         console.log(COURSE_LOG, 'sessão validada', JSON.stringify({ courseId, identityResult }));
@@ -1109,7 +1128,7 @@ export class MoodleSiteService {
         }
 
         if (identityResult === 'matched-current' || identityResult === 'loaded-stored') {
-            await this.openCourseById(courseId);
+            await this.openCourseById(courseId, attempt);
             this.clearPendingOpenCourse();
 
             return 'opened';
@@ -1258,7 +1277,7 @@ export class MoodleSiteService {
             // que o courseId esteja entre os cursos matriculados da sessão atual.
             identityLog('sem identificador forte do Painel — sessão Moodle do site será reutilizada');
 
-            return true;
+            return false;
         }
 
         return match.matches;
@@ -1274,8 +1293,12 @@ export class MoodleSiteService {
         const current = CoreSites.getCurrentSite();
         const hasSession = this.hasPresencialSession(resolved);
         const match = this.matchCurrentMoodleIdentity();
+        if (!match.hasExpected) {
+            throw new Error('Não foi possível confirmar sua conta do Painel. Reabra o Painel e tente novamente.');
+        }
 
-        const storedCount = (await CoreSites.getSiteIdsFromUrl(resolved)).length;
+        // Não consultar o banco só para preencher um log no caminho de sessão já válida.
+        const storedCount = hasSession && match.matches ? undefined : (await CoreSites.getSiteIdsFromUrl(resolved)).length;
 
         identityLog('sessão Moodle existente', {
             hasSession,
@@ -1298,7 +1321,7 @@ export class MoodleSiteService {
 
         this.logIdentityDiagnostics('ensureMatchingMoodleSession');
 
-        if (hasSession && (match.matches || !match.hasExpected)) {
+        if (hasSession && match.matches) {
             identityLog('sessão correta definida como current', {
                 source: match.matches ? 'reuse-current' : 'reuse-current-no-painel-identifier',
                 matchedVia: match.matchedVia,
@@ -1454,7 +1477,7 @@ export class MoodleSiteService {
      * Dentro do main menu: CoreCourseHelper.getAndOpenCourse (igual “Meus cursos”).
      * Só abre se course.id === courseId em getUserCourses(). Sem aproximação por nome.
      */
-    openCourseById(courseId: number): Promise<number> {
+    openCourseById(courseId: number, attempt = new CourseOpeningAttempt()): Promise<number> {
         if (this.courseOpening) {
             if (this.courseOpening.courseId === courseId) {
                 return this.courseOpening.promise;
@@ -1463,10 +1486,18 @@ export class MoodleSiteService {
             return Promise.reject(new Error('Já existe outro curso Moodle sendo aberto.'));
         }
 
-        // Overlay antes de /main e do getAndOpenCourse — evita tela preta da landing.
+        this.openingAttempt = attempt;
+        this.cancelledCourseId = undefined;
+        document.documentElement.classList.add('ifrn-course-opening');
+        // Tokens já disponíveis durante a passagem por /main; sem atraso artificial.
         this.showNativeCourseHandoff();
-        const promise = this.performOpenCourseById(courseId).finally(() => {
+        const promise = this.performOpenCourseById(courseId, attempt).catch((error) => {
+            attempt.cancel();
+            this.cancelledCourseId = courseId;
+            throw error;
+        }).finally(() => {
             this.courseOpening = null;
+            document.documentElement.classList.remove('ifrn-course-opening');
             this.hideNativeCourseHandoff();
         });
         this.courseOpening = { courseId, promise };
@@ -1474,9 +1505,9 @@ export class MoodleSiteService {
         return promise;
     }
 
-    private async performOpenCourseById(courseId: number): Promise<number> {
+    private async performOpenCourseById(courseId: number, attempt: CourseOpeningAttempt): Promise<number> {
         try {
-            await useIfrnBrazilianPortuguese();
+            await attempt.stage('language', () => useIfrnBrazilianPortuguese(), 5000, false);
         } catch (error) {
             // Falha de idioma não deve impedir a abertura do curso.
             this.logger.error('Não foi possível ativar o português brasileiro.', error);
@@ -1484,11 +1515,20 @@ export class MoodleSiteService {
 
         this.lastError = '';
         this.lastCourseAccessIssue = null;
+        attempt.assertActive();
+        const requestedSite = this.getPendingOpenCourse()?.siteUrl;
+        if (requestedSite && !this.hasPresencialSession(requestedSite)) {
+            throw new Error('A sessão Moodle não pertence ao ambiente deste curso. Volte ao Painel e tente novamente.');
+        }
 
         const match = this.matchCurrentMoodleIdentity();
 
         if (!CoreSites.isLoggedIn()) {
             throw new Error('Não há sessão Moodle ativa.');
+        }
+
+        if (!match.hasExpected) {
+            throw new Error('Não foi possível confirmar a conta do Painel antes de abrir o curso. Reabra o Painel.');
         }
 
         if (match.hasExpected && !match.matches) {
@@ -1523,7 +1563,7 @@ export class MoodleSiteService {
 
         try {
             const currentSiteId = CoreSites.getCurrentSiteId();
-            const enrolled = await CoreCourses.getUserCourses(true, currentSiteId);
+            const enrolled = await attempt.stage('enrolments-cache-or-network', () => CoreCourses.getUserCourses(true, currentSiteId));
             courses = enrolled.map((course) => this.toCourseSummary(course));
         } catch (error) {
             // eslint-disable-next-line no-console
@@ -1573,6 +1613,7 @@ export class MoodleSiteService {
         this.markCourseOriginFromPainel(courseId);
 
         const navigation = this.waitForCourseNavigation(courseId);
+        const previousLoadings = new Set(Array.from(document.querySelectorAll('ion-loading')));
         let openingTimeout: number | undefined;
         const openingDeadline = new Promise<never>((_resolve, reject) => {
             openingTimeout = window.setTimeout(() => {
@@ -1585,7 +1626,7 @@ export class MoodleSiteService {
             console.log(COURSE_LOG, 'chamando getAndOpenCourse', JSON.stringify({ courseId, siteIdPresent: !!siteId }));
             // O handler nativo não aguarda navigateToSitePath. A Promise do helper
             // pode resolver em /main: também aguardamos NavigationEnd do curso.
-            await Promise.race([openingDeadline, Promise.all([
+            await attempt.stage('native-helper-and-navigation', () => Promise.race([openingDeadline, Promise.all([
                 CoreCourseHelper.getAndOpenCourse(courseId, {}, siteId).then(() => {
                     // eslint-disable-next-line no-console
                     console.log(COURSE_LOG, 'getAndOpenCourse retornou (rota ainda deve ser confirmada)', JSON.stringify({
@@ -1594,11 +1635,34 @@ export class MoodleSiteService {
                     }));
                 }),
                 navigation.promise,
-            ])]);
+            ])]));
 
-            // Aguarda a renderização inicial dos componentes do curso IFRN antes de liberar o overlay.
-            await new Promise((resolve) => window.setTimeout(resolve, 380));
+            // Mantém os tokens da landing até a página estar visível, estilizada e sem transição ativa.
+            let frame = 0;
+            try {
+                await attempt.stage('course-first-paint', () => new Promise<void>((resolve) => {
+                    const inspect = (): void => {
+                        const page = Array.from(document.querySelectorAll<HTMLElement>('page-core-course-index'))
+                            .find(element => !element.closest('.ion-page-hidden, .ion-page-invisible')
+                                && element.getClientRects().length > 0);
+                        const transitioning = page?.getAnimations?.().some(animation => animation.playState === 'running');
+                        if (page && !transitioning && getComputedStyle(page).getPropertyValue('--ifrn-ava').trim()) {
+                            resolve();
+                        } else {
+                            frame = requestAnimationFrame(inspect);
+                        }
+                    };
+                    frame = requestAnimationFrame(() => { frame = requestAnimationFrame(inspect); });
+                }), 5000);
+            } finally {
+                cancelAnimationFrame(frame);
+            }
         } catch (error) {
+            for (const loading of Array.from(document.querySelectorAll('ion-loading'))) {
+                if (!previousLoadings.has(loading)) {
+                    void (loading as HTMLElement & { dismiss?: () => Promise<boolean> }).dismiss?.();
+                }
+            }
             // eslint-disable-next-line no-console
             console.error(COURSE_LOG, 'getAndOpenCourse / navegação FALHOU', JSON.stringify({
                 courseId,
@@ -1701,8 +1765,35 @@ export class MoodleSiteService {
      * @returns `switched` se pediu switch-account e vai retomar o OAuth;
      *          `opened` se o navegador OAuth foi aberto.
      */
-    async startSuapOAuthLogin(
+    startSuapOAuthLogin(
         options: { resumeAfterSwitch?: boolean } = {},
+    ): Promise<'switched' | 'opened' | 'already-active'> {
+        if (this.oauthPreparation) {
+            if (options.resumeAfterSwitch) {
+                // A nova ponte pode entrar antes de logout/navegação resolver a preparação anterior.
+                return this.oauthPreparation.then(() => this.startSuapOAuthLogin(options));
+            }
+            return this.oauthPreparation;
+        }
+        const attempt = new CourseOpeningAttempt();
+        this.openingAttempt = attempt;
+        const promise = this.performStartSuapOAuthLogin(options, attempt).catch((error) => {
+            this.oauthFlowActive = false;
+            sessionStorage.removeItem(OAUTH_PENDING_KEY);
+            throw error;
+        }).finally(() => {
+            if (this.oauthPreparation === promise) {
+                this.oauthPreparation = undefined;
+            }
+        });
+        this.oauthPreparation = promise;
+
+        return promise;
+    }
+
+    private async performStartSuapOAuthLogin(
+        options: { resumeAfterSwitch?: boolean },
+        attempt: CourseOpeningAttempt,
     ): Promise<'switched' | 'opened' | 'already-active'> {
         this.ensureLoginObserver();
         this.lastError = '';
@@ -1754,11 +1845,11 @@ export class MoodleSiteService {
                 ? { params: { startOAuth: true, courseId: pending.courseId, courseName: pending.courseName } }
                 : { params: { startOAuth: true } };
 
-            await CoreSites.logout({
+            await attempt.stage('session-switch', () => CoreSites.logout({
                 siteId: NO_SITE_ID,
                 redirectPath,
                 redirectOptions,
-            });
+            }));
 
             return 'switched';
         }
@@ -1776,7 +1867,7 @@ export class MoodleSiteService {
             courseId: pending?.courseId ?? null,
         }));
 
-        const siteCheck = await this.checkPresencialSite(targetSiteUrl);
+        const siteCheck = await attempt.stage('oauth-public-config', () => this.checkPresencialSite(targetSiteUrl));
 
         // eslint-disable-next-line no-console
         console.log(SITE_LOG, 'checkSite OK — próxima etapa: identity providers', JSON.stringify({
@@ -1786,7 +1877,7 @@ export class MoodleSiteService {
             enablemobilewebservice: siteCheck.config?.enablemobilewebservice,
         }));
 
-        const provider = await this.findSuapProvider(siteCheck);
+        const provider = await attempt.stage('oauth-provider', () => this.findSuapProvider(siteCheck));
 
         // eslint-disable-next-line no-console
         console.log(SITE_LOG, 'findSuapProvider', JSON.stringify({
@@ -1988,7 +2079,7 @@ export class MoodleSiteService {
             return;
         }
 
-        if (!match.matches && match.hasExpected) {
+        if (!match.hasExpected) {
             this.lastError = 'Não foi possível confirmar a identidade Moodle após o login.';
 
             await CoreNavigator.navigate('/login/moodle-open-course', {

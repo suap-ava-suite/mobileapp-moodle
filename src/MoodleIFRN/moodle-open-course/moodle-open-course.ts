@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CoreSharedModule } from '@/core/shared.module';
 import {
     IFRN_MOODLE_PRESENCIAL_URL,
@@ -42,7 +42,7 @@ type OpenCoursePhase = 'loading' | 'waiting-browser' | 'error';
         CoreSharedModule,
     ],
 })
-export class MoodleOpenCoursePage implements OnInit {
+export class MoodleOpenCoursePage {
 
     private readonly moodleSite = inject(MoodleSiteService);
 
@@ -66,6 +66,7 @@ export class MoodleOpenCoursePage implements OnInit {
 
     /** Evita segundo ngOnInit disparar o fluxo na mesma instância. */
     private initStarted = false;
+    private entryVersion = 0;
 
     get accountIssue(): MoodleSiteService['lastCourseAccessIssue'] {
         return this.moodleSite.lastCourseAccessIssue;
@@ -107,8 +108,17 @@ export class MoodleOpenCoursePage implements OnInit {
         }
     }
 
-    async ngOnInit(): Promise<void> {
+    async ionViewWillEnter(): Promise<void> {
+        // O Ionic mantém a ponte em cache: cada toque precisa reler curso e ambiente.
+        const entry = ++this.entryVersion;
+        this.initStarted = false;
+        this.loading = false;
+        this.formError = '';
+        this.accountSwitchStarted = false;
         await CorePlatform.ready();
+        if (entry !== this.entryVersion) {
+            return;
+        }
 
         this.moodleSite.ensureLoginObserver();
         // Cobre /main e o bootstrap Ionic antes de qualquer await de sessão/OAuth.
@@ -125,7 +135,11 @@ export class MoodleOpenCoursePage implements OnInit {
             this.courseName = pending.courseName || this.courseName;
         }
 
-        this.moodleSiteUrl = resolveMoodleSiteUrl(pending?.siteUrl);
+        // A rota do toque atual tem precedência; um pendente de outro curso não pode trocar o ambiente.
+        const routeSiteUrl = CoreNavigator.getRouteParam<string>('siteUrl');
+        this.moodleSiteUrl = resolveMoodleSiteUrl(
+            routeSiteUrl || (pending?.courseId === this.courseId ? pending.siteUrl : undefined),
+        );
 
         const hasUrlSession = this.moodleSite.hasPresencialSession(this.moodleSiteUrl);
         const hasMatchingSession = this.moodleSite.hasMatchingPresencialSession(this.moodleSiteUrl);
@@ -163,6 +177,9 @@ export class MoodleOpenCoursePage implements OnInit {
             this.loading = true;
             try {
                 if (await this.moodleSite.resumePendingOAuthCourse()) {
+                    if (entry !== this.entryVersion) {
+                        return;
+                    }
                     this.initStarted = true;
                     if (this.moodleSite.lastError) {
                         this.revealBridgeError(this.moodleSite.lastError);
@@ -174,11 +191,16 @@ export class MoodleOpenCoursePage implements OnInit {
                     return;
                 }
             } catch (error) {
+                if (entry !== this.entryVersion) {
+                    return;
+                }
                 this.revealBridgeError(error instanceof Error ? error.message : String(error));
 
                 return;
             } finally {
-                this.loading = false;
+                if (entry === this.entryVersion) {
+                    this.loading = false;
+                }
             }
         }
 
@@ -215,6 +237,8 @@ export class MoodleOpenCoursePage implements OnInit {
     }
 
     cancelOpening(): void {
+        this.entryVersion++;
+        this.loading = false;
         this.moodleSite.dismissCourseRecovery();
         this.moodleSite.hideNativeCourseHandoff();
         void CoreNavigator.navigate('/login/painel');
@@ -237,6 +261,7 @@ export class MoodleOpenCoursePage implements OnInit {
         if (this.loading || !this.courseId) {
             return;
         }
+        const entry = this.entryVersion;
 
         this.formError = '';
         this.phase = 'loading';
@@ -251,6 +276,9 @@ export class MoodleOpenCoursePage implements OnInit {
                 this.moodleSiteUrl,
                 this.courseName,
             );
+            if (entry !== this.entryVersion) {
+                return;
+            }
 
             if (result === 'opened') {
                 return;
@@ -263,6 +291,9 @@ export class MoodleOpenCoursePage implements OnInit {
             this.loading = false;
             await this.startOAuthFlow();
         } catch (error) {
+            if (entry !== this.entryVersion) {
+                return;
+            }
             // eslint-disable-next-line no-console
             console.error('[IFRN-SITE] tryOpenOrPromptConnect erro', JSON.stringify({
                 message: error instanceof Error ? error.message : String(error),
@@ -295,6 +326,9 @@ export class MoodleOpenCoursePage implements OnInit {
                 default: 'Não foi possível abrir o curso Moodle.',
             });
         } finally {
+            if (entry !== this.entryVersion) {
+                return;
+            }
             this.loading = false;
 
             if (this.moodleSite.lastError && !this.formError) {
@@ -314,6 +348,7 @@ export class MoodleOpenCoursePage implements OnInit {
         if (this.loading || !this.courseId) {
             return;
         }
+        const entry = this.entryVersion;
 
         this.formError = '';
         this.phase = 'loading';
@@ -331,6 +366,9 @@ export class MoodleOpenCoursePage implements OnInit {
             const oauthResult = await this.moodleSite.startSuapOAuthLogin({
                 resumeAfterSwitch: options.resumeAfterSwitch === true,
             });
+            if (entry !== this.entryVersion) {
+                return;
+            }
 
             if (oauthResult === 'switched') {
                 // switch-account: a navegação reinicia esta página com startOAuth.
@@ -344,6 +382,9 @@ export class MoodleOpenCoursePage implements OnInit {
             this.moodleSite.hideNativeCourseHandoff();
             this.phase = 'waiting-browser';
         } catch (error) {
+            if (entry !== this.entryVersion) {
+                return;
+            }
             // eslint-disable-next-line no-console
             console.error('[IFRN-SITE] startOAuthFlow erro', JSON.stringify({
                 message: error instanceof Error ? error.message : String(error),
@@ -360,6 +401,9 @@ export class MoodleOpenCoursePage implements OnInit {
                 default: 'Não foi possível iniciar a autenticação SUAP.',
             });
         } finally {
+            if (entry !== this.entryVersion) {
+                return;
+            }
             this.loading = false;
 
             if (this.moodleSite.lastError && !this.formError) {

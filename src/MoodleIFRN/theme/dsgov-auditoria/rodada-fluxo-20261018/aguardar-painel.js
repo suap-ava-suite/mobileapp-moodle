@@ -1,0 +1,1 @@
+(async()=>{const end=performance.now()+8000;while(performance.now()<end){const el=document.querySelector('page-painel:not(.ion-page-hidden) iframe');if(el?.getBoundingClientRect().height)return JSON.stringify({panel:true});await new Promise(r=>requestAnimationFrame(r));}return JSON.stringify({panel:false});})()

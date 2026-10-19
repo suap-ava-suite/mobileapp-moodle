@@ -1,0 +1,145 @@
+=======================================================================
+FASE 1: INVENTARIO DE CORES, FONTES E TOKENS DS GOV
+=======================================================================
+
+--- 1. CONTAGEM DE CORES (HEX/RGB) POR VALOR (TOP 40) ---
+   56 #fff
+   36 #ffffff
+   20 #1351b4
+   17 #000
+   12 #111
+   11 #1f77b4
+   10 #0c326f
+    9 #e6e6e6
+    9 #cccccc
+    7 #333333
+    7 #144e75
+    6 #ff0
+    5 #2b2b2b
+    5 #c5d6f5
+    5 #f90
+    4 #19743c
+    4 rgba(7, 29, 65, 0.12)
+    4 #eaeff8
+    4 #666666
+    4 #dddddd
+    4 rgba(0, 0, 0, 0.04)
+    4 rgba(0, 0, 0, 0.08)
+    4 #d5e8f5
+    4 #ffff00
+    4 #e8f1ff
+    4 rgba(255, 255, 100, 1)
+    4 #333
+    3 rgba(255, 255, 255, 0.92)
+    3 rgba(19, 81, 180, 0.14)
+    3 #2d8a45
+    3 #071d41
+    3 #155bcb
+    3 #000000
+    3 #555555
+    3 #f6f6f6
+    3 #f0f5ff
+    3 #e5e5e5
+    3 #f7f7f7
+    3 #555
+    3 #0054e9
+
+--- 2. CONTAGEM DE CORES POR ARQUIVO (TOP 40) ---
+  139 src/MoodleIFRN/mobilemoodle/static/theme/ifrn/css/painel.css
+   76 src/MoodleIFRN/mobilemoodle/static/vendor/ionic/css/ionic.bundle.css
+   66 src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/_accessibility.scss
+   66 src/MoodleIFRN/moodle-course/moodle-course.scss
+   53 src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/dsgov/_variables.scss
+   40 src/MoodleIFRN/moodle-course/course-menu.scss
+   36 src/MoodleIFRN/moodle-open-course/moodle-open-course.scss
+   25 src/MoodleIFRN/marketplace-ifrn/marketplace-ifrn.scss
+   11 src/MoodleIFRN/mobilemoodle/index.html
+   10 src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/_status-page.scss
+    5 src/MoodleIFRN/services_mobile/painel-ava.service.ts
+    3 src/MoodleIFRN/mobilemoodle/core_mobile/app-status.ts
+    3 src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/_curso.scss
+    3 src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/_splash.scss
+    2 src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/_global.scss
+    2 src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/_sidebar.scss
+    2 src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/_variables.scss
+    2 src/MoodleIFRN/painel-enrol/painel-enrol.scss
+    1 src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/_cards.scss
+    1 src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/_dsgov-components.scss
+
+--- 3. CONTAGEM DE FONT-FAMILY POR VALOR ---
+   10 "opendyslexic"
+    6 "Rawline"
+    5 inherit
+    4 var(--ifrn-font)
+    4 var(--dsgov-font-family)
+    3 "opendyslexic", sans-serif
+    2 var(--font-family, var(--dsgov-font-family))
+    2 var(--ion-font-family)
+    1 Arial, sans-serif
+    1 Rawline, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif
+    1 "Rawline", "Noto Sans", system-ui, sans-serif
+    1 Rawline, Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif
+    1 #{ds.$font-family-base
+    1 monospace,monospace
+    1 var(--ion-default-font)
+    1 var(--ion-font-family, "Rawline", sans-serif)
+    1 "Rawline", sans-serif
+    1 "opendyslexic", var(--ion-font-family, sans-serif)
+    1 var(--moodle-open-font)
+
+--- 4. FONTES RAWLINE NO APP VS TEMA WEB REF ---
+Arquivos rawline no app: rawline-400.woff2, rawline-500.woff2, rawline-600.woff2, rawline-700.woff2
+Pesos no app: 400, 500, 600, 700 (somente variantes normais)
+Pesos no tema web (_fonts.scss): 400, 400i, 500, 600, 600i, 700, 700i (normais e itálicas)
+Nota: O app provê 400, 500, 600, 700 woff2 locais; itálicos usam síntese ou fontes do sistema se requisitado.
+
+--- 5. DIVERGENCIAS DE TOKENS (TEMA WEB REF vs APP) ---
+token | tema web | app | arquivo:linha
+$status-academic-bg | $blue-badge-bg | (ausente) | src/MoodleIFRN/.../dsgov/_variables.scss
+$status-academic-color | $blue-warm-vivid-70 | (ausente) | src/MoodleIFRN/.../dsgov/_variables.scss
+$status-published-bg | $green-badge-bg | (ausente) | src/MoodleIFRN/.../dsgov/_variables.scss
+$status-published-color | $green-cool-vivid-60 | (ausente) | src/MoodleIFRN/.../dsgov/_variables.scss
+$status-coordenacao-bg | #ede7f6 | (ausente) | src/MoodleIFRN/.../dsgov/_variables.scss
+$status-coordenacao-color | #512da8 | (ausente) | src/MoodleIFRN/.../dsgov/_variables.scss
+$status-autoinscricao-bg | #e0f2f1 | (ausente) | src/MoodleIFRN/.../dsgov/_variables.scss
+$status-autoinscricao-color | #00695c | (ausente) | src/MoodleIFRN/.../dsgov/_variables.scss
+$status-oculto-bg | #f0f0f0 | (ausente) | src/MoodleIFRN/.../dsgov/_variables.scss
+$status-oculto-color | #666666 | (ausente) | src/MoodleIFRN/.../dsgov/_variables.scss
+$status-oculto-border | #dcdcdc | (ausente) | src/MoodleIFRN/.../dsgov/_variables.scss
+$table-header-bg | #f1f4f9 | (ausente) | src/MoodleIFRN/.../dsgov/_variables.scss
+$table-subtle-bg | #f8f9fa | (ausente) | src/MoodleIFRN/.../dsgov/_variables.scss
+$table-hover-bg | #f9fbfe | (ausente) | src/MoodleIFRN/.../dsgov/_variables.scss
+$container-max-width | 1200px | 1300px | src/MoodleIFRN/.../dsgov/_variables.scss:89
+$z-index-modal-backdrop | 1070 | (ausente) | src/MoodleIFRN/.../dsgov/_variables.scss
+$z-index-modal | 1080 | (ausente) | src/MoodleIFRN/.../dsgov/_variables.scss
+
+--- 6. TOKENS DO MARKETPLACE (marketplace-ifrn.scss) DIVERGENTES DO TEMA WEB ---
+Token marketplace | Valor atual | Valor DS Gov (web ref) | Divergência
+--ifrn-paper: #fbfcfa -> $bg-gray (#f6f6f6) ou $bg-white (#ffffff) | marketplace-ifrn.scss:2
+--ifrn-ink: #1e3427 -> $text-dark (#333333) | marketplace-ifrn.scss:3
+--ifrn-muted: #637266 -> $text-muted (#666666) | marketplace-ifrn.scss:4
+--ifrn-soft: #eaf2e8 -> $blue-warm-vivid-10 (#eaeff8) | marketplace-ifrn.scss:5
+--ifrn-accent: #19743c -> $blue-warm-vivid-70 (#1351b4) | marketplace-ifrn.scss:6
+--ifrn-line: #e5eae3 -> $border-inner (#e6e6e6) ou $border-outer (#cccccc) | marketplace-ifrn.scss:7
+--ifrn-font: "Segoe UI", Roboto... -> $font-family-base ('Rawline', 'Inter', sans-serif) | marketplace-ifrn.scss:8
+.welcome__eyebrow color: var(--ifrn-accent) (#19743c) -> #1351b4 | marketplace-ifrn.scss:166
+ion-button.btn-enter --background: #19743c -> #1351b4 | marketplace-ifrn.scss:221
+ion-button.btn-enter hover/focus: #145e31, #176b37 -> $blue-warm-vivid-80 (#0c326f) | marketplace-ifrn.scss:222-224
+.marketplace-transition__spinner --color: #19743c -> #1351b4 | marketplace-ifrn.scss:422
+
+--- 7. TOKENS DO CURSO (moodle-course.scss) DIVERGENTES DO TEMA WEB ---
+Token curso | Valor atual | Valor DS Gov (web ref) | Divergência
+--ifrn-ava: #1351b4 (OK, matches $blue-warm-vivid-70) | moodle-course.scss:34
+--ifrn-ava-dark: #0c326f (OK, matches $blue-warm-vivid-80) | moodle-course.scss:35
+--ifrn-ava-mid: #155bcb (OK, matches $blue-warm-vivid-60) | moodle-course.scss:36
+--ifrn-ava-soft: #eaeff8 (OK, matches $blue-warm-vivid-10) | moodle-course.scss:37
+--ifrn-surface: #ffffff (OK, matches $bg-white) | moodle-course.scss:39
+--ifrn-canvas: #f6f6f6 (OK, matches $bg-gray) | moodle-course.scss:40
+--ifrn-border: #cccccc (OK, matches $border-outer) | moodle-course.scss:41
+--ifrn-text: #333333 (OK, matches $text-dark) | moodle-course.scss:42
+--ifrn-muted: #666666 (OK, matches $text-muted) | moodle-course.scss:43
+--ifrn-success: #2f9e44 -> $green-cool-vivid-60 (#2d8a45) | moodle-course.scss:44
+
+--- 8. IMPORTACAO E SINTAXE SASS DE moodle-course.scss ---
+moodle-course.scss é importado em angular.json (linha 59) no array de styles globais de build.
+A sintaxe Sass usada pelo projeto é modern Sass com @use (ex: @use "variables" as *; @use "theme/globals" as *;).

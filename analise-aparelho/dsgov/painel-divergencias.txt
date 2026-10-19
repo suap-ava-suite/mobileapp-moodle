@@ -1,0 +1,21 @@
+# Divergências do Painel em Relação ao Tema Web DS Gov (theme_ifrn_dsgov)
+
+| Token | Valor no App | Valor no Tema Web | Localização | Ação |
+| :--- | :--- | :--- | :--- | :--- |
+| `$color-error-hover` | `#a8250b` | `(não existe na web ref)` | 24 | Mantido |
+| `$status-academic-bg` | `(não existe no app)` | `$blue-badge-bg` | (ausente) | Mantido |
+| `$status-academic-color` | `(não existe no app)` | `$blue-warm-vivid-70` | (ausente) | Mantido |
+| `$status-published-bg` | `(não existe no app)` | `$green-badge-bg` | (ausente) | Mantido |
+| `$status-published-color` | `(não existe no app)` | `$green-cool-vivid-60` | (ausente) | Mantido |
+| `$status-coordenacao-bg` | `(não existe no app)` | `#ede7f6` | (ausente) | Mantido |
+| `$status-coordenacao-color` | `(não existe no app)` | `#512da8` | (ausente) | Mantido |
+| `$status-autoinscricao-bg` | `(não existe no app)` | `#e0f2f1` | (ausente) | Mantido |
+| `$status-autoinscricao-color` | `(não existe no app)` | `#00695c` | (ausente) | Mantido |
+| `$status-oculto-bg` | `(não existe no app)` | `#f0f0f0` | (ausente) | Mantido |
+| `$status-oculto-color` | `(não existe no app)` | `#666666` | (ausente) | Mantido |
+| `$status-oculto-border` | `(não existe no app)` | `#dcdcdc` | (ausente) | Mantido |
+| `$table-header-bg` | `(não existe no app)` | `#f1f4f9` | (ausente) | Mantido |
+| `$table-subtle-bg` | `(não existe no app)` | `#f8f9fa` | (ausente) | Mantido |
+| `$table-hover-bg` | `(não existe no app)` | `#f9fbfe` | (ausente) | Mantido |
+| `$z-index-modal-backdrop` | `(não existe no app)` | `1070` | (ausente) | Mantido |
+| `$z-index-modal` | `(não existe no app)` | `1080` | (ausente) | Mantido |
