@@ -163,7 +163,40 @@ export class SuapEntryService {
     private readonly painel = inject(PainelAvaService);
     private readonly suapBrowser = inject(SuapBrowserService);
     private loading = false;
-    private staged?: { profile: Profile; dashboard: unknown; until: number; siteId: string };
+    private staged?: { profile: Profile; dashboard: unknown; until: number; siteId?: string };
+
+    /** A entrada do painel usa o OAuth SUAP sem exigir conta no Moodle Acadêmico. */
+    async loginWithSuap(expectedIdentity = '', onStatus: (message: string) => void = () => {}): Promise<void> {
+        if (this.loading) {
+            return;
+        }
+        this.loading = true;
+        this.cancel();
+        onStatus('Acessando o SUAP…');
+        try {
+            const panel = await firstValueFrom(this.painel.authenticateWithBrowser({ readOnly: true, reuseSession: false }));
+            const identity = panelIdentity(panel.diagnosticProfile);
+            const dashboard = panel.diagnosticDashboard;
+            if (!identity || !panel.diagnosticProfile || panel.diagnosticOwner !== identity) {
+                throw new Error('Não foi possível confirmar a matrícula da sessão SUAP. Tente novamente.');
+            }
+            if (expectedIdentity && identity !== expectedIdentity.trim()) {
+                throw new SuapEntryAccountError(expectedIdentity.trim(), identity, 'painel');
+            }
+            if (!dashboard || typeof dashboard !== 'object' || Array.isArray(dashboard)
+                || !Array.isArray((dashboard as Profile).diarios)) {
+                throw new Error('O painel não retornou uma lista de cursos válida. Tente novamente.');
+            }
+            this.staged = {
+                profile: { ...panel.diagnosticProfile, identificacao: identity },
+                dashboard, until: Date.now() + 180000,
+            };
+            this.commit();
+        } finally {
+            this.loading = false;
+            onStatus('');
+        }
+    }
 
     constructor() {
         // Registrar antes de iniciar o OAuth, inclusive se a shell de cursos ainda
@@ -313,8 +346,9 @@ export class SuapEntryService {
     private commit(): void {
         const value = this.staged;
         const site = CoreSites.getCurrentSite();
-        if (!value || value.until <= Date.now() || !site || site.isLoggedOut() || site.getId() !== value.siteId
-            || String(site.getInfo()?.username || '').trim() !== profileIdentity(value.profile)) {
+        if (!value || value.until <= Date.now() || (value.siteId && (!site || site.isLoggedOut()
+            || site.getId() !== value.siteId
+            || String(site.getInfo()?.username || '').trim() !== profileIdentity(value.profile)))) {
             this.cancel();
             throw new Error('A sessão de entrada expirou. Inicie a entrada novamente.');
         }
