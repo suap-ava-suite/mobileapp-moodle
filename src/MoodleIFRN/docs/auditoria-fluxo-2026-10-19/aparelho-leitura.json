@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-20T00:42:33.011Z",
+  "app": {
+    "path": "/login/marketplace-ifrn",
+    "hasProfile": false,
+    "hasDashboard": false,
+    "loading": false,
+    "angularDebug": false
+  }
+}

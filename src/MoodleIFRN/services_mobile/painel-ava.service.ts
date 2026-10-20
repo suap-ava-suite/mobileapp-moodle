@@ -17,7 +17,8 @@ import { Injectable } from '@angular/core';
 import { CoreOpener } from '@static/opener';
 import { Observable, map, of, throwError, timeout } from 'rxjs';
 
-import { PAINEL_AVA_CONFIG } from './painel-ava.config';
+import { PAINEL_AVA_CONFIG, isPainelAvaBrowserUrl } from './painel-ava.config';
+import { PAINEL_COURSES_SCRIPT } from './painel-courses';
 import { hasOAuthProfileMode, readOAuthDashboard, readOAuthProfile } from '../mobilemoodle/core_mobile/oauth-profile';
 
 /* eslint-disable @typescript-eslint/naming-convention */
@@ -115,12 +116,13 @@ body::before {
 }
 `;
 
-/** Páginas em que o usuário precisa interagir (login/autorização). Demais URLs ficam ocultas. */
+/** O SUAP pode exigir login, MFA ou consentimento em rotas diferentes. */
 function needsSuapUserInteraction(url: string): boolean {
-    if (!url.startsWith(`${SUAP_ORIGIN}/`)) {
+    try {
+        return new URL(url).origin === SUAP_ORIGIN;
+    } catch {
         return false;
     }
-    return /\/(accounts\/login|login\/?(\?|$)|o\/authorize|oauth\/?2?\/authorize|authorize\/?(\?|$))/i.test(url);
 }
 
 /** Esconde chrome web + imagens Moodle/AVA nos passos sem interação SUAP. */
@@ -531,7 +533,6 @@ export class PainelAvaService {
                 }
                 subscriber.next(result);
                 subscriber.complete();
-                CoreOpener.closeInAppBrowser();
             };
 
             const beginSuapIdentityProbe = (): void => {
@@ -557,6 +558,8 @@ export class PainelAvaService {
                     if (awaitingSuapIdentity || !needsSuapUserInteraction(url)) {
                         hideBrowser();
                         maskIntermediateWebPage(browser, url);
+                    } else if (!finished) {
+                        showBrowserForLogin();
                     }
                     // Login/autorização SUAP: não mascara — deixa a UI nativa do SUAP.
                     return;
@@ -659,7 +662,7 @@ export class PainelAvaService {
                     maskIntermediateWebPage(browser, url);
                 }
 
-                if (finished || probing || awaitingSuapIdentity || !url.startsWith(baseUrl)) {
+                if (finished || probing || awaitingSuapIdentity || !isPainelAvaBrowserUrl(url)) {
                     return;
                 }
 
@@ -687,19 +690,7 @@ export class PainelAvaService {
                                 return null;
                             });
                         }
-                        fetch(endpoint, {
-                            method: 'GET',
-                            headers: { 'Accept': 'application/json' },
-                            credentials: 'same-origin',
-                            redirect: 'follow'
-                        })
-                        .then(function (response) {
-                            var contentType = response.headers.get('content-type') || '';
-                            if (!response.ok || contentType.indexOf('application/json') === -1) {
-                                throw new Error('Painel ainda não autenticado');
-                            }
-                            return response.json();
-                        })
+                        ${PAINEL_COURSES_SCRIPT}(endpoint)
                         .then(function (payload) {
                             // O login já está válido porque /api/v1/diarios/ respondeu JSON.
                             // A identidade confiável vem de /api/v2/usuario/info/ (sessão web).
@@ -932,15 +923,18 @@ export class PainelAvaService {
                 }
             });
 
+            const loadErrorSubscription = browser.on('loaderror').subscribe(() => {
+                finishWithError('Não foi possível carregar o login SUAP. Verifique sua conexão e tente novamente.');
+            });
+
             return () => {
-                if (!finished) {
-                    finished = true;
-                    CoreOpener.closeInAppBrowser();
-                }
+                finished = true;
                 loadStartSubscription.unsubscribe();
                 loadStopSubscription.unsubscribe();
                 messageSubscription.unsubscribe();
                 exitSubscription.unsubscribe();
+                loadErrorSubscription.unsubscribe();
+                CoreOpener.closeInAppBrowser();
             };
         }).pipe(timeout(120000));
     }
@@ -1002,7 +996,7 @@ export class PainelAvaService {
                 }
                 maskIntermediateWebPage(browser, url);
 
-                if (finished || started || !url.startsWith(baseUrl)) {
+                if (finished || started || !isPainelAvaBrowserUrl(url)) {
                     return;
                 }
                 started = true;

@@ -70,14 +70,8 @@ gulp.task('mobilemoodle-ts', (done) => {
     }
 });
 
-gulp.task('ifrn-theme', (done) => {
-    try {
-        execSync('npx sass src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/painel.scss src/MoodleIFRN/mobilemoodle/static/theme/ifrn/css/painel.css --no-source-map', { stdio: 'inherit' });
-        done();
-    } catch (error) {
-        done(error);
-    }
-});
+// The panel bundle includes its compiled SCSS; no CSS directory is generated in the sources.
+gulp.task('ifrn-theme', gulp.series('mobilemoodle-ts'));
 
 // Build a Moodle plugin to run Behat tests.
 if (BuildBehatPluginTask.isBehatConfigured()) {
@@ -92,7 +86,6 @@ gulp.task(
         gulp.series('lang', 'lang-custom'),
         'env',
         'icons',
-        'ifrn-theme',
         'mobilemoodle-ts',
         ...(BuildBehatPluginTask.isBehatConfigured() ? ['behat'] : [])
     ]),
@@ -103,6 +96,7 @@ gulp.task('watch', () => {
     gulp.watch(['./moodle.config.json', './moodle.config.*.json'], { interval: 500 }, gulp.parallel('env'));
     gulp.watch('src/MoodleIFRN/mobilemoodle/core_mobile/**/*.ts', { interval: 500 }, gulp.parallel('mobilemoodle-ts'));
     gulp.watch('src/MoodleIFRN/mobilemoodle/mobilemoodle.ts', { interval: 500 }, gulp.parallel('mobilemoodle-ts'));
+    gulp.watch('src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/**/*.scss', { interval: 500 }, gulp.series('mobilemoodle-ts'));
 
     if (BuildBehatPluginTask.isBehatConfigured()) {
         gulp.watch(['./tests/behat'], { interval: 500 }, gulp.parallel('behat'));

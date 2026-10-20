@@ -27,7 +27,6 @@ mobilemoodle/
 │   ├── curso.html      ← detalhe do curso
 │   └── erros.html      ← telas de erro / not found
 └── static/theme/ifrn/
-    ├── css/painel.css  ← CSS compilado usado pelo index
     ├── scss/           ← fontes SCSS do tema
     └── img/            ← ícones e imagens do tema
 ```
@@ -96,7 +95,7 @@ Documentação dos scripts: [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../mob
 O visual segue a identidade do AVA IFRN (header, cores, cards, progresso, menu).
 
 - Variáveis e partials: `static/theme/ifrn/scss/`
-- CSS servido: `static/theme/ifrn/css/painel.css`
+- Estilos compilados do SCSS e incluídos em `mobilemoodle.js`, sem gerar pasta `css` do tema.
 - Detalhes de header / safe-area / mobile: [`TEMA-VISUAL.md`](./TEMA-VISUAL.md)
 
 ---
@@ -133,9 +132,8 @@ Detalhes do contrato: [`./CONTRATO-API.md`](./CONTRATO-API.md)
 npm run build:mobilemoodle
 ```
 
-CSS (se alterar SCSS):
+Após alterar SCSS, o mesmo comando recompila os estilos no bundle:
 
 ```bash
-npx sass src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/painel.scss \
-  src/MoodleIFRN/mobilemoodle/static/theme/ifrn/css/painel.css --no-source-map
+npm run build:mobilemoodle
 ```

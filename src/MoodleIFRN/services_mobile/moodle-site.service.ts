@@ -38,6 +38,7 @@ import { CoreEvents } from '@static/events';
 import { CoreLogger } from '@static/logger';
 import { useIfrnBrazilianPortuguese } from './ifrn-language';
 import { CourseOpeningAttempt } from '../navigation/course-opening-attempt';
+import { selectSuapProvider } from './suap-provider';
 
 
 export const IFRN_MOODLE_PRESENCIAL_URL = 'https://presencial.ava.ifrn.edu.br';
@@ -662,6 +663,15 @@ export class MoodleSiteService {
         this.oauthCallbackReceived = false;
         this.lastCourseAccessIssue = null;
         this.lastError = '';
+        this.hideNativeCourseHandoff();
+    }
+
+    /** Allows an explicit retry after a browser that never returned; keeps the course and all sessions. */
+    releaseOAuthBrowserWait(): void {
+        this.oauthFlowActive = false;
+        this.oauthCallbackReceived = false;
+        sessionStorage.removeItem(OAUTH_PENDING_KEY);
+        sessionStorage.removeItem(RESUME_OAUTH_KEY);
         this.hideNativeCourseHandoff();
     }
 
@@ -1996,7 +2006,7 @@ export class MoodleSiteService {
     }
 
     /**
-     * Localiza o identity provider nomeado "suap" (oauth id=1 no AVA-Presencial).
+     * Localiza o SUAP anunciado pelo ambiente (id=1 no Presencial, id=4 no Aberto).
      */
     async findSuapProvider(
         siteCheck: CoreSiteCheckResponse,
@@ -2012,17 +2022,7 @@ export class MoodleSiteService {
 
         const providers = await CoreLoginHelper.getValidIdentityProvidersForSite(tempSite);
 
-        const byName = providers.find(
-            (provider) => provider.name.trim().toLowerCase() === 'suap',
-        );
-
-        if (byName) {
-            return byName;
-        }
-
-        return providers.find(
-            (provider) => Number(CoreUrl.extractUrlParams(provider.url).id) === 1,
-        ) ?? providers[0];
+        return selectSuapProvider(providers);
     }
 
     /**

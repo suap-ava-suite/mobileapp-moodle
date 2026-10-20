@@ -1,0 +1,7980 @@
+{
+  "/api/token/pair": {
+    "post": {
+      "operationId": "token_obtain_pair",
+      "summary": "Obtain Token",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenObtainPairOutputSchema"
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "token"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TokenObtainPairInputSchema"
+            }
+          }
+        },
+        "required": true
+      }
+    }
+  },
+  "/api/token/refresh": {
+    "post": {
+      "operationId": "token_refresh",
+      "summary": "Refresh Token",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRefreshOutputSchema"
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "token"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TokenRefreshInputSchema"
+            }
+          }
+        },
+        "required": true
+      }
+    }
+  },
+  "/api/token/verify": {
+    "post": {
+      "operationId": "token_verify",
+      "summary": "Verify Token",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema"
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "token"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TokenVerifyInputSchema"
+            }
+          }
+        },
+        "required": true
+      }
+    }
+  },
+  "/api/rh/meus-dados/": {
+    "get": {
+      "operationId": "api_endpoints_rh_obtem_meus_dados",
+      "summary": "Obtem meu perfil pessoal",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém os dados pessoais do usuário logado.",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rh/meus-vinculos/": {
+    "get": {
+      "operationId": "api_endpoints_rh_meus_vinculos",
+      "summary": "Vínculos do usuário",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedVinculoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém os vínculos do usuário autenticado.",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rh/eu/": {
+    "get": {
+      "operationId": "api_endpoints_rh_eu",
+      "summary": "Obtém meus dados pessoais",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EuSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém os dados pessoais do usuário logado",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rh/unidades-organizacionais/": {
+    "get": {
+      "operationId": "api_endpoints_rh_uos",
+      "summary": "Obtem campi",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedUnidadeOrganizacional"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtem os campus da instituição",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rh/servidores/": {
+    "get": {
+      "operationId": "api_endpoints_rh_servidores",
+      "summary": "Obtem servidores",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "nome",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": "pessoa_fisica__nome__icontains",
+            "title": "Nome"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "campus",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": "setor__uo__sigla",
+            "title": "Campus"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "matricula",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matricula"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "setor",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": "setor__sigla__icontains",
+            "title": "Setor"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "cargo_emprego",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": "cargo_emprego__nome__icontains",
+            "title": "Cargo Emprego"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedServidorSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtem os servidores ativos da instituição",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rh/servidores_funcao_ativa/": {
+    "get": {
+      "operationId": "api_endpoints_rh_servidores_funcao_ativa",
+      "summary": "Obtem servidores com função ativa",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "nome",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": "pessoa_fisica__nome__icontains",
+            "title": "Nome"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "campus",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": "setor__uo__sigla",
+            "title": "Campus"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "matricula",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matricula"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "setor",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": "setor__sigla__icontains",
+            "title": "Setor"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "cargo_emprego",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": "cargo_emprego__nome__icontains",
+            "title": "Cargo Emprego"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedServidorFuncaoAtivaSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtem os servidores com função ativa da instituição",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rh/servidores/detalhado/": {
+    "get": {
+      "operationId": "api_endpoints_rh_servidores_detalhado",
+      "summary": "Obtem dados detalhados de servidores",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "nome",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": "pessoa_fisica__nome__icontains",
+            "title": "Nome"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "campus",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": "setor__uo__sigla",
+            "title": "Campus"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "matricula",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matricula"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "setor",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": "setor__sigla__icontains",
+            "title": "Setor"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "cargo_emprego",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": "cargo_emprego__nome__icontains",
+            "title": "Cargo Emprego"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedServidorDetalhadoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtem dados detalhados de todos os servidores da instituição",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rh/servidores/integra/": {
+    "get": {
+      "operationId": "api_endpoints_rh_servidores_integra",
+      "summary": "Obtem dados de servidores com escopo do integra",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/ServidorIntegraSchema"
+                },
+                "title": "Response",
+                "type": "array"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtem dados de servidores com escopo do integra",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rh/setores/": {
+    "get": {
+      "operationId": "api_endpoints_rh_setores",
+      "summary": "Obtem setores",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "nome",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "sigla",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sigla"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "uo",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uo"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "excluido",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excluido"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "areas_vinculacao",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": "areas_vinculacao__descricao",
+            "title": "Areas Vinculacao"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedSetorSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtem os setores da instituição",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rh/meu-historico-funcional/": {
+    "get": {
+      "operationId": "api_endpoints_rh_obtem_historico_funcional",
+      "summary": "Obtem meu histórico Funcional",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedHistoricoFuncionalSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém a timeline do Histórico Funcional do Servidor logado.",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rh/minhas-ocorrencias-afastamentos/": {
+    "get": {
+      "operationId": "api_endpoints_rh_obtem_ocorrencias_afastamentos_servidor",
+      "summary": "Obtem meus afastamentos",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OcorrenciaAfastamentoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém a lista de ocorrências e afastamentos do Servidor logado.",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rh/emitir-carteira-funcional-digital/{matricula}/": {
+    "get": {
+      "operationId": "api_endpoints_rh_emitir_carteira_funcional_digital",
+      "summary": "Obtem carteira funcional digital",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "matricula",
+          "schema": {
+            "title": "Matricula",
+            "type": "string"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CarteiraFuncionalSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém a carteira funcional de um determinado servidor",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rh/minhas-ferias/": {
+    "get": {
+      "operationId": "api_endpoints_rh_obtem_ferias",
+      "summary": "Obtem minhas férias",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedFeriasSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém a lista das férias do usuário logado.",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rh/minhas-frequencias/": {
+    "get": {
+      "operationId": "api_endpoints_rh_obtem_frequencias",
+      "summary": "Obtem minhas frequências do dia",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FrequenciaSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém a lista das frequências no dia de hoje do usuário logado.",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rh/servidor-resumido/": {
+    "get": {
+      "operationId": "api_endpoints_rh_dados_servidor",
+      "summary": "Obtém dados resumidos de servidor especifico.",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "matricula",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matricula"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DadosServidorResumidoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém dados resumidos de servidor especifico.",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rh/meus-contracheques/": {
+    "get": {
+      "operationId": "api_endpoints_rh_meus_contracheques",
+      "summary": "Obtém meus contracheques",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedMeuContrachequeSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém a lista dos meses com contracheques disponíveis para o usuário logado.",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rh/meu-contracheque/{ano}/{mes}/": {
+    "get": {
+      "operationId": "api_endpoints_rh_obtem_detalhes_contracheque",
+      "summary": "Obtém meu contracheque detalhado",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "ano",
+          "schema": {
+            "title": "Ano",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "path",
+          "name": "mes",
+          "schema": {
+            "title": "Mes",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeuContrachequeDetalheSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém o detalhamento de um determinado contracheque do usuário logado.",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rh/contracheques/": {
+    "get": {
+      "operationId": "api_endpoints_rh_obtem_contracheques",
+      "summary": "Obtém todos os contracheques",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "ano",
+          "schema": {
+            "q": "ano__ano",
+            "title": "Ano",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "mes",
+          "schema": {
+            "title": "Mes",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedContrachequeSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém a lista dos meses com contracheques disponíveis para o usuário logado.",
+      "tags": [
+        "Gestão de Pessoas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/periodos/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_get_periodos",
+      "summary": "Obtém períodos",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedPeriodoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Retorna os semestres letivos do aluno.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/diarios/{semestre}/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_get_diarios",
+      "summary": "Obtém diários",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "semestre",
+          "schema": {
+            "title": "Semestre",
+            "type": "string"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedDiarioSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera os diários do aluno em um semestre letivo.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/diarios/{id_diario}/professores/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_get_diario_professores",
+      "summary": "Obtém professores",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id_diario",
+          "schema": {
+            "title": "Id Diario",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedProfessorSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera os professores de um diário.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/diarios/{id_diario}/alunos/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_get_diario_alunos",
+      "summary": "Obtém alunos",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id_diario",
+          "schema": {
+            "title": "Id Diario",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedAlunoDiarioSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera os alunos de um diário.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/diarios/{id_diario}/aulas/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_get_diario_aulas",
+      "summary": "Obtém aulas",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id_diario",
+          "schema": {
+            "title": "Id Diario",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedAulaSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera as aulas de um diário.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/diarios/{id_diario}/materiais/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_get_diario_materiais",
+      "summary": "Obtém materiais",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id_diario",
+          "schema": {
+            "title": "Id Diario",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedMaterialSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera os materiais de um diário.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/materiais/{id_material}/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_get_diario_material",
+      "summary": "Obtém material",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id_material",
+          "schema": {
+            "title": "Id Material",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera o material de um diário.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/materiais/{id_diario}/{id_material}/pdf/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_get_diario_material_pdf",
+      "summary": "Obtém PDF do material",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id_diario",
+          "schema": {
+            "title": "Id Diario",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "path",
+          "name": "id_material",
+          "schema": {
+            "title": "Id Material",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "title": "Response",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera o pdf material de um diário.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/diarios/{id_diario}/trabalhos/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_get_diario_trabalhos",
+      "summary": "Obtém trabalhos",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id_diario",
+          "schema": {
+            "title": "Id Diario",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedTrabalhoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera os trabalhos de um diário.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/trabalhos/{id_trabalho}/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_get_diario_trabalho",
+      "summary": "Obtém trabalho",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id_trabalho",
+          "schema": {
+            "title": "Id Trabalho",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrabalhoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera o trabalho de um diário.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/diarios/{id_diario}/topicos/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_get_diario_topicos",
+      "summary": "Obtém tópicos",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id_diario",
+          "schema": {
+            "title": "Id Diario",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedTopicoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera os tópicos de um diário.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/disciplinas/{semestre}/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_get_disciplinas",
+      "summary": "Obtém disciplinas",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "semestre",
+          "schema": {
+            "title": "Semestre",
+            "type": "string"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedDisciplinaSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera os dados do aluno nas disciplinas de um semestre letivo.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/disciplinas/{disciplina}/etapas/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_get_disciplinas_etapas",
+      "summary": "Obtém avaliações",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "disciplina",
+          "schema": {
+            "title": "Disciplina",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedEtapaDisciplinaSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera os dados de avaliação do aluno por etapa de uma disciplina.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/mensagens/entrada/{status}/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_get_mensagem_entrada_status",
+      "summary": "Obtém as mensagens do usuário",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "status",
+          "schema": {
+            "enum": [
+              "nao-lidas",
+              "lidas",
+              "todas",
+              "lixeira"
+            ],
+            "title": "MensagemStatusEnum",
+            "type": "string"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedMensagemSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera as mensagens do usuário de um status (Lida, Não lida, Lixeira ou Todas).",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/mensagens/registro-leitura/{mensagem_id}/": {
+    "post": {
+      "operationId": "api_endpoints_ensino_post_registro_leitura",
+      "summary": "Registra leitura",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "mensagem_id",
+          "schema": {
+            "title": "Mensagem Id",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "title": "Response",
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Marca como \"Lida\" uma mensagem do usuário.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/mensagens/registro-exclusao/{mensagem_id}/": {
+    "delete": {
+      "operationId": "api_endpoints_ensino_post_registro_exclusao",
+      "summary": "Registra exclusão",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "mensagem_id",
+          "schema": {
+            "title": "Mensagem Id",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "title": "Response",
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Move para a \"Lixeira\" uma mensagem do usuário.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/meus-dados-aluno/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_get_meus_dados_aluno",
+      "summary": "Obtém os dados do aluno",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeusDadosAluno"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera os dados do aluno com foco no curso.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/requisitos-conclusao/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_get_requisitos_conclusao",
+      "summary": "Obtém os requisitos de conclusão.",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequisitosConclusaoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Com base no aluno logado, retorna os dados referentes a conclusão.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/autenticacao/acesso-responsaveis/": {
+    "post": {
+      "operationId": "api_endpoints_ensino_obtem_token_acesso_responsaveis",
+      "summary": "Autentica responsável de aluno menor de idade.",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "matricula",
+          "schema": {
+            "title": "Matricula",
+            "type": "string"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "chave",
+          "schema": {
+            "title": "Chave",
+            "type": "string"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenResponsavelSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Retorna o token de um aluno a partir da matrícula e chave de acesso do responsável.",
+      "tags": [
+        "Ensino"
+      ]
+    }
+  },
+  "/api/ensino/meus-dependentes/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_meus_dependentes",
+      "summary": "Alunos dependentes do usuário autenticado.",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedDependenteSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Retorna a matrícula, nome e token de autenticação dos dependentes do usuário atenticado",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/meu-calendario-academico/{ano}/{periodo_letivo}/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_meu_calendario_academico",
+      "summary": "Obtém calendário acadêmico do aluno",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "ano",
+          "schema": {
+            "title": "Ano",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "path",
+          "name": "periodo_letivo",
+          "schema": {
+            "title": "Periodo Letivo",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/CalendarioAcademicoSchema"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera o calendário acadêmico do aluno em ano/semestre",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/minhas-aulas/{ano}/{mes}/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_aulas_aluno",
+      "summary": "Obtém aulas do aluno em um determinado ano e mês",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "ano",
+          "schema": {
+            "title": "Ano",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "path",
+          "name": "mes",
+          "schema": {
+            "title": "Mes",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedAulaAlunoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera as aulas de um diário.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/mensagens-responsavel/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_mensagens_reponsavel",
+      "summary": "Obtém as mensagens enviadas para os responsáveis dos alunos",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedMensagemResponsavelSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera as mensagens enviadas para os responsáveis dos alunos",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/mensagens-responsavel/{id}/registrar-leitura/": {
+    "post": {
+      "operationId": "api_endpoints_ensino_registrar_leitura_mensagem_responsavel",
+      "summary": "Registra a leitura de uma mensagem para o responsável de aluno.",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "schema": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MensagemResponsavelSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Registra a leitura de uma mensagem para o responsável de aluno.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/mensagens-responsavel/{id}/perguntar/": {
+    "post": {
+      "operationId": "api_endpoints_ensino_pergunta_mensagem_responsavel",
+      "summary": "Registra uma pergunta",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "schema": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MensagemResponsavelSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Registra pergunta referente a mensagem a responsável de aluno",
+      "tags": [
+        "Ensino"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PerguntaMensagemResponsavelSchema"
+            }
+          }
+        },
+        "required": true
+      },
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/frequencia-periodo-letivo/{ano}/{periodo}/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_total_aulas_periodo_letivo",
+      "summary": "Obtém total de aulas e faltas",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "ano",
+          "schema": {
+            "title": "Ano",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "path",
+          "name": "periodo",
+          "schema": {
+            "title": "Periodo",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FrequenciaSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera total de aulas e faltas em um determinado periodo letivo",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/meu-boletim/{ano_letivo}/{periodo_letivo}/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_meu_boletim",
+      "summary": "Obtém boletim",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "ano_letivo",
+          "schema": {
+            "title": "Ano Letivo",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "path",
+          "name": "periodo_letivo",
+          "schema": {
+            "title": "Periodo Letivo",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedBoletimSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera o boletim do aluno de um ano e período letivo.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/meus-diarios/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_meus_diarios_abertos",
+      "summary": "Obtém diários abertos do professor",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedMeuDiarioSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera os diários abertos do professor de um ano e período letivo.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/meus-diarios/{ano_letivo}/{periodo_letivo}/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_meus_diarios",
+      "summary": "Obtém diários do professor",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "ano_letivo",
+          "schema": {
+            "title": "Ano Letivo",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "path",
+          "name": "periodo_letivo",
+          "schema": {
+            "title": "Periodo Letivo",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedMeuDiarioSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera os diários do professor de um ano e período letivo.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/meus-periodos-letivos/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_meus_periodos_letivos",
+      "summary": "Obtém periodos",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedMeuPeriodoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Retorna os períodos letivos do aluno.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/minhas-proximas-avaliacoes/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_minhas_avaliacoes",
+      "summary": "Obtém próximas avaliações",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedItemConfiguracaoAvaliacaoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera as próximas avaliações do aluno.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/minha-turma-virtual/{pk}/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_turma_virtual",
+      "summary": "Obtém turma virtual",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "pk",
+          "schema": {
+            "title": "Pk",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatriculaDiarioSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera os dados de aula de um diário do aluno.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/minhas-turmas-virtuais/{ano_letivo}/{periodo_letivo}/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_turmas_virtuais",
+      "summary": "Obtém turmas virtuais",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "ano_letivo",
+          "schema": {
+            "title": "Ano Letivo",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "path",
+          "name": "periodo_letivo",
+          "schema": {
+            "title": "Periodo Letivo",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedMatriculaPeriodoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera os diários do aluno em um ano e período letivo.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/aluno-resumido/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_dados_aluno",
+      "summary": "Obtém dados resumidos de alunos.",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "matricula",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matricula"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "ano_conclusao",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ano Conclusao"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "codigo_curso",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Curso"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/DadosSiabiSchema"
+                },
+                "title": "Response",
+                "type": "array"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém dados resumidos de alunos.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/meus-diarios-ead/{pk}/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_meus_diarios_ead_com_pk",
+      "summary": "Lista um diário de um aluno ou professor EAD",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "pk",
+          "schema": {
+            "title": "Pk",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedMeuDiarioEADSChema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Lista um diário de um aluno ou professor EAD",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/meus-diarios-ead/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_lista_meus_diarios_ead_sem_pk",
+      "summary": "Lista todos os diarios de um aluno ou professor EAD",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedMeuDiarioEADSChema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Lista todos os diarios de um aluno ou professor EAD",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/aluno-matriculado/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_dados_aluno_matriculado",
+      "summary": "Obtém aluno matriculado",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "matricula",
+          "schema": {
+            "title": "Matricula",
+            "type": "string"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DadosAlunoMatriculadoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recupera os dados de um aluno matriculado.",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ensino/portal-professores/": {
+    "get": {
+      "operationId": "api_endpoints_ensino_portal_professores",
+      "summary": "Portal Professores",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedDadosProfessorPortalInstitucionalSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Lista dados públicos de professores para o portal institucional",
+      "tags": [
+        "Ensino"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ti/balcao-digital/{id_servico_portal_govbr}/": {
+    "get": {
+      "operationId": "api_endpoints_ti_servicos_ativos",
+      "summary": "Lista um serviço ativo especifico do catalogo digital",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id_servico_portal_govbr",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Servico Portal Govbr"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "201": {
+          "description": "Created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad Request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Lista os serviços ativos do catalogo digital",
+      "tags": [
+        "Tecnologia da Informação"
+      ],
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ti/balcao-digital/": {
+    "get": {
+      "operationId": "api_endpoints_ti_todos_servicos_ativos",
+      "summary": "Lista todos os serviços ativos do catalogo digital",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "201": {
+          "description": "Created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad Request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Lista todos os serviços ativos do catalogo digital",
+      "tags": [
+        "Tecnologia da Informação"
+      ],
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ti/balcao-digital/cpf/{cpf}/": {
+    "get": {
+      "operationId": "api_endpoints_ti_servicos_disponiveis",
+      "summary": "Lista os serviços disponíveis para um determinado usuário",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "cpf",
+          "schema": {
+            "title": "Cpf",
+            "type": "string"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "201": {
+          "description": "Created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad Request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Lista os serviços disponíveis para um determinado usuário",
+      "tags": [
+        "Tecnologia da Informação"
+      ],
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ti/balcao-digital/cpf/{cpf}/avaliacao_disponibilidade/": {
+    "get": {
+      "operationId": "api_endpoints_ti_servicos_avaliacao_disponibilidade",
+      "summary": "Lista os serviços disponíveis para um determinado usuário",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "cpf",
+          "schema": {
+            "title": "Cpf",
+            "type": "string"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "201": {
+          "description": "Created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad Request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Lista os serviços disponíveis para um determinado usuário",
+      "tags": [
+        "Tecnologia da Informação"
+      ],
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ti/balcao-digital/autocompletar/": {
+    "post": {
+      "operationId": "api_endpoints_ti_servicos_autocompletar",
+      "summary": "Retorna uma lista de objetos para a busca do autocompletar do balcao digital",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutocompleteSchema"
+              }
+            }
+          }
+        },
+        "201": {
+          "description": "Created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutocompleteSchema"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad Request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutocompleteSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutocompleteSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutocompleteSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Retorna uma lista de objetos para a busca do autocompletar do balcao digital",
+      "tags": [
+        "Tecnologia da Informação"
+      ],
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ti/balcao-digital/{id_servico_portal_govbr}/cpf/{cpf}/receber_solicitacao/": {
+    "post": {
+      "operationId": "api_endpoints_ti_receber_solicitacao_post",
+      "summary": "Recebe a solicitação de um determinado usuário",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id_servico_portal_govbr",
+          "schema": {
+            "title": "Id Servico Portal Govbr",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "path",
+          "name": "cpf",
+          "schema": {
+            "title": "Cpf",
+            "type": "string"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "201": {
+          "description": "Created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad Request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recebe a solicitação de um determinado usuário",
+      "tags": [
+        "Tecnologia da Informação"
+      ],
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    },
+    "get": {
+      "operationId": "api_endpoints_ti_receber_solicitacao_get",
+      "summary": "Recebe a solicitação de um determinado usuário",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id_servico_portal_govbr",
+          "schema": {
+            "title": "Id Servico Portal Govbr",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "path",
+          "name": "cpf",
+          "schema": {
+            "title": "Cpf",
+            "type": "string"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "201": {
+          "description": "Created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad Request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Recebe a solicitação de um determinado usuário",
+      "tags": [
+        "Tecnologia da Informação"
+      ],
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ti/balcao-digital/cpf/{cpf}/acompanhamentos/": {
+    "get": {
+      "operationId": "api_endpoints_ti_acompanhamentos_por_cidadao",
+      "summary": "Lista os acompanhamentos de um determinado CPF",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "cpf",
+          "schema": {
+            "title": "Cpf",
+            "type": "string"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "201": {
+          "description": "Created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad Request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespostaSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Lista os acompanhamentos de um determinado CPF",
+      "tags": [
+        "Tecnologia da Informação"
+      ],
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ti/atualizacoes-suap/": {
+    "get": {
+      "operationId": "api_endpoints_ti_atualizacoes",
+      "summary": "Obtém as atualizações do SUAP",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedAtualizacaoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém todas as atualizações do SUAP",
+      "tags": [
+        "Tecnologia da Informação"
+      ]
+    }
+  },
+  "/api/ti/demandas/{id}/agent-context/": {
+    "get": {
+      "operationId": "api_endpoints_demandas_agent_context",
+      "summary": "Contexto completo da demanda para o agente",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "schema": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentContextSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Retorna especificação técnica, DoD, decisões arquiteturais, sub-demandas e informações de MR.",
+      "tags": [
+        "Demandas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ti/demandas/{id}/subdemandas/": {
+    "get": {
+      "operationId": "api_endpoints_demandas_subdemandas",
+      "summary": "Sub-demandas diretas",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "schema": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/SubdemandaSchema"
+                },
+                "title": "Response",
+                "type": "array"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Lista as sub-demandas diretas ordenadas por prioridade interna.",
+      "tags": [
+        "Demandas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ti/demandas/{id}/mr-status/": {
+    "get": {
+      "operationId": "api_endpoints_demandas_mr_status",
+      "summary": "Status do MR vinculado à demanda",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "schema": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MRStatusSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Retorna branch, id_merge_request e situação conforme registrado no banco.",
+      "tags": [
+        "Demandas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ti/demandas/{id}/merge-request/": {
+    "post": {
+      "operationId": "api_endpoints_demandas_open_merge_request",
+      "summary": "Abre ou retorna MR vinculado à demanda",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "schema": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenMRResponseSchema"
+              }
+            }
+          }
+        },
+        "201": {
+          "description": "Created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenMRResponseSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Unprocessable Content",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Idempotente: se o MR já existe, retorna o estado atual sem chamar o GitLab.",
+      "tags": [
+        "Demandas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ti/demandas/{id}/spec-decisions/": {
+    "post": {
+      "operationId": "api_endpoints_demandas_create_spec_decision",
+      "summary": "Registra decisão arquitetural na demanda",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "schema": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "201": {
+          "description": "Created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpecDecisionResponseSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Append-only — nenhum registro existente é modificado.",
+      "tags": [
+        "Demandas"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SpecDecisionInputSchema"
+            }
+          }
+        },
+        "required": true
+      },
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ti/demandas/{id}/revisoes-especificacao/": {
+    "post": {
+      "operationId": "api_endpoints_demandas_propor_revisao_especificacao",
+      "summary": "Propõe revisão de especificação da consolidação",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "schema": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisaoEspecificacaoSchema"
+              }
+            }
+          }
+        },
+        "201": {
+          "description": "Created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisaoEspecificacaoSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Unprocessable Content",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Cria (201) ou atualiza (200) a RevisaoEspecificacao pendente — nunca altera a Especificacao aprovada: quem aplica é o demandante, ao validar. Com solicitar_validacao, envia as revisões pendentes para validação dos demandantes, como o botão \"Solicitar validação das alterações\".",
+      "tags": [
+        "Demandas"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RevisaoEspecificacaoInputSchema"
+            }
+          }
+        },
+        "required": true
+      },
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    },
+    "get": {
+      "operationId": "api_endpoints_demandas_revisoes_especificacao",
+      "summary": "Revisões de especificação pendentes",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "schema": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/RevisaoEspecificacaoSchema"
+                },
+                "title": "Response",
+                "type": "array"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Revisões propostas e ainda não aprovadas nem rejeitadas pelos demandantes.",
+      "tags": [
+        "Demandas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ti/demandas/by-mr/": {
+    "get": {
+      "operationId": "api_endpoints_demandas_demanda_by_mr",
+      "summary": "Demanda vinculada a um MR",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "mr_iid",
+          "schema": {
+            "title": "Mr Iid",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ByMrResponseSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Retorna a demanda cujo id_merge_request corresponde ao mr_iid informado.",
+      "tags": [
+        "Demandas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/ti/entregas/{id}/pipeline-status/": {
+    "get": {
+      "operationId": "api_endpoints_entregas_pipeline_status",
+      "summary": "Status do pipeline da entrega",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "schema": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PipelineStatusSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Unprocessable Content",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Retorna pipeline_id e status da entrega conforme registrado no banco.",
+      "tags": [
+        "Entregas"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/midia/banners/": {
+    "get": {
+      "operationId": "api_endpoints_midia_banners_ativos",
+      "summary": "Obtém a lista de banners ativos",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedBannerSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém a lista de banners ativos.",
+      "tags": [
+        "Comunicação Social"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/midia/eventos/ativos-deferidos/": {
+    "get": {
+      "operationId": "api_endpoints_midia_eventos",
+      "summary": "Obtém eventos",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedEventoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém todos os eventos ativos e deferidos.",
+      "tags": [
+        "Comunicação Social"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/administracao/meus-processos-fisicos/": {
+    "get": {
+      "operationId": "api_endpoints_administracao_obtem_meus_processos",
+      "summary": "Obtem meus processos físicos",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "assunto",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assunto"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "status",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "uo",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": [
+              "uo__sigla",
+              "uo__nome"
+            ],
+            "title": "Uo"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "data_cadastro",
+          "schema": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": [
+              "data_cadastro__date"
+            ],
+            "title": "Data Cadastro"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedProcessoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém a lista de processos do Servidor logado.",
+      "tags": [
+        "Administração"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/administracao/meu-processo-fisico/{pk}/": {
+    "get": {
+      "operationId": "api_endpoints_administracao_obtem_processo",
+      "summary": "Obtem processo físico pessoal específico detalhado",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "pk",
+          "schema": {
+            "title": "Pk",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcessoDetalheSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém um processo físico específico do Servidor logado.",
+      "tags": [
+        "Administração"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/administracao/validar-visitante-portaria/{chave_wifi}/": {
+    "get": {
+      "operationId": "api_endpoints_administracao_validar_visitante",
+      "summary": "Exibe a validade de uma determinada chave wifi.",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "chave_wifi",
+          "schema": {
+            "title": "Chave Wifi",
+            "type": "string"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcessoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Exibe a validade de uma determinada chave wifi.",
+      "tags": [
+        "Administração"
+      ]
+    }
+  },
+  "/api/administracao/terceirizados/": {
+    "get": {
+      "operationId": "api_endpoints_administracao_terceirizados",
+      "summary": "Obtem terceirizados ativos",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "nome",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": "prestador_servico__pessoa_fisica__nome__icontains",
+            "title": "Nome"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "campus",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": "campus__nome__icontains",
+            "title": "Campus"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "setor",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "q": "prestador_servico__setor__sigla__icontains",
+            "title": "Setor"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedMaoDeObraSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtem os terceirizados ativos da instituição",
+      "tags": [
+        "Administração"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/pesquisa/projetos/": {
+    "get": {
+      "operationId": "api_endpoints_pesquisa_projetos",
+      "summary": "Obtém projetos",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedProjetoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém todos os projetos em execucao e concluidos",
+      "tags": [
+        "Pesquisa"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/institucional/estatisticas/": {
+    "get": {
+      "operationId": "api_endpoints_institucional_suap_em_numeros",
+      "summary": "Obtém estatisticas do SUAP",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuapEmNumerosSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém dados estatísticos do SUAP",
+      "tags": [
+        "Gestão Institucional"
+      ]
+    }
+  },
+  "/api/institucional/consulta_publica/documentos/": {
+    "get": {
+      "operationId": "api_endpoints_institucional_documentos_publicos",
+      "summary": "Obtem documentos eletrônicos públicos",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "identificador",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Identificador"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "assunto",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assunto"
+          },
+          "required": false
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedDocumentoTextoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém a lista de documentos eletrônicos públicos.",
+      "tags": [
+        "Gestão Institucional"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/extensao/projetos/": {
+    "get": {
+      "operationId": "api_endpoints_extensao_projetos",
+      "summary": "Obtém projetos",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedProjetoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Obtém todos os projetos em execucao e concluidos",
+      "tags": [
+        "Extensão"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/terminais/registrar/": {
+    "post": {
+      "operationId": "api_endpoints_terminais_registrar_dispositivo",
+      "summary": "Registra um dispositivo",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarResponseSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Realiza o registro de um novo dispositivo.",
+      "tags": [
+        "Terminais"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DispositivoRegistroSchema"
+            }
+          }
+        },
+        "required": true
+      },
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/terminais/heartbeat/": {
+    "post": {
+      "operationId": "api_endpoints_terminais_heartbeat",
+      "summary": "Registrar heartbeat de um dispositivo",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusResponseSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Registra o heartbeat de um dispositivo.",
+      "tags": [
+        "Terminais"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/HeartbeatSchema"
+            }
+          }
+        },
+        "required": true
+      },
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/terminais/batch-heartbeat/": {
+    "post": {
+      "operationId": "api_endpoints_terminais_batch_heartbeat",
+      "summary": "Registrar heartbeat em lote de dispositivos",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchHeartbeatResponse"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Registra heartbeat em lote de dispositivos.",
+      "tags": [
+        "Terminais"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/HeartbeatSchema"
+              },
+              "title": "Payload",
+              "type": "array"
+            }
+          }
+        },
+        "required": true
+      },
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/terminais/deploy/check/": {
+    "get": {
+      "operationId": "api_endpoints_terminais_deploy_check",
+      "summary": "Verifica a existência de deploys ativos",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckResponseSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Verifica se há deploys disponíveis.",
+      "tags": [
+        "Terminais"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/terminais/deploy/dispositivos/{deployment_id}": {
+    "get": {
+      "operationId": "api_endpoints_terminais_deploy_dispositivos_get",
+      "summary": "Obtém a lista de dispositivos elegíveis",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "deployment_id",
+          "schema": {
+            "title": "Deployment Id",
+            "type": "string"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeployDispositivosResponseSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Com base em um deployment, obtém a lista de dispositivos elegíveis para atualização.",
+      "tags": [
+        "Terminais"
+      ],
+      "security": [
+        {
+          "JWTAuth": []
+        },
+        {
+          "OAuth2TokenAuth": []
+        },
+        {
+          "SessionAuth": []
+        }
+      ]
+    }
+  },
+  "/api/terminais/report/": {
+    "post": {
+      "operationId": "api_endpoints_terminais_report_update",
+      "summary": "Registrar relatório de um dispositivo",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusResponseSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Registra o relatório de um dispositivo.",
+      "tags": [
+        "Terminais"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UpdateReportSchema"
+            }
+          }
+        },
+        "required": true
+      },
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/terminais/batch-report/": {
+    "post": {
+      "operationId": "api_endpoints_terminais_batch_report",
+      "summary": "Registrar atualizações em lote de dispositivos",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchUpdateReportResponse"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Registra atualizações em lote de dispositivos.",
+      "tags": [
+        "Terminais"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/UpdateReportSchema"
+              },
+              "title": "Payload",
+              "type": "array"
+            }
+          }
+        },
+        "required": true
+      },
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/rsc_tae/memoriais-avaliados/": {
+    "get": {
+      "operationId": "api_endpoints_rsc_tae_memoriais_avaliados",
+      "summary": "Memoriais descritivos avaliados pelos três avaliadores",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedMemorialAvaliadoSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Lista o memorial descritivo dos processos RSC-TAE cujos três avaliadores já finalizaram a avaliação.",
+      "tags": [
+        "RSC-TAE"
+      ]
+    }
+  },
+  "/api/pnp/servidores-nao-docentes/": {
+    "get": {
+      "operationId": "api_endpoints_pnp_servidores_nao_docentes",
+      "summary": "Servidores não docentes",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "page",
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "required": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedServidorNaoDocenteSchema"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Lista os servidores não docentes do sistema.",
+      "tags": [
+        "PNP"
+      ],
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/pgd2/execucao-gitlab/entregas-disponiveis/": {
+    "get": {
+      "operationId": "api_endpoints_pgd2_entregas_disponiveis",
+      "summary": "Lista entregas do PIT em que o servidor pode lançar RIT",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "gitlab_username",
+          "schema": {
+            "title": "Gitlab Username",
+            "type": "string"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntregasDisponiveisOutput"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Lista as entregas do PIT em que o servidor (resolvido pelo username GitLab) pode lançar RIT.\n\nArgs:\n    request: requisição HTTP.\n    gitlab_username: username do autor no GitLab.\n\nReturns:\n    Dicionário com a chave ``entregas`` (lista de entregas disponíveis), ou ``(404, ...)``\n    quando o username não está vinculado a nenhum servidor.",
+      "tags": [
+        "PGD2"
+      ],
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/pgd2/execucao-gitlab/lancar-rit/": {
+    "post": {
+      "operationId": "api_endpoints_pgd2_lancar_rit",
+      "summary": "Cria/atualiza o RIT (em EM_CADASTRO_RIT) a partir de um MR",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RitLancadoOutput"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Cria/atualiza o RIT a partir de um MR do GitLab, de forma idempotente por ``(projeto, MR)``.\n\nArgs:\n    request: requisição HTTP.\n    payload: dados do RIT e da proveniência GitLab.\n\nReturns:\n    Dicionário com ``rit_id``, ``entrega_pit_id``, ``gitlab_mr_iid`` e ``criado``; ou\n    ``(404, ...)`` se o username não resolve em servidor, ou ``(403, ...)`` se a entrega\n    não pertence ao servidor ou o PGD nega o cadastro do RIT.",
+      "tags": [
+        "PGD2"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/LancarRitInput"
+            }
+          }
+        },
+        "required": true
+      },
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/pgd2/execucao-gitlab/rit-do-mr/": {
+    "get": {
+      "operationId": "api_endpoints_pgd2_rit_do_mr",
+      "summary": "Informa o RIT lançado para um MR (status da execução)",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "gitlab_project_id",
+          "schema": {
+            "title": "Gitlab Project Id",
+            "type": "integer"
+          },
+          "required": true
+        },
+        {
+          "in": "query",
+          "name": "gitlab_mr_iid",
+          "schema": {
+            "title": "Gitlab Mr Iid",
+            "type": "integer"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RitDoMrOutput"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Retorna o RIT lançado para o MR ``(gitlab_project_id, gitlab_mr_iid)``.\n\nUsado pelo comentário de confirmação no merge para informar a execução registrada.\n\nArgs:\n    request: requisição HTTP.\n    gitlab_project_id: ID do projeto no GitLab.\n    gitlab_mr_iid: IID do merge request no GitLab.\n\nReturns:\n    Dicionário com ``rit_id``, ``situacao_rit`` (situação do RIT do PIT), ``entrega_titulo``\n    e ``tempo_executado``; ou ``(404, ...)`` quando não há RIT para o MR.",
+      "tags": [
+        "PGD2"
+      ],
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  },
+  "/api/pgd2/execucao-gitlab/horas-pit/": {
+    "get": {
+      "operationId": "api_endpoints_pgd2_horas_pit",
+      "summary": "Informa, por PIT aberto a RIT, a CH prevista, as horas já lançadas, o que falta e o % de teletrabalho",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "gitlab_username",
+          "schema": {
+            "title": "Gitlab Username",
+            "type": "string"
+          },
+          "required": true
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HorasPitOutput"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Not Found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorSchema"
+              }
+            }
+          }
+        }
+      },
+      "description": "Informa as horas dos PITs do servidor que ainda aceitam RIT.\n\nOs valores são os mesmos da tela do PIT (``tempo_previsto`` e ``tempo_executado_total``),\nque o PGD recalcula a cada RIT lançado.\n\nArgs:\n    request: requisição HTTP.\n    gitlab_username: username do servidor no GitLab.\n\nReturns:\n    Dicionário com a chave ``pits``, ou ``(404, ...)`` quando o username não está\n    vinculado a nenhum servidor.",
+      "tags": [
+        "PGD2"
+      ],
+      "security": [
+        {
+          "TrustedAppAuth": []
+        }
+      ]
+    }
+  }
+}

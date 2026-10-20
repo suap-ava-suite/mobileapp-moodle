@@ -4,8 +4,6 @@ Tema visual inspirado no AVA IFRN (`theme_ifrn25` / DS-GOV).
 
 ```text
 ifrn/
-├── css/
-│   └── painel.css      ← CSS gerado durante serve/build e ignorado pelo Git
 ├── favicon/            ← ícones do Painel AVA (PWA / aba)
 ├── scss/
 │   ├── painel.scss     ← estilos consolidados em SCSS, convertidos do CSS servido
@@ -110,11 +108,10 @@ Preferências ficam em `localStorage` (`ifrn_a11y_prefs`) e são reaplicadas ao 
 | `_mobile.scss` | Layout mobile / safe-areas / landscape |
 | `painel.scss` | Folha consolidada do painel, com sintaxe CSS válida em SCSS |
 
-O `index.html` referencia `css/painel.css`. O Gulp gera esse arquivo automaticamente antes de servir ou compilar o app. Para gerar manualmente:
+O build compila `scss/painel.scss` e inclui os estilos no bundle `mobilemoodle.js`. Não existe saída `css/painel.css` nem pasta `css` do tema nos fontes. As URLs das fontes são resolvidas a partir do bundle.
 
 ```bash
-npx sass src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/painel.scss \
-  src/MoodleIFRN/mobilemoodle/static/theme/ifrn/css/painel.css --no-source-map
+npm run build:mobilemoodle
 ```
 
 Depois de mudar TypeScript do painel:

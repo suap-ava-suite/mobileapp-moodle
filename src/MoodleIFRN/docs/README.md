@@ -36,12 +36,8 @@ Tudo que é específico do IFRN vive em `src/MoodleIFRN/` (login, serviços, pai
 # Registrar / reparar rotas IFRN no Moodle Mobile
 npm run patch:ifrn
 
-# Compilar TypeScript do painel → mobilemoodle.js
+# Compilar TypeScript e SCSS do painel → mobilemoodle.js (sem pasta css do tema)
 npm run build:mobilemoodle
-
-# Regenerar CSS do tema a partir do SCSS
-npx sass src/MoodleIFRN/mobilemoodle/static/theme/ifrn/scss/painel.scss \
-  src/MoodleIFRN/mobilemoodle/static/theme/ifrn/css/painel.css --no-source-map
 ```
 
 ## Recursos nativos (ícone / splash)

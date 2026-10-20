@@ -1,0 +1,907 @@
+{
+  "at": "2026-10-20T00:40:27.501Z",
+  "context": "Node fetch, sem sessão; corpos POST vazios validam somente o contrato de erro",
+  "results": [
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/",
+          "status": 302,
+          "type": "text/html; charset=utf-8",
+          "location": "https://painel.ead.ifrn.edu.br/login/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/login/",
+          "status": 302,
+          "type": "text/html; charset=utf-8",
+          "location": "https://suap.ifrn.edu.br/o/authorize/"
+        },
+        {
+          "url": "https://suap.ifrn.edu.br/o/authorize/",
+          "status": 302,
+          "type": "text/html; charset=utf-8",
+          "location": "https://suap.ifrn.edu.br/accounts/login/"
+        },
+        {
+          "url": "https://suap.ifrn.edu.br/accounts/login/",
+          "status": 200,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": true
+      },
+      "ms": 543
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/v1/diarios/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v1/diarios/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v1/diarios/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v1/diarios/",
+          "status": 428,
+          "type": "application/json"
+        }
+      ],
+      "shape": {
+        "type": "object",
+        "keys": [
+          "error"
+        ]
+      },
+      "ms": 213
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/v1/diarios/?page=1&page_size=9&ambiente=",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v1/diarios/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v1/diarios/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v1/diarios/",
+          "status": 428,
+          "type": "application/json"
+        }
+      ],
+      "shape": {
+        "type": "object",
+        "keys": [
+          "error"
+        ]
+      },
+      "ms": 208
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/v1/progresso/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v1/progresso/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v1/progresso/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v1/progresso/",
+          "status": 428,
+          "type": "application/json"
+        }
+      ],
+      "shape": {
+        "type": "object",
+        "keys": [
+          "error"
+        ]
+      },
+      "ms": 55
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/v1/atualizacoes_counts/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v1/atualizacoes_counts/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v1/atualizacoes_counts/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v1/atualizacoes_counts/",
+          "status": 428,
+          "type": "application/json"
+        }
+      ],
+      "shape": {
+        "type": "object",
+        "keys": [
+          "error"
+        ]
+      },
+      "ms": 52
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/v2/usuario/info/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v2/usuario/info/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v2/usuario/info/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v2/usuario/info/",
+          "status": 404,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": false
+      },
+      "ms": 176
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/v2/usuario/preferencia/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v2/usuario/preferencia/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v2/usuario/preferencia/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v2/usuario/preferencia/",
+          "status": 404,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": false
+      },
+      "ms": 91
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/v2/sala/tipo/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v2/sala/tipo/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v2/sala/tipo/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v2/sala/tipo/",
+          "status": 404,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": false
+      },
+      "ms": 103
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/v2/sala/tipo/quantidades/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v2/sala/tipo/quantidades/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v2/sala/tipo/quantidades/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v2/sala/tipo/quantidades/",
+          "status": 404,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": false
+      },
+      "ms": 108
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/v2/sala/tipo/inicio/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v2/sala/tipo/inicio/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v2/sala/tipo/inicio/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v2/sala/tipo/inicio/",
+          "status": 404,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": false
+      },
+      "ms": 93
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/v2/sala/tipo/diario/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v2/sala/tipo/diario/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v2/sala/tipo/diario/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v2/sala/tipo/diario/",
+          "status": 404,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": false
+      },
+      "ms": 93
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/v2/sala/tipo/coordenacao/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v2/sala/tipo/coordenacao/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v2/sala/tipo/coordenacao/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v2/sala/tipo/coordenacao/",
+          "status": 404,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": false
+      },
+      "ms": 102
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/v2/sala/tipo/laboratorio/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v2/sala/tipo/laboratorio/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v2/sala/tipo/laboratorio/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v2/sala/tipo/laboratorio/",
+          "status": 404,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": false
+      },
+      "ms": 100
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/v2/sala/tipo/autoinscricoes/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v2/sala/tipo/autoinscricoes/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v2/sala/tipo/autoinscricoes/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v2/sala/tipo/autoinscricoes/",
+          "status": 404,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": false
+      },
+      "ms": 78
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/v2/sala/tipo/backup/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v2/sala/tipo/backup/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v2/sala/tipo/backup/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v2/sala/tipo/backup/",
+          "status": 404,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": false
+      },
+      "ms": 93
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/v2/notificacao/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v2/notificacao/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v2/notificacao/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v2/notificacao/",
+          "status": 404,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": false
+      },
+      "ms": 113
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/v2/conversa/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v2/conversa/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v2/conversa/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v2/conversa/",
+          "status": 404,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": false
+      },
+      "ms": 116
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/get_tour_status/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/get_tour_status/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/get_tour_status/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/get_tour_status/",
+          "status": 302,
+          "type": "text/html; charset=utf-8",
+          "location": "https://painel.ead.ifrn.edu.br/login/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/login/",
+          "status": 302,
+          "type": "text/html; charset=utf-8",
+          "location": "https://suap.ifrn.edu.br/o/authorize/"
+        },
+        {
+          "url": "https://suap.ifrn.edu.br/o/authorize/",
+          "status": 302,
+          "type": "text/html; charset=utf-8",
+          "location": "https://suap.ifrn.edu.br/accounts/login/"
+        },
+        {
+          "url": "https://suap.ifrn.edu.br/accounts/login/",
+          "status": 200,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": true
+      },
+      "ms": 194
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "POST",
+      "route": "/api/v1/authenticate/",
+      "body": {},
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v1/authenticate/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v1/authenticate/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v1/authenticate/",
+          "status": 500,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": false
+      },
+      "ms": 1315
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "POST",
+      "route": "/api/v1/verify/",
+      "body": {},
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v1/verify/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v1/verify/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v1/verify/",
+          "status": 400,
+          "type": "application/json; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "object",
+        "keys": [
+          "message"
+        ]
+      },
+      "ms": 58
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "POST",
+      "route": "/api/v2/token/pair/",
+      "body": {},
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v2/token/pair/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v2/token/pair/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v2/token/pair/",
+          "status": 404,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": false
+      },
+      "ms": 108
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "POST",
+      "route": "/api/v2/token/refresh/",
+      "body": {},
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v2/token/refresh/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v2/token/refresh/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v2/token/refresh/",
+          "status": 404,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": false
+      },
+      "ms": 84
+    },
+    {
+      "base": "https://ava.ifrn.edu.br",
+      "method": "POST",
+      "route": "/api/v2/token/verify/",
+      "body": {},
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://ava.ifrn.edu.br/api/v2/token/verify/",
+          "status": 302,
+          "type": "text/html",
+          "location": "https://painel.ead.ifrn.edu.br/api/v2/token/verify/"
+        },
+        {
+          "url": "https://painel.ead.ifrn.edu.br/api/v2/token/verify/",
+          "status": 404,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": false
+      },
+      "ms": 91
+    },
+    {
+      "base": "https://suap.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/rh/eu/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://suap.ifrn.edu.br/api/rh/eu/",
+          "status": 401,
+          "type": "application/json; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "object",
+        "keys": [
+          "detail"
+        ]
+      },
+      "ms": 30
+    },
+    {
+      "base": "https://suap.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/ensino/meus-periodos-letivos/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://suap.ifrn.edu.br/api/ensino/meus-periodos-letivos/",
+          "status": 401,
+          "type": "application/json; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "object",
+        "keys": [
+          "detail"
+        ]
+      },
+      "ms": 33
+    },
+    {
+      "base": "https://suap.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/ensino/meus-diarios/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://suap.ifrn.edu.br/api/ensino/meus-diarios/",
+          "status": 401,
+          "type": "application/json; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "object",
+        "keys": [
+          "detail"
+        ]
+      },
+      "ms": 32
+    },
+    {
+      "base": "https://suap.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/docs/",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://suap.ifrn.edu.br/api/docs/",
+          "status": 200,
+          "type": "text/html; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "html-or-text",
+        "loginForm": false
+      },
+      "ms": 128
+    },
+    {
+      "base": "https://suap.ifrn.edu.br",
+      "method": "GET",
+      "route": "/api/openapi.json",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://suap.ifrn.edu.br/api/openapi.json",
+          "status": 200,
+          "type": "application/json"
+        }
+      ],
+      "shape": {
+        "type": "object",
+        "keys": [
+          "openapi",
+          "info",
+          "paths",
+          "components",
+          "servers"
+        ]
+      },
+      "ms": 501
+    },
+    {
+      "base": "https://suap.ifrn.edu.br",
+      "method": "POST",
+      "route": "/api/token/pair",
+      "body": {},
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://suap.ifrn.edu.br/api/token/pair",
+          "status": 400,
+          "type": "application/json; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "object",
+        "keys": [
+          "detail",
+          "code",
+          "username",
+          "password"
+        ]
+      },
+      "ms": 32
+    },
+    {
+      "base": "https://suap.ifrn.edu.br",
+      "method": "POST",
+      "route": "/api/token/refresh",
+      "body": {},
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://suap.ifrn.edu.br/api/token/refresh",
+          "status": 400,
+          "type": "application/json; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "object",
+        "keys": [
+          "detail",
+          "code",
+          "refresh"
+        ]
+      },
+      "ms": 33
+    },
+    {
+      "base": "https://suap.ifrn.edu.br",
+      "method": "POST",
+      "route": "/api/token/verify",
+      "body": {},
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://suap.ifrn.edu.br/api/token/verify",
+          "status": 400,
+          "type": "application/json; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "object",
+        "keys": [
+          "detail",
+          "code",
+          "token"
+        ]
+      },
+      "ms": 645
+    },
+    {
+      "base": "https://academico.ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/lib/ajax/service.php?info=tool_mobile_get_public_config",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://academico.ava.ifrn.edu.br/lib/ajax/service.php",
+          "status": 200,
+          "type": "application/json; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "object",
+        "keys": [
+          "error",
+          "errorcode",
+          "stacktrace",
+          "debuginfo",
+          "reproductionlink"
+        ]
+      },
+      "ms": 252
+    },
+    {
+      "base": "https://academico.ava.ifrn.edu.br",
+      "method": "POST",
+      "route": "/lib/ajax/service.php?info=tool_mobile_get_public_config",
+      "body": [
+        {
+          "index": 0,
+          "methodname": "tool_mobile_get_public_config",
+          "args": {}
+        }
+      ],
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://academico.ava.ifrn.edu.br/lib/ajax/service.php",
+          "status": 200,
+          "type": "application/json; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "array",
+        "count": 1,
+        "firstKeys": [
+          "error",
+          "data"
+        ],
+        "publicConfig": {
+          "wwwroot": "https://academico.ava.ifrn.edu.br",
+          "typeoflogin": 1,
+          "identityproviders": [
+            {
+              "name": "suap",
+              "url": "https://academico.ava.ifrn.edu.br/auth/oauth2/login.php"
+            }
+          ]
+        }
+      },
+      "ms": 277
+    },
+    {
+      "base": "https://presencial.ava.ifrn.edu.br",
+      "method": "GET",
+      "route": "/lib/ajax/service.php?info=tool_mobile_get_public_config",
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://presencial.ava.ifrn.edu.br/lib/ajax/service.php",
+          "status": 200,
+          "type": "application/json; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "object",
+        "keys": [
+          "error",
+          "errorcode",
+          "stacktrace",
+          "debuginfo",
+          "reproductionlink"
+        ]
+      },
+      "ms": 396
+    },
+    {
+      "base": "https://presencial.ava.ifrn.edu.br",
+      "method": "POST",
+      "route": "/lib/ajax/service.php?info=tool_mobile_get_public_config",
+      "body": [
+        {
+          "index": 0,
+          "methodname": "tool_mobile_get_public_config",
+          "args": {}
+        }
+      ],
+      "authentication": "nenhuma enviada",
+      "chain": [
+        {
+          "url": "https://presencial.ava.ifrn.edu.br/lib/ajax/service.php",
+          "status": 200,
+          "type": "application/json; charset=utf-8"
+        }
+      ],
+      "shape": {
+        "type": "array",
+        "count": 1,
+        "firstKeys": [
+          "error",
+          "data"
+        ],
+        "publicConfig": {
+          "wwwroot": "https://presencial.ava.ifrn.edu.br",
+          "typeoflogin": 1,
+          "identityproviders": [
+            {
+              "name": "suap",
+              "url": "https://presencial.ava.ifrn.edu.br/auth/oauth2/login.php"
+            }
+          ]
+        }
+      },
+      "ms": 433
+    }
+  ]
+}

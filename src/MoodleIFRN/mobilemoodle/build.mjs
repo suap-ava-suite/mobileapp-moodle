@@ -7,6 +7,7 @@ import { build } from 'esbuild';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { compile } from 'sass';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(root, '../../..');
@@ -57,6 +58,16 @@ function syncVendorAssets() {
 
 try {
     syncVendorAssets();
+    const themeCss = compile(join(root, 'static/theme/ifrn/scss/painel.scss'), {
+        style: 'expanded',
+    }).css.replaceAll('url("../fonts/', 'url("__IFRN_THEME_BASE__fonts/');
+    const themeBanner = `(() => {
+        const base = new URL('static/theme/ifrn/', document.currentScript.src).href;
+        const style = document.createElement('style');
+        style.id = 'ifrn-panel-theme';
+        style.textContent = ${JSON.stringify(themeCss)}.replaceAll('__IFRN_THEME_BASE__', base);
+        document.head.appendChild(style);
+    })();`;
     await build({
         absWorkingDir: projectRoot,
         entryPoints: [entry],
@@ -66,6 +77,7 @@ try {
         target: 'es2020',
         logLevel: 'warning',
         legalComments: 'inline',
+        banner: { js: themeBanner },
     });
 } catch (error) {
     console.error('Falha ao compilar mobilemoodle:', error);

@@ -21,6 +21,9 @@ const instances = new Map([
     [AuthService, { isAuthenticated: () => valid }],
     [PainelAvaService, { hasDashboard: () => true }],
     [SuapEntryService, {
+        async login() {
+            assert.fail('A entrada inicial deve usar o SUAP sem exigir login no Moodle Acadêmico');
+        },
         async loginWithSuap(identity, status) {
             calls++; expected = identity; status('Entrando');
             if (fail) throw new Error('Cancelado');

@@ -16,6 +16,7 @@ const IFRN_USERNAME_KEY = 'ifrn_username';
 interface PainelAmbiente {
     id?: number;
     titulo?: string;
+    label?: string;
     cor_mestra?: string;
 }
 
@@ -32,6 +33,7 @@ interface PainelDiario {
     url?: string;
     details_url?: string;
     is_enrolled?: boolean;
+    autoinscricao?: { is_enrolled?: boolean; details_url?: string };
     diario_id?: string | number;
     id_diario?: string;
     id_diario_clean?: number;
@@ -45,6 +47,7 @@ interface PainelDiariosResponse {
     autoinscricoes?: PainelDiario[];
     coordenacoes?: PainelDiario[];
     praticas?: PainelDiario[];
+    reutilizaveis?: PainelDiario[];
 }
 
 function normalizeOwner(value: string | null | undefined): string {
@@ -154,7 +157,7 @@ function diarioSuapId(diario: PainelDiario): number | undefined {
     return Number.isFinite(asNum) ? asNum : undefined;
 }
 
-function mapPainelDiario(diario: PainelDiario): DashboardCourse {
+function mapPainelDiario(diario: PainelDiario, showcase = false): DashboardCourse {
     const courseId = Number(diario.id);
     const name =
         diario.fullname ||
@@ -162,7 +165,8 @@ function mapPainelDiario(diario: PainelDiario): DashboardCourse {
         diario.shortname ||
         `Curso ${diario.id}`;
     const viewurl = diario.viewurl || diario.url;
-    const ambienteTitulo = diario.ambiente?.titulo;
+    const ambienteTitulo = diario.ambiente?.titulo || diario.ambiente?.label;
+    const enrolled = diario.is_enrolled ?? diario.autoinscricao?.is_enrolled ?? !showcase;
 
     return {
         id: Number.isFinite(courseId) ? courseId : diario.id || 0,
@@ -176,9 +180,9 @@ function mapPainelDiario(diario: PainelDiario): DashboardCourse {
         ambiente: diario.ambiente,
         isfavourite: Boolean(diario.isfavourite || diario.favourite),
         favourite: Boolean(diario.isfavourite || diario.favourite),
-        is_enrolled: diario.is_enrolled !== false,
-        enrolled: diario.is_enrolled !== false,
-        details_url: viewurl || diario.details_url,
+        is_enrolled: enrolled,
+        enrolled,
+        details_url: diario.autoinscricao?.details_url || diario.details_url || viewurl,
         viewurl,
         moodle_course_id: Number.isFinite(courseId) ? courseId : undefined,
         moodle_site_url: extractSiteUrl(viewurl),
@@ -316,9 +320,9 @@ async function fetchPainelDashboard(): Promise<DashboardData> {
     const rawCoordenacoes = Array.isArray(data) ? [] : (data.coordenacoes || []);
     const rawAutoinscricoes = Array.isArray(data) ? [] : (data.autoinscricoes || []);
 
-    const diarios = rawDiarios.map(mapPainelDiario);
-    const coordenacoes = rawCoordenacoes.map(mapPainelDiario);
-    const autoinscricoes = rawAutoinscricoes.map(mapPainelDiario);
+    const diarios = rawDiarios.map(course => mapPainelDiario(course));
+    const coordenacoes = rawCoordenacoes.map(course => mapPainelDiario(course));
+    const autoinscricoes = rawAutoinscricoes.map(course => mapPainelDiario(course, true));
     const courses = [...diarios, ...coordenacoes, ...autoinscricoes];
 
     // eslint-disable-next-line no-console

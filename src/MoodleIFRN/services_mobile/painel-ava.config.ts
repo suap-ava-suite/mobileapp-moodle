@@ -24,6 +24,9 @@ export const PAINEL_AVA_CONFIG = {
     /** Base URL do Painel AVA (sem barra final). */
     baseUrl: 'https://ava.ifrn.edu.br',
 
+    /** Destino HTTPS confirmado por HTTP 302 no host oficial em 2026-10-19. */
+    browserOrigins: ['https://ava.ifrn.edu.br', 'https://painel.ead.ifrn.edu.br'],
+
     /** Autenticação mobile do Painel (credenciais IFRN → par JWT access/refresh). */
     authenticatePath: '/api/v1/authenticate/',
 
@@ -39,3 +42,12 @@ export const PAINEL_AVA_CONFIG = {
     /** Query usada pelo painel mobile (diários em andamento). */
     diariosQuery: 'q=&situacao=inprogress&semestre=&disciplina=&curso=&ambiente=',
 } as const;
+
+/** Compara origens exatas; não aceita prefixos, subdomínios ou HTTP. */
+export function isPainelAvaBrowserUrl(candidate: string): boolean {
+    try {
+        return PAINEL_AVA_CONFIG.browserOrigins.some(origin => new URL(candidate).origin === origin);
+    } catch {
+        return false;
+    }
+}

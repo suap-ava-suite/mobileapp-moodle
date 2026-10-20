@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Component, inject } from '@angular/core';
+import { Component, OnDestroy, inject } from '@angular/core';
 import { CoreSharedModule } from '@/core/shared.module';
 import {
     IFRN_MOODLE_PRESENCIAL_URL,
@@ -42,7 +42,7 @@ type OpenCoursePhase = 'loading' | 'waiting-browser' | 'error';
         CoreSharedModule,
     ],
 })
-export class MoodleOpenCoursePage {
+export class MoodleOpenCoursePage implements OnDestroy {
 
     private readonly moodleSite = inject(MoodleSiteService);
 
@@ -67,6 +67,20 @@ export class MoodleOpenCoursePage {
     /** Evita segundo ngOnInit disparar o fluxo na mesma instância. */
     private initStarted = false;
     private entryVersion = 0;
+    private browserWaitTimer?: ReturnType<typeof setTimeout>;
+
+    private clearBrowserWait(): void {
+        clearTimeout(this.browserWaitTimer);
+        this.browserWaitTimer = undefined;
+    }
+
+    ionViewWillLeave(): void {
+        this.clearBrowserWait();
+    }
+
+    ngOnDestroy(): void {
+        this.clearBrowserWait();
+    }
 
     get accountIssue(): MoodleSiteService['lastCourseAccessIssue'] {
         return this.moodleSite.lastCourseAccessIssue;
@@ -109,6 +123,7 @@ export class MoodleOpenCoursePage {
     }
 
     async ionViewWillEnter(): Promise<void> {
+        this.clearBrowserWait();
         // O Ionic mantém a ponte em cache: cada toque precisa reler curso e ambiente.
         const entry = ++this.entryVersion;
         this.initStarted = false;
@@ -237,6 +252,7 @@ export class MoodleOpenCoursePage {
     }
 
     cancelOpening(): void {
+        this.clearBrowserWait();
         this.entryVersion++;
         this.loading = false;
         this.moodleSite.dismissCourseRecovery();
@@ -378,9 +394,23 @@ export class MoodleOpenCoursePage {
                 return;
             }
 
+            if (CoreNavigator.getCurrentPath().split(/[?#]/)[0] !== '/login/moodle-open-course') {
+                return;
+            }
+
             // Browser externo aberto: some o overlay para a ponte orientar o usuário.
             this.moodleSite.hideNativeCourseHandoff();
             this.phase = 'waiting-browser';
+            this.clearBrowserWait();
+            this.browserWaitTimer = setTimeout(() => {
+                if (entry !== this.entryVersion || this.phase !== 'waiting-browser') {
+                    return;
+                }
+                this.moodleSite.releaseOAuthBrowserWait();
+                this.revealBridgeError('O navegador não retornou a autenticação do Moodle. '
+                    + 'Conclua o login SUAP e autorize voltar ao aplicativo. '
+                    + 'Se a página não carregar, tente novamente ou volte ao Painel.');
+            }, 180000);
         } catch (error) {
             if (entry !== this.entryVersion) {
                 return;
@@ -413,6 +443,7 @@ export class MoodleOpenCoursePage {
     }
 
     private revealBridgeError(message: string): void {
+        this.clearBrowserWait();
         this.formError = message;
         this.phase = 'error';
         this.moodleSite.hideNativeCourseHandoff();
