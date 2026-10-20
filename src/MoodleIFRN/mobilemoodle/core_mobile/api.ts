@@ -1,3 +1,4 @@
+import { isMock, mockDashboard, mockCourse } from './mock-provider';
 /*!
  * api.ts
  * ----------------------------------------------------------------------------
@@ -24,6 +25,15 @@ import { MM } from './namespace';
         inFlight: null,
     };
 
+    let owner = '';
+    function accountScope(): string {
+        return isMock ? sessionStorage.getItem('ifrn.mock.v1.owner') || ''
+            : sessionStorage.getItem('ifrn_painel_owner') || '';
+    }
+    function checkAccount(): void {
+        const next = accountScope();
+        if (owner !== next) { invalidateCache(); owner = next; }
+    }
     const courseCache = new Map<string, CourseCacheEntry>();
 
     function isCacheFresh(fetchedAt: number): boolean {
@@ -43,6 +53,7 @@ import { MM } from './namespace';
      * Não mascarar falha com diários SUAP (IDs acadêmicos != courseid Moodle).
      */
     async function fetchDashboardPreferPainel(): Promise<DashboardData> {
+        if (isMock) return mockDashboard();
         if (typeof MM.hasPainelSession !== 'function' || !MM.hasPainelSession()) {
             // eslint-disable-next-line no-console
             console.error('[IFRN-PANEL] sessão Painel AVA ausente — fallback SUAP desativado');
@@ -58,6 +69,8 @@ import { MM } from './namespace';
      * @param force se true, ignora cache e refaz o GET (pull-to-refresh / retry).
      */
     function getDashboard(force = false): Promise<DashboardData> {
+        checkAccount();
+        const scope = owner;
         if (DEMO_FORCE_500) {
             return Promise.reject(new MM.ApiError(500));
         }
@@ -72,6 +85,7 @@ import { MM } from './namespace';
 
         dashboardCache.inFlight = fetchDashboardPreferPainel()
             .then((dashboard) => {
+                if (scope !== accountScope()) throw new MM.ApiError(401, 'Conta alterada. Reabra o painel.');
                 dashboardCache.value = dashboard;
                 dashboardCache.fetchedAt = Date.now();
 
@@ -119,18 +133,27 @@ import { MM } from './namespace';
     }
 
     function getCourse(courseId: string | number, force = false): Promise<CourseData> {
+        checkAccount();
         const id = String(courseId);
+        if (isMock) return mockCourse(id);
+        // Official detail routes contain only an ID: reject ambiguity instead of guessing an environment.
+        const candidates = (dashboardCache.value?.courses || []).filter(item => String(item.id) === id);
+        const origins = new Set(candidates.map(item => item.moodle_site_url));
+        if (origins.size > 1) return Promise.reject(new MM.ApiError(409, 'Abra o curso pelo card do ambiente desejado.'));
+        // Detail data is inexpensive and account-sensitive: do not retain it across sessions.
+        courseCache.clear();
 
         // Só IDs numéricos (bate com a rota #/curso/123)
         if (!/^\d+$/.test(id)) {
             return Promise.reject(new MM.ApiError(404, 'Identificador de curso inválido.'));
         }
 
-        let entry = courseCache.get(id);
+        const cacheKey = JSON.stringify([owner, 'painel', candidates[0]?.moodle_site_url || candidates[0]?.ambiente?.id || '', id]);
+        let entry = courseCache.get(cacheKey);
 
         if (!entry) {
             entry = { value: null, fetchedAt: 0, inFlight: null };
-            courseCache.set(id, entry);
+            courseCache.set(cacheKey, entry);
             pruneCourseCache();
         }
 
@@ -143,8 +166,7 @@ import { MM } from './namespace';
         }
 
         // Card do Painel já tem courseid Moodle: monta detalhe mínimo sem SUAP.
-        const fromPainel = (dashboardCache.value?.diarios || dashboardCache.value?.courses || [])
-            .find((item) => String(item.id) === id && item.source === 'painel');
+        const fromPainel = candidates.find((item) => item.source === 'painel');
 
         if (fromPainel) {
             const course: CourseData = {

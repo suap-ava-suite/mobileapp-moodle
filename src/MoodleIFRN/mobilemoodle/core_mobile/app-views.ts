@@ -43,6 +43,8 @@ let currentLists: PainelLists;
 
     /** Título e mensagem vazia de cada aba do painel. */
     const TAB_META: Record<PainelTabKey, { title: string; empty: string }> = {
+        praticas: { title: 'Salas de práticas', empty: 'Não há salas de práticas disponíveis.' },
+        reutilizaveis: { title: 'Salas reutilizáveis', empty: 'Não há salas reutilizáveis disponíveis.' },
         diarios: {
             title: 'Meus Diários',
             empty:
@@ -60,6 +62,8 @@ let currentLists: PainelLists;
     };
 
     interface PainelLists {
+        praticas: DashboardCourse[];
+        reutilizaveis: DashboardCourse[];
         diarios: DashboardCourse[];
         coordenacoes: DashboardCourse[];
         autoinscricoes: DashboardCourse[];
@@ -147,6 +151,8 @@ let currentLists: PainelLists;
         const autoinscricoes = dashboard.autoinscricoes || dashboard.self_enrolments || [];
 
         return {
+            praticas: dashboard.praticas || [],
+            reutilizaveis: dashboard.reutilizaveis || [],
             diarios: Array.isArray(diarios) ? diarios : [],
             coordenacoes: Array.isArray(coordenacoes) ? coordenacoes : [],
             autoinscricoes: Array.isArray(autoinscricoes) ? autoinscricoes : [],
@@ -232,16 +238,14 @@ let currentLists: PainelLists;
 
     /**
      * Origem do site a partir do viewurl do diário (se houver).
-     * Localhost/mock: ainda passa a origem — o Ionic resolveMoodleSiteUrl
-     * troca para o AVA real; não bloquear o handoff aqui.
+     * Exige origem oficial explícita; mock tem destino separado.
      */
     function siteUrlFromCourse(course: DashboardCourse): string | undefined {
         return resolveCourseSite(course);
     }
 
     /**
-     * Toque no card → SEMPRE handoff Moodle Mobile nativo.
-     * Nunca navega para #/curso/… (tela customizada de conteúdo é caminho errado).
+     * O destino mock usa detalhe local; cursos oficiais usam Moodle nativo.
      */
     function wireCourseCardOpen(link: HTMLAnchorElement, course: DashboardCourse): void {
         const moodleCourseId = course.moodle_course_id
@@ -253,6 +257,10 @@ let currentLists: PainelLists;
         link.addEventListener('click', (event) => {
             event.preventDefault();
             event.stopPropagation();
+            if (course.source === 'mock' && course.launch?.kind === 'mock') {
+                window.location.hash = `#/curso/${course.launch.courseId}`;
+                return;
+            }
             if (!moodleSiteUrl) {
                 window.alert('Não foi possível confirmar o ambiente deste curso. Atualize o Painel e tente novamente.');
 
@@ -352,11 +360,12 @@ let currentLists: PainelLists;
 
                 const courseId = course.moodle_course_id
                     ?? (course.source === 'painel' ? Number(course.id) : NaN);
-                const ambienteId = Number(course.ambiente?.id || 2);
+                const ambienteId = Number(course.ambiente?.id);
 
                 if (
                     !Number.isFinite(courseId)
                     || courseId <= 0
+                    || !Number.isSafeInteger(ambienteId) || ambienteId <= 0
                     || typeof App.resolvePainelEnrolUrl !== 'function'
                 ) {
                     window.alert('Não foi possível identificar este curso para autoinscrição.');
@@ -458,9 +467,7 @@ let currentLists: PainelLists;
     }
 
     function renderTabCards(host: HTMLElement, tabKey: PainelTabKey, lists: PainelLists): void {
-        const allItems: DashboardCourse[] = tabKey === 'autoinscricoes'
-            ? lists.autoinscricoes
-            : (tabKey === 'coordenacoes' ? lists.coordenacoes : lists.diarios);
+        const allItems: DashboardCourse[] = lists[tabKey];
 
         const items = App.activeFilter?.situacao === 'favourites'
             ? allItems.filter(course => favourites.isFavourite(course))
@@ -800,7 +807,8 @@ let currentLists: PainelLists;
 
         const openExternal = document.getElementById('curso-open-external');
 
-        if (openExternal && externalUrl) {
+        if (openExternal && course.source === 'mock') openExternal.hidden = true;
+        if (openExternal && externalUrl && course.source !== 'mock') {
             openExternal.hidden = false;
             openExternal.setAttribute('href', externalUrl);
             openExternal.setAttribute('target', '_blank');

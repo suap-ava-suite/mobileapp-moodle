@@ -152,9 +152,15 @@ export class MoodleOpenCoursePage implements OnDestroy {
 
         // A rota do toque atual tem precedência; um pendente de outro curso não pode trocar o ambiente.
         const routeSiteUrl = CoreNavigator.getRouteParam<string>('siteUrl');
-        this.moodleSiteUrl = resolveMoodleSiteUrl(
-            routeSiteUrl || (pending?.courseId === this.courseId ? pending.siteUrl : undefined),
-        );
+        try {
+            this.moodleSiteUrl = resolveMoodleSiteUrl(
+                routeSiteUrl || (pending?.courseId === this.courseId ? pending.siteUrl : undefined),
+            );
+        } catch (error) {
+            this.loading = false;
+            this.revealBridgeError(error instanceof Error ? error.message : 'Ambiente inválido');
+            return;
+        }
 
         const hasUrlSession = this.moodleSite.hasPresencialSession(this.moodleSiteUrl);
         const hasMatchingSession = this.moodleSite.hasMatchingPresencialSession(this.moodleSiteUrl);

@@ -147,38 +147,14 @@ function isMainMenuLandingPath(path: string): boolean {
     return parts.length <= 2 || ['dashboard', 'sitehome'].includes(parts[2]);
 }
 
-/**
- * Origem do viewurl do diário NÃO é necessariamente um Moodle Mobile válido.
- * Mock local (127.0.0.1:8002) não tem tool_mobile_get_public_config / wstoken.
- * Para CoreSites usamos só hosts Moodle reais; localhost → Presencial.
- */
+/** Validate canonical official origin; never choose another environment. */
 export function resolveMoodleSiteUrl(candidate?: string | null): string {
-    if (!candidate) {
-        return IFRN_MOODLE_PRESENCIAL_URL;
-    }
-
     try {
-        const url = new URL(candidate);
-        const host = url.hostname.toLowerCase();
-
-        if (
-            host === 'localhost'
-            || host === '127.0.0.1'
-            || host === '10.0.2.2'
-            || host.endsWith('.local')
-            || host.endsWith('.localhost')
-        ) {
-            return IFRN_MOODLE_PRESENCIAL_URL;
-        }
-
-        if (url.protocol !== 'https:' && url.protocol !== 'http:') {
-            return IFRN_MOODLE_PRESENCIAL_URL;
-        }
-
-        return url.origin;
-    } catch {
-        return IFRN_MOODLE_PRESENCIAL_URL;
-    }
+        const url = new URL(candidate || '');
+        if (url.protocol === 'https:' && !url.username && !url.password
+            && !url.port && url.hostname.endsWith('.ava.ifrn.edu.br')) return url.origin;
+    } catch { /* recoverable invalid target */ }
+    throw new Error('Ambiente do curso inválido. Volte ao Painel e atualize os cursos.');
 }
 
 /** Hostname + pathname only (nunca query/fragment — podem carregar token). */
@@ -434,6 +410,7 @@ export type MoodleIdentityEnsureResult =
     | 'oauth-mismatch';
 
 export interface MoodlePendingOpenCourse {
+    owner?: string;
     courseId: number;
     siteUrl?: string;
     courseName?: string;
@@ -864,6 +841,7 @@ export class MoodleSiteService {
     setPendingOpenCourse(pending: MoodlePendingOpenCourse): void {
         const normalized: MoodlePendingOpenCourse = {
             ...pending,
+            owner: sessionStorage.getItem('ifrn_painel_owner') || undefined,
             siteUrl: resolveMoodleSiteUrl(pending.siteUrl),
         };
 
@@ -880,7 +858,9 @@ export class MoodleSiteService {
         try {
             const parsed = JSON.parse(raw) as MoodlePendingOpenCourse;
 
-            if (!parsed || typeof parsed.courseId !== 'number' || parsed.courseId <= 0) {
+            const owner = sessionStorage.getItem('ifrn_painel_owner');
+            if (!parsed || !owner || parsed.owner !== owner || typeof parsed.courseId !== 'number' || parsed.courseId <= 0) {
+                this.clearPendingOpenCourse();
                 return null;
             }
 
@@ -1297,7 +1277,7 @@ export class MoodleSiteService {
      * Decide se reutiliza current, carrega site armazenado da mesma conta, ou precisa OAuth.
      */
     async ensureMatchingMoodleSession(
-        siteUrl = IFRN_MOODLE_PRESENCIAL_URL,
+        siteUrl?: string,
     ): Promise<MoodleIdentityEnsureResult> {
         const resolved = resolveMoodleSiteUrl(siteUrl);
         const current = CoreSites.getCurrentSite();
@@ -1872,7 +1852,7 @@ export class MoodleSiteService {
 
         // eslint-disable-next-line no-console
         console.log(SITE_LOG, 'startSuapOAuthLogin', JSON.stringify({
-            rawCandidate: rawCandidate || null,
+            rawCandidate: sanitizeUrlForLog(rawCandidate),
             targetSiteUrl,
             courseId: pending?.courseId ?? null,
         }));

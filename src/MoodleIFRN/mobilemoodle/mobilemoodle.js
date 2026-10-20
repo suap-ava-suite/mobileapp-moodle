@@ -145,8 +145,8 @@
     try {
       const storage = sessionStorage.getItem("ifrn_painel_dashboard") !== null ? sessionStorage : localStorage;
       const raw = storage.getItem("ifrn_painel_dashboard");
-      const owner = storage.getItem("ifrn_painel_owner");
-      if (!raw || !owner || owner.trim().toLowerCase() !== snapshot.identity.trim().toLowerCase()) {
+      const owner2 = storage.getItem("ifrn_painel_owner");
+      if (!raw || !owner2 || owner2.trim().toLowerCase() !== snapshot.identity.trim().toLowerCase()) {
         return null;
       }
       const dashboard = JSON.parse(raw);
@@ -154,7 +154,7 @@
         return null;
       }
       sessionStorage.setItem("ifrn_painel_dashboard", raw);
-      sessionStorage.setItem("ifrn_painel_owner", owner);
+      sessionStorage.setItem("ifrn_painel_owner", owner2);
       sessionStorage.setItem("ifrn_painel_profile", JSON.stringify(snapshot.profile));
       return dashboard;
     } catch {
@@ -724,9 +724,9 @@
     if (!raw) {
       return null;
     }
-    const owner = normalizeOwner(sessionStorage.getItem(PAINEL_OWNER_KEY));
+    const owner2 = normalizeOwner(sessionStorage.getItem(PAINEL_OWNER_KEY));
     const current = normalizeOwner(sessionStorage.getItem(IFRN_USERNAME_KEY));
-    if (owner && current && owner !== current) {
+    if (owner2 && current && owner2 !== current) {
       sessionStorage.removeItem(PAINEL_DASHBOARD_KEY);
       sessionStorage.removeItem(PAINEL_OWNER_KEY);
       sessionStorage.removeItem(PAINEL_PROFILE_KEY);
@@ -918,7 +918,15 @@
     const diarios = rawDiarios.map((course) => mapPainelDiario(course));
     const coordenacoes = rawCoordenacoes.map((course) => mapPainelDiario(course));
     const autoinscricoes = rawAutoinscricoes.map((course) => mapPainelDiario(course, true));
-    const courses = [...diarios, ...coordenacoes, ...autoinscricoes];
+    const praticas = (Array.isArray(data) ? [] : data.praticas || []).map((course) => mapPainelDiario(course));
+    const reutilizaveis = (Array.isArray(data) ? [] : data.reutilizaveis || []).map((course) => mapPainelDiario(course));
+    for (const course of [...diarios, ...coordenacoes, ...praticas, ...reutilizaveis, ...autoinscricoes]) {
+      course.key = JSON.stringify(["painel", course.moodle_site_url || course.ambiente?.id || "", String(course.id)]);
+      if (course.moodle_site_url && course.moodle_course_id) {
+        course.launch = { kind: "moodle_native", courseId: course.moodle_course_id, siteUrl: course.moodle_site_url };
+      }
+    }
+    const courses = [...diarios, ...coordenacoes, ...praticas, ...reutilizaveis, ...autoinscricoes];
     console.log(`[IFRN-PANEL] dashboard local carregado; ${diarios.length} di\xE1rio(s)`);
     return {
       nome: profileDisplayName(profile),
@@ -929,6 +937,8 @@
       courses,
       diarios,
       coordenacoes,
+      praticas,
+      reutilizaveis,
       autoinscricoes,
       source: "painel"
     };
@@ -939,6 +949,146 @@
   MM.fetchPainelDashboard = fetchPainelDashboard;
   MM.hasPainelSession = hasPainelSession;
   MM.getPainelToken = () => null;
+
+  // src/MoodleIFRN/services_mobile/backend.config.ts
+  var backendConfig = {
+    provider: "official",
+    baseUrl: "mock"
+  };
+
+  // src/MoodleIFRN/services_mobile/mock-api.ts
+  var KEY = "ifrn.mock.v1.session";
+  var MockApi = class {
+    constructor() {
+      try {
+        this.tokens = JSON.parse(sessionStorage.getItem(KEY) || "null") || void 0;
+      } catch {
+      }
+    }
+    get authenticated() {
+      return !!this.tokens;
+    }
+    async request(path, body, token) {
+      if (backendConfig.provider !== "mock") throw new Error("Simula\xE7\xE3o desativada nesta compila\xE7\xE3o.");
+      const base = new URL(backendConfig.baseUrl);
+      if (!["127.0.0.1", "localhost", "10.0.2.2"].includes(base.hostname) || base.port !== "8000") {
+        throw new Error("A simula\xE7\xE3o exige servidor local na porta 8000.");
+      }
+      const target = new URL(path, base);
+      if (target.origin !== base.origin || target.username || target.password || target.search || target.hash || base.username || base.password) throw new Error("Destino de simula\xE7\xE3o inv\xE1lido.");
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 15e3);
+      const started = Date.now();
+      let status = 0;
+      try {
+        const response = await fetch(target, {
+          method: body === void 0 ? "GET" : "POST",
+          credentials: "omit",
+          redirect: "error",
+          headers: {
+            Accept: "application/json",
+            ...body === void 0 ? {} : { "Content-Type": "application/json" },
+            ...token ? { Authorization: `Bearer ${token}` } : {}
+          },
+          body: body === void 0 ? void 0 : JSON.stringify(body),
+          signal: controller.signal
+        });
+        status = response.status;
+        if (!response.ok) throw Object.assign(new Error(`Falha no simulador (HTTP ${status}).`), { status });
+        if (status === 204) return void 0;
+        if (!response.headers.get("content-type")?.includes("application/json")) throw new Error("Resposta JSON esperada.");
+        return await response.json();
+      } finally {
+        clearTimeout(timer);
+        console.info("[IFRN-MOCK]", {
+          stage: "request",
+          host: base.host,
+          path: target.pathname,
+          status,
+          duration: Date.now() - started,
+          category: status >= 400 ? "http" : status ? "response" : "network-or-cancel"
+        });
+      }
+    }
+    async login(username, password) {
+      this.clear();
+      this.tokens = await this.request("/auth/login", { username, password });
+      sessionStorage.setItem(KEY, JSON.stringify(this.tokens));
+      sessionStorage.setItem("ifrn.mock.v1.owner", username.trim().toLowerCase());
+    }
+    async refresh() {
+      if (!this.refreshPending) this.refreshPending = (async () => {
+        try {
+          if (!this.tokens) throw new Error("Entre na simula\xE7\xE3o novamente.");
+          this.tokens = await this.request("/auth/refresh", { refresh_token: this.tokens.refresh_token });
+          sessionStorage.setItem(KEY, JSON.stringify(this.tokens));
+        } catch (error) {
+          this.clear();
+          throw error;
+        } finally {
+          this.refreshPending = void 0;
+        }
+      })();
+      return this.refreshPending;
+    }
+    async get(path) {
+      if (!this.tokens) throw new Error("Entre na simula\xE7\xE3o novamente.");
+      try {
+        return await this.request(path, void 0, this.tokens.access_token);
+      } catch (error) {
+        if (error.status !== 401) throw error;
+        await this.refresh();
+        return this.request(path, void 0, this.tokens.access_token);
+      }
+    }
+    async logout() {
+      try {
+        if (this.tokens) await this.request("/auth/logout", {}, this.tokens.access_token);
+      } finally {
+        this.clear();
+      }
+    }
+    clear() {
+      this.tokens = void 0;
+      sessionStorage.removeItem(KEY);
+      sessionStorage.removeItem("ifrn.mock.v1.owner");
+    }
+  };
+  var mockApi = new MockApi();
+  var courseKey = (source, environment, id) => JSON.stringify([source, environment, String(id)]);
+
+  // src/MoodleIFRN/mobilemoodle/core_mobile/mock-provider.ts
+  var isMock = backendConfig.provider === "mock";
+  var bridge = () => window.parent.MoodleIfrnBridge || {};
+  async function mockDashboard() {
+    const data = await bridge().mockDashboard?.();
+    if (!data || data.source !== "mock") throw new Error("Sess\xE3o de simula\xE7\xE3o ausente.");
+    const map = (items) => items.map((c) => ({
+      id: c.id,
+      name: c.name,
+      source: "mock",
+      environment: c.environment,
+      moodle: "Ambiente de teste",
+      key: courseKey("mock", c.environment, c.id),
+      launch: { kind: "mock", courseId: c.id }
+    }));
+    return {
+      source: "mock",
+      nome: data.user.nome,
+      username: data.user.username,
+      courses: map(data.courses),
+      diarios: map(data.diarios),
+      coordenacoes: map(data.coordenacoes),
+      praticas: map(data.praticas),
+      reutilizaveis: map(data.reutilizaveis),
+      autoinscricoes: map(data.autoinscricoes)
+    };
+  }
+  async function mockCourse(id) {
+    const course = await bridge().mockCourse?.(Number(id));
+    if (!course || course.source !== "mock") throw new Error("Curso de simula\xE7\xE3o ausente.");
+    return { ...course, source: "mock", moodle: "Ambiente de teste" };
+  }
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/api.ts
   /*!
@@ -956,6 +1106,17 @@
     fetchedAt: 0,
     inFlight: null
   };
+  var owner = "";
+  function accountScope() {
+    return isMock ? sessionStorage.getItem("ifrn.mock.v1.owner") || "" : sessionStorage.getItem("ifrn_painel_owner") || "";
+  }
+  function checkAccount() {
+    const next = accountScope();
+    if (owner !== next) {
+      invalidateCache();
+      owner = next;
+    }
+  }
   var courseCache = /* @__PURE__ */ new Map();
   function isCacheFresh(fetchedAt) {
     return Boolean(fetchedAt) && Date.now() - fetchedAt < CACHE_TTL_MS;
@@ -967,6 +1128,7 @@
     courseCache.clear();
   }
   async function fetchDashboardPreferPainel() {
+    if (isMock) return mockDashboard();
     if (typeof MM.hasPainelSession !== "function" || !MM.hasPainelSession()) {
       console.error("[IFRN-PANEL] sess\xE3o Painel AVA ausente \u2014 fallback SUAP desativado");
       throw new MM.ApiError(401, "Sess\xE3o do Painel AVA ausente. Entre novamente para carregar os cursos reais do Moodle.");
@@ -975,6 +1137,8 @@
     return MM.fetchPainelDashboard();
   }
   function getDashboard(force = false) {
+    checkAccount();
+    const scope = owner;
     if (DEMO_FORCE_500) {
       return Promise.reject(new MM.ApiError(500));
     }
@@ -985,6 +1149,7 @@
       return dashboardCache.inFlight;
     }
     dashboardCache.inFlight = fetchDashboardPreferPainel().then((dashboard) => {
+      if (scope !== accountScope()) throw new MM.ApiError(401, "Conta alterada. Reabra o painel.");
       dashboardCache.value = dashboard;
       dashboardCache.fetchedAt = Date.now();
       return dashboard;
@@ -1020,14 +1185,21 @@
     };
   }
   function getCourse(courseId, force = false) {
+    checkAccount();
     const id = String(courseId);
+    if (isMock) return mockCourse(id);
+    const candidates = (dashboardCache.value?.courses || []).filter((item) => String(item.id) === id);
+    const origins = new Set(candidates.map((item) => item.moodle_site_url));
+    if (origins.size > 1) return Promise.reject(new MM.ApiError(409, "Abra o curso pelo card do ambiente desejado."));
+    courseCache.clear();
     if (!/^\d+$/.test(id)) {
       return Promise.reject(new MM.ApiError(404, "Identificador de curso inv\xE1lido."));
     }
-    let entry = courseCache.get(id);
+    const cacheKey = JSON.stringify([owner, "painel", candidates[0]?.moodle_site_url || candidates[0]?.ambiente?.id || "", id]);
+    let entry = courseCache.get(cacheKey);
     if (!entry) {
       entry = { value: null, fetchedAt: 0, inFlight: null };
-      courseCache.set(id, entry);
+      courseCache.set(cacheKey, entry);
       pruneCourseCache();
     }
     if (!force && entry.value && isCacheFresh(entry.fetchedAt)) {
@@ -1036,7 +1208,7 @@
     if (entry.inFlight && !force) {
       return entry.inFlight;
     }
-    const fromPainel = (dashboardCache.value?.diarios || dashboardCache.value?.courses || []).find((item) => String(item.id) === id && item.source === "painel");
+    const fromPainel = candidates.find((item) => item.source === "painel");
     if (fromPainel) {
       const course = {
         id: fromPainel.id,
@@ -1155,7 +1327,7 @@
   function resolveLoginUrl() {
     return resolveIonicAppUrl("/login/marketplace-ifrn");
   }
-  function resolvePainelEnrolUrl(courseId, ambienteId = 2) {
+  function resolvePainelEnrolUrl(courseId, ambienteId) {
     const id = Number(courseId);
     const envId = Number(ambienteId);
     if (Number.isFinite(id) && id > 0 && Number.isFinite(envId) && envId > 0) {
@@ -1175,6 +1347,7 @@
           "ifrn_moodle_pending_open_course",
           JSON.stringify({
             courseId: id,
+            owner: sessionStorage.getItem("ifrn_painel_owner") || void 0,
             courseName: courseName || void 0,
             siteUrl: siteUrl || void 0
           })
@@ -1198,6 +1371,7 @@
         "ifrn_moodle_pending_open_course",
         JSON.stringify({
           courseId: id,
+          owner: sessionStorage.getItem("ifrn_painel_owner") || void 0,
           courseName: courseName || void 0,
           siteUrl: siteUrl || void 0
         })
@@ -1207,9 +1381,9 @@
       }
     } catch {
     }
-    const bridge = window.parent?.MoodleIfrnBridge;
-    if (window.parent && window.parent !== window && bridge?.openCourse) {
-      bridge.openCourse(id, courseName, siteUrl);
+    const bridge2 = window.parent?.MoodleIfrnBridge;
+    if (window.parent && window.parent !== window && bridge2?.openCourse) {
+      bridge2.openCourse(id, courseName, siteUrl);
       return;
     }
     if (window.parent && window.parent !== window) {
@@ -1223,7 +1397,7 @@
     }
     window.location.assign(resolveMoodleOpenUrl(id, courseName, siteUrl));
   }
-  function openPainelEnrol(courseId, ambienteId = 2) {
+  function openPainelEnrol(courseId, ambienteId) {
     const id = Number(courseId);
     const envId = Number(ambienteId);
     if (Number.isFinite(id) && id > 0 && Number.isFinite(envId) && envId > 0) {
@@ -1235,9 +1409,9 @@
       } catch {
       }
     }
-    const bridge = window.parent?.MoodleIfrnBridge;
-    if (window.parent && window.parent !== window && bridge?.openEnrol) {
-      bridge.openEnrol(id, envId);
+    const bridge2 = window.parent?.MoodleIfrnBridge;
+    if (window.parent && window.parent !== window && bridge2?.openEnrol) {
+      bridge2.openEnrol(id, envId);
       return;
     }
     if (window.parent && window.parent !== window) {
@@ -1409,10 +1583,10 @@
     return null;
   }
   function createCourseFavourites() {
-    const owner = currentOwner();
-    const storageKey = PREFIX + encodeURIComponent(owner);
+    const owner2 = currentOwner();
+    const storageKey = PREFIX + encodeURIComponent(owner2);
     let values = /* @__PURE__ */ Object.create(null);
-    if (owner) {
+    if (owner2) {
       try {
         const parsed = JSON.parse(localStorage.getItem(storageKey) || "{}");
         if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
@@ -1423,9 +1597,9 @@
       } catch {
       }
     }
-    const canEdit = (course) => !!owner && currentOwner() === owner && favouriteCourseKey(course) !== null;
+    const canEdit = (course) => !!owner2 && currentOwner() === owner2 && favouriteCourseKey(course) !== null;
     const isFavourite = (course) => {
-      if (!owner || currentOwner() !== owner) return false;
+      if (!owner2 || currentOwner() !== owner2) return false;
       const key = favouriteCourseKey(course);
       if (key && typeof values[key] === "boolean") return values[key];
       return course.isfavourite === true || course.favourite === true;
@@ -1444,8 +1618,6 @@
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/course-target.ts
   function resolveCourseSite(course) {
-    const environment = [course.environment, course.moodle, course.ambiente?.titulo].filter(Boolean).join(" ");
-    const expected = /presencial/i.test(environment) ? "https://presencial.ava.ifrn.edu.br" : /acad[eê]mico/i.test(environment) ? "https://academico.ava.ifrn.edu.br" : void 0;
     const raw = course.moodle_site_url || course.viewurl || course.details_url;
     if (raw) {
       try {
@@ -1453,15 +1625,12 @@
         if (url.protocol !== "https:" || url.username || url.password || !url.hostname.endsWith(".ava.ifrn.edu.br")) {
           return void 0;
         }
-        if (expected && url.origin !== expected) {
-          return void 0;
-        }
         return url.origin;
       } catch {
         return void 0;
       }
     }
-    return expected;
+    return void 0;
   }
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/app-views.ts
@@ -1501,6 +1670,8 @@
     attendance: "checkmark-done-outline"
   };
   var TAB_META = {
+    praticas: { title: "Salas de pr\xE1ticas", empty: "N\xE3o h\xE1 salas de pr\xE1ticas dispon\xEDveis." },
+    reutilizaveis: { title: "Salas reutiliz\xE1veis", empty: "N\xE3o h\xE1 salas reutiliz\xE1veis dispon\xEDveis." },
     diarios: {
       title: "Meus Di\xE1rios",
       empty: "\xC9 poss\xEDvel que a Secretaria Acad\xEAmica ainda n\xE3o tenha lhe inserido em di\xE1rio algum; neste caso, aguarde."
@@ -1573,6 +1744,8 @@
     const coordenacoes = dashboard.coordenacoes || [];
     const autoinscricoes = dashboard.autoinscricoes || dashboard.self_enrolments || [];
     return {
+      praticas: dashboard.praticas || [],
+      reutilizaveis: dashboard.reutilizaveis || [],
       diarios: Array.isArray(diarios) ? diarios : [],
       coordenacoes: Array.isArray(coordenacoes) ? coordenacoes : [],
       autoinscricoes: Array.isArray(autoinscricoes) ? autoinscricoes : []
@@ -1651,6 +1824,10 @@
     link.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
+      if (course.source === "mock" && course.launch?.kind === "mock") {
+        window.location.hash = `#/curso/${course.launch.courseId}`;
+        return;
+      }
       if (!moodleSiteUrl) {
         window.alert("N\xE3o foi poss\xEDvel confirmar o ambiente deste curso. Atualize o Painel e tente novamente.");
         return;
@@ -1723,8 +1900,8 @@
         event.preventDefault();
         event.stopPropagation();
         const courseId = course.moodle_course_id ?? (course.source === "painel" ? Number(course.id) : NaN);
-        const ambienteId = Number(course.ambiente?.id || 2);
-        if (!Number.isFinite(courseId) || courseId <= 0 || typeof App.resolvePainelEnrolUrl !== "function") {
+        const ambienteId = Number(course.ambiente?.id);
+        if (!Number.isFinite(courseId) || courseId <= 0 || !Number.isSafeInteger(ambienteId) || ambienteId <= 0 || typeof App.resolvePainelEnrolUrl !== "function") {
           window.alert("N\xE3o foi poss\xEDvel identificar este curso para autoinscri\xE7\xE3o.");
           return;
         }
@@ -1795,7 +1972,7 @@
     host.appendChild(empty);
   }
   function renderTabCards(host, tabKey, lists) {
-    const allItems = tabKey === "autoinscricoes" ? lists.autoinscricoes : tabKey === "coordenacoes" ? lists.coordenacoes : lists.diarios;
+    const allItems = lists[tabKey];
     const items = App.activeFilter?.situacao === "favourites" ? allItems.filter((course) => favourites.isFavourite(course)) : allItems;
     host.innerHTML = "";
     host.setAttribute("data-active-tab", tabKey);
@@ -2040,7 +2217,8 @@
     );
     const externalUrl = course.external_url || dashboardCourse?.viewurl || dashboardCourse?.details_url || "https://suap.ifrn.edu.br/edu/meus_diarios/";
     const openExternal = document.getElementById("curso-open-external");
-    if (openExternal && externalUrl) {
+    if (openExternal && course.source === "mock") openExternal.hidden = true;
+    if (openExternal && externalUrl && course.source !== "mock") {
       openExternal.hidden = false;
       openExternal.setAttribute("href", externalUrl);
       openExternal.setAttribute("target", "_blank");
@@ -2174,9 +2352,6 @@
     return templatesReady;
   }
   async function loadDashboard(force) {
-    if (!force && App.dashboardCache) {
-      return App.dashboardCache;
-    }
     App.dashboardCache = await window.MobileMoodleApi.getDashboard(force);
     return App.dashboardCache;
   }
@@ -2193,7 +2368,7 @@
         return;
       }
       const hasPainelSession2 = typeof MM.hasPainelSession === "function" && MM.hasPainelSession();
-      if (!hasPainelSession2 || hasOAuthProfileMode() && !readOAuthProfile()) {
+      if (!isMock && (!hasPainelSession2 || hasOAuthProfileMode() && !readOAuthProfile())) {
         console.warn(
           "[IFRN-ROUTER] Sess\xE3o do Painel AVA n\xE3o encontrada."
         );
@@ -2993,6 +3168,11 @@
   App.templatesRoot = document.getElementById("page-templates");
   App.dashboardCache = null;
   function logout() {
+    if (isMock) {
+      const parent = window.parent;
+      parent.MoodleIfrnBridge?.logout?.();
+      return;
+    }
     const lastMoodleSite = sessionStorage.getItem("ifrn_moodle_last_site_url");
     let webLogoutUrl = null;
     if (lastMoodleSite) {
@@ -3014,9 +3194,9 @@
     sessionStorage.removeItem("ifrn_username");
     sessionStorage.removeItem("ifrn_moodle_last_site_url");
     App.dashboardCache = null;
-    const bridge = window.parent?.MoodleIfrnBridge;
-    if (window.parent && window.parent !== window && bridge?.logout) {
-      bridge.logout();
+    const bridge2 = window.parent?.MoodleIfrnBridge;
+    if (window.parent && window.parent !== window && bridge2?.logout) {
+      bridge2.logout();
       return;
     }
     if (window.parent && window.parent !== window) {

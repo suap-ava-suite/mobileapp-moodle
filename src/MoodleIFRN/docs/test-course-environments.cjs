@@ -54,24 +54,11 @@ assert.equal(
     'Deve resolver ambiente EAD',
 );
 
-// 2. Proteção contra mocks de desenvolvimento local
-assert.equal(
-    resolveMoodleSiteUrl('http://127.0.0.1:8002/view'),
-    IFRN_MOODLE_PRESENCIAL_URL,
-    'Deve fazer fallback em mock localhost',
-);
-
-assert.equal(
-    resolveMoodleSiteUrl('http://localhost:8080/'),
-    IFRN_MOODLE_PRESENCIAL_URL,
-    'Deve fazer fallback em localhost',
-);
-
-assert.equal(
-    resolveMoodleSiteUrl(null),
-    IFRN_MOODLE_PRESENCIAL_URL,
-    'Deve fazer fallback para Presencial quando nulo',
-);
+// Invalid targets must never silently become Presencial.
+for (const candidate of [null, '', 'http://127.0.0.1:8000', 'http://localhost:8080',
+    'https://evil.invalid', 'https://user:pass@ead.ava.ifrn.edu.br']) {
+    assert.throws(() => resolveMoodleSiteUrl(candidate), /Ambiente do curso inválido/);
+}
 
 // 3. Teste do módulo de idioma otimizado
 const langPath = path.join(__dirname, '../services_mobile/ifrn-language.ts');

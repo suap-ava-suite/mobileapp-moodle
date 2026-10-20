@@ -14,6 +14,8 @@ interface ApiErrorShape {
 }
 
 interface DashboardCourse {
+    key?: string;
+    launch?: { kind: 'mock'; courseId: number } | { kind: 'moodle_native'; courseId: number; siteUrl: string };
     id: number | string;
     name?: string;
     fullname?: string;
@@ -37,7 +39,7 @@ interface DashboardCourse {
     /** ID do diário no SUAP, quando conhecido. */
     diario_id?: number;
     /** Fonte dos dados: painel (Moodle) ou suap. */
-    source?: 'painel' | 'suap';
+    source?: 'painel' | 'suap' | 'mock';
 }
 
 interface DashboardData {
@@ -59,7 +61,9 @@ interface DashboardData {
     coordenacoes?: DashboardCourse[];
     autoinscricoes?: DashboardCourse[];
     self_enrolments?: DashboardCourse[];
-    source?: 'painel' | 'suap';
+    praticas?: DashboardCourse[];
+    reutilizaveis?: DashboardCourse[];
+    source?: 'painel' | 'suap' | 'mock';
 }
 
 interface CourseActivity {
@@ -95,10 +99,10 @@ interface CourseData {
     external_url?: string;
     moodle_course_id?: number;
     moodle_site_url?: string;
-    source?: 'painel' | 'suap';
+    source?: 'painel' | 'suap' | 'mock';
 }
 
-type PainelTabKey = 'diarios' | 'coordenacoes' | 'autoinscricoes';
+type PainelTabKey = 'diarios' | 'coordenacoes' | 'autoinscricoes' | 'praticas' | 'reutilizaveis';
 
 type RouteInfo =
     | { name: 'painel' }

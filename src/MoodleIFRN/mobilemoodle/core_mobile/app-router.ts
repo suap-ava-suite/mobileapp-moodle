@@ -1,3 +1,4 @@
+import { isMock } from './mock-provider';
 /*!
  * app-router.ts
  * ----------------------------------------------------------------------------
@@ -88,9 +89,7 @@ async function loadTemplates(): Promise<void> {
 }
 
 async function loadDashboard(force: boolean): Promise<DashboardData> {
-    if (!force && App.dashboardCache) {
-        return App.dashboardCache;
-    }
+
 
     App.dashboardCache =
         await window.MobileMoodleApi.getDashboard(force);
@@ -127,7 +126,7 @@ async function loadRoute(force: boolean): Promise<void> {
        const hasPainelSession =
     typeof MM.hasPainelSession === 'function' &&
     MM.hasPainelSession();
-        if (!hasPainelSession || (hasOAuthProfileMode() && !readOAuthProfile())) {
+        if (!isMock && (!hasPainelSession || (hasOAuthProfileMode() && !readOAuthProfile()))) {
             console.warn(
                 '[IFRN-ROUTER] Sessão do Painel AVA não encontrada.',
             );

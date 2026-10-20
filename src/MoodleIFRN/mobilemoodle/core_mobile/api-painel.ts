@@ -323,7 +323,15 @@ async function fetchPainelDashboard(): Promise<DashboardData> {
     const diarios = rawDiarios.map(course => mapPainelDiario(course));
     const coordenacoes = rawCoordenacoes.map(course => mapPainelDiario(course));
     const autoinscricoes = rawAutoinscricoes.map(course => mapPainelDiario(course, true));
-    const courses = [...diarios, ...coordenacoes, ...autoinscricoes];
+    const praticas = (Array.isArray(data) ? [] : data.praticas || []).map(course => mapPainelDiario(course));
+    const reutilizaveis = (Array.isArray(data) ? [] : data.reutilizaveis || []).map(course => mapPainelDiario(course));
+    for (const course of [...diarios, ...coordenacoes, ...praticas, ...reutilizaveis, ...autoinscricoes]) {
+        course.key = JSON.stringify(['painel', course.moodle_site_url || course.ambiente?.id || '', String(course.id)]);
+        if (course.moodle_site_url && course.moodle_course_id) {
+            course.launch = { kind: 'moodle_native', courseId: course.moodle_course_id, siteUrl: course.moodle_site_url };
+        }
+    }
+    const courses = [...diarios, ...coordenacoes, ...praticas, ...reutilizaveis, ...autoinscricoes];
 
     // eslint-disable-next-line no-console
     console.log(`[IFRN-PANEL] dashboard local carregado; ${diarios.length} diário(s)`);
@@ -339,6 +347,8 @@ async function fetchPainelDashboard(): Promise<DashboardData> {
         courses,
         diarios,
         coordenacoes,
+        praticas,
+        reutilizaveis,
         autoinscricoes,
         source: 'painel',
     };

@@ -944,10 +944,10 @@ export class PainelAvaService {
      * Cookies e CSRF nunca saem do InAppBrowser; o app recebe somente o JSON
      * funcional (status/courseid/viewurl) e o dashboard atualizado.
      */
-    enrolCourse(courseId: number, ambienteId = 2): Observable<Record<string, unknown>> {
+    enrolCourse(courseId: number, ambienteId: number): Observable<Record<string, unknown>> {
         return new Observable<Record<string, unknown>>((subscriber) => {
-            if (!Number.isFinite(courseId) || courseId <= 0) {
-                subscriber.error(new Error('Identificador Moodle inválido para autoinscrição.'));
+            if (!Number.isSafeInteger(courseId) || courseId <= 0 || !Number.isSafeInteger(ambienteId) || ambienteId <= 0) {
+                subscriber.error(new Error('Identificador de curso ou ambiente inválido para autoinscrição.'));
                 return;
             }
 

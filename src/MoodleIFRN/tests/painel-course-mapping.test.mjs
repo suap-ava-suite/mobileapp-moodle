@@ -28,3 +28,13 @@ test('vitrine sem matrícula confirmada não é apresentada como já matriculada
     const data = await dashboard({ autoinscricoes: [{ id: 91 }] });
     assert.equal(data.autoinscricoes[0].is_enrolled, false);
 });
+
+test('preserva práticas e reutilizáveis com chaves distintas para mesmo ID em ambientes diferentes', async () => {
+    const data = await dashboard({ praticas: [{ id: 7, viewurl: 'https://ead.ava.ifrn.edu.br/course/view.php?id=7' }],
+        reutilizaveis: [{ id: 7, viewurl: 'https://presencial.ava.ifrn.edu.br/course/view.php?id=7' }] });
+    assert.equal(data.praticas.length, 1);
+    assert.equal(data.reutilizaveis.length, 1);
+    assert.notEqual(data.praticas[0].key, data.reutilizaveis[0].key);
+    assert.equal(data.courses.length, 2);
+    assert.equal(data.praticas[0].launch.kind, 'moodle_native');
+});

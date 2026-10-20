@@ -1,3 +1,5 @@
+import { backendConfig } from '../services_mobile/backend.config';
+import { mockApi } from '../services_mobile/mock-api';
 import { AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -30,6 +32,22 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     statusMessage = '';
     private nativeReturnQueued = false;
     private expectedIdentity = '';
+
+    readonly mockMode = backendConfig.provider === 'mock';
+    demoUsername = '';
+    demoPassword = '';
+    async enterDemo(): Promise<void> {
+        if (!this.mockMode || this.loading) return;
+        this.loading = true;
+        this.formError = '';
+        try {
+            await mockApi.login(this.demoUsername, this.demoPassword);
+            this.demoPassword = '';
+            await CoreNavigator.navigate('/login/painel');
+        } catch (error) {
+            this.formError = error instanceof Error ? error.message : 'Falha na simulação';
+        } finally { this.loading = false; }
+    }
 
     readonly currentYear = new Date().getFullYear();
     readonly welcomeImageSrc = 'mobilemoodle/static/theme/ifrn/img/alunos-ifrn-biblioteca-enhanced.webp';
@@ -156,6 +174,7 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
 
     /** Inicia o SUAP diretamente a partir do gesto no marketplace. */
     async enterAva(): Promise<void> {
+        if (this.mockMode) { await this.enterDemo(); return; }
         if (this.loading || this.waitingBrowser || this.openingPainel) {
             return;
         }

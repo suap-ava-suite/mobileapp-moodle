@@ -102,14 +102,19 @@
                 Acesse suas disciplinas, atividades e conteúdos do IFRN em um só lugar.
             </p>
 
+            @if (mockMode) {
+                <p>Simulação local — use somente usuários fictícios.</p>
+                <ion-input label="Usuário demo" [(ngModel)]="demoUsername" />
+                <ion-input label="Senha demo" type="password" [(ngModel)]="demoPassword" />
+            }
             <div class="welcome__actions" role="group" aria-label="Acesso ao AVA">
                 <ion-button
                     expand="block"
                     class="btn-enter"
                     [disabled]="showTransition"
-                    (click)="canContinue ? continueSession() : enterAva()">
+                    (click)="mockMode ? enterDemo() : (canContinue ? continueSession() : enterAva())">
                     <span class="btn-enter__content">
-                        <span>{{ showTransition ? 'Autenticando...' : (canContinue ? continueLabel : 'Entrar no AVA') }}</span>
+                        <span>{{ showTransition ? 'Autenticando...' : (canContinue ? continueLabel : (mockMode ? 'Entrar na simulação' : 'Entrar no AVA')) }}</span>
                         <span class="btn-enter__arrow" aria-hidden="true">
                             <ion-icon name="arrow-forward-outline" aria-hidden="true" />
                         </span>
@@ -122,7 +127,7 @@
                 @if (formError) {
                     <p class="welcome__error" role="alert">{{ formError }}</p>
                 }
-                <p class="welcome__account">Acesse com sua conta SUAP</p>
+                <p class="welcome__account">{{ mockMode ? 'Dados fictícios de teste' : 'Acesse com sua conta SUAP' }}</p>
 
 
 

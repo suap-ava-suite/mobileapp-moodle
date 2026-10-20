@@ -39,7 +39,7 @@ export class PainelEnrolPage implements OnInit {
 
     private readPending(): PendingEnrol | null {
         const routeCourseId = Number(CoreNavigator.getRouteNumberParam('courseId') || 0);
-        const routeAmbienteId = Number(CoreNavigator.getRouteNumberParam('ambienteId') || 2);
+        const routeAmbienteId = Number(CoreNavigator.getRouteNumberParam('ambienteId'));
         if (Number.isFinite(routeCourseId) && routeCourseId > 0 && Number.isFinite(routeAmbienteId) && routeAmbienteId > 0) {
             return { courseId: routeCourseId, ambienteId: routeAmbienteId };
         }
@@ -49,7 +49,7 @@ export class PainelEnrolPage implements OnInit {
             if (!raw) return null;
             const value = JSON.parse(raw) as Partial<PendingEnrol>;
             const courseId = Number(value.courseId);
-            const ambienteId = Number(value.ambienteId || 2);
+            const ambienteId = Number(value.ambienteId);
             return Number.isFinite(courseId) && courseId > 0 && Number.isFinite(ambienteId) && ambienteId > 0
                 ? { courseId, ambienteId } : null;
         } catch {

@@ -1,3 +1,4 @@
+import { isMock } from './mock-provider';
 /*!
  * app.ts
  * ----------------------------------------------------------------------------
@@ -26,6 +27,11 @@ import { MM, App } from './namespace';
     App.dashboardCache = null;
 
     function logout(): void {
+        if (isMock) {
+            const parent = window.parent as Window & { MoodleIfrnBridge?: { logout?: () => void } };
+            parent.MoodleIfrnBridge?.logout?.();
+            return;
+        }
         // O OAuth Moodle roda no navegador do sistema (_system). A sessão web desse
         // navegador precisa ser encerrada para que outro usuário possa autenticar.
         // Abre a saída oficial; a confirmação do servidor permanece na página.

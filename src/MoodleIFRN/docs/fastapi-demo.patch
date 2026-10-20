@@ -1,0 +1,893 @@
+--- a/.env.example
++++ b/.env.example
+@@ -0,0 +1,6 @@
++# Documentation only; values must be explicitly exported. Never use real credentials.
++APP_MODE=demo
++# Generate a fresh temporary SECRET_KEY with at least 32 characters.
++CORS_ORIGINS=https://localhost,http://localhost
++ACCESS_TOKEN_EXPIRE_MINUTES=15
++REFRESH_TOKEN_EXPIRE_DAYS=1
+--- a/README.md
++++ b/README.md
+@@ -0,0 +1,39 @@
++# Simulador FastAPI para AVA IFRN Mobile
++
++Este serviço não autentica SUAP e não emite wstoken Moodle. Somente `APP_MODE=demo` é aceito.
++Não carregamos `.env` automaticamente. Não copie nem publique o `.env` antigo.
++
++Linux / Git Bash (Windows: substitua `python3` por `py -3` e `.venv-demo/bin/python` por `.venv-demo/Scripts/python.exe`):
++
++```bash
++python3 -m venv .venv-demo
++.venv-demo/bin/python -m pip install -r requirements.txt
++export APP_MODE=demo
++export SECRET_KEY="$(.venv-demo/bin/python -c 'import secrets; print(secrets.token_urlsafe(48))')"
++export CORS_ORIGINS='https://localhost,http://localhost'
++.venv-demo/bin/python -m unittest discover -s tests -v
++.venv-demo/bin/python run.py
++```
++
++Porta: 8000, bind padrão 127.0.0.1. Nunca 8002. Execute da raiz do backend.
++Use somente credenciais fictícias do BrokerService: `matheus` ou `samuel`, senha demo `123456`.
++Não envie credenciais institucionais. Dados são estáticos em memória.
++
++Contrato preferido: `/api/v1/me`, `/api/v1/dashboard`, `/api/v1/courses/{id}`,
++`/api/v1/courses/{id}/sections`, `/api/v1/courses/{id}/sections/{section_id}/activities/{activity_id}`.
++Schemas constam em `/openapi.json`. Conteúdo inexistente ou não autorizado retorna 404, sem confirmar existência.
++`Authorization: Bearer <access>` é obrigatório. Token de refresh só em POST `/auth/refresh`.
++
++Rotas preexistentes preservadas: `/`, `/auth/login`, `/auth/refresh`, `/usuario/me`, `/courses/`,
++`/dashboard/`, `/dashboard/view`, `/course/{id}`, `/section/{id}`, `/activity/{id}`.
++As antigas páginas de conteúdo e dashboard/view agora retornam JSON autenticado; query token não autentica.
++Novas rotas: `/auth/logout` e todas as rotas `/api/v1/` acima. Nenhuma simula o protocolo Moodle.
++
++Refresh é de uso único: rotação invalida a sessão anterior (inclusive access). Logout revoga a sessão.
++Access vence em 15 minutos e refresh em 1 dia por padrão. Valida assinatura HS256, emissor, audiência,
++sub, jti, iat, exp, tipo e sessão ativa. Reiniciar o processo revoga tudo.
++Registro de sessões é limitado pela expiração e limpo ao emitir tokens. Um worker apenas: sem persistência,
++sem coordenação entre processos, sem proteção contra brute force e sem recuperação após reinício.
++Não implantar em produção. O modo production falha na inicialização; uma integração institucional exige outro projeto de segurança.
++CORS usa lista explícita, sem credenciais de cookies. Confirme a origem real da WebView antes de ajustar a lista.
++Middleware registra apenas método/rota parametrizada/status/duração/categoria, sem query, headers ou corpo.
+--- a/app/api/activity.py
++++ b/app/api/activity.py
+@@ -1,27 +1,8 @@
+-from fastapi import APIRouter, Request
+-from fastapi.templating import Jinja2Templates
+-
+-from app.services.activity_service import ActivityService
+-
++from fastapi import APIRouter, Depends
++from app.core.dependencies import get_current_user
++from app.services.demo_content import activity_for
+ router = APIRouter()
+ 
+-templates = Jinja2Templates(
+-    directory="app/templates"
+-)
+-
+-
+ @router.get("/activity/{activity_id}")
+-async def activity_page(
+-    request: Request,
+-    activity_id: int
+-):
+-
+-    activity = ActivityService.get_activity(activity_id)
+-
+-    return templates.TemplateResponse(
+-        request=request,
+-        name="activity.htm",
+-        context={
+-            "activity": activity
+-        }
+-    )
+\ No newline at end of file
++def content(activity_id: int, user: dict = Depends(get_current_user)):
++    return activity_for(user, activity_id)
+--- a/app/api/auth.py
++++ b/app/api/auth.py
+@@ -32,3 +32,12 @@
+         )
+ 
+     return TokenResponse(**tokens)
++
++
++from fastapi import Depends, Response
++from app.core.dependencies import access_credentials
++
++@router.post("/logout", status_code=204)
++def logout(token: str = Depends(access_credentials)):
++    JWTService.logout(token)
++    return Response(status_code=204)
+--- a/app/api/course.py
++++ b/app/api/course.py
+@@ -1,27 +1,8 @@
+-from fastapi import APIRouter, Request
+-from fastapi.templating import Jinja2Templates
+-
+-from app.services.course_service import CourseService
+-
++from fastapi import APIRouter, Depends
++from app.core.dependencies import get_current_user
++from app.services.demo_content import course_for
+ router = APIRouter()
+ 
+-templates = Jinja2Templates(
+-    directory="app/templates"
+-)
+-
+-
+ @router.get("/course/{course_id}")
+-async def course_page(
+-    request: Request,
+-    course_id: int
+-):
+-
+-    course = CourseService.get_course(course_id)
+-
+-    return templates.TemplateResponse(
+-        request=request,
+-        name="course.html",
+-        context={
+-            "course": course
+-        }
+-    )
+\ No newline at end of file
++def content(course_id: int, user: dict = Depends(get_current_user)):
++    return course_for(user, course_id)
+--- a/app/api/dashboard.py
++++ b/app/api/dashboard.py
+@@ -1,57 +1,9 @@
+-from fastapi import APIRouter, Depends, Request, HTTPException
+-from fastapi.templating import Jinja2Templates
+-from jose import JWTError, jwt
+-
+-from app.core.config import SECRET_KEY, ALGORITHM
++from fastapi import APIRouter, Depends
+ from app.core.dependencies import get_current_user
+ from app.services.dashboard_service import DashboardService
+-
+ router = APIRouter()
+ 
+-templates = Jinja2Templates(
+-    directory="app/templates"
+-)
+-
+-
+-# Dashboard HTML
+-@router.get("/view")
+-async def dashboard_page(
+-    request: Request,
+-    token: str,
+-):
+-    try:
+-        payload = jwt.decode(
+-            token,
+-            SECRET_KEY,
+-            algorithms=[ALGORITHM]
+-        )
+-
+-        user = {
+-            "username": payload["sub"],
+-            "nome": payload["nome"],
+-        }
+-
+-    except JWTError:
+-        raise HTTPException(
+-            status_code=401,
+-            detail="Token inválido"
+-        )
+-
+-    dashboard = DashboardService.get_dashboard(user)
+-
+-    return templates.TemplateResponse(
+-        request=request,
+-        name="dashboard.html",
+-        context={
+-            "request": request,
+-            "dashboard": dashboard
+-        }
+-    )
+-
+-
+-# API protegida
+ @router.get("/")
+-async def dashboard_api(
+-    current_user: dict = Depends(get_current_user)
+-):
+-    return DashboardService.get_dashboard(current_user)
+\ No newline at end of file
++@router.get("/view", deprecated=True)
++def dashboard(user: dict = Depends(get_current_user)):
++    return DashboardService.get_dashboard(user)
+--- /dev/null
++++ b/app/api/demo.py
+@@ -0,0 +1,72 @@
++from fastapi import APIRouter, Depends
++from pydantic import BaseModel
++from app.core.dependencies import get_current_user
++from app.services.demo_content import course_for, section_for, activity_for
++from app.services.course_service import CourseService
++
++class Activity(BaseModel):
++    id: int
++    course_id: int
++    section_id: int
++    name: str
++    modname: str
++    description: str
++    completion: bool
++    url: str | None = None
++
++class Section(BaseModel):
++    id: int
++    course_id: int
++    name: str
++    activities: list[Activity]
++
++class Course(BaseModel):
++    id: int
++    name: str
++    source: str
++    environment: str
++    summary: str
++    sections: list[Section]
++
++class Profile(BaseModel):
++    username: str
++    nome: str
++
++class Card(BaseModel):
++    id: int
++    name: str
++    source: str = "mock"
++    environment: str = "demo"
++    moodle: str = "Ambiente de teste"
++
++class Dashboard(BaseModel):
++    source: str = "mock"
++    user: Profile
++    courses: list[Card]
++    diarios: list[Card]
++    coordenacoes: list[Card] = []
++    praticas: list[Card] = []
++    reutilizaveis: list[Card] = []
++    autoinscricoes: list[Card] = []
++
++router = APIRouter(prefix="/api/v1")
++@router.get("/me", response_model=Profile)
++def me(user=Depends(get_current_user)):
++    return user
++
++@router.get("/dashboard", response_model=Dashboard)
++def dashboard(user=Depends(get_current_user)):
++    cards = [Card(id=c["id"], name=c["name"]) for c in CourseService.list_courses(user["username"])]
++    return Dashboard(user=user, courses=cards, diarios=cards)
++
++@router.get("/courses/{course_id}", response_model=Course)
++def course(course_id: int, user=Depends(get_current_user)):
++    return course_for(user, course_id)
++
++@router.get("/courses/{course_id}/sections", response_model=list[Section])
++def sections(course_id: int, user=Depends(get_current_user)):
++    return course_for(user, course_id)["sections"]
++
++@router.get("/courses/{course_id}/sections/{section_id}/activities/{activity_id}", response_model=Activity)
++def activity(course_id: int, section_id: int, activity_id: int, user=Depends(get_current_user)):
++    return activity_for(user, activity_id, course_id, section_id)
+--- a/app/api/routes.py
++++ b/app/api/routes.py
+@@ -35,3 +35,6 @@
+ router.include_router(section_router)
+ 
+ router.include_router(activity_router)
++
++from app.api.demo import router as demo_router
++router.include_router(demo_router)
+--- a/app/api/section.py
++++ b/app/api/section.py
+@@ -1,27 +1,8 @@
+-from fastapi import APIRouter, Request
+-from fastapi.templating import Jinja2Templates
+-
+-from app.services.section_service import SectionService
+-
++from fastapi import APIRouter, Depends
++from app.core.dependencies import get_current_user
++from app.services.demo_content import section_for
+ router = APIRouter()
+ 
+-templates = Jinja2Templates(
+-    directory="app/templates"
+-)
+-
+-
+ @router.get("/section/{section_id}")
+-async def section_page(
+-    request: Request,
+-    section_id: int
+-):
+-
+-    section = SectionService.get_section(section_id)
+-
+-    return templates.TemplateResponse(
+-        request=request,
+-        name="section.html",
+-        context={
+-            "section": section
+-        }
+-    )
+\ No newline at end of file
++def content(section_id: int, user: dict = Depends(get_current_user)):
++    return section_for(user, section_id)
+--- a/app/core/config.py
++++ b/app/core/config.py
+@@ -1,15 +1,12 @@
+ import os
+-from dotenv import load_dotenv
+ 
+-load_dotenv()
+-
+-SECRET_KEY = os.getenv("SECRET_KEY")
+-ALGORITHM = os.getenv("ALGORITHM", "HS256")
+-
+-ACCESS_TOKEN_EXPIRE_MINUTES = int(
+-    os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60)
+-)
+-
+-REFRESH_TOKEN_EXPIRE_DAYS = int(
+-    os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7)
+-)
+\ No newline at end of file
++# Deliberately do not load .env: demo must be explicitly enabled.
++MODE = os.environ.get("APP_MODE", "disabled")
++SECRET_KEY = os.environ.get("SECRET_KEY", "")
++ALGORITHM = "HS256"
++ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
++REFRESH_TOKEN_EXPIRE_DAYS = int(os.environ.get("REFRESH_TOKEN_EXPIRE_DAYS", "1"))
++if MODE != "demo" or len(SECRET_KEY) < 32:
++    raise RuntimeError("Set APP_MODE=demo and a temporary SECRET_KEY of at least 32 characters")
++if ACCESS_TOKEN_EXPIRE_MINUTES <= 0 or REFRESH_TOKEN_EXPIRE_DAYS <= 0:
++    raise RuntimeError("Token lifetimes must be positive")
+--- a/app/core/dependencies.py
++++ b/app/core/dependencies.py
+@@ -1,40 +1,16 @@
+-from fastapi import Depends, HTTPException, status
++from fastapi import Depends, HTTPException
+ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+-from jose import JWTError, jwt
++from app.services.jwt_service import JWTService
++from app.services.broker_service import BrokerService
++security = HTTPBearer(auto_error=False)
+ 
+-from app.core.config import SECRET_KEY, ALGORITHM
++def access_credentials(credentials: HTTPAuthorizationCredentials = Depends(security)):
++    if not credentials or not JWTService.validate(credentials.credentials, "access"):
++        raise HTTPException(401, "Sessão demo inválida", headers={"WWW-Authenticate": "Bearer"})
++    return credentials.credentials
+ 
+-security = HTTPBearer()
+-
+-
+-async def get_current_user(
+-    credentials: HTTPAuthorizationCredentials = Depends(security),
+-):
+-    token = credentials.credentials
+-
+-    try:
+-        payload = jwt.decode(
+-            token,
+-            SECRET_KEY,
+-            algorithms=[ALGORITHM],
+-        )
+-
+-        username = payload.get("sub")
+-        nome = payload.get("nome")
+-
+-        if username is None or payload.get("type") != "access":
+-            raise HTTPException(
+-                status_code=status.HTTP_401_UNAUTHORIZED,
+-                detail="Token inválido",
+-            )
+-
+-        return {
+-            "username": username,
+-            "nome": nome,
+-        }
+-
+-    except JWTError:
+-        raise HTTPException(
+-            status_code=status.HTTP_401_UNAUTHORIZED,
+-            detail="Token inválido",
+-        )
++def get_current_user(token: str = Depends(access_credentials)):
++    data = JWTService.validate(token, "access")
++    if not data:
++        raise HTTPException(401, "Sessão demo inválida")
++    return {"username": data["sub"], "nome": BrokerService.USERS[data["sub"]]["nome"]}
+--- a/app/core/security.py
++++ b/app/core/security.py
+@@ -1,40 +1 @@
+-from fastapi import Depends, HTTPException
+-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+-from jose import JWTError, jwt
+-
+-from app.core.config import SECRET_KEY, ALGORITHM
+-
+-security = HTTPBearer()
+-
+-
+-async def get_current_user(
+-    credentials: HTTPAuthorizationCredentials = Depends(security)
+-):
+-
+-    token = credentials.credentials
+-
+-    try:
+-
+-        payload = jwt.decode(
+-            token,
+-            SECRET_KEY,
+-            algorithms=[ALGORITHM]
+-        )
+-
+-        if not payload.get("sub") or payload.get("type") != "access":
+-            raise HTTPException(
+-                status_code=401,
+-                detail="Token inválido",
+-            )
+-
+-        return {
+-            "username": payload.get("sub"),
+-            "nome": payload.get("nome"),
+-        }
+-
+-    except JWTError:
+-
+-        raise HTTPException(
+-            status_code=401,
+-            detail="Token inválido"
+-        )
++from app.core.dependencies import get_current_user, security
+--- a/app/main.py
++++ b/app/main.py
+@@ -8,7 +8,7 @@
+ app = FastAPI(
+     title="SUAP Auth Service",
+     version="0.1.0",
+-    description="Serviço de autenticação JWT para integração com o SUAP.",
++    description="Simulador local; não autentica SUAP ou Moodle.",
+ )
+ 
+ 
+@@ -16,16 +16,10 @@
+ # CORS
+ # -------------------------------
+ 
+-origin_regex = r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
+-
+-app.add_middleware(
+-    CORSMiddleware,
+-    allow_origin_regex=origin_regex,
+-    allow_credentials=True,
+-    allow_methods=["*"],
+-    allow_headers=["*"],
+-)
+-
++import os
++app.add_middleware(CORSMiddleware,
++    allow_origins=os.environ.get("CORS_ORIGINS", "http://localhost,https://localhost").split(","),
++    allow_credentials=False, allow_methods=["GET", "POST"], allow_headers=["Authorization", "Content-Type"])
+ 
+ # -------------------------------
+ # Arquivos estáticos
+@@ -56,3 +50,23 @@
+         "service": "SUAP Auth Service",
+     }
+ 
++
++
++import logging
++from time import monotonic
++logger = logging.getLogger("ifrn.mock")
++
++@app.middleware("http")
++async def metrics(request, call_next):
++    started = monotonic()
++    status = 500
++    try:
++        response = await call_next(request)
++        status = response.status_code
++        return response
++    finally:
++        route = request.scope.get("route")
++        path = getattr(route, "path", "unmatched")
++        logger.info("step=request method=%s path=%s status=%d duration_ms=%d category=%s",
++                    request.method, path, status, (monotonic()-started)*1000,
++                    "server" if status >= 500 else "client" if status >= 400 else "ok")
+--- a/app/services/activity_service.py
++++ b/app/services/activity_service.py
+@@ -1,18 +1,6 @@
++from app.services.demo_content import activity_for
++
+ class ActivityService:
+-
+     @staticmethod
+-    def get_activity(activity_id: int):
+-
+-        return {
+-
+-            "id": activity_id,
+-
+-            "name": "Vídeo Aula",
+-
+-            "type": "Vídeo",
+-
+-            "description": "Introdução ao FastAPI.",
+-
+-            "url": "http://localhost:8100"
+-
+-        }
+\ No newline at end of file
++    def get_activity(activity_id: int, user: dict):
++        return activity_for(user, activity_id)
+--- a/app/services/auth_service.py
++++ b/app/services/auth_service.py
+@@ -20,14 +20,4 @@
+                 detail="Usuário ou senha inválidos"
+             )
+ 
+-        return {
+-
+-            "access_token":
+-                JWTService.create_access_token(user),
+-
+-            "refresh_token":
+-                JWTService.create_refresh_token(user),
+-
+-            "token_type": "bearer"
+-
+-        }
+\ No newline at end of file
++        return JWTService.issue(user)
+--- a/app/services/course_service.py
++++ b/app/services/course_service.py
+@@ -110,7 +110,9 @@
+             "name": course["name"],
+             "shortname": course.get("shortname", f"CURSO{course['id']}"),
+             "progress": course.get("progress", 0),
+-            "moodle": course.get("moodle", "AVA Acadêmico"),
++            "moodle": "Ambiente de teste",
++            "source": "mock",
++            "environment": "demo",
+             "isfavourite": bool(course.get("isfavourite", False)),
+             "hasprogress": True,
+         }
+@@ -120,7 +122,7 @@
+         key = str(username or "").strip().lower()
+         course_ids = CourseService.USER_COURSES.get(
+             key,
+-            CourseService.DEFAULT_COURSE_IDS,
++            [],
+         )
+ 
+         cards = []
+@@ -163,7 +165,9 @@
+             "teacher": course.get("teacher", "Professor Exemplo"),
+             "workload": course.get("workload", "40h"),
+             "progress": course.get("progress", 0),
+-            "moodle": course.get("moodle", "AVA Acadêmico"),
++            "moodle": "Ambiente de teste",
++            "source": "mock",
++            "environment": "demo",
+             "summary": course.get("summary", ""),
+             "sections": CourseService.SECTION_TEMPLATES,
+         }
+--- /dev/null
++++ b/app/services/demo_content.py
+@@ -0,0 +1,31 @@
++from copy import deepcopy
++from fastapi import HTTPException
++from app.services.course_service import CourseService
++
++def course_for(user, course_id):
++    if course_id not in CourseService.COURSES or course_id not in CourseService.USER_COURSES.get(user["username"], []):
++        raise HTTPException(404, "Curso não encontrado")
++    course = deepcopy(CourseService.get_course(course_id))
++    course.update(source="mock", environment="demo", moodle="Ambiente de teste")
++    for si, section in enumerate(course["sections"], 1):
++        section.update(id=course_id * 100 + si, course_id=course_id)
++        for ai, activity in enumerate(section["activities"], 1):
++            activity.update(id=section["id"] * 100 + ai, section_id=section["id"], course_id=course_id,
++                            description="Conteúdo fictício de teste", url=None)
++    return course
++
++def section_for(user, section_id):
++    course = course_for(user, section_id // 100)
++    for section in course["sections"]:
++        if section["id"] == section_id:
++            return section
++    raise HTTPException(404, "Seção não encontrada")
++
++def activity_for(user, activity_id, course_id=None, section_id=None):
++    section = section_for(user, activity_id // 100)
++    if (course_id is not None and section["course_id"] != course_id) or (section_id is not None and section["id"] != section_id):
++        raise HTTPException(404, "Atividade não encontrada")
++    for activity in section["activities"]:
++        if activity["id"] == activity_id:
++            return activity
++    raise HTTPException(404, "Atividade não encontrada")
+--- a/app/services/jwt_service.py
++++ b/app/services/jwt_service.py
+@@ -1,84 +1,56 @@
+ from datetime import datetime, timedelta, timezone
+ from uuid import uuid4
+-
++from threading import RLock
+ from jose import JWTError, jwt
+-
+-from app.core.config import (
+-    SECRET_KEY,
+-    ALGORITHM,
+-    ACCESS_TOKEN_EXPIRE_MINUTES,
+-    REFRESH_TOKEN_EXPIRE_DAYS
+-)
+-
++from app.core.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
++from app.services.broker_service import BrokerService
+ 
+ class JWTService:
++    # Demo only, single process. Restart invalidates every session.
++    sessions = {}
++    lock = RLock()
+ 
+     @staticmethod
+-    def create_access_token(user: dict):
+-
+-        payload = {
+-            "sub": user["username"],
+-            "nome": user["nome"],
+-            "type": "access",
+-            "jti": str(uuid4()),
+-            "iat": datetime.now(timezone.utc),
+-            "exp": datetime.now(timezone.utc) + timedelta(
+-                minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+-            )
+-        }
+-
+-        return jwt.encode(
+-            payload,
+-            SECRET_KEY,
+-            algorithm=ALGORITHM
+-        )
+-
++    def issue(user):
++        with JWTService.lock:
++            now = datetime.now(timezone.utc)
++            JWTService.sessions = {k:v for k,v in JWTService.sessions.items() if v["exp"] > now.timestamp()}
++            sid = str(uuid4())
++            refresh_jti = str(uuid4())
++            expiry = now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
++            JWTService.sessions[sid] = {"sub": user["username"], "refresh": refresh_jti, "exp": expiry.timestamp()}
++            def token(kind, exp, jti):
++                return jwt.encode({"sub": user["username"], "sid": sid, "type": kind, "jti": jti,
++                                   "iat": now, "exp": exp, "iss": "ifrn-mock", "aud": "ifrn-mock-app"}, SECRET_KEY, algorithm=ALGORITHM)
++            return {"access_token": token("access", now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES), str(uuid4())),
++                    "refresh_token": token("refresh", expiry, refresh_jti), "token_type": "bearer"}
+ 
+     @staticmethod
+-    def create_refresh_token(user: dict):
+-
+-        payload = {
+-            "sub": user["username"],
+-            "nome": user["nome"],
+-            "type": "refresh",
+-            "jti": str(uuid4()),
+-            "iat": datetime.now(timezone.utc),
+-            "exp": datetime.now(timezone.utc) + timedelta(
+-                days=REFRESH_TOKEN_EXPIRE_DAYS
+-            )
+-        }
+-
+-        return jwt.encode(
+-            payload,
+-            SECRET_KEY,
+-            algorithm=ALGORITHM
+-        )
+-
++    def validate(token, kind):
++        try:
++            data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], audience="ifrn-mock-app", issuer="ifrn-mock",
++                              options={"require_exp": True, "require_iat": True, "require_sub": True, "require_jti": True})
++            session = JWTService.sessions.get(data.get("sid"))
++            if (data.get("type") != kind or not session or session["sub"] != data["sub"]
++                or data["sub"] not in BrokerService.USERS or session["exp"] <= datetime.now(timezone.utc).timestamp()
++                or (kind == "refresh" and session["refresh"] != data["jti"])):
++                return None
++            return data
++        except (JWTError, KeyError, TypeError):
++            return None
+ 
+     @staticmethod
+-    def refresh_tokens(refresh_token: str):
++    def refresh_tokens(token):
++        with JWTService.lock:
++            data = JWTService.validate(token, "refresh")
++            if not data:
++                return None
++            del JWTService.sessions[data["sid"]]
++            return JWTService.issue({"username": data["sub"]})
+ 
+-        try:
+-
+-            payload = jwt.decode(
+-                refresh_token,
+-                SECRET_KEY,
+-                algorithms=[ALGORITHM]
+-            )
+-
+-            if payload.get("type") != "refresh":
+-                return None
+-
+-            user = {
+-                "username": payload["sub"],
+-                "nome": payload["nome"]
+-            }
+-
+-            return {
+-                "access_token": JWTService.create_access_token(user),
+-                "refresh_token": refresh_token,
+-                "token_type": "bearer",
+-            }
+-
+-        except JWTError:
+-            return None
++    @staticmethod
++    def logout(token):
++        with JWTService.lock:
++            data = JWTService.validate(token, "access")
++            if data:
++                JWTService.sessions.pop(data["sid"], None)
+--- a/app/services/section_service.py
++++ b/app/services/section_service.py
+@@ -1,36 +1,6 @@
++from app.services.demo_content import section_for
++
+ class SectionService:
+-
+     @staticmethod
+-    def get_section(section_id: int):
+-
+-        return {
+-
+-            "id": section_id,
+-
+-            "name": "Introdução",
+-
+-            "description": "Primeiros passos no curso.",
+-
+-            "activities": [
+-
+-                {
+-                    "id": 1,
+-                    "name": "Vídeo Aula",
+-                    "type": "Vídeo"
+-                },
+-
+-                {
+-                    "id": 2,
+-                    "name": "PDF",
+-                    "type": "Material"
+-                },
+-
+-                {
+-                    "id": 3,
+-                    "name": "Questionário",
+-                    "type": "Quiz"
+-                }
+-
+-            ]
+-
+-        }
+\ No newline at end of file
++    def get_section(section_id: int, user: dict):
++        return section_for(user, section_id)
+--- a/tests/test_auth.py
++++ b/tests/test_auth.py
+@@ -1,39 +1,66 @@
+-from unittest import TestCase
+-
++import unittest
++from datetime import datetime, timedelta, timezone
+ from fastapi.testclient import TestClient
+-
++from jose import jwt
+ from app.main import app
+ from app.services.jwt_service import JWTService
++from app.core.config import SECRET_KEY, ALGORITHM
+ 
++class DemoTests(unittest.TestCase):
++    def setUp(self):
++        JWTService.sessions.clear()
++        self.c = TestClient(app)
++        self.tokens = self.login('matheus')
++        self.h = {'Authorization': 'Bearer ' + self.tokens['access_token']}
+ 
+-class RefreshTokenTests(TestCase):
+-    def setUp(self):
+-        self.client = TestClient(app)
+-        self.user = {
+-            "username": "2026000000",
+-            "nome": "Usuário Teste",
+-        }
++    def login(self, username):
++        response = self.c.post('/auth/login', json={'username': username, 'password': '123456'})
++        self.assertEqual(response.status_code, 200)
++        return response.json()
+ 
+-    def test_refresh_returns_a_new_access_token(self):
+-        refresh_token = JWTService.create_refresh_token(self.user)
++    def test_login_and_identity(self):
++        self.assertEqual(self.c.post('/auth/login', json={'username':'matheus','password':'wrong'}).status_code,401)
++        self.assertEqual(self.c.get('/api/v1/me',headers=self.h).json()['username'],'matheus')
++        self.assertEqual(self.c.get('/api/v1/dashboard',headers=self.h).status_code,200)
+ 
+-        response = self.client.post(
+-            "/auth/refresh",
+-            json={"refresh_token": refresh_token},
+-        )
++    def test_credentials(self):
++        for path in ['/api/v1/dashboard','/course/1','/section/101','/activity/10101','/dashboard/view?token='+self.tokens['access_token']]:
++            self.assertEqual(self.c.get(path).status_code,401)
++            self.assertEqual(self.c.get(path,headers={'Authorization':'Bearer '+self.tokens['refresh_token']}).status_code,401)
++        data=jwt.decode(self.tokens['access_token'],SECRET_KEY,algorithms=[ALGORITHM],audience='ifrn-mock-app')
++        data['exp']=datetime.now(timezone.utc)-timedelta(seconds=5)
++        expired=jwt.encode(data,SECRET_KEY,algorithm=ALGORITHM)
++        self.assertEqual(self.c.get('/api/v1/me',headers={'Authorization':'Bearer '+expired}).status_code,401)
+ 
+-        self.assertEqual(response.status_code, 200)
+-        body = response.json()
+-        self.assertEqual(body["token_type"], "bearer")
+-        self.assertEqual(body["refresh_token"], refresh_token)
+-        self.assertNotEqual(body["access_token"], refresh_token)
++    def test_rotation_logout(self):
++        self.assertEqual(self.c.post('/auth/refresh',json={'refresh_token':self.tokens['access_token']}).status_code,401)
++        result=self.c.post('/auth/refresh',json={'refresh_token':self.tokens['refresh_token']})
++        self.assertEqual(result.status_code,200)
++        self.assertNotEqual(result.json()['refresh_token'],self.tokens['refresh_token'])
++        self.assertEqual(self.c.post('/auth/refresh',json={'refresh_token':self.tokens['refresh_token']}).status_code,401)
++        self.assertEqual(self.c.get('/api/v1/me',headers=self.h).status_code,401)
++        headers={'Authorization':'Bearer '+result.json()['access_token']}
++        self.assertEqual(self.c.post('/auth/logout',headers=headers).status_code,204)
++        self.assertEqual(self.c.get('/api/v1/me',headers=headers).status_code,401)
++        self.assertEqual(self.c.post('/auth/refresh',json={'refresh_token':result.json()['refresh_token']}).status_code,401)
+ 
+-    def test_refresh_rejects_an_access_token(self):
+-        access_token = JWTService.create_access_token(self.user)
++    def test_authorization_and_relations(self):
++        b=self.login('samuel')
++        bh={'Authorization':'Bearer '+b['access_token']}
++        for path in ['/course/1','/section/101','/activity/10101']:
++            self.assertEqual(self.c.get(path,headers=bh).status_code,404)
++            self.assertEqual(self.c.get(path,headers=self.h).status_code,200)
++        for path in ['/course/4','/course/999','/section/199','/activity/10199',
++                     '/api/v1/courses/2/sections/101/activities/10101',
++                     '/api/v1/courses/1/sections/102/activities/10101']:
++            self.assertEqual(self.c.get(path,headers=self.h).status_code,404)
++        course=self.c.get('/api/v1/courses/1',headers=self.h).json()
++        self.assertEqual(course['sections'][0]['id'],101)
++        self.assertIsNone(course['sections'][0]['activities'][0]['url'])
++        self.assertEqual(self.c.get('/api/v1/courses/1/sections',headers=self.h).status_code,200)
++        self.assertEqual(self.c.get('/api/v1/courses/1/sections/101/activities/10101',headers=self.h).status_code,200)
+ 
+-        response = self.client.post(
+-            "/auth/refresh",
+-            json={"refresh_token": access_token},
+-        )
+-
+-        self.assertEqual(response.status_code, 401)
++    def test_cors(self):
++        for origin,allowed in [('https://localhost',True),('https://untrusted.invalid',False)]:
++            response=self.c.options('/auth/login',headers={'Origin':origin,'Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'content-type'})
++            self.assertEqual(response.status_code,200 if allowed else 400)

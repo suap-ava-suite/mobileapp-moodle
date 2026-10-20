@@ -1,3 +1,5 @@
+import { backendConfig } from '../services_mobile/backend.config';
+import { mockApi, MockCourse, MockDashboard } from '../services_mobile/mock-api';
 import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CoreSharedModule } from '@/core/shared.module';
@@ -9,6 +11,8 @@ import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.servic
 import { readPainelHostLayout } from '../navigation/painel-host-layout';
 
 export interface MoodleIfrnBridgeApi {
+    mockDashboard?: () => Promise<MockDashboard>;
+    mockCourse?: (id: number) => Promise<MockCourse>;
     openCourse: (courseId: number | string, courseName?: string, siteUrl?: string) => Promise<void>;
     openEnrol: (courseId: number | string, ambienteId?: number | string) => Promise<void>;
     goToMarketplace: () => Promise<void>;
@@ -58,6 +62,13 @@ export class PainelPage implements OnInit, OnDestroy {
 
     private registerBridge(): void {
         (window as { MoodleIfrnBridge?: MoodleIfrnBridgeApi }).MoodleIfrnBridge = {
+            ...(backendConfig.provider === 'mock' ? {
+                mockDashboard: () => mockApi.get<MockDashboard>('/api/v1/dashboard'),
+                mockCourse: (id: number) => {
+                    if (!Number.isSafeInteger(id) || id <= 0) return Promise.reject(new Error('Curso inválido'));
+                    return mockApi.get<MockCourse>(`/api/v1/courses/${id}`);
+                },
+            } : {}),
             openCourse: (courseId: number | string, courseName?: string, siteUrl?: string) =>
                 this.handleOpenCourse(courseId, courseName, siteUrl),
             openEnrol: (courseId: number | string, ambienteId?: number | string) =>
@@ -78,6 +89,7 @@ export class PainelPage implements OnInit, OnDestroy {
     }
 
     private onWindowMessage = (event: MessageEvent): void => {
+        if (event.source !== this.painelFrame?.nativeElement.contentWindow || event.origin !== window.location.origin) return;
         const data = event.data;
         if (!data || typeof data !== 'object') {
             return;
@@ -104,6 +116,7 @@ export class PainelPage implements OnInit, OnDestroy {
         courseName?: string,
         siteUrl?: string,
     ): Promise<void> {
+        if (backendConfig.provider === 'mock') return;
         const id = Number(courseId);
         if (!Number.isFinite(id) || id <= 0) {
             return;
@@ -112,6 +125,7 @@ export class PainelPage implements OnInit, OnDestroy {
         try {
             sessionStorage.setItem('ifrn_moodle_pending_open_course', JSON.stringify({
                 courseId: id,
+                owner: sessionStorage.getItem('ifrn_painel_owner') || undefined,
                 courseName: courseName || undefined,
                 siteUrl: siteUrl || undefined,
             }));
@@ -135,12 +149,18 @@ export class PainelPage implements OnInit, OnDestroy {
         courseId: number | string,
         ambienteId?: number | string,
     ): Promise<void> {
+        if (backendConfig.provider === 'mock') return;
         const id = Number(courseId);
-        const envId = Number(ambienteId || 2);
+        const envId = Number(ambienteId);
+        if (!Number.isSafeInteger(id) || id <= 0 || !Number.isSafeInteger(envId) || envId <= 0) {
+            window.alert('Ambiente ou curso não identificado. Atualize o Painel.');
+            return;
+        }
 
         try {
             sessionStorage.setItem('ifrn_painel_pending_enrol', JSON.stringify({
                 courseId: id,
+                owner: sessionStorage.getItem('ifrn_painel_owner') || undefined,
                 ambienteId: envId,
             }));
         } catch {
@@ -160,6 +180,11 @@ export class PainelPage implements OnInit, OnDestroy {
     }
 
     private async handleLogout(): Promise<void> {
+        if (backendConfig.provider === 'mock') {
+            try { await mockApi.logout(); }
+            finally { await CoreNavigator.navigate('/login/marketplace-ifrn', { reset: true }); }
+            return;
+        }
         this.authService.logout();
         this.painelAva.clearSession();
         await CoreNavigator.navigate('/login/marketplace-ifrn', { reset: true });

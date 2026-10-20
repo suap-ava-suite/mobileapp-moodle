@@ -109,7 +109,7 @@ import { MM, App } from './namespace';
     }
 
     /** Agenda uma autoinscrição no Painel AVA usando a sessão web já autenticada. */
-    function resolvePainelEnrolUrl(courseId: number | string, ambienteId: number | string = 2): string {
+    function resolvePainelEnrolUrl(courseId: number | string, ambienteId?: number | string): string {
         const id = Number(courseId);
         const envId = Number(ambienteId);
 
@@ -142,6 +142,7 @@ import { MM, App } from './namespace';
                     'ifrn_moodle_pending_open_course',
                     JSON.stringify({
                         courseId: id,
+                        owner: sessionStorage.getItem('ifrn_painel_owner') || undefined,
                         courseName: courseName || undefined,
                         siteUrl: siteUrl || undefined,
                     }),
@@ -175,6 +176,7 @@ import { MM, App } from './namespace';
                 'ifrn_moodle_pending_open_course',
                 JSON.stringify({
                     courseId: id,
+                    owner: sessionStorage.getItem('ifrn_painel_owner') || undefined,
                     courseName: courseName || undefined,
                     siteUrl: siteUrl || undefined,
                 }),
@@ -206,7 +208,7 @@ import { MM, App } from './namespace';
         window.location.assign(resolveMoodleOpenUrl(id, courseName, siteUrl));
     }
 
-    function openPainelEnrol(courseId: number | string, ambienteId: number | string = 2): void {
+    function openPainelEnrol(courseId: number | string, ambienteId?: number | string): void {
         const id = Number(courseId);
         const envId = Number(ambienteId);
 
