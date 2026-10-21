@@ -76,6 +76,23 @@ test('official callback resuming a course does not start another browser or leav
     s.page.ionViewWillLeave(); s.service.resumePendingOAuthCourse = async () => true;
     await s.page.ionViewWillEnter(); assert.equal(s.browserCalls, 1); assert.equal(s.timers.size, 0);
 });
+
+test('native session opening skips browser and waiting timer', async () => {
+    const s = setup();
+    s.service.ensureSessionAndOpenCourse = async () => 'opened';
+    await s.page.ionViewWillEnter();
+    assert.equal(s.browserCalls, 0);
+    assert.equal(s.timers.size, 0);
+});
+
+test('session inspection failure displays an error without browser authentication', async () => {
+    const s = setup();
+    s.service.ensureSessionAndOpenCourse = async () => { throw new Error('storage unavailable'); };
+    await s.page.ionViewWillEnter();
+    assert.equal(s.browserCalls, 0);
+    assert.equal(s.page.phase, 'error');
+    assert.ok(s.page.formError);
+});
 test('releasing a stalled browser preserves the pending course, account checks and saved credentials', () => {
     const entries = new Map([
         ['ifrn_moodle_oauth_pending', '1'], ['ifrn_moodle_resume_oauth', '1'],

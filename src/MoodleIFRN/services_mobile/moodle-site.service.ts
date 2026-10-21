@@ -1307,9 +1307,6 @@ export class MoodleSiteService {
             throw new Error('Não foi possível confirmar sua conta do Painel. Reabra o Painel e tente novamente.');
         }
 
-        // Não consultar o banco só para preencher um log no caminho de sessão já válida.
-        const storedCount = hasSession && match.matches ? undefined : (await CoreSites.getSiteIdsFromUrl(resolved)).length;
-
         identityLog('sessão Moodle existente', {
             hasSession,
             isLoggedIn: CoreSites.isLoggedIn(),
@@ -1317,7 +1314,6 @@ export class MoodleSiteService {
             siteIdPresent: !!current?.getId(),
             hasExpected: match.hasExpected,
             candidateCount: match.candidateCount,
-            storedSitesForUrl: storedCount,
         });
         identityLog(`sessão existente corresponde = ${hasSession && match.matches}`);
 
@@ -1326,7 +1322,6 @@ export class MoodleSiteService {
         identityLog('diagnóstico origem', {
             caseA_storedWrongAccount: !!(hasSession && match.hasExpected && !match.matches),
             caseB_needsBrowserOAuth: !(hasSession && match.matches),
-            multiAccountSitesForUrl: storedCount,
         });
 
         this.logIdentityDiagnostics('ensureMatchingMoodleSession');
@@ -1393,6 +1388,7 @@ export class MoodleSiteService {
                         loadSiteReturned: loaded,
                         hasMatchingAfterLoad: this.hasMatchingPresencialSession(resolved),
                     });
+                    throw new Error('Não foi possível recuperar a sessão Moodle salva. Volte ao Painel e tente novamente.');
                 }
             }
         }
@@ -1426,16 +1422,19 @@ export class MoodleSiteService {
         siteUrl: string,
     ): Promise<string | undefined> {
         const candidates = this.getExpectedIdentityCandidates();
-        const ids = await CoreSites.getSiteIdsFromUrl(siteUrl);
+        // getSiteIdsFromUrl carrega tokens de TODOS os sites e transforma qualquer
+        // falha em []. Consultar metadados primeiro evita interpretar falha do
+        // armazenamento seguro (inclusive de outro ambiente) como conta ausente.
+        const ids = (await CoreSites.getSites())
+            .filter(site => CoreUrl.sameDomainAndPath(site.siteUrl, siteUrl))
+            .map(site => site.id);
 
         if (!candidates.length || !ids.length) {
             return undefined;
         }
 
-        // O siteId do Moodle Mobile é md5(siteUrl + username). Em alguns retornos
-        // ao mobilemoodle o CoreSite armazenado ainda não expõe getInfo().username,
-        // embora a conta exista no banco. Primeiro resolvemos a conta pelo próprio
-        // siteId, sem ativar uma conta diferente.
+        // Prioriza o ID canônico, mas sempre verifica URL, identidade e estado.
+        // Uma entrada histórica desconectada não pode esconder outra sessão válida.
         const allowedCandidates = allowedIdentityCandidates(candidates);
 
         for (const candidate of allowedCandidates) {
@@ -1447,12 +1446,15 @@ export class MoodleSiteService {
                     siteIdPresent: true,
                 });
 
-                return candidateSiteId;
+                ids.splice(ids.indexOf(candidateSiteId), 1);
+                ids.unshift(candidateSiteId);
             }
         }
 
         // Compatibilidade: se o siteId não puder ser reproduzido (URL histórica
         // normalizada de forma diferente), tenta o username salvo no CoreSite.
+        let inspectionError: unknown;
+        let loggedOutId: string | undefined;
         for (const id of ids) {
             try {
                 const site = await CoreSites.getSite(id);
@@ -1466,15 +1468,23 @@ export class MoodleSiteService {
                     matchedVia: hit.matchedVia,
                 });
 
-                if (hit.matches && !site.isLoggedOut()) {
-                    return id;
+                if (CoreUrl.sameDomainAndPath(site.getURL(), siteUrl) && hit.matches) {
+                    if (!site.isLoggedOut()) {
+                        return id;
+                    }
+                    loggedOutId ??= id;
                 }
-            } catch {
-                // Site corrompido / sem token — ignora e deixa OAuth ser o fallback.
+            } catch (error) {
+                inspectionError = error;
             }
         }
 
-        return undefined;
+        // Falha ao ler uma sessão não comprova expiração e não deve abrir o navegador.
+        if (inspectionError) {
+            throw inspectionError;
+        }
+
+        return loggedOutId;
     }
 
     /**

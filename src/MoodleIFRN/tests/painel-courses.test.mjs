@@ -51,6 +51,14 @@ test('falha de progresso preserva os cursos', async () => {
     const { fn } = setup([page([course(1, 5)]), page()], new Error('offline'));
     assert.equal((await fn('/api/v1/diarios/')).diarios.length, 1);
 });
+
+test('integração Ninja recusa destino fora da API v1 antes de enviar cookies', async () => {
+    for (const endpoint of ['https://outro.example/api/v1/diarios/', '/api/v2/sala/']) {
+        const { fn, calls } = setup([]);
+        await assert.rejects(fn(endpoint), /Destino de consulta/);
+        assert.equal(calls.length, 0);
+    }
+});
 test('falha numa página não entrega silenciosamente uma lista incompleta', async () => {
     const { fn } = setup([page([course(1, 5)]), new Error('offline')]);
     await assert.rejects(fn('/api/v1/diarios/'), /offline/);

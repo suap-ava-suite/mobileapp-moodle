@@ -17,6 +17,10 @@
  * compilação Angular não introduza helpers externos de async/await.
  */
 export const PAINEL_COURSES_SCRIPT = `(async function fetchPainelCourses(endpoint) {
+  const target = new URL(endpoint, location.origin);
+  if (target.origin !== location.origin || target.pathname !== "/api/v1/diarios/") {
+    throw new Error("Destino de consulta de cursos inv\xE1lido.");
+  }
   const categories = ["diarios", "coordenacoes", "praticas", "autoinscricoes", "reutilizaveis"];
   const result = {};
   const seen = /* @__PURE__ */ new Map();
@@ -29,6 +33,12 @@ export const PAINEL_COURSES_SCRIPT = `(async function fetchPainelCourses(endpoin
         credentials: "same-origin",
         signal: controller.signal
       });
+      if (response.status === 401 || response.status === 403 || response.status === 428) {
+        throw new Error("A sess\xE3o do Painel AVA precisa ser renovada. Entre novamente no Painel.");
+      }
+      if (response.redirected) {
+        throw new Error("O Painel redirecionou a consulta de cursos. Reabra o Painel para confirmar sua sess\xE3o.");
+      }
       if (!response.ok || !(response.headers.get("content-type") || "").includes("application/json")) {
         throw new Error(\`Falha ao carregar os cursos (HTTP \${response.status}).\`);
       }

@@ -6,6 +6,9 @@ import { CoreLang } from '@services/lang';
 import { CorePlatform } from '@services/platform';
 import { AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
+import { MoodleSiteService } from '@/MoodleIFRN/services_mobile/moodle-site.service';
+import { resolveCourseSite } from '../mobilemoodle/core_mobile/course-target';
+import { CoreAlerts } from '@services/overlays/alerts';
 import { readPainelHostLayout } from '../navigation/painel-host-layout';
 
 export interface MoodleIfrnBridgeApi {
@@ -26,6 +29,8 @@ export class PainelPage implements OnInit, OnDestroy {
     private readonly sanitizer = inject(DomSanitizer);
     private readonly authService = inject(AuthService);
     private readonly painelAva = inject(PainelAvaService);
+    private readonly moodleSite = inject(MoodleSiteService);
+    private openingCourse = false;
 
     @ViewChild('painelFrame') painelFrame?: ElementRef<HTMLIFrameElement>;
 
@@ -105,30 +110,45 @@ export class PainelPage implements OnInit, OnDestroy {
         siteUrl?: string,
     ): Promise<void> {
         const id = Number(courseId);
-        if (!Number.isFinite(id) || id <= 0) {
+        if (!Number.isSafeInteger(id) || id <= 0 || this.openingCourse) {
+            return;
+        }
+        const target = resolveCourseSite({ viewurl: siteUrl });
+        if (!target) {
+            await CoreAlerts.showError('Não foi possível confirmar o ambiente deste curso. Atualize o Painel.');
+
             return;
         }
 
+        this.openingCourse = true;
+        let identityOnly = false;
         try {
-            sessionStorage.setItem('ifrn_moodle_pending_open_course', JSON.stringify({
-                courseId: id,
-                courseName: courseName || undefined,
-                siteUrl: siteUrl || undefined,
-            }));
-            if (siteUrl && /^https:\/\//i.test(siteUrl)) {
-                sessionStorage.setItem('ifrn_moodle_last_site_url', new URL(siteUrl).origin);
+            // Recupera também contas persistidas após reiniciar o app. Com sessão
+            // válida, o clique termina no curso nativo sem passar pela ponte OAuth.
+            const result = await this.moodleSite.ensureSessionAndOpenCourse(id, target, courseName);
+            if (result === 'opened') {
+                this.openingCourse = false;
+
+                return;
             }
-        } catch {
-            // ignore storage quota
+        } catch (error) {
+            // Rede, permissão ou identidade não autorizam iniciar outra autenticação.
+            this.moodleSite.lastError = error instanceof Error ? error.message : 'Não foi possível abrir o curso.';
+            identityOnly = true;
         }
 
-        await CoreNavigator.navigate('/login/moodle-open-course', {
-            params: {
-                courseId: id,
-                courseName: courseName || '',
-                siteUrl: siteUrl || '',
-            },
-        });
+        try {
+            await CoreNavigator.navigate('/login/moodle-open-course', {
+                params: {
+                    courseId: id,
+                    courseName: courseName || '',
+                    siteUrl: target,
+                    identityOnly,
+                },
+            });
+        } finally {
+            this.openingCourse = false;
+        }
     }
 
     private async handleOpenEnrol(

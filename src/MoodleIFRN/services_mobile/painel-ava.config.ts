@@ -27,7 +27,7 @@ export const PAINEL_AVA_CONFIG = {
     /** Destino HTTPS confirmado por HTTP 302 no host oficial em 2026-10-19. */
     browserOrigins: ['https://ava.ifrn.edu.br', 'https://painel.ead.ifrn.edu.br'],
 
-    /** Autenticação mobile do Painel (credenciais IFRN → par JWT access/refresh). */
+    /** Autenticação v1 do Painel (credenciais IFRN → data + token próprio do Painel). */
     authenticatePath: '/api/v1/authenticate/',
 
     /** Lista de diários em todos os AVAs; cada item traz id Moodle e viewurl. */
