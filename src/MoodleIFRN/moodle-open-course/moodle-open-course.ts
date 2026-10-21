@@ -24,13 +24,13 @@ import { CoreAlerts } from '@services/overlays/alerts';
 import { CorePlatform } from '@services/platform';
 
 /** Estados da ponte Painel → Moodle (bate com o template). */
-type OpenCoursePhase = 'loading' | 'waiting-browser' | 'error';
+type OpenCoursePhase = 'loading' | 'need-connect' | 'waiting-browser' | 'error';
 
 /**
  * Ponte mínima IFRN → Moodle Mobile nativo.
  *
  * Com sessão Moodle válida e correspondente: abre o curso em silêncio.
- * Sem sessão reutilizável: inicia o OAuth/SSO oficial automaticamente, sem tela intermediária.
+ * Sem sessão reutilizável: oferece a conexão oficial, sem abrir o navegador automaticamente.
  *
  * Rota: /login/moodle-open-course (intermediária; sai com reset ao abrir).
  */
@@ -75,10 +75,14 @@ export class MoodleOpenCoursePage implements OnDestroy {
     }
 
     ionViewWillLeave(): void {
+        // Invalida também awaits ainda pendentes: sair da ponte não pode
+        // disparar OAuth ou recolocar a UI de erro depois em outra tela.
+        this.entryVersion++;
         this.clearBrowserWait();
     }
 
     ngOnDestroy(): void {
+        this.entryVersion++;
         this.clearBrowserWait();
     }
 
@@ -239,10 +243,11 @@ export class MoodleOpenCoursePage implements OnDestroy {
         this.initStarted = true;
         this.phase = 'loading';
 
-        const startOAuth = CoreNavigator.getRouteBooleanParam('startOAuth')
-            || this.moodleSite.shouldResumeOAuthAfterSiteSwitch();
+        // A flag persistida isolada pode pertencer a uma tentativa abandonada.
+        // Somente o redirect explícito da troca de conta retoma a conexão.
+        const startOAuth = CoreNavigator.getRouteBooleanParam('startOAuth');
 
-        if (startOAuth) {
+        if (startOAuth && this.moodleSite.consumeOAuthResume(this.courseId, this.moodleSiteUrl)) {
             await this.startOAuthFlow({ resumeAfterSwitch: true });
 
             return;
@@ -271,9 +276,9 @@ export class MoodleOpenCoursePage implements OnDestroy {
     }
 
     /**
-     * Verifica sessão Moodle: abre o curso se válida; senão inicia o OAuth oficial automaticamente.
+     * Verifica a sessão antes de oferecer ou iniciar uma conexão solicitada pelo usuário.
      */
-    async tryOpenOrPromptConnect(): Promise<void> {
+    async tryOpenOrPromptConnect(connectIfNeeded = false): Promise<void> {
         if (this.loading || !this.courseId) {
             return;
         }
@@ -300,12 +305,13 @@ export class MoodleOpenCoursePage implements OnDestroy {
                 return;
             }
 
-            // Sem sessão: libera o overlay e mostra a UI “Conclua o login no navegador”.
-            // eslint-disable-next-line no-console
-            console.log('[IFRN-COURSE] sessão Moodle ausente — iniciando OAuth automaticamente');
             this.moodleSite.hideNativeCourseHandoff();
             this.loading = false;
-            await this.startOAuthFlow();
+            if (connectIfNeeded) {
+                await this.startOAuthFlow();
+            } else {
+                this.phase = 'need-connect';
+            }
         } catch (error) {
             if (entry !== this.entryVersion) {
                 return;
@@ -354,10 +360,15 @@ export class MoodleOpenCoursePage implements OnDestroy {
     }
 
     /**
-     * “Tentar novamente” após erro: revalida a sessão e, se necessário, reinicia o OAuth oficial.
+     * “Tentar novamente” revalida a sessão, sem iniciar OAuth automaticamente.
      */
     async retryConnect(): Promise<void> {
         await this.tryOpenOrPromptConnect();
+    }
+
+    /** Revalida a sessão para não abrir OAuth se outra tentativa já a recuperou. */
+    async connectMoodle(): Promise<void> {
+        await this.tryOpenOrPromptConnect(true);
     }
 
     private async startOAuthFlow(options: { resumeAfterSwitch?: boolean } = {}): Promise<void> {

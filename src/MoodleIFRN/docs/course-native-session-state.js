@@ -6,13 +6,15 @@
         || sessionStorage.getItem('ifrn_username') || '').trim().toLowerCase();
     const db = window.sqlitePlugin.openDatabase({ name: 'MoodleMobile', location: 'default' });
     return new Promise(resolve => db.executeSql(
-        'SELECT id, siteUrl, loggedOut, info, CASE WHEN token IS NULL OR token = ? THEN 0 ELSE 1 END AS tokenInDatabase FROM sites_2',
+        'SELECT id, siteUrl, loggedOut, info, config, CASE WHEN token IS NULL OR token = ? THEN 0 ELSE 1 END AS tokenInDatabase FROM sites_2',
         [''], async result => {
             const sessions = [];
             for (let i = 0; i < result.rows.length; i++) {
                 const row = result.rows.item(i);
                 let info;
                 try { info = JSON.parse(row.info || '{}'); } catch { info = {}; }
+                let config;
+                try { config = JSON.parse(row.config || '{}'); } catch { config = {}; }
                 let site;
                 try { site = new URL(row.siteUrl).origin; } catch { site = '(invalid)'; }
                 let tokenInSecureStorage = null;
@@ -31,6 +33,8 @@
                 } catch { /* presença não confirmada */ }
                 sessions.push({ site, loggedOut: !!row.loggedOut, tokenInDatabase: !!row.tokenInDatabase,
                     tokenInSecureStorage,
+                    contentScriptCount: String(config.tool_mobile_scriptallowlist || '').split(/\r?\n/)
+                        .filter(value => value.trim()).length,
                     identityAvailable: !!info.username,
                     matchesPanel: !!expected && String(info.username || '').trim().toLowerCase() === expected });
             }

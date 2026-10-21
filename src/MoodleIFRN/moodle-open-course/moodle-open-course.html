@@ -37,6 +37,13 @@
             <section class="moodle-open-course__card">
                 <h2>{{ courseName || ('Curso ' + courseId) }}</h2>
 
+                @if (phase === 'need-connect') {
+                    <p class="moodle-open-course__account-help">
+                        Conecte sua conta a este ambiente para abrir o curso no aplicativo.
+                        Essa etapa usa o navegador. Depois, o app reutiliza a sessão enquanto ela estiver válida.
+                    </p>
+                }
+
                 @if (formError) {
                     <p class="moodle-open-course__error" role="alert">
                         {{ formError }}
@@ -88,6 +95,15 @@
                             Voltar ao login IFRN
                         </ion-button>
                     } @else {
+                    @if (phase === 'need-connect') {
+                        <ion-button
+                            expand="block"
+                            class="moodle-open-course__button"
+                            (click)="connectMoodle()"
+                            [disabled]="loading || !courseId">
+                            Conectar este ambiente
+                        </ion-button>
+                    }
                     <ion-button
                         expand="block"
                         class="moodle-open-course__button"

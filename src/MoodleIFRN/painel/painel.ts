@@ -31,6 +31,7 @@ export class PainelPage implements OnInit, OnDestroy {
     private readonly painelAva = inject(PainelAvaService);
     private readonly moodleSite = inject(MoodleSiteService);
     private openingCourse = false;
+    private bridgeApi?: MoodleIfrnBridgeApi;
 
     @ViewChild('painelFrame') painelFrame?: ElementRef<HTMLIFrameElement>;
 
@@ -57,12 +58,13 @@ export class PainelPage implements OnInit, OnDestroy {
     }
 
     ionViewDidEnter(): void {
+        this.registerBridge();
         // O menu nativo só perde o contexto azul quando a entrada do painel terminou.
         document.documentElement.classList.remove('ifrn-course-context');
     }
 
     private registerBridge(): void {
-        (window as { MoodleIfrnBridge?: MoodleIfrnBridgeApi }).MoodleIfrnBridge = {
+        this.bridgeApi ??= {
             openCourse: (courseId: number | string, courseName?: string, siteUrl?: string) =>
                 this.handleOpenCourse(courseId, courseName, siteUrl),
             openEnrol: (courseId: number | string, ambienteId?: number | string) =>
@@ -70,6 +72,7 @@ export class PainelPage implements OnInit, OnDestroy {
             goToMarketplace: () => this.handleGoToMarketplace(),
             logout: () => this.handleLogout(),
         };
+        (window as { MoodleIfrnBridge?: MoodleIfrnBridgeApi }).MoodleIfrnBridge = this.bridgeApi;
 
         window.addEventListener('message', this.onWindowMessage);
     }
@@ -77,12 +80,15 @@ export class PainelPage implements OnInit, OnDestroy {
     private unregisterBridge(): void {
         window.removeEventListener('message', this.onWindowMessage);
         const win = window as { MoodleIfrnBridge?: MoodleIfrnBridgeApi };
-        if (win.MoodleIfrnBridge) {
+        if (win.MoodleIfrnBridge === this.bridgeApi) {
             delete win.MoodleIfrnBridge;
         }
     }
 
     private onWindowMessage = (event: MessageEvent): void => {
+        if (event.source !== this.painelFrame?.nativeElement.contentWindow || event.origin !== window.location.origin) {
+            return;
+        }
         const data = event.data;
         if (!data || typeof data !== 'object') {
             return;
@@ -121,6 +127,11 @@ export class PainelPage implements OnInit, OnDestroy {
         }
 
         this.openingCourse = true;
+        try {
+            sessionStorage.setItem('ifrn_moodle_last_site_url', target);
+        } catch {
+            // A preferência de logout web não impede a abertura nativa.
+        }
         let identityOnly = false;
         try {
             // Recupera também contas persistidas após reiniciar o app. Com sessão
@@ -144,6 +155,7 @@ export class PainelPage implements OnInit, OnDestroy {
                     courseName: courseName || '',
                     siteUrl: target,
                     identityOnly,
+                    startOAuth: false,
                 },
             });
         } finally {

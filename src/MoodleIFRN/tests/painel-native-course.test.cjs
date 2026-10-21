@@ -4,8 +4,8 @@ const vm = require('node:vm');
 const ts = require('typescript');
 const test = require('node:test');
 
-function load(file, mocks) {
-    const context = { exports: {}, require: id => mocks[id] || {}, console, URL };
+function load(file, mocks, extra = {}) {
+    const context = { exports: {}, require: id => mocks[id] || {}, console, URL, ...extra };
     vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     }).outputText, context);
@@ -16,6 +16,7 @@ function setup(open = async () => 'opened') {
     const calls = [];
     const navigation = [];
     const errors = [];
+    const win = { location: { origin: 'http://localhost' }, addEventListener() {}, removeEventListener() {} };
     const service = { ensureSessionAndOpenCourse: async (...args) => {
         calls.push(args);
         return open(...args);
@@ -27,8 +28,8 @@ function setup(open = async () => 'opened') {
         '../mobilemoodle/core_mobile/course-target': load('src/MoodleIFRN/mobilemoodle/core_mobile/course-target.ts', {}),
         '@services/navigator': { CoreNavigator: { navigate: async (...args) => navigation.push(args) } },
         '@services/overlays/alerts': { CoreAlerts: { showError: async error => errors.push(error) } },
-    });
-    return { page: new PainelPage(), service, calls, navigation, errors };
+    }, { window: win, document: { documentElement: { classList: { remove() {} } } } });
+    return { page: new PainelPage(), Page: PainelPage, win, service, calls, navigation, errors };
 }
 const academic = 'https://academico.ava.ifrn.edu.br';
 const presencial = 'https://presencial.ava.ifrn.edu.br';
@@ -72,4 +73,29 @@ test('unconfirmed environment never selects a default Moodle', async () => {
     }
     assert.equal(s.calls.length, 0);
     assert.equal(s.errors.length, 3);
+});
+
+test('destroying an old Ionic panel does not unregister the active panel bridge', () => {
+    const s = setup();
+    s.page.registerBridge();
+    const current = new s.Page();
+    current.ionViewDidEnter();
+    const active = s.win.MoodleIfrnBridge;
+    s.page.ngOnDestroy();
+    assert.equal(s.win.MoodleIfrnBridge, active);
+    current.ngOnDestroy();
+    assert.equal(s.win.MoodleIfrnBridge, undefined);
+});
+
+test('only the panel iframe on the app origin can post course commands', async () => {
+    const s = setup();
+    const source = {};
+    s.page.painelFrame = { nativeElement: { contentWindow: source } };
+    const data = { type: 'MOODLE_IFRN_OPEN_COURSE', courseId: 7, siteUrl: academic };
+    s.page.onWindowMessage({ source: {}, origin: 'http://localhost', data });
+    s.page.onWindowMessage({ source, origin: 'https://other.example', data });
+    assert.equal(s.calls.length, 0);
+    s.page.onWindowMessage({ source, origin: 'http://localhost', data });
+    assert.equal(s.calls.length, 1);
+    await Promise.resolve();
 });

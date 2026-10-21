@@ -55,6 +55,21 @@ Testes automatizados cobrem seleção de sessão histórica, conta/ambiente inco
 
 Resultado da continuação: 25 testes de sessão/OAuth/consulta/clique aprovados; os 3 testes de mapeamento já tinham passado separadamente. TypeScript `tsc --noEmit -p tsconfig.app.json` aprovado e `git diff --check` sem erros. ESLint dos arquivos completos ainda aponta problemas em trechos não alterados; não foi feita reformatação geral nesta tarefa.
 
-As alterações servidor-servidor descritas abaixo continuam sendo proposta: não foram implementadas ou publicadas nos repositórios do Painel/plugin. Foram solicitados ao usuário os checkouts locais e o ambiente de destino para prosseguir; o workspace disponível é o aplicativo. Nenhum endpoint inexistente foi ativado no app.
+As alterações servidor-servidor descritas acima continuam sendo proposta: não foram implementadas ou publicadas nos repositórios do Painel/plugin. Foram solicitados ao usuário os checkouts locais e o ambiente de destino para prosseguir; o workspace disponível é o aplicativo. Nenhum endpoint inexistente foi ativado no app.
+
+## Correção posterior: cliques, saída da ponte e retorno à tela inicial
+
+Após o relato de instabilidade, foram corrigidas condições não cobertas pela primeira rodada:
+
+- O iframe escrevia o curso pendente antes de encaminhar o clique ao bridge. Portanto, mesmo um segundo clique rejeitado pelo bloqueio podia alterar o ambiente da primeira abertura. Agora, quando hospedado no Painel, o iframe apenas encaminha o pedido; a shell aceita e persiste a tentativa.
+- Sair da ponte Ionic só removia o timer do navegador. Agora a saída/destruição também invalida os awaits pendentes, evitando OAuth ou UI de erro disparados depois de navegar para outra tela.
+- A landing nativa redirecionava ao Marketplace quando a flag de origem do curso não estava disponível. Agora retorna ao Painel quando sua própria sessão e dashboard são válidos; sessão Moodle isolada não autoriza esse retorno.
+- Uma marca antiga de entrada SUAP não intercepta a passagem de uma abertura de curso ativa. A recuperação transporta explicitamente o ambiente, além do ID do curso.
+- O bridge é registrado novamente ao reentrar no Painel Ionic em cache; destruir uma instância antiga não remove o bridge da instância atual. Mensagens são aceitas somente do iframe do Painel na origem do app.
+- A ausência de sessão Moodle agora mostra a ação **Conectar este ambiente**, sem abrir o navegador automaticamente. Tentar novamente apenas revalida a sessão. A ação de conectar revalida antes de abrir OAuth, e somente o redirect explícito de troca de conta pode retomar a autenticação. Uma flag persistida abandonada não inicia outro OAuth.
+
+Os testes dessa rodada incluem 35 casos de sessão, navegação, cliques, consulta dos cursos e OAuth. Os scripts de perfil/foto/identidade e Marketplace também passaram; TypeScript aprovado e bundle mobilemoodle recompilado. O build web Android com Cordova foi executado para validar também o template. O Android estava desconectado nesta rodada, portanto ainda não foi possível verificar a versão instalada nem reproduzir nela as aberturas. O novo fluxo não deve ser apresentado como autenticação silenciosa de um Moodle sem token: nesse caso continua existindo a conexão oficial explícita.
+
+APK debug gerado em `platforms/android/app/build/outputs/apk/debug/app-debug.apk` (50.148.392 bytes), SHA256 `096446F458CD3D2B730A4B7011ADAFC15BB0F9AD11C3949A85F8E67D493FF05D`. A inspeção ZIP confirmou bootstrap Cordova, arquivo Cordova, idioma pt-br e bundle da ponte com a ação explícita de conexão. `cordova prepare android` e Gradle `assembleDebug` concluíram; o modo offline precisou ser substituído por consulta de dependências porque faltava o índice de `androidx.core:core:1.6.+` no cache. O APK não foi instalado nesta rodada. ESLint dos arquivos completos ainda reporta problemas preexistentes de cabeçalho, nomenclatura e finally; o build não os apresenta como verificação aprovada.
 
 Validação de aparelho ainda necessária: abrir curso com sessão existente, reiniciar o app e reabrir, alternar ambientes com IDs iguais, testar outra conta, primeiro acesso, expiração e falha de rede. Não foram gerados APK nem alterados servidores nesta intervenção.

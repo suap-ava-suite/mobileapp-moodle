@@ -12,17 +12,13 @@ export const ifrnMainMenuGuard: CanActivateFn & CanActivateChildFn = (_route, st
         return true;
     }
 
-    if (readNativeSuapEntry()) {
-        return inject(Router).createUrlTree(['/login/marketplace-ifrn'], {
-            queryParams: { nativeSuapReturn: true },
-        });
-    }
-
     const recovery = service.getCourseRecoveryTarget();
     if (service.isIdentityMismatchPending() && recovery) {
         service.hideNativeCourseHandoff();
         return inject(Router).createUrlTree(['/login/moodle-open-course'], {
-            queryParams: { courseId: recovery.courseId, courseName: recovery.courseName, identityOnly: true },
+            queryParams: {
+                courseId: recovery.courseId, courseName: recovery.courseName, siteUrl: recovery.siteUrl, identityOnly: true,
+            },
         });
     }
 
@@ -34,7 +30,17 @@ export const ifrnMainMenuGuard: CanActivateFn & CanActivateChildFn = (_route, st
         return true;
     }
 
+    if (readNativeSuapEntry()) {
+        return inject(Router).createUrlTree(['/login/marketplace-ifrn'], {
+            queryParams: { nativeSuapReturn: true },
+        });
+    }
+
     if (service.returnToPainelOnCourseExit(false)) {
+        return inject(Router).createUrlTree(['/login/painel']);
+    }
+
+    if (service.hasAuthenticatedPainel()) {
         return inject(Router).createUrlTree(['/login/painel']);
     }
 
@@ -78,6 +84,7 @@ export const ifrnReconnectGuard: CanActivateFn = () => {
         queryParams: {
             courseId: recovery.courseId,
             courseName: recovery.courseName,
+            siteUrl: recovery.siteUrl,
             identityOnly: service.isIdentityMismatchPending(),
         },
     });

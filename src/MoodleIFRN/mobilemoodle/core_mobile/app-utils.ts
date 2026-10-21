@@ -167,6 +167,21 @@ import { MM, App } from './namespace';
             return;
         }
 
+        // A shell decide qual tentativa aceita. O iframe não pode sobrescrever
+        // o pendente de uma abertura em andamento antes do bloqueio de cliques.
+        const bridge = (window.parent as unknown as {
+            MoodleIfrnBridge?: { openCourse?: (id: number, name?: string, url?: string) => void };
+        })?.MoodleIfrnBridge;
+        if (window.parent && window.parent !== window) {
+            if (bridge?.openCourse) {
+                bridge.openCourse(id, courseName, siteUrl);
+            } else {
+                window.parent.postMessage({ type: 'MOODLE_IFRN_OPEN_COURSE', courseId: id, courseName, siteUrl }, '*');
+            }
+
+            return;
+        }
+
         try {
             // eslint-disable-next-line no-console
             console.log('[IFRN-COURSE] courseId recebido do Painel =', id);
@@ -185,22 +200,6 @@ import { MM, App } from './namespace';
             }
         } catch {
             // ignore quota
-        }
-
-        const bridge = (window.parent as unknown as { MoodleIfrnBridge?: { openCourse?: (id: number, name?: string, url?: string) => void } })?.MoodleIfrnBridge;
-        if (window.parent && window.parent !== window && bridge?.openCourse) {
-            bridge.openCourse(id, courseName, siteUrl);
-            return;
-        }
-
-        if (window.parent && window.parent !== window) {
-            window.parent.postMessage({
-                type: 'MOODLE_IFRN_OPEN_COURSE',
-                courseId: id,
-                courseName,
-                siteUrl,
-            }, '*');
-            return;
         }
 
         window.location.assign(resolveMoodleOpenUrl(id, courseName, siteUrl));

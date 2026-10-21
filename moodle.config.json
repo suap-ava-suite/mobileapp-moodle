@@ -87,7 +87,13 @@
         "high": 120
     },
     "customurlscheme": "moodlemobile",
-    "sites": [],
+    "sites": [
+        { "name": "AVA Acadêmico IFRN", "url": "https://academico.ava.ifrn.edu.br" },
+        { "name": "AVA Presencial IFRN", "url": "https://presencial.ava.ifrn.edu.br" },
+        { "name": "AVA Projetos IFRN", "url": "https://projetos.ava.ifrn.edu.br" },
+        { "name": "AVA Aberto IFRN", "url": "https://aberto.ava.ifrn.edu.br" },
+        { "name": "Moodle Teste IFRN", "url": "https://moodle.ead.ifrn.edu.br" }
+    ],
     "multisitesdisplay": "",
     "sitefindersettings": {},
     "onlyallowlistedsites": false,

@@ -8,9 +8,22 @@ const root = path.resolve(__dirname, '../../..');
 const logPath = path.join(root, 'src/MoodleIFRN/docs/auditoria-fluxo-2026-10-19/course-opening-cordova-build.log');
 fs.mkdirSync(path.dirname(logPath), {recursive:true});
 const log = fs.openSync(logPath, 'w');
+// ng run does not execute ionic:build:before. Regenerate the configuration so
+// trusted sites (and other config changes) really reach the packaged app.
+const buildEnvironment = { ...process.env, NODE_ENV: 'development' };
+const envResult = spawnSync(process.execPath, ['node_modules/gulp/bin/gulp.js', 'env'], {
+    cwd: root, env: buildEnvironment, stdio: ['ignore', log, log],
+});
+if (envResult.error || envResult.status !== 0) {
+    fs.closeSync(log);
+    console.error('Android environment generation failed; inspect ' + logPath);
+    process.exit(envResult.status || 1);
+}
 const result = spawnSync(process.execPath, ['--max-old-space-size=8192',
     'node_modules/@angular/cli/bin/ng.js', 'run', 'app:ionic-cordova-build',
-    '--platform=android', '--browser-target=app:build:development'], {cwd:root, stdio:['ignore',log,log]});
+    '--platform=android', '--browser-target=app:build:development'], {
+    cwd:root, env: buildEnvironment, stdio:['ignore',log,log],
+});
 fs.closeSync(log);
 if(result.error || result.status !== 0) {
     console.error('Cordova web build failed; inspect '+logPath);

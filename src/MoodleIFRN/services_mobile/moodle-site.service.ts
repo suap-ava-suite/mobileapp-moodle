@@ -13,11 +13,12 @@
 // limitations under the License.
 
 import { Injectable, inject } from '@angular/core';
+import type { BackButtonEvent } from '@ionic/core';
+import { BackButtonPriority } from '@/core/constants';
 import { NavigationEnd, NavigationError, Router } from '@angular/router';
 import { CoreSiteIdentityProvider } from '@classes/sites/unauthenticated-site';
 import { NO_SITE_ID } from '@features/login/constants';
 import { MAIN_MENU_HOME_PAGE_NAME } from '@features/mainmenu/constants';
-import { CoreCourseHelper } from '@features/course/services/course-helper';
 import { CoreCourses, CoreEnrolledCourseData } from '@features/courses/services/courses';
 import { CoreLoginHelper } from '@features/login/services/login-helper';
 import { AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
@@ -38,6 +39,7 @@ import { CoreEvents } from '@static/events';
 import { CoreLogger } from '@static/logger';
 import { useIfrnBrazilianPortuguese } from './ifrn-language';
 import { CourseOpeningAttempt } from '../navigation/course-opening-attempt';
+import { openNativeCourse } from '../navigation/open-native-course';
 import { selectSuapProvider } from './suap-provider';
 
 
@@ -611,6 +613,7 @@ export class MoodleSiteService {
         }
 
         this.navigationShellInitialized = true;
+        document.addEventListener('ionBackButton', this.onIfrnCourseBackButton);
         this.ensurePainelRouteRegistered();
         document.documentElement.classList.add('ifrn-shell');
         // Bootstrap após reload do Painel: cobre o WebView preto até a ponte/curso.
@@ -648,6 +651,16 @@ export class MoodleSiteService {
             }
         });
     }
+
+    private readonly onIfrnCourseBackButton = (event: BackButtonEvent): void => {
+        // Overlays e abas internas mantêm prioridade. No índice do curso IFRN,
+        // evita restaurar uma página em cache pertencente a outro ambiente.
+        event.detail.register(BackButtonPriority.CORE_TABS - 1, (next) => {
+            if (!this.returnToPainelOnCourseExit()) {
+                next();
+            }
+        });
+    };
 
     /** Cancelamento explícito pelo usuário; nenhum redirecionamento automático. */
     dismissCourseRecovery(): void {
@@ -841,7 +854,9 @@ export class MoodleSiteService {
 
     /** Consome o retorno OAuth apenas quando a ponte oficial estiver ativa. */
     async resumePendingOAuthCourse(): Promise<boolean> {
-        if (sessionStorage.getItem(OAUTH_PENDING_KEY) !== '1' || !CoreSites.isLoggedIn()) {
+        const pending = this.getPendingOpenCourse();
+        if (sessionStorage.getItem(OAUTH_PENDING_KEY) !== '1' || !pending
+            || !this.hasMatchingPresencialSession(pending.siteUrl)) {
             return false;
         }
 
@@ -1076,7 +1091,12 @@ export class MoodleSiteService {
     redirectToPainelAva(): void {
         this.ensurePainelRouteRegistered();
         this.redirectingToPainel = false;
-        void CoreNavigator.navigate('/login/painel');
+        void CoreNavigator.navigate('/login/painel', { reset: true, animated: false });
+    }
+
+    /** O token Moodle sozinho não autoriza recuperar o Painel. */
+    hasAuthenticatedPainel(): boolean {
+        return this.authService.isAuthenticated() && this.painelAva.hasDashboard();
     }
 
     /**
@@ -1359,16 +1379,18 @@ export class MoodleSiteService {
                 // dispara SESSION_EXPIRED e pode redirecionar para /login/reconnect.
                 const storedSite = await CoreSites.getSite(storedId);
                 const storedIsLoggedOut = storedSite.isLoggedOut();
+                const hasNativeToken = !!storedSite.token;
 
                 identityLog('estado do site armazenado correspondente', {
                     siteIdPresent: true,
                     loggedOut: storedIsLoggedOut,
+                    hasNativeToken,
                 });
 
-                if (storedIsLoggedOut) {
+                if (storedIsLoggedOut || !hasNativeToken) {
                     storedMatchingLoggedOut = true;
                     identityLog(
-                        'conta armazenada correspondente está logged-out — OAuth necessário (não descarta sessão válida)',
+                        'conta armazenada sem sessão utilizável — conexão necessária',
                         { siteIdPresent: true },
                     );
                 } else {
@@ -1469,7 +1491,7 @@ export class MoodleSiteService {
                 });
 
                 if (CoreUrl.sameDomainAndPath(site.getURL(), siteUrl) && hit.matches) {
-                    if (!site.isLoggedOut()) {
+                    if (!site.isLoggedOut() && site.token) {
                         return id;
                     }
                     loggedOutId ??= id;
@@ -1647,7 +1669,7 @@ export class MoodleSiteService {
             // O handler nativo não aguarda navigateToSitePath. A Promise do helper
             // pode resolver em /main: também aguardamos NavigationEnd do curso.
             await attempt.stage('native-helper-and-navigation', () => Promise.race([openingDeadline, Promise.all([
-                CoreCourseHelper.getAndOpenCourse(courseId, {}, siteId).then(() => {
+                openNativeCourse(courseId, siteId).then(() => {
                     // eslint-disable-next-line no-console
                     console.log(COURSE_LOG, 'getAndOpenCourse retornou (rota ainda deve ser confirmada)', JSON.stringify({
                         courseId,
@@ -1767,8 +1789,17 @@ export class MoodleSiteService {
     /**
      * True quando o bridge pediu switch-account e deve retomar o OAuth ao voltar.
      */
-    shouldResumeOAuthAfterSiteSwitch(): boolean {
-        return sessionStorage.getItem(RESUME_OAUTH_KEY) === '1';
+    consumeOAuthResume(courseId: number, siteUrl: string): boolean {
+        const raw = sessionStorage.getItem(RESUME_OAUTH_KEY);
+        sessionStorage.removeItem(RESUME_OAUTH_KEY);
+        try {
+            const marker = JSON.parse(raw || 'null');
+
+            return !!marker && marker.courseId === courseId && marker.siteUrl === resolveMoodleSiteUrl(siteUrl)
+                && Number.isFinite(marker.until) && marker.until > Date.now();
+        } catch {
+            return false;
+        }
     }
 
     /**
@@ -1855,14 +1886,22 @@ export class MoodleSiteService {
                 `${LOG_PREFIX} Sessão Moodle ativa — switch-account antes do OAuth SUAP`,
             );
 
-            sessionStorage.setItem(RESUME_OAUTH_KEY, '1');
-
             const pending = this.getPendingOpenCourse();
+            if (!pending) {
+                throw new Error('Nenhum curso informado para conectar o ambiente Moodle. Volte ao Painel.');
+            }
+            sessionStorage.setItem(RESUME_OAUTH_KEY, JSON.stringify({
+                courseId: pending.courseId,
+                siteUrl: resolveMoodleSiteUrl(pending.siteUrl),
+                until: Date.now() + 120000,
+            }));
             const redirectPath = pending?.courseId
                 ? '/login/moodle-open-course'
                 : '/login/moodle-open-course';
             const redirectOptions = pending?.courseId
-                ? { params: { startOAuth: true, courseId: pending.courseId, courseName: pending.courseName } }
+                ? { params: {
+                    startOAuth: true, courseId: pending.courseId, courseName: pending.courseName, siteUrl: pending.siteUrl,
+                } }
                 : { params: { startOAuth: true } };
 
             await attempt.stage('session-switch', () => CoreSites.logout({
@@ -1938,6 +1977,9 @@ export class MoodleSiteService {
                             params: {
                                 courseId: pending.courseId,
                                 courseName: pending.courseName,
+                                siteUrl: pending.siteUrl,
+                                startOAuth: false,
+                                identityOnly: false,
                             },
                         },
                     },

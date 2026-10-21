@@ -16,8 +16,8 @@
  * Configuração do Painel AVA oficial observado em produção.
  *
  * O navegador usa GET /api/v1/diarios/ com sessão web.
- * Identidade: tenta /api/v2/usuario/info/ (404 no host em 2026-10; v2 no código-fonte
- * mas ainda não publicada) e, se ausente, consulta /api/rh/eu/ no SUAP com a
+ * Identidade: tenta /api/v2/usuario/info/ (200 em ava.ifrn.edu.br no teste de
+ * 20/10/2026; 404 em painel.ead.ifrn.edu.br) e, se ausente, consulta /api/rh/eu/ no SUAP com a
  * mesma sessão do InAppBrowser (same-origin após navegação).
  */
 export const PAINEL_AVA_CONFIG = {

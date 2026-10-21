@@ -30,6 +30,7 @@ function setup() {
         isIdentityMismatchPending: () => false, setIdentityMismatchPending() {},
         resumePendingOAuthCourse: async () => false,
         shouldResumeOAuthAfterSiteSwitch: () => false,
+        consumeOAuthResume: () => false,
         ensureSessionAndOpenCourse: async () => 'need-connect',
         startSuapOAuthLogin: async () => { browserCalls++; return 'opened'; },
         releaseOAuthBrowserWait: () => { released++; },
@@ -58,23 +59,118 @@ function setup() {
 }
 test('missing browser return ends waiting and permits a new official attempt for the same environment', async () => {
     const s = setup(); await s.page.ionViewWillEnter();
+    assert.equal(s.browserCalls, 0);
+    assert.equal(s.page.phase, 'need-connect');
+    await s.page.connectMoodle();
     assert.equal(s.page.phase, 'waiting-browser'); assert.equal(s.page.loading, false);
     assert.equal(s.browserCalls, 1);
     const timer = [...s.timers.values()][0]; assert.equal(timer.ms, 180000); timer.fn();
     assert.equal(s.page.phase, 'error'); assert.equal(s.released, 1);
     assert.equal(s.pending.courseId, 2836); assert.equal(s.pending.siteUrl, 'https://presencial.ava.ifrn.edu.br');
-    await s.page.retryConnect(); assert.equal(s.browserCalls, 2); assert.equal(s.page.phase, 'waiting-browser');
+    await s.page.retryConnect(); assert.equal(s.browserCalls, 1); assert.equal(s.page.phase, 'need-connect');
+    await s.page.connectMoodle(); assert.equal(s.browserCalls, 2); assert.equal(s.page.phase, 'waiting-browser');
 });
 test('leaving, cancelling and destroying the cached bridge remove its browser timer', async () => {
     for (const action of ['ionViewWillLeave', 'cancelOpening', 'ngOnDestroy']) {
-        const s = setup(); await s.page.ionViewWillEnter(); assert.equal(s.timers.size, 1);
+        const s = setup(); await s.page.ionViewWillEnter(); await s.page.connectMoodle(); assert.equal(s.timers.size, 1);
         s.page[action](); assert.equal(s.timers.size, 0); assert.equal(s.released, 0);
     }
 });
 test('official callback resuming a course does not start another browser or leave a timeout behind', async () => {
     const s = setup(); await s.page.ionViewWillEnter();
+    await s.page.connectMoodle();
     s.page.ionViewWillLeave(); s.service.resumePendingOAuthCourse = async () => true;
     await s.page.ionViewWillEnter(); assert.equal(s.browserCalls, 1); assert.equal(s.timers.size, 0);
+});
+
+test('leaving while session lookup is pending cannot open the browser afterwards', async () => {
+    const s = setup();
+    await s.page.ionViewWillEnter();
+    let finish;
+    s.service.ensureSessionAndOpenCourse = () => new Promise(resolve => { finish = resolve; });
+    const pending = s.page.tryOpenOrPromptConnect(true);
+    s.page.ionViewWillLeave();
+    finish('need-connect');
+    await pending;
+    assert.equal(s.browserCalls, 0);
+    assert.equal(s.timers.size, 0);
+});
+
+test('connect action reuses a session recovered since showing the connection prompt', async () => {
+    const s = setup();
+    await s.page.ionViewWillEnter();
+    assert.equal(s.page.phase, 'need-connect');
+    s.service.ensureSessionAndOpenCourse = async () => 'opened';
+    await s.page.connectMoodle();
+    assert.equal(s.browserCalls, 0);
+});
+
+test('a stale persisted account-switch flag cannot open the browser on another visit', async () => {
+    const s = setup();
+    s.service.shouldResumeOAuthAfterSiteSwitch = () => true;
+    await s.page.ionViewWillEnter();
+    assert.equal(s.browserCalls, 0);
+    assert.equal(s.page.phase, 'need-connect');
+});
+
+test('the account-switch redirect cannot start OAuth twice when the cached bridge reenters', async () => {
+    const s = setup();
+    let consumed = false;
+    s.navigator.getRouteBooleanParam = key => key === 'startOAuth';
+    s.service.consumeOAuthResume = () => {
+        if (consumed) return false;
+        consumed = true;
+        return true;
+    };
+    await s.page.ionViewWillEnter();
+    assert.equal(s.browserCalls, 1);
+    s.page.ionViewWillLeave();
+    await s.page.ionViewWillEnter();
+    assert.equal(s.browserCalls, 1);
+    assert.equal(s.page.phase, 'need-connect');
+});
+
+function serviceWithStorage(entries) {
+    const { MoodleSiteService } = load('src/MoodleIFRN/services_mobile/moodle-site.service.ts', {
+        '@angular/core': { Injectable: () => c => c, inject: () => ({}) },
+        '@static/logger': { CoreLogger: { getInstance: () => ({}) } },
+    }, { URL, sessionStorage: {
+        getItem: key => entries.get(key) ?? null,
+        removeItem: key => entries.delete(key),
+    } });
+    return new MoodleSiteService();
+}
+
+test('OAuth resume is one-use, scoped to course and environment, and expires', () => {
+    const key = 'ifrn_moodle_resume_oauth';
+    const site = 'https://presencial.ava.ifrn.edu.br';
+    const entries = new Map();
+    const service = serviceWithStorage(entries);
+    const marker = { courseId: 2836, siteUrl: site, until: Date.now() + 60000 };
+    entries.set(key, JSON.stringify(marker));
+    assert.equal(service.consumeOAuthResume(2836, site), true);
+    assert.equal(service.consumeOAuthResume(2836, site), false);
+    for (const value of [
+        { ...marker, courseId: 4022 },
+        { ...marker, siteUrl: 'https://academico.ava.ifrn.edu.br' },
+        { ...marker, until: Date.now() - 1 },
+        1,
+    ]) {
+        entries.set(key, JSON.stringify(value));
+        assert.equal(service.consumeOAuthResume(2836, site), false);
+        assert.equal(entries.has(key), false);
+    }
+});
+
+test('Academic session cannot consume a pending Presencial OAuth return', async () => {
+    const key = 'ifrn_moodle_oauth_pending';
+    const entries = new Map([[key, '1']]);
+    const service = serviceWithStorage(entries);
+    service.getPendingOpenCourse = () => ({ courseId: 2836, siteUrl: 'https://presencial.ava.ifrn.edu.br' });
+    service.hasMatchingPresencialSession = site => site === 'https://academico.ava.ifrn.edu.br';
+    service.afterOAuthLogin = async () => assert.fail('Wrong environment cannot resume the course');
+    assert.equal(await service.resumePendingOAuthCourse(), false);
+    assert.equal(entries.get(key), '1');
 });
 
 test('native session opening skips browser and waiting timer', async () => {

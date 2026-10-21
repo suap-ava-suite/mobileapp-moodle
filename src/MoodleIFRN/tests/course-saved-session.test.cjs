@@ -8,7 +8,7 @@ function setup(entries) {
     let current;
     const sites = {
         getCurrentSite: () => current,
-        isLoggedIn: () => !!current,
+        isLoggedIn: () => !!current?.token,
         loadSite: async id => { current = await sites.getSite(id); return true; },
         getSites: async () => Object.keys(entries).map(id => ({ id, siteUrl: entries[id].url || url })),
         getSiteIdsFromUrl: async () => { throw new Error('Do not eagerly load tokens from all environments'); },
@@ -17,7 +17,7 @@ function setup(entries) {
             if (entries[id] instanceof Error) throw entries[id];
             const entry = entries[id];
             return { getId: () => id, getURL: () => entry.url || url, getInfo: () => ({ username: entry.username || '123' }),
-                isLoggedOut: () => !!entry.loggedOut };
+                token: entry.missingToken ? '' : 'test-token', isLoggedOut: () => !!entry.loggedOut };
         },
     };
     const mocks = {
@@ -70,4 +70,15 @@ test('metadata read failure is propagated instead of being classified as missing
     const s = setup({});
     s.sites.getSites = async () => { throw new Error('metadata unavailable'); };
     await assert.rejects(() => s.service.ensureMatchingMoodleSession(url), /metadata unavailable/);
+});
+
+test('account metadata without a native token offers connection instead of loading an unusable session', async () => {
+    const s = setup({ canonical: { missingToken: true } });
+    s.sites.loadSite = async () => assert.fail('Metadata without token must not activate the account');
+    assert.equal(await s.service.ensureMatchingMoodleSession(url), 'need-oauth');
+});
+
+test('a tokenless canonical entry does not hide a usable historical session', async () => {
+    const s = setup({ canonical: { missingToken: true }, historical: {} });
+    assert.equal(await s(), 'historical');
 });

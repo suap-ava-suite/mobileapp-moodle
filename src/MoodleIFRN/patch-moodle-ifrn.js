@@ -15,6 +15,7 @@
 const fs = require('fs');
 const path = require('path');
 const { patchCourseMenu } = require('./moodle-course/patch-course-menu.cjs');
+const { patchLoadingAnimation } = require('./moodle-course/patch-loading-animation.cjs');
 
 const SCRIPT_DIR = __dirname;
 const PROJECT_ROOT = path.resolve(SCRIPT_DIR, '..', '..');
@@ -431,6 +432,7 @@ function main() {
     patchPackageScripts();
     patchIndexEarlyHandoff();
     const menuChanged = patchCourseMenu(PROJECT_ROOT);
+    patchLoadingAnimation(PROJECT_ROOT);
     console.log(menuChanged ? '✔ Menu IFRN registrado no curso nativo' : '• Menu IFRN do curso já estava atualizado');
 
     console.log('\n✔ Patch concluído.');

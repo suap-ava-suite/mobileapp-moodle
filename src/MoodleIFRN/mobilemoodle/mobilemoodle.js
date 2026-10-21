@@ -1192,6 +1192,15 @@
     if (!Number.isFinite(id) || id <= 0) {
       return;
     }
+    const bridge = window.parent?.MoodleIfrnBridge;
+    if (window.parent && window.parent !== window) {
+      if (bridge?.openCourse) {
+        bridge.openCourse(id, courseName, siteUrl);
+      } else {
+        window.parent.postMessage({ type: "MOODLE_IFRN_OPEN_COURSE", courseId: id, courseName, siteUrl }, "*");
+      }
+      return;
+    }
     try {
       console.log("[IFRN-COURSE] courseId recebido do Painel =", id);
       sessionStorage.setItem(
@@ -1206,20 +1215,6 @@
         sessionStorage.setItem("ifrn_moodle_last_site_url", new URL(siteUrl).origin);
       }
     } catch {
-    }
-    const bridge = window.parent?.MoodleIfrnBridge;
-    if (window.parent && window.parent !== window && bridge?.openCourse) {
-      bridge.openCourse(id, courseName, siteUrl);
-      return;
-    }
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({
-        type: "MOODLE_IFRN_OPEN_COURSE",
-        courseId: id,
-        courseName,
-        siteUrl
-      }, "*");
-      return;
     }
     window.location.assign(resolveMoodleOpenUrl(id, courseName, siteUrl));
   }
