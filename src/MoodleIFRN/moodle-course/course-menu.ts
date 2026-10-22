@@ -140,7 +140,12 @@ export class IfrnCourseMenuComponent implements OnChanges, OnDestroy {
             const host = new URL(site?.getURL() || '').hostname;
 
             return !!site && !site.isLoggedOut() && Number.isSafeInteger(this.courseId) && this.courseId > 0
-                && (host === 'ava.ifrn.edu.br' || host.endsWith('.ava.ifrn.edu.br'));
+                && (
+                    host === 'ava.ifrn.edu.br'
+                    || host.endsWith('.ava.ifrn.edu.br')
+                    // Moodle Teste é um host oficial do IFRN fora do domínio .ava.
+                    || host === 'moodle.ead.ifrn.edu.br'
+                );
         } catch {
             return false;
         }
