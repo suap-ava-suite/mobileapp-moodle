@@ -16,6 +16,7 @@ let expected;
 let entryState = null;
 const params = {};
 const navigation = [];
+const routeNavigations = [];
 const queryHandlers = new Set();
 const instances = new Map([
     [AuthService, { isAuthenticated: () => valid }],
@@ -41,7 +42,7 @@ const instances = new Map([
         },
     }],
     [Router, {
-        async navigate() { return true; },
+        async navigate(...args) { routeNavigations.push(args); return true; },
     }],
 ]);
 const dependencies = {
@@ -77,6 +78,9 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerO
     assert.equal(page.canContinue, false, 'cache sozinho não equivale a sessão válida');
     await page.enterAva();
     assert.equal(calls, 1);
+    assert.equal(routeNavigations[0][1].queryParams.nativeSuapReturn, null);
+    assert.equal(routeNavigations[0][1].queryParams.directSuap, null,
+        'consome os parâmetros de entrada para evitar iniciar o login de novo');
     assert.equal(navigation.length, 0, 'não navega para formulário intermediário');
     fail = true;
     await page.enterAva();

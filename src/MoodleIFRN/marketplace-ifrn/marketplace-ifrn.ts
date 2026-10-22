@@ -168,7 +168,7 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         try {
             // Um novo retorno deve mudar a query, mesmo na tela Ionic em cache.
             await this.router.navigate([], { relativeTo: this.route, replaceUrl: true,
-                queryParams: { nativeSuapReturn: null }, queryParamsHandling: 'merge' });
+                queryParams: { nativeSuapReturn: null, directSuap: null }, queryParamsHandling: 'merge' });
             await this.suapEntry.loginWithSuap(this.expectedIdentity, message => this.statusMessage = message);
             // OAuth fica no navegador do sistema; mantém o splash até o callback.
             if (readNativeSuapEntry()) {

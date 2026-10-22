@@ -7,7 +7,7 @@ function setup(tab = null, success = true) {
     const navigation = [];
     const fetched = [];
     const helper = [];
-    const course = { id: 4022, format: 'topics' };
+    const course = { id: 4022, format: 'topics', fullname: 'Curso de teste' };
     const mocks = {
         '@features/course/services/course-helper': { CoreCourseHelper: {
             getCourse: async (...args) => { fetched.push(args); return { course }; },
@@ -34,6 +34,12 @@ test('from the IFRN panel or OAuth bridge, enters the course without opening the
     assert.equal(s.navigation[0][1].reset, true);
     assert.equal(s.navigation[0][1].params.course, s.course);
     assert.equal(s.helper.length, 0);
+});
+test('reuses the course object already returned by the enrollment check', async () => {
+    const s = setup();
+    await s.open(4022, 'academic-site', s.course);
+    assert.equal(s.fetched.length, 0);
+    assert.equal(s.navigation[0][1].params.course, s.course);
 });
 test('existing native tab retains the standard course handler', async () => {
     const s = setup('home');

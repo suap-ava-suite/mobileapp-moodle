@@ -1602,10 +1602,12 @@ export class MoodleSiteService {
         }));
 
         let courses: MoodleCourseSummary[];
+        let enrolledCourse: CoreEnrolledCourseData | undefined;
 
         try {
             const currentSiteId = CoreSites.getCurrentSiteId();
             const enrolled = await attempt.stage('enrolments-cache-or-network', () => CoreCourses.getUserCourses(true, currentSiteId));
+            enrolledCourse = enrolled.find((course) => course.id === courseId);
             courses = enrolled.map((course) => this.toCourseSummary(course));
         } catch (error) {
             // eslint-disable-next-line no-console
@@ -1621,7 +1623,7 @@ export class MoodleSiteService {
         // eslint-disable-next-line no-console
         console.log(COURSE_LOG, 'quantidade de cursos Moodle =', courses.length);
 
-        const found = courses.some((course) => course.id === courseId);
+        const found = !!enrolledCourse;
 
         // eslint-disable-next-line no-console
         console.log(COURSE_LOG, 'courseId encontrado =', found);
@@ -1669,7 +1671,7 @@ export class MoodleSiteService {
             // O handler nativo não aguarda navigateToSitePath. A Promise do helper
             // pode resolver em /main: também aguardamos NavigationEnd do curso.
             await attempt.stage('native-helper-and-navigation', () => Promise.race([openingDeadline, Promise.all([
-                openNativeCourse(courseId, siteId).then(() => {
+                openNativeCourse(courseId, siteId, enrolledCourse).then(() => {
                     // eslint-disable-next-line no-console
                     console.log(COURSE_LOG, 'getAndOpenCourse retornou (rota ainda deve ser confirmada)', JSON.stringify({
                         courseId,
