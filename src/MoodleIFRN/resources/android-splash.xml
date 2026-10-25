@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Reserva margem para a mÃ¡scara do splash Android, incluindo os detalhes Ã  direita. -->
+    <item android:left="32dp" android:top="32dp" android:right="32dp" android:bottom="32dp">
+        <bitmap android:src="@drawable/ifrn_splash_logo" android:gravity="fill" android:filter="true" />
+    </item>
+</layer-list>
+
