@@ -60,14 +60,10 @@ try {
     syncVendorAssets();
     const themeCss = compile(join(root, 'static/theme/ifrn/scss/painel.scss'), {
         style: 'expanded',
-    }).css.replaceAll('url("../fonts/', 'url("__IFRN_THEME_BASE__fonts/');
-    const themeBanner = `(() => {
-        const base = new URL('static/theme/ifrn/', document.currentScript.src).href;
-        const style = document.createElement('style');
-        style.id = 'ifrn-panel-theme';
-        style.textContent = ${JSON.stringify(themeCss)}.replaceAll('__IFRN_THEME_BASE__', base);
-        document.head.appendChild(style);
-    })();`;
+    }).css.replaceAll('url("../fonts/', 'url("static/theme/ifrn/fonts/');
+    // Folha bloqueante no <head>: o iframe nunca pinta as logos sem o tema
+    // enquanto aguarda o bundle deferred, inclusive ao voltar do curso nativo.
+    fs.writeFileSync(join(root, 'mobilemoodle.css'), themeCss);
     await build({
         absWorkingDir: projectRoot,
         entryPoints: [entry],
@@ -77,7 +73,6 @@ try {
         target: 'es2020',
         logLevel: 'warning',
         legalComments: 'inline',
-        banner: { js: themeBanner },
     });
 } catch (error) {
     console.error('Falha ao compilar mobilemoodle:', error);
