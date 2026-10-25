@@ -262,12 +262,16 @@ function profileDisplayName(profile: Record<string, unknown> | null): string {
         return '';
     };
 
-    // Mesma prioridade usada pelo login IFRN antigo com /api/rh/eu/.
+    // Mantém a mesma prioridade do Perfil.show_name no backend django-suap-auth:
+    // nome_usual, nome_social e nome_registro. O endpoint também devolve `nome`
+    // como fallback em nome_usual, então não o deixamos sombrear esses campos.
     const nome = pick(
-        'nome_social',
+        'nome_exibicao',
+        'show_name',
         'nome_usual',
-        'nome',
+        'nome_social',
         'nome_registro',
+        'nome',
         'nome_completo',
         'identificacao',
         'primeiro_nome',

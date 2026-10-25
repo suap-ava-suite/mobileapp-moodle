@@ -23,7 +23,7 @@ function setup(open = async () => 'opened') {
     } };
     const { PainelPage } = load('src/MoodleIFRN/painel/painel.ts', {
         '@angular/core': { Component: () => c => c, ViewChild: () => () => {},
-            inject: id => id === token ? service : {} },
+            inject: id => id === token ? service : { stopProfileRefresh() {} } },
         '@/MoodleIFRN/services_mobile/moodle-site.service': { MoodleSiteService: token },
         '../mobilemoodle/core_mobile/course-target': load('src/MoodleIFRN/mobilemoodle/core_mobile/course-target.ts', {}),
         '@services/navigator': { CoreNavigator: { navigate: async (...args) => navigation.push(args) } },

@@ -20,6 +20,7 @@ import { Observable, map, of, throwError, timeout } from 'rxjs';
 import { PAINEL_AVA_CONFIG, isPainelAvaBrowserUrl } from './painel-ava.config';
 import { PAINEL_COURSES_SCRIPT } from './painel-courses';
 import { hasOAuthProfileMode, readOAuthDashboard, readOAuthProfile } from '../mobilemoodle/core_mobile/oauth-profile';
+import { refreshSavedProfileNames } from '../mobilemoodle/core_mobile/profile-refresh';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 /** Resposta mobile de POST /api/v1/authenticate/. */
@@ -404,6 +405,82 @@ function profileUsernameHint(profile: Record<string, unknown> | null, fallback: 
 })
 export class PainelAvaService {
 
+    private profileRefresh?: Promise<boolean>;
+    private cancelProfileRefresh?: () => void;
+
+    stopProfileRefresh(): void {
+        this.cancelProfileRefresh?.();
+    }
+
+    /** Revalida apenas o perfil com cookies existentes, sem iniciar login ou consultar cursos. */
+    refreshSavedProfile(): Promise<boolean> {
+        if (!readOAuthProfile()) {
+            return Promise.resolve(false);
+        }
+        this.profileRefresh ??= new Promise<boolean>(resolve => {
+            const origin = PAINEL_AVA_CONFIG.baseUrl;
+            const endpoint = `${origin}/api/v2/usuario/info/`;
+            const browser = CoreOpener.openInApp(endpoint, {
+                ...PAINEL_IAB_CHROME, clearcache: 'no', clearsessioncache: 'no',
+            });
+            const subscriptions: Array<{ unsubscribe: () => void }> = [];
+            let finished = false;
+            const finish = (updated: boolean): void => {
+                if (finished) {
+                    return;
+                }
+                finished = true;
+                clearTimeout(timer);
+                subscriptions.forEach(subscription => subscription.unsubscribe());
+                browser.close();
+                resolve(updated);
+            };
+            const timer = setTimeout(() => finish(false), REQUEST_TIMEOUT_MS);
+            this.cancelProfileRefresh = () => finish(false);
+            subscriptions.push(browser.on('loadstart').subscribe(event => {
+                if (event.url !== endpoint) {
+                    finish(false);
+                }
+            }));
+            subscriptions.push(browser.on('loadstop').subscribe(event => {
+                if (event.url !== endpoint) {
+                    finish(false);
+                    return;
+                }
+                browser.executeScript({ code: `(function () {
+                    fetch('/api/v2/usuario/info/', {credentials:'same-origin', cache:'no-store', redirect:'error'})
+                      .then(function (response) {
+                        if (!response.ok) throw new Error('profile');
+                        return response.json().then(function (profile) {
+                          window.webkit.messageHandlers.cordova_iab.postMessage(JSON.stringify({
+                            type:'ifrn-profile-refresh', profile:profile, url:response.url
+                          }));
+                        });
+                      }).catch(function () {
+                        window.webkit.messageHandlers.cordova_iab.postMessage(JSON.stringify({type:'ifrn-profile-refresh'}));
+                      });
+                })();` }).catch(() => finish(false));
+            }));
+            subscriptions.push(browser.on('message').subscribe(event => {
+                const data = event.data;
+                if (data?.type !== 'ifrn-profile-refresh') {
+                    return;
+                }
+                try {
+                    finish(!!data.profile && refreshSavedProfileNames(data.profile, data.url, origin, true));
+                } catch {
+                    finish(false);
+                }
+            }));
+            subscriptions.push(browser.on('exit').subscribe(() => finish(false)));
+            subscriptions.push(browser.on('loaderror').subscribe(() => finish(false)));
+        }).catch(() => false).finally(() => {
+            this.profileRefresh = undefined;
+            this.cancelProfileRefresh = undefined;
+        });
+        return this.profileRefresh;
+    }
+
     /**
      * Abre o Painel AVA no InAppBrowser e deixa o próprio Painel executar o OAuth do SUAP.
      * Depois que a sessão web existir, consulta /api/v1/diarios/ dentro da origem
@@ -733,6 +810,7 @@ export class PainelAvaService {
                                 }
                                 if (!name && !photo && !matricula) return null;
                                 return {
+                                    nome_exibicao: name || undefined,
                                     nome: name || undefined,
                                     nome_usual: name || undefined,
                                     foto: photo || undefined,
@@ -749,10 +827,13 @@ export class PainelAvaService {
                                 if (!matricula) return null;
                                 var foto = absoluteUrl(data.url_foto_150x200 || data.url_foto_75x100 || data.foto || '');
                                 return {
+                                    id: data.id,
+                                    _profile_origin: location.origin,
                                     matricula: matricula,
                                     identificacao: matricula,
                                     username: matricula,
-                                    nome: cleanName(data.nome_usual || data.nome_social || data.nome_registro || data.nome) || undefined,
+                                    nome_exibicao: cleanName(data.nome_exibicao || data.show_name) || undefined,
+                                    nome: cleanName(data.nome_exibicao || data.show_name || data.nome_usual || data.nome_social || data.nome_registro || data.nome) || undefined,
                                     nome_usual: cleanName(data.nome_usual) || undefined,
                                     nome_social: cleanName(data.nome_social) || undefined,
                                     nome_registro: cleanName(data.nome_registro) || undefined,
@@ -1152,7 +1233,11 @@ export class PainelAvaService {
         // A captura resumida do HTML nao deve substituir o perfil completo do SUAP.
         const oauth = readOAuthProfile();
         if (oauth) {
-            profile = oauth.profile;
+            if (profile && typeof profile['_profile_origin'] === 'string') {
+                refreshSavedProfileNames(profile, `${profile['_profile_origin']}/api/v2/usuario/info/`,
+                    PAINEL_AVA_CONFIG.baseUrl, true);
+            }
+            profile = readOAuthProfile()?.profile || oauth.profile;
         }
         if (!profile) {
             // Evita reutilizar perfil antigo (ex.: scraping anterior com nome de disciplina).

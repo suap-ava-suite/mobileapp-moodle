@@ -10,9 +10,12 @@
 import { MM } from './namespace';
 
 interface SuapEu {
+    nome_exibicao?: string;
+    show_name?: string;
     nome?: string;
     nome_usual?: string;
     nome_social?: string;
+    nome_registro?: string;
     foto?: string;
     tipo_usuario?: string;
     identificacao?: string;
@@ -167,8 +170,11 @@ function activityFromTrabalho(trabalho: SuapTrabalho): CourseActivity {
 
 function displayName(eu: SuapEu): string {
     return (
-        eu.nome_social ||
+        eu.nome_exibicao ||
+        eu.show_name ||
         eu.nome_usual ||
+        eu.nome_social ||
+        eu.nome_registro ||
         eu.nome ||
         eu.identificacao ||
         'Usuário SUAP'

@@ -50,9 +50,15 @@ export class PainelPage implements OnInit, OnDestroy {
         this.safePainelUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
 
         this.registerBridge();
+        void this.painelAva.refreshSavedProfile().then(updated => {
+            if (updated) {
+                this.painelFrame?.nativeElement.contentWindow?.location.reload();
+            }
+        });
     }
 
     ngOnDestroy(): void {
+        this.painelAva.stopProfileRefresh();
         this.hostAppearanceObserver?.disconnect();
         this.unregisterBridge();
     }
@@ -127,6 +133,7 @@ export class PainelPage implements OnInit, OnDestroy {
         }
 
         this.openingCourse = true;
+        this.painelAva.stopProfileRefresh();
         try {
             sessionStorage.setItem('ifrn_moodle_last_site_url', target);
         } catch {
