@@ -55,7 +55,6 @@ const RESUME_OAUTH_KEY = 'ifrn_moodle_resume_oauth';
 const PENDING_OPEN_COURSE_KEY = 'ifrn_moodle_pending_open_course';
 /** Persiste mismatch Painel↔Moodle além do ciclo de logout/navegação. */
 const IDENTITY_MISMATCH_KEY = 'ifrn_moodle_identity_mismatch';
-export const COURSE_OAUTH_EXTERNAL_FALLBACK_EVENT = 'ifrn_course_oauth_external_fallback';
 /** Curso aberto pelo fluxo Painel AVA → Voltar deve retornar ao Painel. */
 const COURSE_ORIGIN_KEY = 'ifrn_course_origin';
 const COURSE_ORIGIN_ID_KEY = 'ifrn_course_id';
@@ -526,9 +525,6 @@ export class MoodleSiteService {
         this.oauthFlowActive = false;
         this.oauthReturnNavigating = false;
         this.oauthCallbackReceived = false;
-        this.courseOAuthExternalFallback = undefined;
-        this.courseOAuthExternalFallbackStarted = false;
-        this.courseOAuthExternalFallbackStarting = false;
         this.hideNativeCourseHandoff();
         this.lastCourseAccessIssue = null;
         this.lastError = '';
@@ -581,9 +577,6 @@ export class MoodleSiteService {
     private oauthPreparation?: Promise<'switched' | 'opened' | 'already-active'>;
     private courseOAuthBrowser?: InAppBrowserObject;
     private courseOAuthBrowserSubscriptions: Array<{ unsubscribe: () => void }> = [];
-    private courseOAuthExternalFallback?: () => Promise<boolean>;
-    private courseOAuthExternalFallbackStarted = false;
-    private courseOAuthExternalFallbackStarting = false;
     private cancelledCourseId?: number;
 
     private navigationShellInitialized = false;
@@ -683,6 +676,7 @@ export class MoodleSiteService {
     /** Cancelamento explícito pelo usuário; nenhum redirecionamento automático. */
     dismissCourseRecovery(): void {
         this.cancelCourseOAuthBrowser();
+        void CoreConfig.delete(LOGIN_SSO_LAUNCH_DATA).catch(() => undefined);
         this.cancelledCourseId = this.courseOpening?.courseId;
         this.openingAttempt?.cancel();
         this.clearPendingOpenCourse();
@@ -701,9 +695,7 @@ export class MoodleSiteService {
     /** Allows an explicit retry after a browser that never returned; keeps the course and all sessions. */
     releaseOAuthBrowserWait(): void {
         this.cancelCourseOAuthBrowser();
-        this.courseOAuthExternalFallback = undefined;
-        this.courseOAuthExternalFallbackStarted = false;
-        this.courseOAuthExternalFallbackStarting = false;
+        void CoreConfig.delete(LOGIN_SSO_LAUNCH_DATA).catch(() => undefined);
         this.oauthFlowActive = false;
         this.oauthCallbackReceived = false;
         sessionStorage.removeItem(OAUTH_PENDING_KEY);
@@ -726,11 +718,6 @@ export class MoodleSiteService {
     /** Browser session result used by the bridge to distinguish cancel from callback. */
     hasCourseOAuthCallbackReceived(): boolean {
         return this.oauthCallbackReceived;
-    }
-
-    /** Indicates the official browser fallback is active, so IAB exit is not a cancellation. */
-    hasCourseOAuthExternalFallbackStarted(): boolean {
-        return this.courseOAuthExternalFallbackStarted || this.courseOAuthExternalFallbackStarting;
     }
 
     /** Abre a saída SUAP do Moodle no mesmo InAppBrowser, preservando o fluxo do app. */
@@ -867,7 +854,6 @@ export class MoodleSiteService {
             const isSsoToken = CoreCustomURLSchemes.isCustomURLToken(url);
             if (isSsoToken && sessionStorage.getItem(OAUTH_PENDING_KEY) === '1') {
                 this.oauthCallbackReceived = true;
-                this.finishCourseOAuthBrowser();
             }
             // eslint-disable-next-line no-console
             console.log(SITE_LOG, 'callback deep link APP_LAUNCHED_URL', JSON.stringify({
@@ -1906,195 +1892,6 @@ export class MoodleSiteService {
         }
     }
 
-    /** Fecha o IAB sem remover os dados de launch usados pelo callback nativo. */
-    private finishCourseOAuthBrowser(): void {
-        const browser = this.courseOAuthBrowser;
-        this.courseOAuthBrowser = undefined;
-        this.courseOAuthBrowserSubscriptions.forEach(subscription => subscription.unsubscribe());
-        this.courseOAuthBrowserSubscriptions = [];
-        this.courseOAuthExternalFallback = undefined;
-        this.courseOAuthExternalFallbackStarted = false;
-        this.courseOAuthExternalFallbackStarting = false;
-        browser?.close();
-    }
-
-    /** On embedded WebView failure, retry the same official Moodle OAuth through Android's browser. */
-    private failCourseOAuthBrowser(browser: InAppBrowserObject, message: string): void {
-        if (this.courseOAuthBrowser !== browser || this.oauthCallbackReceived) {
-            return;
-        }
-
-        const fallback = this.courseOAuthExternalFallback;
-        this.courseOAuthBrowser = undefined;
-        this.courseOAuthBrowserSubscriptions.forEach(subscription => subscription.unsubscribe());
-        this.courseOAuthBrowserSubscriptions = [];
-        browser.close();
-
-        if (!fallback) {
-            this.lastError = message;
-            this.oauthFlowActive = false;
-            sessionStorage.removeItem(OAUTH_PENDING_KEY);
-            void CoreConfig.delete(LOGIN_SSO_LAUNCH_DATA).catch(() => undefined);
-
-            return;
-        }
-
-        this.courseOAuthExternalFallbackStarting = true;
-        void fallback().then(opened => {
-            if (!opened) {
-                throw new Error('O Moodle não conseguiu abrir a autenticação oficial no navegador.');
-            }
-            if (!this.oauthFlowActive || sessionStorage.getItem(OAUTH_PENDING_KEY) !== '1') {
-                return;
-            }
-
-            this.courseOAuthExternalFallbackStarting = false;
-            this.courseOAuthExternalFallbackStarted = true;
-            this.lastError = '';
-            CoreEvents.trigger(COURSE_OAUTH_EXTERNAL_FALLBACK_EVENT, { opened: true });
-        }).catch(error => {
-            this.courseOAuthExternalFallbackStarting = false;
-            if (!this.oauthFlowActive) {
-                return;
-            }
-            this.courseOAuthExternalFallback = undefined;
-            this.courseOAuthExternalFallbackStarted = false;
-            this.lastError = error instanceof Error ? error.message : message;
-            this.oauthFlowActive = false;
-            sessionStorage.removeItem(OAUTH_PENDING_KEY);
-            void CoreConfig.delete(LOGIN_SSO_LAUNCH_DATA).catch(() => undefined);
-            CoreEvents.trigger(COURSE_OAUTH_EXTERNAL_FALLBACK_EVENT, { opened: false, message: this.lastError });
-        });
-    }
-
-    /** Detecta a página de erro interna do Chromium, que não dispara loaderror no plugin. */
-    private detectCourseOAuthBrowserError(browser: InAppBrowserObject): void {
-        void browser.executeScript({
-            code: `(() => /ERR_(?:TOO_MANY_REDIRECTS|CONNECTION|NAME_NOT_RESOLVED|TIMED_OUT|INTERNET_DISCONNECTED)/
-                .test(document.body?.innerText || ''))()`,
-        }).then(result => {
-            if (this.courseOAuthBrowser !== browser || this.oauthCallbackReceived) {
-                return;
-            }
-
-            const failed = Array.isArray(result) ? result[0] : result;
-            if (failed === true || failed === 'true') {
-                this.failCourseOAuthBrowser(
-                    browser,
-                    'O login do Moodle retornou um erro de redirecionamento. Tente novamente; se persistir, o ambiente precisa ser verificado.',
-                );
-            }
-        }).catch(() => undefined);
-    }
-
-    /** Entrega o callback Moodle ao mesmo handler nativo validado pelo núcleo. */
-    private handleCourseOAuthCallback(url: string): void {
-        if (!CoreCustomURLSchemes.isCustomURLToken(url)) {
-            return;
-        }
-
-        this.oauthCallbackReceived = true;
-        this.finishCourseOAuthBrowser();
-
-        const handleOpenURL = (window as unknown as { handleOpenURL?: (url: string) => void }).handleOpenURL;
-        if (handleOpenURL) {
-            handleOpenURL(url);
-        } else {
-            void CoreCustomURLSchemes.handleCustomURL(url).catch((error) => {
-                logSiteError('in-app-oauth-callback', error, { scheme: 'moodlemobile' });
-            });
-        }
-    }
-
-    /**
-     * Abre o OAuth oficial do Moodle no InAppBrowser do Painel.
-     * Reutiliza a sessão SUAP já criada nesse navegador, mostra as telas SUAP
-     * quando exigem interação e oculta os redirects intermediários. O callback
-     * continua sendo validado pelo launch/passport oficial do Moodle.
-     */
-    private async openCourseOAuthInApp(
-        siteUrl: string,
-        providerId: string,
-        launchUrl: string | undefined,
-        redirectData?: CoreRedirectPayload,
-        externalFallback?: () => Promise<boolean>,
-    ): Promise<void> {
-        this.cancelCourseOAuthBrowser();
-        this.courseOAuthExternalFallback = externalFallback;
-        this.courseOAuthExternalFallbackStarted = false;
-        this.courseOAuthExternalFallbackStarting = false;
-        const loginUrl = await CoreLoginHelper.prepareForSSOLogin(
-            siteUrl,
-            undefined,
-            launchUrl,
-            redirectData,
-            { oauthsso: providerId },
-        );
-        const browser = CoreOpener.openInApp(loginUrl, {
-            hidden: 'yes',
-            location: 'no',
-            footer: 'no',
-            hideurlbar: 'yes',
-            hidenavigationbuttons: 'yes',
-            toolbarcolor: '#ffffff',
-            closebuttoncolor: '#1351b4',
-            navigationbuttoncolor: '#1351b4',
-            closebuttoncaption: 'Cancelar',
-            clearcache: 'no',
-            clearsessioncache: 'no',
-        });
-        this.courseOAuthBrowser = browser;
-
-        const setBrowserVisibility = (url: string): void => {
-            if (CoreCustomURLSchemes.isCustomURLToken(url)) {
-                this.handleCourseOAuthCallback(url);
-                return;
-            }
-
-            let needsInteraction = false;
-            try {
-                needsInteraction = new URL(url).origin === SUAP_ORIGIN;
-            } catch {
-                needsInteraction = false;
-            }
-
-            try {
-                if (needsInteraction) {
-                    browser.show();
-                } else {
-                    browser.hide();
-                }
-            } catch {
-                // O handoff Ionic permanece visível se a plataforma não suportar hide/show.
-            }
-        };
-
-        this.courseOAuthBrowserSubscriptions = [
-            browser.on('loadstart').subscribe(event => setBrowserVisibility(event.url || '')),
-            browser.on('loadstop').subscribe(event => {
-                setBrowserVisibility(event.url || '');
-                this.detectCourseOAuthBrowserError(browser);
-            }),
-            browser.on('exit').subscribe(() => {
-                if (this.courseOAuthBrowser !== browser) {
-                    return;
-                }
-                this.courseOAuthBrowser = undefined;
-                this.courseOAuthBrowserSubscriptions = [];
-                if (!this.oauthCallbackReceived) {
-                    this.oauthFlowActive = false;
-                    sessionStorage.removeItem(OAUTH_PENDING_KEY);
-                    this.lastError = 'Autenticação cancelada.';
-                    void CoreConfig.delete(LOGIN_SSO_LAUNCH_DATA).catch(() => undefined);
-                }
-            }),
-            browser.on('loaderror').subscribe(() => this.failCourseOAuthBrowser(
-                browser,
-                'Não foi possível carregar a autenticação SUAP. Verifique a conexão e tente novamente.',
-            )),
-        ];
-    }
-
     /**
      * Autentica no Moodle pelo provedor SUAP e obtém o token móvel oficial.
      * O fluxo do Painel permanece independente; somente os cursos usam este IAB.
@@ -2137,9 +1934,6 @@ export class MoodleSiteService {
         this.lastCourseAccessIssue = null;
         this.lastSummary = null;
         this.oauthCallbackReceived = false;
-        this.courseOAuthExternalFallback = undefined;
-        this.courseOAuthExternalFallbackStarted = false;
-        this.courseOAuthExternalFallbackStarting = false;
 
         if (this.oauthFlowActive && !options.resumeAfterSwitch) {
             identityLog('OAuth ignorado — já existe fluxo ativo');
@@ -2285,21 +2079,22 @@ export class MoodleSiteService {
                 ? sanitizeUrlForLog(siteCheck.config.launchurl)
                 : null,
             redirectPath: redirectData?.redirectPath || null,
-            note: 'Retorno esperado: callback Moodle mobile validado pelo handler nativo',
+            note: 'Login em tela interna; retorno pelo callback Moodle mobile validado pelo handler nativo',
         }));
 
-        await this.openCourseOAuthInApp(
+        // A documentação oficial do Moodle alerta que SSO por navegador
+        // embutido pode perder parâmetros em redirecionamentos HTTP. Use o
+        // fluxo padrão de browser-window; o passport retorna ao app e o curso
+        // continua sendo aberto pelas telas nativas do CoreSites.
+        const opened = await CoreLoginHelper.openBrowserForOAuthLogin(
             siteCheck.siteUrl,
-            oauthParams.id,
+            provider,
             siteCheck.config?.launchurl,
             redirectData,
-            () => CoreLoginHelper.openBrowserForOAuthLogin(
-                siteCheck.siteUrl,
-                provider,
-                siteCheck.config?.launchurl,
-                redirectData,
-            ),
         );
+        if (!opened) {
+            throw new Error('Não foi possível iniciar o login SUAP para este curso.');
+        }
 
         // eslint-disable-next-line no-console
         console.log(SITE_LOG, 'OAuth de curso no IAB iniciado', JSON.stringify({

@@ -129,102 +129,22 @@ test('course tabs use the activated course route, not the previous bridge URL', 
     assert.doesNotMatch(source, /this\.currentPagePath\s*=\s*CoreNavigator\.getCurrentPath\(\)/);
 });
 
-test('course OAuth reuses the hidden Panel IAB and forwards Moodle callback to native handler', async () => {
-    const { MoodleSiteService, state } = loadService();
-    const service = Object.create(MoodleSiteService.prototype);
-    service.courseOAuthBrowserSubscriptions = [];
-    service.oauthCallbackReceived = false;
-    service.oauthFlowActive = true;
-    service.lastError = '';
-
-    await service.openCourseOAuthInApp('https://academico.ava.ifrn.edu.br', '1');
-    assert.equal(state().browserUrl, 'https://academico.ava.ifrn.edu.br/admin/tool/mobile/launch.php');
-    assert.equal(state().browserOptions.hidden, 'yes');
-    assert.equal(state().browserOptions.clearcache, 'no');
-    assert.equal(state().browserOptions.clearsessioncache, 'no');
-
-    state().subscriptions.get('loadstart')({ url: 'https://suap.ifrn.edu.br/accounts/login/' });
-    assert.equal(state().browserShown, true);
-    state().subscriptions.get('loadstart')({ url: 'https://academico.ava.ifrn.edu.br/auth/oauth2/login.php' });
-    assert.equal(state().browserHidden, true);
-    state().subscriptions.get('loadstart')({ url: 'moodlemobile://token=fixture' });
-    assert.equal(state().callbackUrl, 'moodlemobile://token=fixture');
-    assert.equal(state().browserClosed, true);
-    assert.equal(service.hasCourseOAuthCallbackReceived(), true);
-});
-
-test('course OAuth load failure closes the hidden browser and releases the pending flow', async () => {
-    const { MoodleSiteService, state } = loadService();
-    const service = Object.create(MoodleSiteService.prototype);
-    service.courseOAuthBrowserSubscriptions = [];
-    service.oauthCallbackReceived = false;
-    service.oauthFlowActive = true;
-    service.lastError = '';
-
-    await service.openCourseOAuthInApp('https://academico.ava.ifrn.edu.br', '1');
-    state().subscriptions.get('loaderror')({ code: -6 });
-
-    assert.equal(state().browserClosed, true);
-    assert.equal(state().session.has('ifrn_moodle_oauth_pending'), false);
-    assert.equal(service.oauthFlowActive, false);
-    assert.match(service.lastError, /autenticação SUAP/);
-});
-
-test('course OAuth detects Android WebView redirect error pages after loadstop', async () => {
-    const { MoodleSiteService, state } = loadService();
-    const service = Object.create(MoodleSiteService.prototype);
-    service.courseOAuthBrowserSubscriptions = [];
-    service.oauthCallbackReceived = false;
-    service.oauthFlowActive = true;
-    service.lastError = '';
-
-    await service.openCourseOAuthInApp('https://academico.ava.ifrn.edu.br', '1');
-    state().setBrowserScriptResult(true);
-    state().subscriptions.get('loadstop')({ url: 'https://academico.ava.ifrn.edu.br/auth/suap/authenticate.php' });
-    await new Promise(resolve => setImmediate(resolve));
-
-    assert.equal(state().browserClosed, true);
-    assert.equal(state().session.has('ifrn_moodle_oauth_pending'), false);
-    assert.equal(service.oauthFlowActive, false);
-    assert.match(service.lastError, /redirecionamento/);
-});
-
-test('course OAuth retries an embedded redirect failure using the official browser callback', async () => {
-    const { MoodleSiteService, state } = loadService();
-    const service = Object.create(MoodleSiteService.prototype);
-    service.courseOAuthBrowserSubscriptions = [];
-    service.oauthCallbackReceived = false;
-    service.oauthFlowActive = true;
-    service.lastError = '';
-
-    await service.openCourseOAuthInApp(
-        'https://academico.ava.ifrn.edu.br', '1', undefined, undefined,
-        async () => { state().markExternalFallbackCall(); return true; },
-    );
-    state().setBrowserScriptResult(true);
-    state().subscriptions.get('loadstop')({ url: 'https://academico.ava.ifrn.edu.br/auth/suap/authenticate.php' });
-    await new Promise(resolve => setImmediate(resolve));
-
-    assert.equal(state().browserClosed, true);
-    assert.equal(state().externalFallbackCalls, 1);
-    assert.equal(service.hasCourseOAuthExternalFallbackStarted(), true);
-    assert.equal(state().lastTriggeredEvent.data.opened, true);
-});
-
-test('course tap starts hidden OAuth and uses the official browser only as failure fallback', () => {
+test('course OAuth uses Moodle browser-window SSO and resumes the selected course natively', () => {
     const page = fs.readFileSync('src/MoodleIFRN/moodle-open-course/moodle-open-course.ts', 'utf8');
     const service = fs.readFileSync('src/MoodleIFRN/services_mobile/moodle-site.service.ts', 'utf8');
 
     assert.match(page, /await this\.tryOpenOrPromptConnect\(true\)/);
-    assert.match(service, /CoreOpener\.openInApp\(loginUrl/);
     assert.match(service, /CoreLoginHelper\.openBrowserForOAuthLogin\(/);
+    assert.match(service, /isSitePath:\s*false/);
+    assert.match(service, /path:\s*'\/login\/moodle-open-course'/);
+    assert.doesNotMatch(service, /openCourseOAuthInApp/);
 });
 
 test('course tap resets the Ionic login route before entering the OAuth bridge', () => {
     const panel = fs.readFileSync('src/MoodleIFRN/painel/painel.ts', 'utf8');
-    const navigation = panel.match(/CoreNavigator\.navigate\('\/login\/moodle-open-course',[\s\S]*?\n            \}\);/);
+    const navigation = panel.match(/this\.router\.navigate\(\['\/login\/moodle-open-course'\],[\s\S]*?\n            \}\);/);
 
-    assert.ok(navigation, 'Panel must navigate to the course bridge');
-    assert.match(navigation[0], /reset:\s*true/);
-    assert.match(navigation[0], /animated:\s*false/);
+    assert.ok(navigation, 'Panel must navigate directly to the course bridge');
+    assert.match(navigation[0], /replaceUrl:\s*true/);
+    assert.match(navigation[0], /queryParams:/);
 });

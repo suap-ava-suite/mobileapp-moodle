@@ -10,14 +10,12 @@
             </div>
             <p class="moodle-open-course__text">
                 {{ phase === 'waiting-browser'
-                    ? (externalBrowserFallback ? 'Conclua o login no navegador' : 'Conclua o login no SUAP')
+                    ? 'Aguardando autenticação SUAP...'
                     : 'Carregando curso...' }}
             </p>
             @if (phase === 'waiting-browser') {
                 <p class="moodle-open-course__silent-hint">
-                    {{ externalBrowserFallback
-                        ? 'Ao concluir a autenticação, volte ao app para abrir o curso.'
-                        : 'Após autenticar no SUAP, o app abre o curso automaticamente.' }}
+                    Conclua o login; ao retornar, o app abre o curso selecionado.
                 </p>
             }
             <ion-button fill="clear" class="moodle-open-course__silent-back" (click)="cancelOpening()">

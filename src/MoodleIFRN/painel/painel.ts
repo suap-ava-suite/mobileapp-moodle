@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { CoreSharedModule } from '@/core/shared.module';
 import { CoreNavigator } from '@services/navigator';
 import { CoreLang } from '@services/lang';
@@ -27,6 +28,7 @@ export interface MoodleIfrnBridgeApi {
 export class PainelPage implements OnInit, OnDestroy {
 
     private readonly sanitizer = inject(DomSanitizer);
+    private readonly router = inject(Router);
     private readonly authService = inject(AuthService);
     private readonly painelAva = inject(PainelAvaService);
     private readonly moodleSite = inject(MoodleSiteService);
@@ -156,12 +158,12 @@ export class PainelPage implements OnInit, OnDestroy {
         }
 
         try {
-            await CoreNavigator.navigate('/login/moodle-open-course', {
-                // Abre a ponte como rota raiz para não ficar aguardando uma
-                // transição Ionic pendente do iframe do Painel.
-                reset: true,
-                animated: false,
-                params: {
+            // A ponte é aberta diretamente pelo Router: o navigateRoot do
+            // NavController pode ficar pendente quando a origem é o iframe
+            // do Painel e impedir que o próprio fluxo OAuth comece.
+            await this.router.navigate(['/login/moodle-open-course'], {
+                replaceUrl: true,
+                queryParams: {
                     courseId: id,
                     courseName: courseName || '',
                     siteUrl: target,

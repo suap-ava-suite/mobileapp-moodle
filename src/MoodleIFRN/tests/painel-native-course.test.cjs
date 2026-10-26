@@ -16,6 +16,8 @@ function setup(open = async () => 'opened') {
     const calls = [];
     const navigation = [];
     const errors = [];
+    const routerToken = {};
+    const router = { navigate: async (...args) => navigation.push(args) };
     const win = { location: { origin: 'http://localhost' }, addEventListener() {}, removeEventListener() {} };
     const service = { ensureSessionAndOpenCourse: async (...args) => {
         calls.push(args);
@@ -23,7 +25,8 @@ function setup(open = async () => 'opened') {
     } };
     const { PainelPage } = load('src/MoodleIFRN/painel/painel.ts', {
         '@angular/core': { Component: () => c => c, ViewChild: () => () => {},
-            inject: id => id === token ? service : { stopProfileRefresh() {} } },
+            inject: id => id === token ? service : id === routerToken ? router : { stopProfileRefresh() {} } },
+        '@angular/router': { Router: routerToken },
         '@/MoodleIFRN/services_mobile/moodle-site.service': { MoodleSiteService: token },
         '../mobilemoodle/core_mobile/course-target': load('src/MoodleIFRN/mobilemoodle/core_mobile/course-target.ts', {}),
         '@services/navigator': { CoreNavigator: { navigate: async (...args) => navigation.push(args) } },
@@ -46,14 +49,15 @@ test('panel opens native course directly and permits another click after complet
 test('no native session keeps the official connection route scoped to the target environment', async () => {
     const s = setup(async () => 'need-connect');
     await s.page.handleOpenCourse(7, 'Course', presencial);
-    assert.equal(s.navigation[0][0], '/login/moodle-open-course');
-    assert.equal(s.navigation[0][1].params.siteUrl, presencial);
-    assert.equal(s.navigation[0][1].params.identityOnly, false);
+    assert.equal(s.navigation[0][0][0], '/login/moodle-open-course');
+    assert.equal(s.navigation[0][1].queryParams.siteUrl, presencial);
+    assert.equal(s.navigation[0][1].queryParams.identityOnly, false);
+    assert.equal(s.navigation[0][1].replaceUrl, true);
 });
 test('read, permission and identity errors open recovery without automatic OAuth', async () => {
     const s = setup(async () => { throw new Error('Unavailable'); });
     await s.page.handleOpenCourse(7, 'Course', academic);
-    assert.equal(s.navigation[0][1].params.identityOnly, true);
+    assert.equal(s.navigation[0][1].queryParams.identityOnly, true);
     assert.ok(s.service.lastError);
 });
 test('duplicate bridge messages cannot replace an in-progress course or environment', async () => {
