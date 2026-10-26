@@ -16,10 +16,12 @@ import { Component, OnDestroy, inject } from '@angular/core';
 import { CoreSharedModule } from '@/core/shared.module';
 import {
     IFRN_MOODLE_PRESENCIAL_URL,
+    COURSE_OAUTH_EXTERNAL_FALLBACK_EVENT,
     MoodleSiteService,
     resolveMoodleSiteUrl,
 } from '@/MoodleIFRN/services_mobile/moodle-site.service';
 import { CoreNavigator } from '@services/navigator';
+import { CoreEvents, CoreEventObserver } from '@static/events';
 import { CoreAlerts } from '@services/overlays/alerts';
 import { CorePlatform } from '@services/platform';
 
@@ -30,7 +32,7 @@ type OpenCoursePhase = 'loading' | 'need-connect' | 'waiting-browser' | 'error';
  * Ponte mínima IFRN → Moodle Mobile nativo.
  *
  * Com sessão Moodle válida e correspondente: abre o curso em silêncio.
- * Sem sessão reutilizável: oferece a conexão oficial, sem abrir o navegador automaticamente.
+ * Sem sessão reutilizável: autentica no IAB do app e retoma o curso pelo callback oficial.
  *
  * Rota: /login/moodle-open-course (intermediária; sai com reset ao abrir).
  */
@@ -59,7 +61,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
 
     /**
      * loading = spinner “Abrindo curso…”
-     * waiting-browser = OAuth no navegador externo
+     * waiting-browser = OAuth no IAB (SUAP visível apenas quando exige interação)
      * error = UI de recuperação
      */
     phase: OpenCoursePhase = 'loading';
@@ -68,10 +70,37 @@ export class MoodleOpenCoursePage implements OnDestroy {
     private initStarted = false;
     private entryVersion = 0;
     private browserWaitTimer?: ReturnType<typeof setTimeout>;
+    private browserExitObserver?: CoreEventObserver;
+    private browserFallbackObserver?: CoreEventObserver;
+    externalBrowserFallback = false;
+
+    /**
+     * Algumas navegações vindas do iframe do Painel montam a rota sem repassar
+     * o lifecycle Ionic. Inicia a mesma entrada como fallback após o primeiro
+     * ciclo Angular; se o lifecycle normal rodar antes, entryVersion evita
+     * executar o fluxo duas vezes.
+     */
+    ngOnInit(): void {
+        queueMicrotask(() => {
+            if (this.entryVersion === 0) {
+                void this.ionViewWillEnter();
+            }
+        });
+    }
 
     private clearBrowserWait(): void {
         clearTimeout(this.browserWaitTimer);
         this.browserWaitTimer = undefined;
+    }
+
+    private clearBrowserExitObserver(): void {
+        this.browserExitObserver?.off();
+        this.browserExitObserver = undefined;
+    }
+
+    private clearBrowserFallbackObserver(): void {
+        this.browserFallbackObserver?.off();
+        this.browserFallbackObserver = undefined;
     }
 
     ionViewWillLeave(): void {
@@ -79,32 +108,33 @@ export class MoodleOpenCoursePage implements OnDestroy {
         // disparar OAuth ou recolocar a UI de erro depois em outra tela.
         this.entryVersion++;
         this.clearBrowserWait();
+        this.clearBrowserExitObserver();
+        this.clearBrowserFallbackObserver();
     }
 
     ngOnDestroy(): void {
         this.entryVersion++;
         this.clearBrowserWait();
+        this.clearBrowserExitObserver();
+        this.clearBrowserFallbackObserver();
     }
 
     get accountIssue(): MoodleSiteService['lastCourseAccessIssue'] {
         return this.moodleSite.lastCourseAccessIssue;
     }
 
-    /** Abre a saída web no mesmo navegador externo usado pelo OAuth Moodle. */
+    /** Abre a saída SUAP dentro do InAppBrowser compartilhado com o Painel. */
     changeMoodleAccount(): void {
         if (this.loading || !this.courseId) {
             return;
         }
 
-        // O logout local do CoreSites não remove os cookies do navegador.
-        // Usa o mesmo endpoint auth_suap/logout.php já usado pelo Sair do painel.
-        const origin = new URL(resolveMoodleSiteUrl(this.moodleSiteUrl)).origin;
         this.moodleSite.hideNativeCourseHandoff();
         this.accountSwitchStarted = true;
-        window.open(`${origin}/auth/suap/logout.php`, '_system');
+        this.moodleSite.openCourseAccountLogout(this.moodleSiteUrl);
     }
 
-    /** Após confirmar a saída no navegador, reinicia o OAuth oficial do curso. */
+    /** Após confirmar a saída SUAP no IAB, reinicia o OAuth oficial do curso. */
     async continueAccountSwitch(): Promise<void> {
         if (this.loading || !this.accountSwitchStarted || !this.courseId) {
             return;
@@ -253,7 +283,9 @@ export class MoodleOpenCoursePage implements OnDestroy {
             return;
         }
 
-        await this.tryOpenOrPromptConnect();
+        // Course tap already expresses intent. If its Moodle session is missing,
+        // authenticate inside the Panel's SUAP-capable IAB and resume this course.
+        await this.tryOpenOrPromptConnect(true);
     }
 
     cancelOpening(): void {
@@ -286,6 +318,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
 
         this.formError = '';
         this.phase = 'loading';
+        this.externalBrowserFallback = false;
         this.moodleSite.lastError = '';
         this.moodleSite.setIdentityMismatchPending(false);
         this.loading = true;
@@ -359,11 +392,9 @@ export class MoodleOpenCoursePage implements OnDestroy {
         }
     }
 
-    /**
-     * “Tentar novamente” revalida a sessão, sem iniciar OAuth automaticamente.
-     */
+    /** Revalida a sessão e reinicia o OAuth oficial no IAB se ainda for necessário. */
     async retryConnect(): Promise<void> {
-        await this.tryOpenOrPromptConnect();
+        await this.tryOpenOrPromptConnect(true);
     }
 
     /** Revalida a sessão para não abrir OAuth se outra tentativa já a recuperou. */
@@ -390,6 +421,38 @@ export class MoodleOpenCoursePage implements OnDestroy {
                 siteUrl: this.moodleSiteUrl,
             });
 
+            this.clearBrowserFallbackObserver();
+            this.browserFallbackObserver = CoreEvents.on(COURSE_OAUTH_EXTERNAL_FALLBACK_EVENT, rawData => {
+                const data = rawData as unknown as { opened?: boolean; message?: string };
+                if (entry !== this.entryVersion || (this.phase !== 'loading' && this.phase !== 'waiting-browser')) {
+                    return;
+                }
+                if (data?.opened !== true) {
+                    this.clearBrowserWait();
+                    this.clearBrowserExitObserver();
+                    this.clearBrowserFallbackObserver();
+                    this.moodleSite.releaseOAuthBrowserWait();
+                    this.loading = false;
+                    this.revealBridgeError(data?.message || 'Não foi possível abrir a autenticação do curso.');
+
+                    return;
+                }
+
+                this.externalBrowserFallback = true;
+                this.loading = false;
+                this.phase = 'waiting-browser';
+                this.clearBrowserWait();
+                this.browserWaitTimer = setTimeout(() => {
+                    if (entry !== this.entryVersion || this.phase !== 'waiting-browser') {
+                        return;
+                    }
+                    this.moodleSite.releaseOAuthBrowserWait();
+                    this.clearBrowserExitObserver();
+                    this.clearBrowserFallbackObserver();
+                    this.revealBridgeError(this.moodleSite.lastError || 'A autenticação não retornou do navegador. Tente novamente.');
+                }, 180000);
+            });
+
             const oauthResult = await this.moodleSite.startSuapOAuthLogin({
                 resumeAfterSwitch: options.resumeAfterSwitch === true,
             });
@@ -409,19 +472,43 @@ export class MoodleOpenCoursePage implements OnDestroy {
                 return;
             }
 
-            // Browser externo aberto: some o overlay para a ponte orientar o usuário.
+            // InAppBrowser oculto nas etapas intermediárias; SUAP aparece se pedir ação.
             this.moodleSite.hideNativeCourseHandoff();
             this.phase = 'waiting-browser';
+            this.clearBrowserExitObserver();
+            this.browserExitObserver = CoreEvents.on(CoreEvents.IAB_EXIT, () => {
+                window.setTimeout(() => {
+                    if (entry !== this.entryVersion || this.phase !== 'waiting-browser') {
+                        return;
+                    }
+                    if (this.moodleSite.hasCourseOAuthCallbackReceived()) {
+                        this.clearBrowserExitObserver();
+
+                        return;
+                    }
+                    if (this.moodleSite.hasCourseOAuthExternalFallbackStarted()) {
+                        this.clearBrowserExitObserver();
+
+                        return;
+                    }
+                    this.clearBrowserWait();
+                    this.moodleSite.releaseOAuthBrowserWait();
+                    this.loading = false;
+                    this.revealBridgeError(this.moodleSite.lastError || 'Autenticação SUAP cancelada.');
+                    this.clearBrowserExitObserver();
+                }, 500);
+            });
             this.clearBrowserWait();
             this.browserWaitTimer = setTimeout(() => {
                 if (entry !== this.entryVersion || this.phase !== 'waiting-browser') {
                     return;
                 }
                 this.moodleSite.releaseOAuthBrowserWait();
-                this.revealBridgeError('O navegador não retornou a autenticação do Moodle. '
-                    + 'Conclua o login SUAP e autorize voltar ao aplicativo. '
-                    + 'Se a página não carregar, tente novamente ou volte ao Painel.');
-            }, 180000);
+                this.clearBrowserExitObserver();
+                this.clearBrowserFallbackObserver();
+                this.revealBridgeError(this.moodleSite.lastError || 'O Moodle não concluiu a autenticação do curso. '
+                    + 'Tente novamente. Se o problema continuar, o login deste ambiente precisa ser verificado.');
+            }, 15000);
         } catch (error) {
             if (entry !== this.entryVersion) {
                 return;
@@ -455,6 +542,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
 
     private revealBridgeError(message: string): void {
         this.clearBrowserWait();
+        this.clearBrowserFallbackObserver();
         this.formError = message;
         this.phase = 'error';
         this.moodleSite.hideNativeCourseHandoff();

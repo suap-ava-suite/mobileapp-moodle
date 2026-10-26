@@ -23,11 +23,38 @@ const PROJECT_ROOT = path.resolve(SCRIPT_DIR, '..', '..');
 const FILES = {
     loginModule: path.join(PROJECT_ROOT, 'src/core/features/login/login.module.ts'),
     mainMenuModule: path.join(PROJECT_ROOT, 'src/core/features/mainmenu/mainmenu.module.ts'),
+    courseIndex: path.join(PROJECT_ROOT, 'src/core/features/course/pages/index/index.ts'),
     angularJson: path.join(PROJECT_ROOT, 'angular.json'),
     gulpfile: path.join(PROJECT_ROOT, 'gulpfile.js'),
     packageJson: path.join(PROJECT_ROOT, 'package.json'),
     indexHtml: path.join(PROJECT_ROOT, 'src/index.html'),
 };
+
+/**
+ * Keep native course tabs under the activated course route. Router.url can
+ * still point at the previous IFRN bridge during Android WebView navigation.
+ */
+function patchCourseIndexRoute() {
+    let content = readFile(FILES.courseIndex);
+    const currentRouteAssignment = 'this.currentPagePath = CoreNavigator.getCurrentPath();';
+    const patchedRouteAssignment = `// Router.url can still point to the previous bridge while this page is
+        // being activated. Build tab URLs from this course's activated route so
+        // slower Android WebViews don't create tabs under /login/moodle-open-course.
+        this.currentPagePath = path;`;
+
+    if (content.includes(patchedRouteAssignment)) {
+        console.log('• core course index já usa a rota ativada');
+        return;
+    }
+
+    if (!content.includes(currentRouteAssignment)) {
+        throw new Error('Não foi possível localizar a atribuição currentPagePath no índice do curso Moodle.');
+    }
+
+    content = content.replace(currentRouteAssignment, patchedRouteAssignment);
+    writeFile(FILES.courseIndex, content);
+    console.log('✔ core course index — abas usam a rota ativada do curso');
+}
 
 const MARKER = {
     loginRoutesStart: '// BEGIN MoodleIFRN login routes',
@@ -431,6 +458,7 @@ function main() {
     patchGulpfile();
     patchPackageScripts();
     patchIndexEarlyHandoff();
+    patchCourseIndexRoute();
     const menuChanged = patchCourseMenu(PROJECT_ROOT);
     patchLoadingAnimation(PROJECT_ROOT);
     console.log(menuChanged ? '✔ Menu IFRN registrado no curso nativo' : '• Menu IFRN do curso já estava atualizado');

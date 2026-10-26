@@ -157,6 +157,10 @@ export class PainelPage implements OnInit, OnDestroy {
 
         try {
             await CoreNavigator.navigate('/login/moodle-open-course', {
+                // Abre a ponte como rota raiz para não ficar aguardando uma
+                // transição Ionic pendente do iframe do Painel.
+                reset: true,
+                animated: false,
                 params: {
                     courseId: id,
                     courseName: courseName || '',

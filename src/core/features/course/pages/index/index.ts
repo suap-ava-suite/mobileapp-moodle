@@ -153,7 +153,10 @@ export default class CoreCourseIndexPage implements OnInit, OnDestroy {
 
         this.modNavOptions = CoreNavigator.getRouteParam<CoreNavigationOptions>('modNavOptions');
         this.openModule = CoreNavigator.getRouteBooleanParam('openModule') ?? true; // If false, just scroll to module.
-        this.currentPagePath = CoreNavigator.getCurrentPath();
+        // Router.url can still point to the previous bridge while this page is
+        // being activated. Build tab URLs from this course's activated route so
+        // slower Android WebViews don't create tabs under /login/moodle-open-course.
+        this.currentPagePath = path;
 
         if (!CorePlatform.isMobile()) {
             // Remove what's after course/courseId in the path using a regex.

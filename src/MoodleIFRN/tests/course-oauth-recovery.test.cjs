@@ -22,6 +22,7 @@ test('selects SUAP by name, retaining the ID advertised by each environment', ()
 });
 function setup() {
     const timers = new Map(); let sequence = 0; let browserCalls = 0; let released = 0;
+    const eventHandlers = new Map(); let externalFallbackStarted = false;
     let pending = { courseId: 2836, siteUrl: 'https://presencial.ava.ifrn.edu.br' };
     const service = {
         ensureLoginObserver() {}, showNativeCourseHandoff() {}, hideNativeCourseHandoff() {},
@@ -34,6 +35,8 @@ function setup() {
         ensureSessionAndOpenCourse: async () => 'need-connect',
         startSuapOAuthLogin: async () => { browserCalls++; return 'opened'; },
         releaseOAuthBrowserWait: () => { released++; },
+        hasCourseOAuthCallbackReceived: () => false,
+        hasCourseOAuthExternalFallbackStarted: () => externalFallbackStarted,
         dismissCourseRecovery: () => { pending = null; },
     };
     const navigator = {
@@ -44,41 +47,77 @@ function setup() {
     const { MoodleOpenCoursePage } = load('src/MoodleIFRN/moodle-open-course/moodle-open-course.ts', {
         '@angular/core': { Component: () => c => c, inject: () => service },
         '@/MoodleIFRN/services_mobile/moodle-site.service': {
+            COURSE_OAUTH_EXTERNAL_FALLBACK_EVENT: 'ifrn_course_oauth_external_fallback',
             resolveMoodleSiteUrl: url => url || 'https://presencial.ava.ifrn.edu.br',
         },
         '@services/navigator': { CoreNavigator: navigator },
+        '@static/events': { CoreEvents: { IAB_EXIT: 'iab-exit', on: (event, callback) => {
+            eventHandlers.set(event, callback);
+            return { off() {} };
+        } } },
         '@services/platform': { CorePlatform: { ready: async () => {} } },
         '@services/overlays/alerts': { CoreAlerts: { showError: async () => {} } },
     }, {
         setTimeout: (fn, ms) => { const id = ++sequence; timers.set(id, { fn, ms }); return id; },
         clearTimeout: id => timers.delete(id),
+        window: { setTimeout: (fn, ms) => { const id = ++sequence; timers.set(id, { fn, ms }); return id; } },
     });
     return { page: new MoodleOpenCoursePage(), service, timers, navigator,
         get browserCalls() { return browserCalls; }, get released() { return released; },
+        emitIabExit() { eventHandlers.get('iab-exit')?.(); },
+        emitFallback(data) {
+            externalFallbackStarted = data.opened === true;
+            eventHandlers.get('ifrn_course_oauth_external_fallback')?.(data);
+        },
         get pending() { return pending; } };
 }
 test('missing browser return ends waiting and permits a new official attempt for the same environment', async () => {
     const s = setup(); await s.page.ionViewWillEnter();
-    assert.equal(s.browserCalls, 0);
-    assert.equal(s.page.phase, 'need-connect');
-    await s.page.connectMoodle();
     assert.equal(s.page.phase, 'waiting-browser'); assert.equal(s.page.loading, false);
     assert.equal(s.browserCalls, 1);
-    const timer = [...s.timers.values()][0]; assert.equal(timer.ms, 180000); timer.fn();
+    const timer = [...s.timers.values()][0]; assert.equal(timer.ms, 15000); timer.fn();
     assert.equal(s.page.phase, 'error'); assert.equal(s.released, 1);
     assert.equal(s.pending.courseId, 2836); assert.equal(s.pending.siteUrl, 'https://presencial.ava.ifrn.edu.br');
-    await s.page.retryConnect(); assert.equal(s.browserCalls, 1); assert.equal(s.page.phase, 'need-connect');
-    await s.page.connectMoodle(); assert.equal(s.browserCalls, 2); assert.equal(s.page.phase, 'waiting-browser');
+    await s.page.retryConnect(); assert.equal(s.browserCalls, 2); assert.equal(s.page.phase, 'waiting-browser');
+});
+test('embedded OAuth failure switches to the official browser and keeps the selected course waiting', async () => {
+    const s = setup(); await s.page.ionViewWillEnter();
+    s.emitFallback({ opened: true });
+    assert.equal(s.page.phase, 'waiting-browser');
+    assert.equal(s.page.loading, false);
+    assert.equal(s.page.externalBrowserFallback, true);
+    assert.equal([...s.timers.values()][0].ms, 180000);
+
+    s.emitIabExit();
+    const exitTimerId = [...s.timers.entries()].find(([, timer]) => timer.ms === 500)[0];
+    const exitTimer = s.timers.get(exitTimerId);
+    s.timers.delete(exitTimerId);
+    exitTimer.fn();
+    assert.equal(s.page.phase, 'waiting-browser');
+    assert.equal(s.released, 0);
+    assert.equal(s.pending.courseId, 2836);
+});
+test('InAppBrowser load failure closes the loading state and offers course retry', async () => {
+    const s = setup(); await s.page.ionViewWillEnter();
+    s.service.lastError = 'Não foi possível carregar a autenticação SUAP.';
+    s.emitIabExit();
+    const exitTimerId = [...s.timers.entries()].find(([, timer]) => timer.ms === 500)[0];
+    const exitTimer = s.timers.get(exitTimerId);
+    s.timers.delete(exitTimerId);
+    exitTimer.fn();
+    assert.equal(s.page.phase, 'error');
+    assert.equal(s.page.loading, false);
+    assert.match(s.page.formError, /autenticação SUAP/);
+    assert.equal(s.timers.size, 0);
 });
 test('leaving, cancelling and destroying the cached bridge remove its browser timer', async () => {
     for (const action of ['ionViewWillLeave', 'cancelOpening', 'ngOnDestroy']) {
-        const s = setup(); await s.page.ionViewWillEnter(); await s.page.connectMoodle(); assert.equal(s.timers.size, 1);
+        const s = setup(); await s.page.ionViewWillEnter(); assert.equal(s.timers.size, 1);
         s.page[action](); assert.equal(s.timers.size, 0); assert.equal(s.released, 0);
     }
 });
 test('official callback resuming a course does not start another browser or leave a timeout behind', async () => {
     const s = setup(); await s.page.ionViewWillEnter();
-    await s.page.connectMoodle();
     s.page.ionViewWillLeave(); s.service.resumePendingOAuthCourse = async () => true;
     await s.page.ionViewWillEnter(); assert.equal(s.browserCalls, 1); assert.equal(s.timers.size, 0);
 });
@@ -89,18 +128,19 @@ test('leaving while session lookup is pending cannot open the browser afterwards
     let finish;
     s.service.ensureSessionAndOpenCourse = () => new Promise(resolve => { finish = resolve; });
     const pending = s.page.tryOpenOrPromptConnect(true);
+    const browserCalls = s.browserCalls;
     s.page.ionViewWillLeave();
     finish('need-connect');
     await pending;
-    assert.equal(s.browserCalls, 0);
+    assert.equal(s.browserCalls, browserCalls);
     assert.equal(s.timers.size, 0);
 });
 
 test('connect action reuses a session recovered since showing the connection prompt', async () => {
     const s = setup();
-    await s.page.ionViewWillEnter();
-    assert.equal(s.page.phase, 'need-connect');
     s.service.ensureSessionAndOpenCourse = async () => 'opened';
+    await s.page.ionViewWillEnter();
+    assert.equal(s.page.phase, 'loading');
     await s.page.connectMoodle();
     assert.equal(s.browserCalls, 0);
 });
@@ -109,14 +149,15 @@ test('a stale persisted account-switch flag cannot open the browser on another v
     const s = setup();
     s.service.shouldResumeOAuthAfterSiteSwitch = () => true;
     await s.page.ionViewWillEnter();
-    assert.equal(s.browserCalls, 0);
-    assert.equal(s.page.phase, 'need-connect');
+    assert.equal(s.browserCalls, 1);
+    assert.equal(s.page.phase, 'waiting-browser');
 });
 
 test('the account-switch redirect cannot start OAuth twice when the cached bridge reenters', async () => {
     const s = setup();
     let consumed = false;
-    s.navigator.getRouteBooleanParam = key => key === 'startOAuth';
+    let firstEntry = true;
+    s.navigator.getRouteBooleanParam = key => key === 'startOAuth' && firstEntry;
     s.service.consumeOAuthResume = () => {
         if (consumed) return false;
         consumed = true;
@@ -125,9 +166,11 @@ test('the account-switch redirect cannot start OAuth twice when the cached bridg
     await s.page.ionViewWillEnter();
     assert.equal(s.browserCalls, 1);
     s.page.ionViewWillLeave();
+    firstEntry = false;
+    s.service.resumePendingOAuthCourse = async () => true;
     await s.page.ionViewWillEnter();
     assert.equal(s.browserCalls, 1);
-    assert.equal(s.page.phase, 'need-connect');
+    assert.equal(s.page.phase, 'loading');
 });
 
 function serviceWithStorage(entries) {

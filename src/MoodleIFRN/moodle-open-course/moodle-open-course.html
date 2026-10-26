@@ -9,11 +9,15 @@
                 <img class="moodle-open-course__logo" src="mobilemoodle/static/theme/ifrn/img/splash-logo.png" alt="Painel AVA">
             </div>
             <p class="moodle-open-course__text">
-                {{ phase === 'waiting-browser' ? 'Conclua o login no navegador' : 'Carregando curso...' }}
+                {{ phase === 'waiting-browser'
+                    ? (externalBrowserFallback ? 'Conclua o login no navegador' : 'Conclua o login no SUAP')
+                    : 'Carregando curso...' }}
             </p>
             @if (phase === 'waiting-browser') {
                 <p class="moodle-open-course__silent-hint">
-                    Após autenticar no SUAP, o app abre o curso automaticamente.
+                    {{ externalBrowserFallback
+                        ? 'Ao concluir a autenticação, volte ao app para abrir o curso.'
+                        : 'Após autenticar no SUAP, o app abre o curso automaticamente.' }}
                 </p>
             }
             <ion-button fill="clear" class="moodle-open-course__silent-back" (click)="cancelOpening()">
@@ -40,7 +44,7 @@
                 @if (phase === 'need-connect') {
                     <p class="moodle-open-course__account-help">
                         Conecte sua conta a este ambiente para abrir o curso no aplicativo.
-                        Essa etapa usa o navegador. Depois, o app reutiliza a sessão enquanto ela estiver válida.
+                        O app reutiliza sua sessão SUAP no ambiente Moodle e retorna ao curso após autenticar.
                     </p>
                 }
 
@@ -58,8 +62,8 @@
                         <dd>{{ issue.actualLogin || 'Não identificada' }}</dd>
                     </dl>
                     <p class="moodle-open-course__account-help">
-                        A conta conectada ao SUAP no navegador é diferente da utilizada no Painel. Para continuar,
-                        saia dessa conta no navegador e entre com a mesma matrícula do Painel.
+                        A conta conectada ao SUAP é diferente da utilizada no Painel. Para continuar,
+                        saia dessa conta na janela do app e entre com a mesma matrícula do Painel.
                     </p>
                 }
 
@@ -67,7 +71,7 @@
                     @if (accountIssue) {
                         @if (accountSwitchStarted) {
                             <p class="moodle-open-course__account-help" role="status" aria-live="polite">
-                                No navegador, confirme a saída da conta atual. Depois volte ao app e toque em
+                                Na janela do app, confirme a saída da conta atual. Depois volte e toque em
                                 “Continuar com a matrícula do Painel”. No próximo login, use a matrícula
                                 {{ accountIssue?.expectedLogin }}.
                             </p>
