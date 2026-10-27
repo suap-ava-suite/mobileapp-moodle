@@ -80,6 +80,10 @@ const SUAP_ORIGIN = 'https://suap.ifrn.edu.br';
 
 /** Opções do IAB: sem barra de URL; login SUAP continua usável quando exibido. */
 const PAINEL_IAB_CHROME = {
+    // O plugin Android preserva beforeload entre janelas. O SSO dos cursos usa
+    // "get"; o Painel precisa desativá-lo explicitamente para não parar redirects.
+    // A tipagem do wrapper omite "no", aceito pela implementação nativa.
+    beforeload: 'no' as NonNullable<Parameters<typeof CoreOpener.openInApp>[1]>['beforeload'],
     location: 'no' as const,
     hidden: 'yes' as const,
     footer: 'no' as const,

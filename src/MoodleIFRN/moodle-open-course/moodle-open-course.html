@@ -10,12 +10,12 @@
             </div>
             <p class="moodle-open-course__text">
                 {{ phase === 'waiting-browser'
-                    ? 'Aguardando autenticação SUAP...'
+                    ? 'Conectando ao curso...'
                     : 'Carregando curso...' }}
             </p>
             @if (phase === 'waiting-browser') {
                 <p class="moodle-open-course__silent-hint">
-                    Conclua o login; ao retornar, o app abre o curso selecionado.
+                    Reutilizando sua sessão SUAP, sem sair do aplicativo.
                 </p>
             }
             <ion-button fill="clear" class="moodle-open-course__silent-back" (click)="cancelOpening()">
@@ -60,34 +60,13 @@
                         <dd>{{ issue.actualLogin || 'Não identificada' }}</dd>
                     </dl>
                     <p class="moodle-open-course__account-help">
-                        A conta conectada ao SUAP é diferente da utilizada no Painel. Para continuar,
-                        saia dessa conta na janela do app e entre com a mesma matrícula do Painel.
+                        A conta deste ambiente é diferente da utilizada no Painel.
+                        Renove o acesso pelo login principal com a matrícula do Painel.
                     </p>
                 }
 
                 <div class="moodle-open-course__actions">
                     @if (accountIssue) {
-                        @if (accountSwitchStarted) {
-                            <p class="moodle-open-course__account-help" role="status" aria-live="polite">
-                                Na janela do app, confirme a saída da conta atual. Depois volte e toque em
-                                “Continuar com a matrícula do Painel”. No próximo login, use a matrícula
-                                {{ accountIssue?.expectedLogin }}.
-                            </p>
-                            <ion-button
-                                expand="block"
-                                class="moodle-open-course__button"
-                                (click)="continueAccountSwitch()"
-                                [disabled]="loading || !courseId">
-                                Continuar com a matrícula do Painel
-                            </ion-button>
-                        }
-                        <ion-button
-                            expand="block"
-                            class="moodle-open-course__button"
-                            (click)="changeMoodleAccount()"
-                            [disabled]="loading || !courseId">
-                            Entrar com outra conta SUAP
-                        </ion-button>
                         <ion-button
                             expand="block"
                             fill="outline"
@@ -119,6 +98,12 @@
                     </ion-button>
                     }
 
+                    @if (!accountIssue && phase === 'error') {
+                        <ion-button expand="block" fill="outline"
+                            class="moodle-open-course__button" (click)="returnToIfrnLogin()" [disabled]="loading">
+                            Renovar acesso no login principal
+                        </ion-button>
+                    }
                     <ion-button
                         expand="block"
                         fill="outline"

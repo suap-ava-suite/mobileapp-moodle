@@ -2983,20 +2983,6 @@
   App.templatesRoot = document.getElementById("page-templates");
   App.dashboardCache = null;
   function logout() {
-    const lastMoodleSite = sessionStorage.getItem("ifrn_moodle_last_site_url");
-    let webLogoutUrl = null;
-    if (lastMoodleSite) {
-      try {
-        const origin = new URL(lastMoodleSite).origin;
-        if (origin.startsWith("https://")) {
-          webLogoutUrl = `${origin}/auth/suap/logout.php`;
-        }
-      } catch {
-      }
-    }
-    if (webLogoutUrl) {
-      window.open(webLogoutUrl, "_system");
-    }
     if (window.MobileMoodleApi?.clearToken) {
       window.MobileMoodleApi.clearToken();
     }

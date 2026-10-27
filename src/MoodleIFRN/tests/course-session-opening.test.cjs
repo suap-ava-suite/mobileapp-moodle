@@ -3,6 +3,10 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
 const test = require('node:test');
+const ssoModule = { exports: {} };
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/MoodleIFRN/services_mobile/course-sso-browser.ts', 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText, { exports: ssoModule.exports, URL, setTimeout, clearTimeout });
 
 class FakeCourseOpeningAttempt {
     cancel() {}
@@ -29,6 +33,7 @@ function loadService() {
         close: () => browserClosed = true,
         show: () => browserShown = true,
         hide: () => browserHidden = true,
+        _loadAfterBeforeload() {},
         executeScript: async () => browserScriptResult,
         on: event => ({ subscribe: callback => {
             subscriptions.set(event, callback);
@@ -36,13 +41,17 @@ function loadService() {
         } }),
     };
     const mocks = {
+        './course-sso-browser': ssoModule.exports,
+        '@singletons': { InAppBrowser: { create: (url, target, options) => {
+            assert.equal(target, '_blank'); browserUrl = url; browserOptions = options; return browser;
+        } } },
         '@angular/core': { Injectable: injectable, inject: () => ({}) },
         '@angular/router': { NavigationEnd: class {}, NavigationError: class {}, Router: class {} },
         '../navigation/course-opening-attempt': { CourseOpeningAttempt: FakeCourseOpeningAttempt },
         '@features/login/services/login-helper': { CoreLoginHelper: {
             prepareForSSOLogin: async (...args) => {
                 assert.equal(args[0], 'https://academico.ava.ifrn.edu.br');
-                assert.equal(args[4].oauthsso, '1');
+                assert.equal(args[4], undefined);
                 return 'https://academico.ava.ifrn.edu.br/admin/tool/mobile/launch.php';
             },
             openBrowserForOAuthLogin: async () => { externalFallbackCalls++; return true; },
@@ -129,15 +138,36 @@ test('course tabs use the activated course route, not the previous bridge URL', 
     assert.doesNotMatch(source, /this\.currentPagePath\s*=\s*CoreNavigator\.getCurrentPath\(\)/);
 });
 
-test('course OAuth uses Moodle browser-window SSO and resumes the selected course natively', () => {
+test('course OAuth stays hidden inside the app and resumes the selected course natively', () => {
     const page = fs.readFileSync('src/MoodleIFRN/moodle-open-course/moodle-open-course.ts', 'utf8');
     const service = fs.readFileSync('src/MoodleIFRN/services_mobile/moodle-site.service.ts', 'utf8');
 
     assert.match(page, /await this\.tryOpenOrPromptConnect\(true\)/);
-    assert.match(service, /CoreLoginHelper\.openBrowserForOAuthLogin\(/);
+    assert.match(service, /CoreLoginHelper\.prepareForSSOLogin\(/);
     assert.match(service, /isSitePath:\s*false/);
     assert.match(service, /path:\s*'\/login\/moodle-open-course'/);
-    assert.doesNotMatch(service, /openCourseOAuthInApp/);
+    assert.match(service, /openCourseOAuthInApp/);
+    assert.doesNotMatch(service, /CoreLoginHelper\.openBrowserForOAuthLogin\(/);
+    assert.match(service, /hidden:\s*'yes'/);
+});
+
+test('native course SSO preserves cookies, stays hidden and delegates token validation to Moodle', async () => {
+    const { MoodleSiteService, state } = loadService();
+    const service = Object.create(MoodleSiteService.prototype);
+    const pending = service.openCourseOAuthInApp({siteUrl:'https://academico.ava.ifrn.edu.br',config:{}});
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(state().browserOptions.hidden,'yes');
+    assert.equal(state().browserOptions.clearcache,'no');
+    assert.equal(state().browserOptions.clearsessioncache,'no');
+    assert.equal(state().browserOptions.beforeload,'get');
+    assert.match(state().browserUrl,/auth\/suap\/login\.php\?next=/);
+    state().subscriptions.get('beforeload')({url:'moodlemobile://token=official-callback'});
+    await pending;
+    assert.equal(state().callbackUrl,'moodlemobile://token=official-callback');
+    assert.equal(state().externalFallbackCalls,0);
+    assert.equal(state().browserShown,false);
+    assert.equal(state().browserClosed,true);
+    assert.equal(service.oauthCallbackReceived,true);
 });
 
 test('course tap resets the Ionic login route before entering the OAuth bridge', () => {

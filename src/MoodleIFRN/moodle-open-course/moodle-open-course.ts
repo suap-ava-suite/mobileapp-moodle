@@ -106,9 +106,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
             return;
         }
 
-        this.moodleSite.hideNativeCourseHandoff();
-        this.accountSwitchStarted = true;
-        this.moodleSite.openCourseAccountLogout(this.moodleSiteUrl);
+        void this.returnToIfrnLogin();
     }
 
     /** Após confirmar a saída SUAP no IAB, reinicia o OAuth oficial do curso. */
@@ -117,7 +115,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
             return;
         }
         this.accountSwitchStarted = false;
-        await this.startOAuthFlow();
+        await this.returnToIfrnLogin();
     }
 
     async returnToIfrnLogin(): Promise<void> {
@@ -432,8 +430,8 @@ export class MoodleOpenCoursePage implements OnDestroy {
                     return;
                 }
                 this.moodleSite.releaseOAuthBrowserWait();
-                this.revealBridgeError(this.moodleSite.lastError || 'O SUAP não concluiu a autenticação do curso. '
-                    + 'Tente novamente e conclua o login; o app retomará o curso selecionado.');
+                this.revealBridgeError(this.moodleSite.lastError || 'Não foi possível conectar o curso automaticamente. '
+                    + 'Tente novamente ou renove sua sessão no login principal.');
             }, 180000);
         } catch (error) {
             if (entry !== this.entryVersion) {

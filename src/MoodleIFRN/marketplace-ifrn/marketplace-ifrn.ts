@@ -8,6 +8,7 @@ import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.servic
 import { CoreLang } from '@services/lang';
 import { CorePlatform } from '@services/platform';
 import { CoreNavigator } from '@services/navigator';
+import { CoreOpener } from '@static/opener';
 import { SuapEntryService, SuapEntryAccountError } from '@/MoodleIFRN/services_mobile/suap-entry.service';
 
 @Component({
@@ -219,7 +220,9 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
             return;
         }
         this.accountSwitchStarted = true;
-        window.open('https://academico.ava.ifrn.edu.br/auth/suap/logout.php', '_system');
+        CoreOpener.openInApp('https://academico.ava.ifrn.edu.br/auth/suap/logout.php', {
+            location: 'no', clearcache: 'no', clearsessioncache: 'no',
+        });
     }
 
     /** Depois da saída na web, reinicia a entrada com a matrícula esperada. */

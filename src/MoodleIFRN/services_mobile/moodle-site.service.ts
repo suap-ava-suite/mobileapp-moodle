@@ -45,6 +45,8 @@ import { CourseOpeningAttempt } from '../navigation/course-opening-attempt';
 import { openNativeCourse } from '../navigation/open-native-course';
 import { selectSuapProvider } from './suap-provider';
 import type { InAppBrowserObject } from '@awesome-cordova-plugins/in-app-browser/ngx';
+import { InAppBrowser } from '@singletons';
+import { startCourseSsoBrowser } from './course-sso-browser';
 
 
 export const IFRN_MOODLE_PRESENCIAL_URL = 'https://presencial.ava.ifrn.edu.br';
@@ -516,6 +518,7 @@ export class MoodleSiteService {
 
     /** Troca o login do Painel por escolha explícita, mantendo os sites Moodle salvos. */
     async returnToIfrnLogin(): Promise<void> {
+        this.cancelCourseOAuthBrowser();
         const expectedLogin = this.describeExpectedIdentity().value;
         this.clearPendingOpenCourse();
         this.clearCourseOriginFlags();
@@ -539,7 +542,7 @@ export class MoodleSiteService {
 
     /**
      * True após mismatch de identidade (Caso B): a página NÃO deve auto-iniciar OAuth.
-     * O usuário toca em “Entrar com outra conta SUAP” conscientemente.
+     * A recuperação da identidade acontece pelo login principal.
      */
     identityMismatchPending = false;
 
@@ -576,6 +579,7 @@ export class MoodleSiteService {
     };
     private oauthPreparation?: Promise<'switched' | 'opened' | 'already-active'>;
     private courseOAuthBrowser?: InAppBrowserObject;
+    private cancelSilentCourseSso?: () => void;
     private courseOAuthBrowserSubscriptions: Array<{ unsubscribe: () => void }> = [];
     private cancelledCourseId?: number;
 
@@ -705,6 +709,8 @@ export class MoodleSiteService {
 
     /** Fecha somente o InAppBrowser de OAuth dos cursos e descarta o launch pendente. */
     cancelCourseOAuthBrowser(): void {
+        this.cancelSilentCourseSso?.();
+        this.cancelSilentCourseSso = undefined;
         const browser = this.courseOAuthBrowser;
         this.courseOAuthBrowser = undefined;
         this.courseOAuthBrowserSubscriptions.forEach(subscription => subscription.unsubscribe());
@@ -1186,8 +1192,8 @@ export class MoodleSiteService {
      * Pending (courseId/siteUrl/courseName) sobrevive ao OAuth em sessionStorage.
      *
      * Quando não há sessão correspondente, retorna `need-connect` sem iniciar o
-     * OAuth — a UI (moodle-open-course) mostra “Entrar com SUAP” e só então chama
-     * startSuapOAuthLogin(). Assim a segunda autenticação fica explícita.
+     * OAuth — a ponte inicia a conexão oculta usando os cookies do login principal,
+     * sem apresentar um segundo formulário de credenciais.
      */
     ensureSessionAndOpenCourse(
         courseId: number,
@@ -1897,7 +1903,7 @@ export class MoodleSiteService {
      * O fluxo do Painel permanece independente; somente os cursos usam este IAB.
      *
      * @returns `switched` se pediu switch-account e vai retomar o OAuth;
-     *          `opened` se o InAppBrowser foi aberto.
+     *          `opened` após o retorno SSO interno ser aceito pelo núcleo.
      */
     startSuapOAuthLogin(
         options: { resumeAfterSwitch?: boolean } = {},
@@ -2082,19 +2088,7 @@ export class MoodleSiteService {
             note: 'Login em tela interna; retorno pelo callback Moodle mobile validado pelo handler nativo',
         }));
 
-        // A documentação oficial do Moodle alerta que SSO por navegador
-        // embutido pode perder parâmetros em redirecionamentos HTTP. Use o
-        // fluxo padrão de browser-window; o passport retorna ao app e o curso
-        // continua sendo aberto pelas telas nativas do CoreSites.
-        const opened = await CoreLoginHelper.openBrowserForOAuthLogin(
-            siteCheck.siteUrl,
-            provider,
-            siteCheck.config?.launchurl,
-            redirectData,
-        );
-        if (!opened) {
-            throw new Error('Não foi possível iniciar o login SUAP para este curso.');
-        }
+        await this.openCourseOAuthInApp(siteCheck, redirectData);
 
         // eslint-disable-next-line no-console
         console.log(SITE_LOG, 'OAuth de curso no IAB iniciado', JSON.stringify({
@@ -2103,6 +2097,51 @@ export class MoodleSiteService {
         }));
 
         return 'opened';
+    }
+
+    /** Cursos reutilizam os cookies do login principal, sem exibir outra tela de login. */
+    private async openCourseOAuthInApp(
+        siteCheck: CoreSiteCheckResponse,
+        redirectData?: CoreRedirectPayload,
+    ): Promise<void> {
+        // auth_suap restaura `next`; misturar oauthsso do plugin OAuth2 com a URL
+        // alternativa auth_suap gerou um ciclo real de login no Presencial.
+        const launchUrl = await CoreLoginHelper.prepareForSSOLogin(siteCheck.siteUrl, undefined,
+            siteCheck.config?.launchurl, redirectData);
+        const login = new URL('auth/suap/login.php', `${siteCheck.siteUrl.replace(/\/$/, '')}/`);
+        login.searchParams.set('next', launchUrl);
+        const flow = startCourseSsoBrowser({
+            loginUrl: login.href,
+            launchUrl,
+            siteUrl: siteCheck.siteUrl,
+            // Instância isolada: o dispatcher global do IAB pode encaminhar esquemas a apps externos.
+            open: url => InAppBrowser.create(url, '_blank', {
+                hidden: 'yes', location: 'no', footer: 'no', toolbar: 'no',
+                clearcache: 'no', clearsessioncache: 'no', beforeload: 'get',
+                usewkwebview: 'yes',
+            }),
+            isToken: url => CoreCustomURLSchemes.isCustomURLToken(url),
+            acceptToken: async url => {
+                this.oauthCallbackReceived = true;
+                this.courseOAuthBrowser = undefined;
+                this.cancelSilentCourseSso = undefined;
+                // O núcleo continua validando passport, site e token; LOGIN valida a identidade.
+                await CoreCustomURLSchemes.handleCustomURL(url);
+            },
+        });
+        this.courseOAuthBrowser = flow.browser;
+        this.cancelSilentCourseSso = flow.cancel;
+        try {
+            await flow.completion;
+        } catch (error) {
+            await CoreConfig.delete(LOGIN_SSO_LAUNCH_DATA).catch(() => undefined);
+            throw error;
+        } finally {
+            if (this.courseOAuthBrowser === flow.browser) {
+                this.courseOAuthBrowser = undefined;
+                this.cancelSilentCourseSso = undefined;
+            }
+        }
     }
 
     /**
