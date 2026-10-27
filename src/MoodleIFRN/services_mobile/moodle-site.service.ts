@@ -2118,6 +2118,9 @@ export class MoodleSiteService {
             open: url => InAppBrowser.create(url, '_blank', {
                 hidden: 'yes', location: 'no', footer: 'no', toolbar: 'no',
                 clearcache: 'no', clearsessioncache: 'no', beforeload: 'get',
+                // Hook Android: mantém o UA normal do WebView só nesta janela.
+                // Evita sessões particionadas duplicadas no retorno OAuth do Moodle.
+                ...{ omitappuseragent: 'yes' },
                 usewkwebview: 'yes',
             }),
             isToken: url => CoreCustomURLSchemes.isCustomURLToken(url),

@@ -32,6 +32,25 @@ function setup(overrides = {}) {
 }
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
+test('retoma launch do curso ao receber retorno para raiz oficial do Painel, uma única vez', async () => {
+    const s=setup();
+    s.emit('beforeload','https://ava.ifrn.edu.br/');
+    assert.equal(s.resumed.length,1);
+    assert.match(s.resumed[0], /^https:\/\/presencial\.ava\.ifrn\.edu\.br\/admin\/tool\/mobile\/launch\.php/);
+    s.emit('beforeload','https://ava.ifrn.edu.br/');
+    await assert.rejects(s.completion,/não autorizado/);
+    assert.equal(s.resumed.length,1);
+});
+
+test('não navega por páginas arbitrárias do Painel como fallback do curso', async () => {
+    for (const url of ['https://ava.ifrn.edu.br/qualquer','http://ava.ifrn.edu.br/',
+        'https://ava.ifrn.edu.br/?next=outro']) {
+        const s=setup();s.emit('beforeload',url);
+        await assert.rejects(s.completion,/não autorizado/);
+        assert.equal(s.resumed.length,0);
+    }
+});
+
 test('interrompe ciclo mesmo com novos parâmetros OAuth sem limpar sessões', async () => {
     const s = setup();
     for (let i = 0; i < 5; i++) {

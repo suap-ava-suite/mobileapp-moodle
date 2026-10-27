@@ -72,6 +72,17 @@ export function startCourseSsoBrowser(options: CourseSsoBrowserOptions): {
         };
         subscriptions.push(browser.on('beforeload').subscribe(event => {
             if (settled || accepting || accept(event.url)) return;
+            // O auth_suap pode restaurar o Painel como destino de uma sessão anterior.
+            // Não carrega o Painel: retoma uma vez o launch da identidade/site pendentes.
+            try {
+                const destination = new URL(event.url);
+                if (!restoredLaunch && destination.pathname === '/' && !destination.search
+                        && ['https://ava.ifrn.edu.br', 'https://painel.ead.ifrn.edu.br'].includes(destination.origin)) {
+                    restoredLaunch = true;
+                    browser._loadAfterBeforeload(launch.href);
+                    return;
+                }
+            } catch { /* A validação de origem abaixo recusa URLs inválidas. */ }
             if (!allowed(event.url)) {
                 fail('O ambiente solicitou um destino de autenticação não autorizado.');
                 return;

@@ -160,6 +160,7 @@ test('native course SSO preserves cookies, stays hidden and delegates token vali
     assert.equal(state().browserOptions.clearcache,'no');
     assert.equal(state().browserOptions.clearsessioncache,'no');
     assert.equal(state().browserOptions.beforeload,'get');
+    assert.equal(state().browserOptions.omitappuseragent,'yes');
     assert.match(state().browserUrl,/auth\/suap\/login\.php\?next=/);
     state().subscriptions.get('beforeload')({url:'moodlemobile://token=official-callback'});
     await pending;

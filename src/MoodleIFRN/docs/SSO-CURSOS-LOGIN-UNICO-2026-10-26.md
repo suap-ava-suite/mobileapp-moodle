@@ -95,7 +95,7 @@ substituída a abertura externa de logout da recuperação de conta.
   consentimento, domínios indevidos, cancelamento, timeout, erro e retomada única.
 - Não há teste de credenciais reais embutidas nem limpeza de dados do aparelho.
 
-## Resultado real no Android — investigação ainda em andamento
+## Primeira rodada no Android — antes da correção de User-Agent
 
 - Cursos com tokens nativos já válidos abriram no Acadêmico e no Presencial.
   Isso não comprova autenticação inicial em uma instalação sem sessão.
@@ -141,3 +141,51 @@ e recebeu `loadstart` e `loadstop` em `https://suap.ifrn.edu.br/accounts/login/`
 sem pausa em `beforeload`. A tela ficou disponível para o aluno autenticar.
 Não foram lidas nem preenchidas credenciais e o login completo depende dessa
 interação manual do usuário.
+
+## Correção do timeout após limpar os dados e entrar novamente
+
+A limpeza removeu os tokens nativos que permitiam abrir os cursos. Na primeira
+conexão sem esses tokens, tanto Acadêmico como Presencial repetiam o OAuth até
+expirar, embora a configuração pública respondesse normalmente. Trocar a branch
+Git não modifica o APK instalado; os testes anteriores com tokens salvos não
+validavam esse cenário.
+
+No código oficial de `admin/tool/mobile/launch.php` consultado acima, o Moodle
+acrescenta `Secure` e `Partitioned` ao cookie de sessão quando
+`core_useragent::is_moodle_app()` reconhece o app. No Android conectado foram
+observados dois cookies `MoodleSession` por ambiente, um particionado e outro
+normal. No diagnóstico com o mesmo fluxo e os mesmos cookies, retirar apenas o
+identificador `MoodleMobile` do User-Agent da janela fez o Presencial retornar o
+token em vez de repetir o ciclo. O Acadêmico também retornou o token usando a
+identificação normal do WebView.
+
+A implementação usa `omitappuseragent=yes` somente na janela oculta dos cursos.
+O hook `scripts/cordova-hooks/ifrn-course-sso.js`, registrado em `after_prepare`,
+ajusta o plugin Android para omitir o sufixo `AppendUserAgent` apenas quando essa
+opção estiver explícita. O comportamento padrão, o login principal, os cookies
+SUAP, os perfis e os tokens nativos não são alterados. O hook é idempotente,
+abrange as cópias do plugin e do projeto Android e recusa fonte incompatível.
+É necessário compilar o APK: atualizar apenas o JavaScript não inclui esse ajuste.
+
+O `auth_suap` do Acadêmico também chegou a redirecionar para a raiz do Painel.
+Nesse retorno específico, o helper não carrega o Painel: retoma uma única vez o
+launch original do ambiente solicitado. Caminhos arbitrários, parâmetros de
+redirect e domínios semelhantes continuam recusados. A validação oficial do
+passport e da identidade autenticada permanece sob responsabilidade do núcleo.
+
+Validação desta correção:
+
+- 41 testes de cursos, retorno ao Painel, recuperação, novo login e hook passaram.
+- TypeScript, build web e `assembleDebug` passaram.
+- APK instalado com `adb install -r`, preservando o login feito pelo usuário.
+- Acadêmico abriu `/main/home/course/4022/contents` sem erro.
+- Presencial concluiu a conexão automática e abriu
+  `/main/home/course/2836/contents` sem erro.
+- O Android permaneceu na `MainActivity` do app, sem navegador externo.
+- Novas aberturas e troca entre os dois ambientes também foram verificadas.
+
+Os tokens dos diagnósticos isolados não foram ativados nem registrados em logs.
+O teste final passou pelo serviço real do app, que validou e salvou as sessões.
+Não foi necessária alteração no servidor institucional para os dois ambientes
+testados. A pendência da primeira rodada descrita acima foi resolvida nesta versão
+Android; iOS não foi validado nesta rodada.
