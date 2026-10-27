@@ -77,3 +77,4 @@ Thumbs.db
 /moodle.config.*.json
 !/moodle.config.example.json
 /android
+suap-auth-service-Teste-Mobile/
