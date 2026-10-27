@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "measurementId": "medicao-01",
+  "startedAt": "2026-10-27T18:59:10.900Z",
+  "durationMs": 111053.22,
+  "firstMeasurementDesignatedCold": true,
+  "coldMeasurementNote": "Primeira rodada indicada como fria pelo operador; dados/cache não são limpos pelo coletor.",
+  "appPackage": "com.moodle.moodlemobile",
+  "target": {
+    "type": "page",
+    "url": "http://localhost/[segment]/home/course/[redacted]/[segment]"
+  },
+  "tracing": {
+    "started": false
+  },
+  "transitions": [
+    {
+      "sequence": 1,
+      "timestamp": "2026-10-27T18:59:10.900Z",
+      "elapsedMs": 0,
+      "frameNavigatedTimestamp": null,
+      "frameNavigatedElapsedMs": null,
+      "kind": "início",
+      "source": "CDP snapshot",
+      "frame": "main",
+      "from": null,
+      "url": "http://localhost/[segment]/home/course/[redacted]/[segment]",
+      "route": "",
+      "contentUsableMs": null,
+      "contentUsableTimestamp": null,
+      "requests": {
+        "count": 1,
+        "encodedBytes": 122,
+        "failed": 0,
+        "byHost": [
+          {
+            "host": "presencial.ava.ifrn.edu.br",
+            "requests": 1,
+            "encodedBytes": 122,
+            "failed": 0
+          }
+        ]
+      },
+      "longTasks": {
+        "count": 1,
+        "totalMs": 59,
+        "maxMs": 59
+      },
+      "performance": {
+        "Nodes": 3690,
+        "LayoutCount": 0,
+        "RecalcStyleCount": 0,
+        "LayoutDuration": 0,
+        "ScriptDuration": 0,
+        "TaskDuration": 0.025213,
+        "JSHeapUsedSize": 27920316
+      },
+      "listenersInstrumentados": {
+        "contexts": 1,
+        "window": 11,
+        "document": 27,
+        "domNodesFromContexts": 837
+      },
+      "usableSnapshot": null,
+      "trace": {
+        "runTaskOver50ms": 0,
+        "scriptMs": 0,
+        "styleMs": 0,
+        "layoutMs": 0,
+        "paintMs": 0
+      }
+    }
+  ],
+  "hosts": [
+    {
+      "host": "presencial.ava.ifrn.edu.br",
+      "requests": 1,
+      "encodedBytes": 122,
+      "failed": 0
+    }
+  ],
+  "cdn": {
+    "jsDelivr": {
+      "requestCount": 0
+    },
+    "vlibras": {
+      "requestCount": 0
+    }
+  },
+  "longTasks": {
+    "count": 1,
+    "totalMs": 59,
+    "maxMs": 59
+  },
+  "trace": {
+    "available": false,
+    "runTaskOver50ms": 0,
+    "scriptMs": 0,
+    "styleMs": 0,
+    "layoutMs": 0,
+    "paintMs": 0
+  },
+  "listenersInstrumentados": {
+    "contexts": 1,
+    "window": 11,
+    "document": 27,
+    "domNodesFromContexts": 837
+  },
+  "privacy": {
+    "queryStringsSaved": false,
+    "rawFragmentsSaved": false,
+    "sanitizedRouteFromHashSaved": true,
+    "headersSaved": false,
+    "responseBodiesSaved": false,
+    "cookiesSaved": false,
+    "pageTextSaved": false,
+    "numericPathIdentifiersRedacted": true
+  }
+}

@@ -1,0 +1,296 @@
+{
+  "schemaVersion": 1,
+  "measurementId": "medicao-02",
+  "startedAt": "2026-10-27T19:01:14.655Z",
+  "durationMs": 200116.12,
+  "firstMeasurementDesignatedCold": true,
+  "coldMeasurementNote": "Primeira rodada indicada como fria pelo operador; dados/cache não são limpos pelo coletor.",
+  "appPackage": "com.moodle.moodlemobile",
+  "target": {
+    "type": "page",
+    "url": "http://localhost/[segment]/home/course/[redacted]/[segment]"
+  },
+  "tracing": {
+    "started": false
+  },
+  "transitions": [
+    {
+      "sequence": 1,
+      "timestamp": "2026-10-27T19:01:14.655Z",
+      "elapsedMs": 0,
+      "frameNavigatedTimestamp": null,
+      "frameNavigatedElapsedMs": null,
+      "kind": "início",
+      "source": "CDP snapshot",
+      "frame": "main",
+      "from": null,
+      "url": "http://localhost/[segment]/home/course/[redacted]/[segment]",
+      "route": "",
+      "contentUsableMs": 3950.87,
+      "contentUsableTimestamp": "2026-10-27T19:01:18.605Z",
+      "requests": {
+        "count": 0,
+        "encodedBytes": 0,
+        "failed": 0,
+        "byHost": []
+      },
+      "longTasks": {
+        "count": 5,
+        "totalMs": 681,
+        "maxMs": 229
+      },
+      "performance": {
+        "Nodes": 3690,
+        "LayoutCount": 0,
+        "RecalcStyleCount": 0,
+        "LayoutDuration": 0,
+        "ScriptDuration": 0.002577,
+        "TaskDuration": 0.005279,
+        "JSHeapUsedSize": 28966308
+      },
+      "listenersInstrumentados": {
+        "contexts": 1,
+        "window": 11,
+        "document": 27,
+        "domNodesFromContexts": 837
+      },
+      "usableSnapshot": null,
+      "trace": {
+        "runTaskOver50ms": 0,
+        "scriptMs": 0,
+        "styleMs": 0,
+        "layoutMs": 0,
+        "paintMs": 0
+      }
+    },
+    {
+      "sequence": 2,
+      "timestamp": "2026-10-27T19:01:22.323Z",
+      "elapsedMs": 7668.34,
+      "frameNavigatedTimestamp": null,
+      "frameNavigatedElapsedMs": null,
+      "kind": "rota",
+      "source": "Page.navigatedWithinDocument",
+      "frame": "main",
+      "from": {
+        "url": "http://localhost/[segment]/home/course/[redacted]/[segment]",
+        "route": ""
+      },
+      "url": "http://localhost/login/painel",
+      "route": "",
+      "contentUsableMs": null,
+      "contentUsableTimestamp": null,
+      "requests": {
+        "count": 0,
+        "encodedBytes": 0,
+        "failed": 0,
+        "byHost": []
+      },
+      "longTasks": {
+        "count": 0,
+        "totalMs": 0,
+        "maxMs": 0
+      },
+      "performance": {
+        "Nodes": 3710,
+        "LayoutCount": 1,
+        "RecalcStyleCount": 1,
+        "LayoutDuration": 0.009473,
+        "ScriptDuration": 0.246217,
+        "TaskDuration": 0.327289,
+        "JSHeapUsedSize": 29222444
+      },
+      "listenersInstrumentados": {
+        "contexts": 2,
+        "window": 1,
+        "document": 4,
+        "domNodesFromContexts": 159
+      },
+      "usableSnapshot": null,
+      "trace": {
+        "runTaskOver50ms": 0,
+        "scriptMs": 0,
+        "styleMs": 0,
+        "layoutMs": 0,
+        "paintMs": 0
+      }
+    },
+    {
+      "sequence": 3,
+      "timestamp": "2026-10-27T19:01:22.507Z",
+      "elapsedMs": 7852.53,
+      "frameNavigatedTimestamp": "2026-10-27T19:01:22.507Z",
+      "frameNavigatedElapsedMs": 7852.53,
+      "kind": "Document",
+      "source": "Page.frameNavigated",
+      "frame": "iframe",
+      "from": null,
+      "url": "about:[segment]",
+      "route": "",
+      "contentUsableMs": null,
+      "contentUsableTimestamp": null,
+      "requests": {
+        "count": 0,
+        "encodedBytes": 0,
+        "failed": 0,
+        "byHost": []
+      },
+      "longTasks": {
+        "count": 0,
+        "totalMs": 0,
+        "maxMs": 0
+      },
+      "performance": {
+        "Nodes": 3715,
+        "LayoutCount": 4,
+        "RecalcStyleCount": 4,
+        "LayoutDuration": 0.015425,
+        "ScriptDuration": 0.280955,
+        "TaskDuration": 0.413735,
+        "JSHeapUsedSize": 29348340
+      },
+      "listenersInstrumentados": {
+        "contexts": 2,
+        "window": 1,
+        "document": 4,
+        "domNodesFromContexts": 206
+      },
+      "usableSnapshot": null,
+      "trace": {
+        "runTaskOver50ms": 0,
+        "scriptMs": 0,
+        "styleMs": 0,
+        "layoutMs": 0,
+        "paintMs": 0
+      }
+    },
+    {
+      "sequence": 4,
+      "timestamp": "2026-10-27T19:01:22.563Z",
+      "elapsedMs": 7908.51,
+      "frameNavigatedTimestamp": "2026-10-27T19:01:22.799Z",
+      "frameNavigatedElapsedMs": 8144.67,
+      "kind": "Document",
+      "source": "Network Document",
+      "frame": "iframe",
+      "from": {
+        "url": "about:[segment]",
+        "route": ""
+      },
+      "url": "http://localhost/mobilemoodle/index.html",
+      "route": "",
+      "contentUsableMs": 18057.96,
+      "contentUsableTimestamp": "2026-10-27T19:01:40.621Z",
+      "requests": {
+        "count": 60,
+        "encodedBytes": 3218,
+        "failed": 0,
+        "byHost": [
+          {
+            "host": "localhost",
+            "requests": 58,
+            "encodedBytes": 0,
+            "failed": 0
+          },
+          {
+            "host": "suap.ifrn.edu.br",
+            "requests": 1,
+            "encodedBytes": 611,
+            "failed": 0
+          },
+          {
+            "host": "cdn.suap.ifrn.edu.br",
+            "requests": 1,
+            "encodedBytes": 2607,
+            "failed": 0
+          }
+        ]
+      },
+      "longTasks": {
+        "count": 0,
+        "totalMs": 0,
+        "maxMs": 0
+      },
+      "performance": {
+        "Nodes": 4146,
+        "LayoutCount": 7,
+        "RecalcStyleCount": 8,
+        "LayoutDuration": 0.03343,
+        "ScriptDuration": 0.406596,
+        "TaskDuration": 0.703145,
+        "JSHeapUsedSize": 29611180
+      },
+      "listenersInstrumentados": {
+        "contexts": 2,
+        "window": 7,
+        "document": 8,
+        "domNodesFromContexts": 298
+      },
+      "usableSnapshot": null,
+      "trace": {
+        "runTaskOver50ms": 0,
+        "scriptMs": 0,
+        "styleMs": 0,
+        "layoutMs": 0,
+        "paintMs": 0
+      }
+    }
+  ],
+  "hosts": [
+    {
+      "host": "cdn.suap.ifrn.edu.br",
+      "requests": 1,
+      "encodedBytes": 2607,
+      "failed": 0
+    },
+    {
+      "host": "localhost",
+      "requests": 58,
+      "encodedBytes": 0,
+      "failed": 0
+    },
+    {
+      "host": "suap.ifrn.edu.br",
+      "requests": 1,
+      "encodedBytes": 611,
+      "failed": 0
+    }
+  ],
+  "cdn": {
+    "jsDelivr": {
+      "requestCount": 0
+    },
+    "vlibras": {
+      "requestCount": 0
+    }
+  },
+  "longTasks": {
+    "count": 5,
+    "totalMs": 681,
+    "maxMs": 229
+  },
+  "trace": {
+    "available": false,
+    "runTaskOver50ms": 0,
+    "scriptMs": 0,
+    "styleMs": 0,
+    "layoutMs": 0,
+    "paintMs": 0
+  },
+  "listenersInstrumentados": {
+    "contexts": 2,
+    "window": 7,
+    "document": 8,
+    "domNodesFromContexts": 298
+  },
+  "privacy": {
+    "queryStringsSaved": false,
+    "rawFragmentsSaved": false,
+    "sanitizedRouteFromHashSaved": true,
+    "headersSaved": false,
+    "responseBodiesSaved": false,
+    "cookiesSaved": false,
+    "pageTextSaved": false,
+    "numericPathIdentifiersRedacted": true
+  }
+}
