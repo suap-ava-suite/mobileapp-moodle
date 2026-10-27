@@ -122,7 +122,7 @@
       if (!sessionStorage.getItem("ifrn_username")) {
         sessionStorage.setItem("ifrn_username", value.identity);
       }
-      if (raw) {
+      if (raw && sessionStorage.getItem(OAUTH_PROFILE_KEY) !== raw) {
         sessionStorage.setItem(OAUTH_PROFILE_KEY, raw);
       }
       return value;
@@ -146,9 +146,14 @@
       if (!dashboard || typeof dashboard !== "object") {
         return null;
       }
-      sessionStorage.setItem("ifrn_painel_dashboard", raw);
-      sessionStorage.setItem("ifrn_painel_owner", owner);
-      sessionStorage.setItem("ifrn_painel_profile", JSON.stringify(snapshot.profile));
+      const restored = {
+        ifrn_painel_dashboard: raw,
+        ifrn_painel_owner: owner,
+        ifrn_painel_profile: JSON.stringify(snapshot.profile)
+      };
+      for (const [key, value] of Object.entries(restored)) {
+        if (sessionStorage.getItem(key) !== value) sessionStorage.setItem(key, value);
+      }
       return dashboard;
     } catch {
       return null;
