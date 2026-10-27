@@ -32,6 +32,7 @@
         "prod:ios": "NODE_ENV=production ionic cordova run ios --prod",
         "test": "NODE_ENV=testing gulp && jest --verbose",
         "test:ci": "NODE_ENV=testing gulp && jest -ci --runInBand --verbose",
+        "test:ifrn": "node --test \"src/MoodleIFRN/tests/*.test.cjs\" \"src/MoodleIFRN/tests/*.test.mjs\"",
         "test:watch": "NODE_ENV=testing gulp watch & jest --watch",
         "test:coverage": "NODE_ENV=testing gulp && jest --coverage",
         "lint": "NODE_OPTIONS=--max-old-space-size=8192 eslint",
