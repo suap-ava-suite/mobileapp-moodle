@@ -629,6 +629,10 @@ export class MoodleSiteService {
 
         this.navigationShellInitialized = true;
         document.addEventListener('ionBackButton', this.onIfrnCourseBackButton);
+        // ion-back-button uses the Ionic router outlet's per-tab history and
+        // can reveal a previous course page after returning to the IFRN panel.
+        // Handle the course-index toolbar button before Ionic pops that stack.
+        document.addEventListener('click', this.onIfrnCourseBackClick, true);
         this.ensurePainelRouteRegistered();
         document.documentElement.classList.add('ifrn-shell');
         // Bootstrap após reload do Painel: cobre o WebView preto até a ponte/curso.
@@ -675,6 +679,20 @@ export class MoodleSiteService {
                 next();
             }
         });
+    };
+
+    private readonly onIfrnCourseBackClick = (event: MouseEvent): void => {
+        const path = event.composedPath();
+        const button = path.find((target): target is HTMLElement =>
+            target instanceof HTMLElement && target.tagName === 'ION-BACK-BUTTON',
+        );
+        if (!button?.closest('.ifrn-course-back') || !this.returnToPainelOnCourseExit(false)) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        this.redirectToPainelAva();
     };
 
     /** Cancelamento explícito pelo usuário; nenhum redirecionamento automático. */
