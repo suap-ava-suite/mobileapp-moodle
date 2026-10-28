@@ -46,7 +46,7 @@ import { MM, App } from './namespace';
         }
 
         if (window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: 'MOODLE_IFRN_LOGOUT' }, '*');
+            window.parent.postMessage({ type: 'MOODLE_IFRN_LOGOUT' }, window.location.origin);
             return;
         }
 

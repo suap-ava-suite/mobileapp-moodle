@@ -15,19 +15,53 @@ test('iframe forwards clicks without replacing the active pending course, includ
         const App = {};
         const calls = [];
         const entries = new Map([['ifrn_moodle_pending_open_course', 'original-pending']]);
-        const parent = direct ? { MoodleIfrnBridge: { openCourse: (...args) => calls.push(args) } }
-            : { postMessage: message => calls.push(message) };
+        const parent = direct ? { MoodleIfrnBridge: {
+            openCourse: (...args) => calls.push(args),
+            openEnrol: (...args) => calls.push(args),
+        } }
+            : { postMessage: (...args) => calls.push(args) };
         load('src/MoodleIFRN/mobilemoodle/core_mobile/app-utils.ts', { './namespace': { App, MM: {} } }, {
-            window: { parent }, document: {
+            window: { parent, location: { origin: 'http://localhost' } }, document: {
                 getElementsByTagName: () => [{ src: 'http://localhost/mobilemoodle/mobilemoodle.js' }],
             }, sessionStorage: { setItem: (key, value) => entries.set(key, value) },
         });
         App.openMoodleCourse(7, 'Academic', 'https://academico.ava.ifrn.edu.br');
         App.openMoodleCourse(7, 'Presencial', 'https://presencial.ava.ifrn.edu.br');
-        assert.equal(calls.length, 2);
+        App.openPainelEnrol(7, 3);
+        assert.equal(calls.length, 3);
         assert.equal(entries.get('ifrn_moodle_pending_open_course'), 'original-pending');
+        if (!direct) {
+            assert.equal(calls[0][1], 'http://localhost');
+            assert.equal(calls[1][1], 'http://localhost');
+            assert.equal(calls[2][1], 'http://localhost');
+            assert.notEqual(calls[0][1], '*');
+        }
     }
 });
+
+test('logout bridge uses the current app origin as targetOrigin', () => {
+    const App = {};
+    const messages = [];
+    const origin = 'http://localhost';
+    const parent = { postMessage: (...args) => messages.push(args) };
+    const window = { parent, location: { origin, hash: '' }, addEventListener() {} };
+    const storage = { removeItem() {} };
+    load('src/MoodleIFRN/mobilemoodle/core_mobile/app.ts', {
+        './app-keyboard': { initKeyboardInsets() {} },
+        './namespace': { App, MM: {} },
+    }, {
+        window,
+        document: { getElementById: () => null },
+        localStorage: storage,
+        sessionStorage: storage,
+    });
+    App.logout();
+    assert.equal(messages.length, 1);
+    assert.equal(messages[0][0].type, 'MOODLE_IFRN_LOGOUT');
+    assert.equal(messages[0][1], origin);
+    assert.notEqual(messages[0][1], '*');
+});
+
 function guardSetup() {
     const state = { nativeEntry: null };
     const service = {

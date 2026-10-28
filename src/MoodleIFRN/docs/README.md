@@ -35,12 +35,20 @@ Tudo que é específico do IFRN vive em `src/MoodleIFRN/` (login, serviços, pai
 ## Scripts úteis
 
 ```bash
+# Executar somente os testes Node da customização IFRN (sem ADB/aparelho)
+npm run test:ifrn
+
+# Suíte Jest e gulp do repositório
+npm test
+
 # Registrar / reparar rotas IFRN no Moodle Mobile
 npm run patch:ifrn
 
 # Compilar TypeScript e SCSS do painel → mobilemoodle.js (sem pasta css do tema)
 npm run build:mobilemoodle
 ```
+
+`npm run test:ifrn` executa os arquivos `*.test.cjs` e `*.test.mjs` em `src/MoodleIFRN/tests/` usando o runner nativo `node:test`. O probe `painel-first-paint.android.mjs` é excluído por não ter o sufixo `.test` e requer um alvo CDP Android. Os testes da suíte IFRN usam fakes/fixtures; esse comando não valida rede institucional nem substitui testes no aparelho. Jest segue configurado para `*.test.ts` e não coleta esses arquivos Node.
 
 ## Recursos nativos (ícone / splash)
 

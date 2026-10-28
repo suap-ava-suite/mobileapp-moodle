@@ -29,6 +29,18 @@ function setup(pages, progress = { progresso: [] }) {
     return { fn, calls };
 }
 
+function setupWithFetch(fetchImpl, timers = {}) {
+    const context = vm.createContext({
+        module: { exports: {} }, URL, AbortController, AbortSignal, Map, Set,
+        setTimeout: timers.setTimeout || setTimeout,
+        clearTimeout: timers.clearTimeout || clearTimeout,
+        location: { origin: 'https://ava.ifrn.edu.br' },
+        fetch: fetchImpl,
+    });
+    vm.runInContext(js, context);
+    return vm.runInContext(`(${context.module.exports.PAINEL_COURSES_SCRIPT})`, context);
+}
+
 test('reúne páginas, mantém IDs iguais de ambientes distintos e encerra com vitrine repetida', async () => {
     const { fn, calls } = setup([
         page([course(1, 7)], { praticas: [course(1, 8)] }),
@@ -66,6 +78,67 @@ test('falha numa página não entrega silenciosamente uma lista incompleta', asy
 test('rejeita corpo sem listas de cursos', async () => {
     const { fn } = setup([{ detail: 'sessão expirada' }]);
     await assert.rejects(fn('/api/v1/diarios/'), /Resposta de cursos inválida/);
+});
+
+test('trata HTTP 401, 403 e 500 sem converter falha em lista vazia', async () => {
+    for (const status of [401, 403, 500]) {
+        const fn = setupWithFetch(async () => ({
+            status,
+            ok: false,
+            redirected: false,
+            headers: { get: () => 'application/json' },
+            json: async () => ({}),
+        }));
+        await assert.rejects(fn('/api/v1/diarios/'), status === 500
+            ? /HTTP 500/ : /sessão do Painel AVA precisa ser renovada/);
+    }
+});
+
+test('rejeita resposta sem JSON e JSON malformado', async () => {
+    const wrongContentType = setupWithFetch(async () => ({
+        status: 200, ok: true, redirected: false,
+        headers: { get: () => 'text/html' }, json: async () => ({ diarios: [] }),
+    }));
+    await assert.rejects(wrongContentType('/api/v1/diarios/'), /HTTP 200/);
+
+    const invalidJson = setupWithFetch(async () => ({
+        status: 200, ok: true, redirected: false,
+        headers: { get: () => 'application/json' }, json: async () => { throw new SyntaxError('invalid JSON'); },
+    }));
+    await assert.rejects(invalidJson('/api/v1/diarios/'), /invalid JSON/);
+});
+
+test('timeout aborta a requisição idempotente de leitura e propaga erro', async () => {
+    const scheduled = [];
+    const fn = setupWithFetch((_path, options) => new Promise((_resolve, reject) => {
+        options.signal.addEventListener('abort', () => reject(new Error('request aborted')));
+    }), {
+        setTimeout: callback => { scheduled.push(callback); return scheduled.length; },
+        clearTimeout: () => {},
+    });
+    const pending = fn('/api/v1/diarios/');
+    assert.equal(scheduled.length, 1);
+    scheduled[0]();
+    await assert.rejects(pending, /request aborted/);
+});
+
+test('conexão recusada na consulta principal é propagada; falha no progresso é opcional', async () => {
+    const refused = setupWithFetch(async () => { throw new TypeError('connection refused'); });
+    await assert.rejects(refused('/api/v1/diarios/'), /connection refused/);
+
+    let requests = 0;
+    const progressUnavailable = setupWithFetch(async path => {
+        requests++;
+        if (path.startsWith('/api/v1/progresso/')) throw new TypeError('offline');
+        return {
+            status: 200, ok: true, redirected: false,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ diarios: [course(1, 42)] }),
+        };
+    });
+    const result = await progressUnavailable('/api/v1/diarios/');
+    assert.equal(requests, 3);
+    assert.equal(result.diarios.length, 1);
 });
 
 test('script continua autônomo após transformação async de produção e minificação', async () => {

@@ -176,7 +176,10 @@ import { MM, App } from './namespace';
             if (bridge?.openCourse) {
                 bridge.openCourse(id, courseName, siteUrl);
             } else {
-                window.parent.postMessage({ type: 'MOODLE_IFRN_OPEN_COURSE', courseId: id, courseName, siteUrl }, '*');
+                window.parent.postMessage(
+                    { type: 'MOODLE_IFRN_OPEN_COURSE', courseId: id, courseName, siteUrl },
+                    window.location.origin,
+                );
             }
 
             return;
@@ -231,7 +234,7 @@ import { MM, App } from './namespace';
                 type: 'MOODLE_IFRN_OPEN_ENROL',
                 courseId: id,
                 ambienteId: envId,
-            }, '*');
+            }, window.location.origin);
             return;
         }
 

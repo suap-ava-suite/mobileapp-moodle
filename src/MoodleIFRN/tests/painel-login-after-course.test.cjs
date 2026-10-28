@@ -15,7 +15,7 @@ test('login principal retoma redirects após curso e preserva a política de coo
             listeners.set(name, callback);
             return { unsubscribe: () => listeners.delete(name) };
         } }),
-        hide() {}, show() {}, executeScript: async () => [],
+        hide() {}, show() {}, executeScript: async () => [], insertCSS: async () => [],
     };
     const mocks = {
         '@angular/common/http': {},
@@ -31,7 +31,7 @@ test('login principal retoma redirects após curso e preserva a política de coo
         rxjs,
         './painel-ava.config': { PAINEL_AVA_CONFIG: {
             baseUrl: 'https://ava.ifrn.edu.br', diariosPath: '/api/v1/diarios/',
-        } },
+        }, isPainelAvaBrowserUrl: url => new URL(url).origin === 'https://ava.ifrn.edu.br' },
         './painel-courses': {},
         '../mobilemoodle/core_mobile/oauth-profile': {},
         '../mobilemoodle/core_mobile/profile-refresh': {},
@@ -60,4 +60,57 @@ test('login principal retoma redirects após curso e preserva a política de coo
         assert.equal(listeners.size, 0);
     }
     assert.equal(closed, 2);
+});
+
+test('authenticateWithBrowser conclui quando recebe dashboard e identidade sintéticos do Painel', async () => {
+    const events = new Map();
+    let closed = 0;
+    let observed;
+    const browser = {
+        on: name => ({ subscribe: callback => {
+            events.set(name, callback);
+            return { unsubscribe: () => events.delete(name) };
+        } }),
+        hide() {}, show() {}, executeScript: async () => [], insertCSS: async () => [],
+    };
+    const mocks = {
+        '@angular/common/http': {},
+        '@angular/core': { Injectable: () => value => value },
+        '@static/opener': { CoreOpener: { openInApp: () => browser, closeInAppBrowser: () => closed++ } },
+        rxjs,
+        './painel-ava.config': { PAINEL_AVA_CONFIG: {
+            baseUrl: 'https://ava.ifrn.edu.br', diariosPath: '/api/v1/diarios/',
+        }, isPainelAvaBrowserUrl: url => new URL(url).origin === 'https://ava.ifrn.edu.br' },
+        './painel-courses': {},
+        '../mobilemoodle/core_mobile/oauth-profile': {},
+        '../mobilemoodle/core_mobile/profile-refresh': {},
+    };
+    const source = fs.readFileSync('src/MoodleIFRN/services_mobile/painel-ava.service.ts', 'utf8');
+    const currentOutput = ts.transpileModule(source, {
+        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    }).outputText;
+    const currentModule = { exports: {} };
+    vm.runInNewContext(currentOutput, {
+        exports: currentModule.exports,
+        require: name => mocks[name],
+        console: { log() {} }, URL,
+    });
+    const currentService = new currentModule.exports.PainelAvaService();
+    currentService.authenticateWithBrowser({ readOnly: true }).subscribe({
+        next: value => { observed = value; },
+        error: error => { throw error; },
+    });
+    events.get('loadstop')({ url: 'https://ava.ifrn.edu.br/' });
+    events.get('message')({ data: JSON.stringify({
+        type: 'ifrn-painel-diarios', ok: true,
+        payload: { diarios: [{ id: 'fixture-course', fullname: 'Curso fixture' }] },
+        profile: { matricula: 'fixture-user', nome: 'Perfil fixture' },
+        profileProbeLog: [],
+    }) });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(observed.diariosCount, 1);
+    assert.equal(observed.diarios[0].id, 'fixture-course');
+    assert.equal(observed.tokenStored, false);
+    assert.equal(closed, 1);
+    assert.equal(events.size, 0);
 });
