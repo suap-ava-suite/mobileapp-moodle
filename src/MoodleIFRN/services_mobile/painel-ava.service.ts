@@ -629,20 +629,15 @@ export class PainelAvaService {
                 });
             };
 
-            // Inicia oculto; só mostra login/autorização SUAP. Esconde no loadstart
-            // (antes do paint) ao voltar ao Painel ou em redirects sem interação.
-            // Páginas intermediárias também recebem CSS que oculta logos Moodle/web.
+            // Inicia oculto. Mantém a tela de carregamento do app durante loadstart
+            // e mostra o SUAP apenas em loadstop, quando a página já pode ser pintada.
+            // Páginas intermediárias ficam ocultas e recebem CSS antes do paint.
             const loadStartSubscription = browser.on('loadstart').subscribe((event) => {
                 const url = event.url || '';
 
                 if (url.startsWith(`${suapOrigin}/`)) {
-                    if (awaitingSuapIdentity || !needsSuapUserInteraction(url)) {
-                        hideBrowser();
-                        maskIntermediateWebPage(browser, url);
-                    } else if (!finished) {
-                        showBrowserForLogin();
-                    }
-                    // Login/autorização SUAP: não mascara — deixa a UI nativa do SUAP.
+                    hideBrowser();
+                    // SUAP só aparece quando seu loadstop confirmar que está pronto.
                     return;
                 }
 
