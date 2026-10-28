@@ -149,6 +149,112 @@ page-core-course-index ion-toolbar ion-button {
     --color: var(--ifrn-ava-dark);
 }
 
+/* Índice lateral da disciplina, aproximado ao drawer do AVA web. */
+ion-modal.ifrn-course-index-modal {
+    --width: min(86vw, 520px);
+    --height: 90vh;
+    --border-radius: 0 16px 16px 0;
+    --background: #f5f5f5;
+    --backdrop-opacity: 0.38;
+    --box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+    align-items: center;
+    justify-content: flex-start;
+}
+
+ion-modal.ifrn-course-index-modal::part(content) {
+    margin-inline-start: 0;
+    margin-inline-end: auto;
+    overflow: hidden;
+}
+
+ion-modal.ifrn-course-index-modal ion-header,
+ion-modal.ifrn-course-index-modal ion-toolbar {
+    --background: #f5f5f5;
+    --color: #292929;
+    --border-width: 0 0 1px;
+    --border-color: #dedede;
+}
+
+ion-modal.ifrn-course-index-modal ion-title h1 {
+    color: #292929;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+ion-modal.ifrn-course-index-modal ion-content {
+    --background: #f5f5f5;
+    --color: #4b535b;
+}
+
+ion-modal.ifrn-course-index-modal ion-list {
+    padding: 12px 14px 24px;
+    background: transparent;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.divider.section {
+    --background: transparent;
+    --color: #4b535b;
+    --padding-start: 4px;
+    --padding-end: 12px;
+    --inner-border-width: 0;
+    --min-height: 56px;
+    margin: 4px 0;
+    border-radius: 12px;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.divider.section h2 {
+    color: #292929;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.divider.section ion-icon.expandable-status-icon {
+    margin-inline-end: 8px;
+    padding: 10px;
+    border-radius: 50%;
+    background: transparent;
+    color: #4b535b;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.divider.section.section-expanded {
+    --background: transparent;
+    --color: #7440ad;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.divider.section.section-expanded h2 {
+    color: #7440ad;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.divider.section.section-expanded ion-icon.expandable-status-icon {
+    background: #ead9fa;
+    color: #7440ad;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.module {
+    --background: transparent;
+    --color: #4b535b;
+    --padding-start: 16px;
+    --padding-end: 12px;
+    --min-height: 50px;
+    --inner-border-width: 0;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.module .item-heading {
+    color: #4b535b;
+    font-size: 0.95rem;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.module ion-icon.completion_complete {
+    color: #31833d;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.core-course-index-all {
+    --background: transparent;
+    --color: #4b535b;
+    --min-height: 48px;
+    font-weight: 600;
+}
+
 /* =========================================================
  * Banner + nome + progresso (.core-course-header)
  * ========================================================= */

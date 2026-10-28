@@ -38,7 +38,8 @@
     <div class="ion-activatable ripple-parent">
         <ion-item class="divider section" (click)="selectSectionOrModule($event, section.id)" tappable
             [class.item-current]="selectedId === section.id" [class.item-dimmed]="!section.visible"
-            [class.item-hightlighted]="section.highlighted" [detail]="false">
+            [class.item-hightlighted]="section.highlighted" [class.section-expanded]="section.expanded"
+            [detail]="false">
             @if (section.hasVisibleModules) {
                 <ion-icon name="fas-chevron-right" flip-rtl slot="start" class="expandable-status-icon"
                     (ariaButtonClick)="toggleExpand($event, section)"

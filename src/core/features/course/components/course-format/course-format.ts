@@ -470,6 +470,7 @@ export class CoreCourseFormatComponent implements OnInit, OnChanges, OnDestroy {
 
         const data = await CoreModals.openModal<CoreCourseIndexSectionWithModule>({
             component: CoreCourseCourseIndexComponent,
+            cssClass: 'ifrn-course-index-modal',
             initialBreakpoint: 1,
             breakpoints: [0, 1],
             handle: false,

@@ -1639,7 +1639,7 @@ const IFRN_PT_BR: Record<string, string> = {
     "core.course.couldnotloadsectioncontent": "Não foi possível carregar o conteúdo da seção, por favor tente mais tarde.",
     "core.course.couldnotloadsections": "Não foi possível carregar as seções. Por favor, tente novamente mais tarde.",
     "core.course.course:viewoverview": "Ver página de visão geral das atividades do curso",
-    "core.course.courseindex": "Índice do curso",
+    "core.course.courseindex": "Índice da disciplina",
     "core.course.coursesummary": "Sumário do curso",
     "core.course.done": "Feito",
     "core.course.downloadcourse": "Download do curso",
