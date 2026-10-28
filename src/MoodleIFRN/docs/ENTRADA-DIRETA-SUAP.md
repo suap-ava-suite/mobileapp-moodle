@@ -1,31 +1,31 @@
-# Marketplace → SUAP → painel
+# Entrada do Marketplace pelo SUAP
 
-Fluxo normal: o botão do marketplace abre o OAuth nativo do Moodle Acadêmico
-(provedor SUAP). Não há formulário próprio de matrícula/senha nem backend OAuth
-local (Python/Cloudflare).
+O Marketplace é a entrada do usuário. No fluxo atual, seu botão chama
+`SuapEntryService.loginWithSuap()`, que abre a autenticação web do Painel AVA no
+InAppBrowser e valida a identidade antes de entregar o dashboard ao app.
 
-Após o retorno SSO, o app lê o perfil Moodle (`core_user_get_users_by_field`),
-abre o Painel AVA no navegador interno e consulta `/api/v1/diarios/` com a sessão
-web. A matrícula vem, nesta ordem: `/api/v2/usuario/info/` no painel (ainda 404
-no host de produção em 2026-10) e, se ausente, `/api/rh/eu/` no SUAP usando a
-mesma sessão do InAppBrowser. Logcat só registra `identidadeDisponivel` e
-`contaCorresponde` (booleanos), nunca a matrícula.
+Não há formulário próprio de matrícula/senha nesta tela. A sessão web do Painel
+e a sessão Moodle nativa usada para abrir um curso têm finalidades diferentes;
+ver [Ponte Painel → Moodle](./PONTE-PAINEL-MOODLE.md).
 
-A entrada só grava perfil/dashboard quando a matrícula observada no painel
-coincide com o username Moodle. Dados anteriores de outra conta não são
-reaproveitados. A foto prefere URL utilizável (SUAP/Moodle tokenizado) e ignora
-`url_foto_*` vazia ou avatar padrão.
+## Depois do retorno
 
-Correções de retorno mantidas: callback com `loading` ativo é reprocessado;
-`queryParamMap` + `ionViewWillEnter` cobrem reutilização do marketplace; leitura
-sem cache do perfil cobre LOGIN não reemitido com o mesmo token.
+- Perfil e dashboard são associados à identidade observada na sessão.
+- O curso selecionado mantém seu ID e ambiente enquanto o Moodle valida ou
+  estabelece a sessão nativa.
+- Se o serviço pedir renovação, o usuário conclui a etapa na autenticação
+  institucional; o app não fabrica tokens nem compartilha cookies entre apps.
+- A rota `/login/ifrn-login` continua apenas como compatibilidade para links
+  antigos; não é a tela normal de entrada.
 
-Depois de alterar fontes em `mobilemoodle/core_mobile`, execute:
+## Verificação local
 
 ```bash
+npm run test:ifrn
 npm run build:mobilemoodle
 npm run prod:android
 ```
 
-Validação local: `test-suap-entry-profile.cjs`, `test-marketplace-entry.cjs`,
-`test-oauth.cjs`. O fluxo real no Android ainda precisa ser confirmado no aparelho.
+Esses comandos não substituem a validação manual em Android com conta de teste
+autorizada. Resultados de aparelhos descritos em documentos datados estão
+listados no [índice](./README.md#relatórios-históricos).

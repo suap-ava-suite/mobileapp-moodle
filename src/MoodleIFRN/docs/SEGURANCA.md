@@ -1,7 +1,13 @@
 # Segurança do MoodleIFRN
 
-Medidas **simples no cliente** aplicadas na pasta `MoodleIFRN`.  
-Não substituem segurança de backend (assinatura JWT, rate limit, HTTPS, etc.).
+Medidas do cliente e limites conhecidos em `MoodleIFRN`.
+
+> O fluxo normal atual autentica a sessão web do Painel AVA no InAppBrowser e
+> abre o curso com a sessão Moodle nativa. As tabelas de JWT/Bearer abaixo
+> descrevem também adaptadores compatíveis ainda presentes no código; não
+> significam que o fluxo principal troque tokens SUAP/Painel por tokens Moodle.
+
+Essas medidas não substituem os controles do SUAP, do Painel AVA ou dos Moodle.
 
 ---
 
@@ -22,11 +28,11 @@ Não substituem segurança de backend (assinatura JWT, rate limit, HTTPS, etc.).
 
 | Medida | Onde |
 |--------|------|
-| `Authorization: Bearer` fixo (não sobrescrito) | `api-http.ts` |
-| `credentials: "omit"` | `api-http.ts` |
+| Header `Authorization: Bearer` não sobrescrito | `api-http.ts` (adaptador JWT compatível) |
+| `credentials: "omit"` para essas chamadas fetch | `api-http.ts` (não se aplica ao fetch same-origin do Painel no InAppBrowser) |
 | Timeout de 15s | `api-http.ts`, `auth.service.ts` |
 | Só paths relativos seguros (`/api/…`) | `api-http.ts` |
-| Base da API: SUAP oficial (`https://suap.ifrn.edu.br`) | `app.ts`, `api-http.ts` |
+| Origens de API limitadas a origens conhecidas | `api-http.ts` |
 | Removido o override perigoso `?api=https://…` | `app.ts` |
 | ID de curso só numérico | `api.ts`, `app-router.ts` |
 

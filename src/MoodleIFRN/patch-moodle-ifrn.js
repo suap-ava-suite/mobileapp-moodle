@@ -56,6 +56,21 @@ function patchCourseIndexRoute() {
     console.log('✔ core course index — abas usam a rota ativada do curso');
 }
 
+/** Remove o título legado que foi injetado na gaveta nativa de blocos. */
+function cleanupCourseBlocksDrawer() {
+    const file = path.join(PROJECT_ROOT, 'src/core/features/block/components/side-blocks/side-blocks.html');
+    let content = readFile(file);
+    const injectedTitle = `        <ion-title>\n            <h1>{{ 'core.block.blocks' | translate }}</h1>\n        </ion-title>\n`;
+
+    if (!content.includes(injectedTitle)) {
+        return;
+    }
+
+    content = content.replace(injectedTitle, '');
+    writeFile(file, content);
+    console.log('✔ removido título experimental da gaveta nativa de blocos');
+}
+
 const MARKER = {
     loginRoutesStart: '// BEGIN MoodleIFRN login routes',
     loginRoutesEnd: '// END MoodleIFRN login routes',
@@ -159,7 +174,7 @@ function stripLegacyIfrnRoutes(content) {
 
     next = replaceBetweenMarkers(next, MARKER.loginRoutesStart, MARKER.loginRoutesEnd, '') ?? next;
 
-    const legacyPaths = ['marketplace-ifrn', 'painel', 'ifrn-login', 'moodle-open-course', 'moodle-course/:courseId', 'painel-enrol', 'ifrn'];
+    const legacyPaths = ['marketplace-ifrn', 'painel', 'ifrn-login', 'moodle-open-course', 'moodle-course/:courseId', 'painel-enrol', 'ifrn', 'hello-world'];
     for (const routePath of legacyPaths) {
         const pattern = new RegExp(
             `\\{[^{}]*path:\\s*'${routePath}'[\\s\\S]*?\\n\\s*\\},?\\s*`,
@@ -187,6 +202,7 @@ function isLoginModulePatched(content) {
         && content.includes("path: 'moodle-open-course'")
         && content.includes("path: 'painel-enrol'")
         && !content.includes("path: 'moodle-course/:courseId'")
+        && !content.includes("path: 'hello-world'")
         && /redirectTo:\s*'marketplace-ifrn'/.test(content)
         && content.includes('@/MoodleIFRN/marketplace-ifrn/marketplace-ifrn')
         && content.includes('@/MoodleIFRN/painel/painel')
@@ -222,6 +238,7 @@ function patchLoginModule() {
             if (!guards.includes('ifrnMarketplaceGuard')) guards.unshift('ifrnMarketplaceGuard');
             return `${route}\n                canActivate: [${guards.join(', ')}],`;
         });
+    content = content.replace(/[ \t]+$/gm, '');
     writeFile(FILES.loginModule, content);
 
     if (isLoginModulePatched(content)) {
@@ -459,6 +476,7 @@ function main() {
     patchPackageScripts();
     patchIndexEarlyHandoff();
     patchCourseIndexRoute();
+    cleanupCourseBlocksDrawer();
     const menuChanged = patchCourseMenu(PROJECT_ROOT);
     patchLoadingAnimation(PROJECT_ROOT);
     console.log(menuChanged ? '✔ Menu IFRN registrado no curso nativo' : '• Menu IFRN do curso já estava atualizado');

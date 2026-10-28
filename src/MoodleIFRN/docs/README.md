@@ -1,66 +1,61 @@
-# Documentação MoodleIFRN
+# Documentação do MoodleIFRN
 
-Índice da customização **AVA IFRN** no app Moodle Mobile.
-
-Tudo que é específico do IFRN vive em `src/MoodleIFRN/` (login, serviços, painel e tema), com o mínimo de alteração no núcleo do Moodle.
+Índice da customização do AVA IFRN no Moodle Mobile. O código do módulo fica em
+[`../`](../); os documentos abaixo diferenciam o fluxo atual de contratos antigos
+e relatórios de uma versão específica.
 
 ## Comece por aqui
 
-| Documento | Conteúdo |
-|-----------|----------|
-| [VISAO-GERAL.md](./VISAO-GERAL.md) | Arquitetura, fluxo do usuário e status do projeto |
-| [PONTE-PAINEL-MOODLE.md](./PONTE-PAINEL-MOODLE.md) | SUAP → Painel AVA → sessão Moodle Mobile |
-| [PATCH-AO-ATUALIZAR.md](./PATCH-AO-ATUALIZAR.md) | Reaplicar o módulo após atualizar o Moodle Mobile |
-| [PLAY-STORE-BETA.md](./PLAY-STORE-BETA.md) | Criar a ficha Moodle IFRN e publicar um teste beta na Google Play |
-| [DESEMPENHO-PAINEL-2026-10-26.md](./DESEMPENHO-PAINEL-2026-10-26.md) | Reduzir gravações repetidas e recargas desnecessárias do Painel |
+| Preciso entender… | Documento |
+|---|---|
+| O fluxo atual de entrada, painel e curso | [Visão geral](./VISAO-GERAL.md) |
+| Como os cursos reais chegam ao Moodle Mobile | [Ponte Painel → curso nativo](./PONTE-PAINEL-MOODLE.md) |
+| A SPA do Painel AVA, seus módulos e build | [Painel de cursos](./PAINEL-CURSOS.md) |
+| O OAuth/SSO de cursos e suas limitações | [SSO de cursos](./SSO-CURSOS-LOGIN-UNICO-2026-10-26.md) |
+| Segurança do cliente | [Segurança](./SEGURANCA.md) |
+| Como reaplicar a customização após atualizar o Moodle Mobile | [Patch de atualização](./PATCH-AO-ATUALIZAR.md) |
 
-## Login e autenticação
+## Desenvolvimento
 
-| Documento | Conteúdo |
-|-----------|----------|
-| [../ifrn-login/LOGIN-IFRN.md](../ifrn-login/LOGIN-IFRN.md) | Tela de login IFRN-id |
-| [SERVICOS-AUTH-BIOMETRIA.md](./SERVICOS-AUTH-BIOMETRIA.md) | `AuthService` + biometria |
-| [CONTRATO-API.md](./CONTRATO-API.md) | Endpoints e payloads esperados |
-| [SEGURANCA.md](./SEGURANCA.md) | Medidas de segurança no cliente |
+| Tarefa | Comando |
+|---|---|
+| Testes Node da customização IFRN | `npm run test:ifrn` |
+| Suíte geral do projeto | `npm test` |
+| Reaplicar rotas e integração IFRN | `npm run patch:ifrn` |
+| Compilar a SPA mobilemoodle | `npm run build:mobilemoodle` |
+| Build Android de produção | `npm run prod:android` |
 
-## Painel de cursos (mobilemoodle)
+`test:ifrn` usa `node:test` com fakes e fixtures; não chama SUAP/AVA nem testa
+um aparelho. O probe Android `painel-first-paint.android.mjs` é separado e não
+faz parte desse comando.
 
-| Documento | Conteúdo |
-|-----------|----------|
-| [PAINEL-CURSOS.md](./PAINEL-CURSOS.md) | SPA do painel, rotas e integração |
-| [../mobilemoodle/core_mobile/SCRIPTS-TS.md](../mobilemoodle/core_mobile/SCRIPTS-TS.md) | Módulos TypeScript (`core_mobile/`) |
-| [TEMPLATES-HTML.md](./TEMPLATES-HTML.md) | Partials HTML e shell do `index.html` |
-| [TEMA-VISUAL.md](./TEMA-VISUAL.md) | SCSS/CSS, header AVA, safe-area, responsividade |
+## Referência por assunto
 
-## Scripts úteis
+| Assunto | Documento |
+|---|---|
+| APIs e endpoints observados | [APIs e endpoints](./apis-e-endpoints.md) |
+| Contrato antigo de login JWT / FastAPI | [Contrato legado](./CONTRATO-API.md) |
+| Entrada atual pelo SUAP | [Entrada do Marketplace](./ENTRADA-DIRETA-SUAP.md) |
+| Login de compatibilidade | [LOGIN-IFRN](./LOGIN-IFRN.md) |
+| Serviços de autenticação e biometria compatíveis | [Serviços](./SERVICOS-AUTH-BIOMETRIA.md) |
+| Templates e tema | [Templates HTML](./TEMPLATES-HTML.md) · [Tema visual](./TEMA-VISUAL.md) · [Logo](./LOGO-MOODLE-IFRN.md) |
+| Beta na Google Play | [Play Store](./PLAY-STORE-BETA.md) |
+| Splash Android | [Trocar imagem de abertura](./TROCAR-IMAGEM-ABERTURA-ANDROID.md) |
 
-```bash
-# Executar somente os testes Node da customização IFRN (sem ADB/aparelho)
-npm run test:ifrn
+## Relatórios históricos
 
-# Suíte Jest e gulp do repositório
-npm test
+Os arquivos com data no nome registram inspeções, builds ou testes de uma versão
+específica. Use-os como histórico, não como prova do estado atual do código ou
+do servidor.
 
-# Registrar / reparar rotas IFRN no Moodle Mobile
-npm run patch:ifrn
+- [Abertura de cursos — 19/10/2026](./COURSE-OPENING-2026-10-19.md)
+- [Teste de API do Painel — 20/10/2026](./TESTE-API-PAINEL-2026-10-20.md)
+- [Sessões e Django Ninja — 20/10/2026](./SESSOES-E-DJANGO-NINJA-2026-10-20.md)
+- [Metodologia de acessibilidade — 20/10/2026](./TESTE-ACESSIBILIDADE-METODOLOGIA-2026-10-20.md)
+- [Correção do nome do perfil — 25/10/2026](./CORRECAO-NOME-PERFIL-2026-10-25.md)
+- [Retorno ao Painel — 25/10/2026](./CORRECAO-FLASH-RETORNO-PAINEL-2026-10-25.md)
+- [Desempenho do Painel — 26/10/2026](./DESEMPENHO-PAINEL-2026-10-26.md)
+- [Adaptação iOS](./RELATORIO-IOS.md)
 
-# Compilar TypeScript e SCSS do painel → mobilemoodle.js (sem pasta css do tema)
-npm run build:mobilemoodle
-```
-
-`npm run test:ifrn` executa os arquivos `*.test.cjs` e `*.test.mjs` em `src/MoodleIFRN/tests/` usando o runner nativo `node:test`. O probe `painel-first-paint.android.mjs` é excluído por não ter o sufixo `.test` e requer um alvo CDP Android. Os testes da suíte IFRN usam fakes/fixtures; esse comando não valida rede institucional nem substitui testes no aparelho. Jest segue configurado para `*.test.ts` e não coleta esses arquivos Node.
-
-## Recursos nativos (ícone / splash)
-
-Assets oficiais do Painel AVA para o build Cordova:
-
-| Arquivo | Uso | Tamanho |
-|---------|-----|---------|
-| `../resources/icon.png` (se presente) / `resources/` na raiz | Ícone do app | 1024×1024 |
-| Splash Cordova | Splash screen | ver `config.xml` |
-
-Identidade: fundo teal `#098E95` + marca branca do Painel AVA (`theme_ifrn25`).
-
-Favicons e splash **web** do painel:
-
-`mobilemoodle/static/theme/ifrn/favicon/` e `…/img/splash-logo.png`.
+> Os dados de backend, compatibilidade, APK e publicação nesses relatórios podem
+> ter mudado. Confirme no código e no ambiente antes de usá-los como instrução.

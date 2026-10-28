@@ -65,9 +65,10 @@ const appRoutes: Routes = [
                         .then(m => m.PainelEnrolPage),
             },
             // END MoodleIFRN login routes
-            
 
-            
+
+
+
             {
                 path: 'site',
                 loadComponent: () => import('@features/login/pages/site/site'),
@@ -100,12 +101,6 @@ const appRoutes: Routes = [
             },
         ],
         canActivate: [redirectGuard],
-    },
-    {
-        path: 'hello-world',
-        loadComponent: () =>
-            import('@features/hello_world/hello-world')
-                .then(module => module.HelloWorldPage),
     },
     {
         path: 'logout',

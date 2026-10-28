@@ -1,14 +1,15 @@
-# Contrato da API
+# Contratos legados de API (AuthService / FastAPI)
 
-O app usa **três bases**:
+> **Referência de compatibilidade, não descrição do fluxo principal atual.** O
+> Marketplace usa `SuapEntryService` e uma sessão web do Painel AVA. A lista de
+> cursos é consultada same-origin pelo InAppBrowser; o acesso ao conteúdo usa a
+> sessão Moodle nativa. Não trate `/api/token/pair`, Bearer SUAP, FastAPI local
+> ou `/courses/{id}` como etapas necessárias do fluxo normal.
 
-1. **Autenticação SUAP** — `https://suap.ifrn.edu.br` (`/api/token/pair`)
-2. **Painel AVA (preferido)** — `https://painel.ead.ifrn.edu.br` (`/api/v1/authenticate/`, `/api/v1/diarios/`)
-3. **Fallback diários** — API SUAP ensino (`/api/ensino/…`) se o Painel estiver indisponível
-
-Detalhes da ponte: [`PONTE-PAINEL-MOODLE.md`](./PONTE-PAINEL-MOODLE.md).
-
-Este documento descreve o que o **cliente espera**.
+Esta página preserva contratos ainda presentes no repositório para manutenção
+de `AuthService`, biometria e adaptadores antigos. Para o fluxo atual, consulte
+[visão geral](./VISAO-GERAL.md), [ponte](./PONTE-PAINEL-MOODLE.md) e
+[APIs observadas](./apis-e-endpoints.md).
 
 ---
 
@@ -24,7 +25,7 @@ Painel AVA: https://github.com/suap-ava-suite/djangoapp-painel_ava
 
 ---
 
-## Autenticação (SUAP)
+## Compatibilidade: autenticação por JWT SUAP
 
 ### `POST /api/token/pair`
 
@@ -98,7 +99,7 @@ Confere se o access token ainda é aceito pelo SUAP.
 
 ---
 
-## Painel (Bearer obrigatório)
+## Compatibilidade: chamadas autenticadas por Bearer
 
 Header em todas as rotas abaixo:
 
@@ -107,8 +108,8 @@ Authorization: Bearer <access_token>
 Accept: application/json
 ```
 
-O painel **não** usa mais `/dashboard/` da FastAPI.  
-Após o login SUAP, os dados vêm destes endpoints (adaptados em `api-suap.ts`):
+Os endpoints abaixo pertencem aos adaptadores de compatibilidade. Eles não
+substituem a consulta same-origin do Painel AVA no fluxo principal:
 
 | Uso interno | Endpoint SUAP |
 |-------------|----------------|
@@ -141,7 +142,7 @@ Formato interno esperado pela UI (`DashboardData`):
 A aba **Diários** usa `diarios` se existir; senão cai em `courses`.  
 A aba **Autoinscrição** usa `autoinscricoes` (hoje vazia no adaptador SUAP).
 
-### Detalhe legado (FastAPI de teste)
+### Protótipo FastAPI (legado)
 
 Os paths abaixo ficam documentados só como referência do protótipo antigo; o cliente atual não os chama:
 
@@ -205,11 +206,9 @@ Resposta de sucesso deve ser `Content-Type: application/json`.
 
 ---
 
-## Observação
+## Não use como instrução de implantação
 
-A autenticação já aponta para o **SUAP oficial**.  
-O painel ainda pode usar FastAPI de **teste** para cursos/diários. Quando a API de produção do AVA chegar:
-
-1. Manter os paths do painel (ou adaptar só os serviços)
-2. Trocar a base URL do painel
-3. Garantir CORS + HTTPS + JWT aceito pelo backend AVA
+As tabelas acima registram formatos e endpoints da implementação compatível e
+do protótipo. Antes de alterar a integração, confirme o contrato do serviço no
+checkout e no ambiente institucional. O app não deve enviar tokens SUAP ou do
+Painel como token Moodle nem presumir que uma resposta HTML de login seja JSON.

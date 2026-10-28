@@ -15,7 +15,7 @@
         <ng-template>
             <div class="ifrn-ava-sidebar">
                 <div class="ifrn-ava-sidebar__header">
-                    <h1 id="ifrn-course-drawer-title" class="ifrn-ava-sidebar__title">Menu do curso</h1>
+                    <h1 id="ifrn-course-drawer-title" class="ifrn-ava-sidebar__title">{{ environmentLabel }}</h1>
                     <button type="button" class="ifrn-ava-sidebar__toggle" (click)="closeMenu()"
                         aria-label="Fechar menu">
                         <svg class="ifrn-ava-menu-trigger__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 11" aria-hidden="true" focusable="false">
@@ -25,8 +25,6 @@
                 </div>
 
                 <div class="ifrn-ava-sidebar__body">
-                    <p class="ifrn-ava-sidebar__env">{{ environment }}</p>
-
                     <nav class="ifrn-ava-sidebar__nav" aria-label="Atalhos do curso">
                         <button type="button" class="ifrn-ava-nav-btn"
                             [disabled]="!indexEnabled || busy" (click)="choose('index')">

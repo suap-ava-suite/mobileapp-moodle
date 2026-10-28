@@ -1197,7 +1197,10 @@
       if (bridge?.openCourse) {
         bridge.openCourse(id, courseName, siteUrl);
       } else {
-        window.parent.postMessage({ type: "MOODLE_IFRN_OPEN_COURSE", courseId: id, courseName, siteUrl }, "*");
+        window.parent.postMessage(
+          { type: "MOODLE_IFRN_OPEN_COURSE", courseId: id, courseName, siteUrl },
+          window.location.origin
+        );
       }
       return;
     }
@@ -1240,7 +1243,7 @@
         type: "MOODLE_IFRN_OPEN_ENROL",
         courseId: id,
         ambienteId: envId
-      }, "*");
+      }, window.location.origin);
       return;
     }
     window.location.assign(resolvePainelEnrolUrl(id, envId));
@@ -3001,7 +3004,7 @@
       return;
     }
     if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: "MOODLE_IFRN_LOGOUT" }, "*");
+      window.parent.postMessage({ type: "MOODLE_IFRN_LOGOUT" }, window.location.origin);
       return;
     }
     const loginUrl = typeof App.resolveLoginUrl === "function" ? App.resolveLoginUrl() : "/login/marketplace-ifrn";

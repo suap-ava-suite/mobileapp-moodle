@@ -162,6 +162,17 @@ export class IfrnCourseMenuComponent implements OnChanges, OnDestroy {
         return this.a11y.colorModeLabel;
     }
 
+    get environmentLabel(): string {
+        if (this.environment.startsWith('presencial.')) {
+            return 'AVA-Presencial';
+        }
+        if (this.environment.startsWith('academico.')) {
+            return 'AVA-Acadêmico';
+        }
+
+        return 'AVA IFRN';
+    }
+
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['courseId'] && this.visible) {
             this.a11y.init();
@@ -259,6 +270,7 @@ export class IfrnCourseMenuComponent implements OnChanges, OnDestroy {
                 await CoreModals.openSideModal({
                     component: CoreBlockSideBlocksComponent,
                     componentProps: { contextLevel: ContextLevel.COURSE, instanceId: this.courseId },
+                    cssClass: 'core-modal-lateral ifrn-course-block-modal',
                 });
             } else {
                 const path = action === 'messages' ? ADDON_MESSAGES_PAGE_NAME

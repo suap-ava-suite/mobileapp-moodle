@@ -1,58 +1,60 @@
-# Ponte SUAP → Painel AVA → Moodle Mobile
+# Painel AVA → sessão nativa do Moodle Mobile
 
-Arquitetura implementada no MoodleIFRN **sem redesenhar o login SUAP**.
+Este documento descreve o fluxo implementado neste checkout. Para eventos e
+resultados de uma versão datada, consulte os [relatórios históricos](./README.md#relatórios-históricos).
 
-## Fluxo
+## Fluxo atual
 
 ```text
-1. Login IFRN (inalterado na UX)
-   POST https://suap.ifrn.edu.br/api/token/pair
-   → JWT SUAP em sessionStorage (ifrn_access_token)
-
-2. Best-effort (mesmo login, mesmas credenciais)
-   POST https://painel.ead.ifrn.edu.br/api/v1/authenticate/
-   → JWT do Painel (ifrn_painel_token) + perfil
-   (falha aqui NÃO impede o painel; cai no fallback SUAP)
-
-3. Painel mobile (#/painel)
-   Preferência: GET /api/v1/diarios/  (courseid Moodle + viewurl + diario_id)
-   Fallback:    API SUAP ensino     (só id do diário SUAP)
-
-4. Clique “Abrir no Moodle”
-   → /login/moodle-open-course
-   → se não houver sessão: OAuth Moodle (launch.php + issuer suap)
-   → CoreSites.newSite() / sessão restaurada
-   → CoreCourseHelper.getAndOpenCourse(courseid)
+Marketplace
+  → SuapEntryService.loginWithSuap()
+  → PainelAvaService.authenticateWithBrowser()
+  → sessão web do Painel e resposta JSON de /api/v1/diarios/
+  → dashboard associado à identidade confirmada
+  → toque no cartão (ID Moodle + URL do ambiente)
+  → ponte validada por PainelPage
+  → MoodleSiteService.ensureSessionAndOpenCourse()
+  → sessão nativa correspondente ou OAuth do Moodle selecionado
+  → rota de curso do Moodle Mobile
 ```
 
-## O que NÃO fazemos
+O InAppBrowser é usado para a sessão web do Painel. A tela começa oculta e pode
+ser apresentada quando o fluxo institucional exigir interação. A consulta dos
+cursos é feita na origem do Painel com a sessão web dessa janela. O ID do curso e
+a origem do ambiente vêm dos dados do Painel; o app não deriva um Moodle ID de
+um identificador SUAP de diário.
 
-- Não enviamos JWT SUAP / JWT Painel como `wstoken` Moodle
-- Não inventamos endpoints além dos oficiais do Painel / Moodle / SUAP
-- Não alteramos a tela “Entrar com SUAP” além de vincular o Painel em background
+## Tokens, cookies e identidade
 
-## Arquivos principais
+- Cookies da sessão web permanecem no InAppBrowser e são enviados ao Painel em
+  chamadas same-origin.
+- O app não converte JWT SUAP/Painel em `wstoken` Moodle, nem assume que cookies
+  de navegadores diferentes sejam compartilhados.
+- A sessão nativa do Moodle é criada/validada pelo fluxo oficial do Moodle e
+  pelo núcleo do Moodle Mobile.
+- Perfil/dashboard só são aceitos depois da conferência da identidade; os dados
+  permanecem associados à conta em uso.
+- O clique preserva curso e ambiente para a retomada após OAuth. Duplicatas da
+  mesma abertura são deduplicadas pelo serviço de cursos.
 
-| Arquivo | Papel |
-|---------|--------|
-| `services_mobile/painel-ava.service.ts` | Auth Painel + tokens |
-| `services_mobile/moodle-site.service.ts` | OAuth Moodle + abrir courseid |
-| `moodle-open-course/` | Rota Ionic de abertura nativa |
-| `mobilemoodle/core_mobile/api-painel.ts` | Cliente `/api/v1/diarios/` |
-| `mobilemoodle/core_mobile/api.ts` | Preferência Painel → fallback SUAP |
+## Componentes principais
 
-## Tokens (sessionStorage)
+| Código | Papel |
+|---|---|
+| `marketplace-ifrn/marketplace-ifrn.ts` | Inicia a entrada e conclui callbacks |
+| `services_mobile/suap-entry.service.ts` | Coordena identidade e retorno ao Painel |
+| `services_mobile/painel-ava.service.ts` | Sessão web e consultas same-origin do Painel |
+| `painel/painel.ts` | Trata a escolha de curso e valida a ponte recebida |
+| `services_mobile/moodle-site.service.ts` | Valida sessão/identidade e abre a rota nativa |
+| `services_mobile/course-sso-browser.ts` | Estado do OAuth de curso em janela interna controlada |
+| `mobilemoodle/core_mobile/app-utils.ts` | Emite o comando de abertura do curso |
 
-| Chave | Origem | Uso |
-|-------|--------|-----|
-| `ifrn_access_token` | SUAP `/api/token/pair` | Sessão app / fallback |
-| `ifrn_painel_token` | Painel `/api/v1/authenticate/` | Lista diários Moodle |
-| `ifrn_painel_profile` | corpo `data` do authenticate | Nome/foto no painel |
-| `ifrn_moodle_pending_open_course` | clique no diário | courseid a abrir após OAuth |
+## Limites
 
-## Evidências
+O app não pode criar uma sessão institucional que o servidor não concedeu, nem
+contornar senha, consentimento, autorização ou expiração. Se o usuário precisar
+renovar a autenticação, o fluxo depende da tela institucional. O acesso real a
+cada ambiente precisa ser validado com conta autorizada e somente leitura.
 
-- Painel produção: `https://painel.ead.ifrn.edu.br` (helm `painel.ead.ifrn.edu.br`)
-- `GET /api/v1/diarios/` → 428 sem token (endpoint vivo)
-- `tool_painelava` devolve `id` = courseid Moodle e `viewurl`
-- `local_suap` / Integrador: `idnumber` = `{turma}.{sigla}#{diario.id}`
+Referências atuais: [visão geral](./VISAO-GERAL.md), [painel de cursos](./PAINEL-CURSOS.md)
+e [SSO de cursos](./SSO-CURSOS-LOGIN-UNICO-2026-10-26.md).
