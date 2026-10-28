@@ -38,10 +38,18 @@ export function refreshSavedProfileNames(
     }
     profile['_profile_origin'] = expectedOrigin;
     profile['_name_source'] = 'GET /api/v2/usuario/info/';
-    const serialized = JSON.stringify({ ...snapshot, profile });
+    // Sem mudança real, não grava quatro snapshots nem pede ao host para
+    // recarregar o iframe inteiro (scripts, listas, fotos e estado dos filtros).
+    const changed = [...NAME_KEYS, '_profile_origin', '_name_source']
+        .some(key => profile[key] !== snapshot.profile[key]);
+    const currentProfile = changed ? profile : snapshot.profile;
+    const serialized = JSON.stringify({ ...snapshot, profile: currentProfile });
+    const serializedProfile = JSON.stringify(currentProfile);
     for (const storage of [sessionStorage, localStorage]) {
-        storage.setItem(OAUTH_PROFILE_KEY, serialized);
-        storage.setItem('ifrn_painel_profile', JSON.stringify(profile));
+        if (storage.getItem(OAUTH_PROFILE_KEY) !== serialized) storage.setItem(OAUTH_PROFILE_KEY, serialized);
+        if (storage.getItem('ifrn_painel_profile') !== serializedProfile) {
+            storage.setItem('ifrn_painel_profile', serializedProfile);
+        }
     }
-    return true;
+    return changed;
 }

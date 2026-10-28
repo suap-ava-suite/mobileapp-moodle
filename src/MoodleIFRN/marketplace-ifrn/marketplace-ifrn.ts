@@ -8,6 +8,7 @@ import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.servic
 import { CoreLang } from '@services/lang';
 import { CorePlatform } from '@services/platform';
 import { CoreNavigator } from '@services/navigator';
+import { CoreOpener } from '@static/opener';
 import { SuapEntryService, SuapEntryAccountError } from '@/MoodleIFRN/services_mobile/suap-entry.service';
 
 @Component({
@@ -30,6 +31,18 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     statusMessage = '';
     private nativeReturnQueued = false;
     private expectedIdentity = '';
+
+    /**
+     * Garante que o overlay já esteja pintado antes de abrir o InAppBrowser nativo.
+     * @returns Conclui após dois ciclos de pintura.
+     */
+    private async waitForTransitionPaint(): Promise<void> {
+        await new Promise<void>((resolve) => {
+            window.requestAnimationFrame(() => {
+                window.requestAnimationFrame(() => resolve());
+            });
+        });
+    }
 
     readonly currentYear = new Date().getFullYear();
     readonly welcomeImageSrc = 'mobilemoodle/static/theme/ifrn/img/alunos-ifrn-biblioteca-enhanced.webp';
@@ -165,10 +178,12 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         this.waitingBrowser = false;
         this.nativeReturnQueued = false;
         this.formError = '';
+        this.statusMessage = 'Acessando o SUAP…';
         try {
             // Um novo retorno deve mudar a query, mesmo na tela Ionic em cache.
             await this.router.navigate([], { relativeTo: this.route, replaceUrl: true,
                 queryParams: { nativeSuapReturn: null }, queryParamsHandling: 'merge' });
+            await this.waitForTransitionPaint();
             await this.suapEntry.loginWithSuap(this.expectedIdentity, message => this.statusMessage = message);
             // OAuth fica no navegador do sistema; mantém o splash até o callback.
             if (readNativeSuapEntry()) {
@@ -219,7 +234,9 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
             return;
         }
         this.accountSwitchStarted = true;
-        window.open('https://academico.ava.ifrn.edu.br/auth/suap/logout.php', '_system');
+        CoreOpener.openInApp('https://academico.ava.ifrn.edu.br/auth/suap/logout.php', {
+            location: 'no', clearcache: 'no', clearsessioncache: 'no',
+        });
     }
 
     /** Depois da saída na web, reinicia a entrada com a matrícula esperada. */

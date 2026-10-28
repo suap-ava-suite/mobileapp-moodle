@@ -26,29 +26,8 @@ import { MM, App } from './namespace';
     App.dashboardCache = null;
 
     function logout(): void {
-        // O OAuth Moodle roda no navegador do sistema (_system). A sessão web desse
-        // navegador precisa ser encerrada para que outro usuário possa autenticar.
-        // Abre a saída oficial; a confirmação do servidor permanece na página.
-        const lastMoodleSite = sessionStorage.getItem('ifrn_moodle_last_site_url');
-        let webLogoutUrl: string | null = null;
-
-        if (lastMoodleSite) {
-            try {
-                const origin = new URL(lastMoodleSite).origin;
-
-                if (origin.startsWith('https://')) {
-                    webLogoutUrl = `${origin}/auth/suap/logout.php`;
-                }
-            } catch {
-                // URL inválida: segue apenas com o logout local.
-            }
-        }
-
-        if (webLogoutUrl) {
-            // Mesmo contexto usado pelo OAuth Moodle. O servidor exibirá
-            // "Confirmar saída"; essa confirmação não é automatizada pelo app.
-            window.open(webLogoutUrl, '_system');
-        }
+        // Saída local pelo bridge; o próximo login principal já inicia sua própria
+        // sessão web. A autenticação dos cursos nunca usa o navegador externo.
 
         if (window.MobileMoodleApi?.clearToken) {
             window.MobileMoodleApi.clearToken();

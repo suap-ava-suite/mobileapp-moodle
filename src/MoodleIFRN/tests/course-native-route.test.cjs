@@ -35,12 +35,14 @@ test('from the IFRN panel or OAuth bridge, enters the course without opening the
     assert.equal(s.navigation[0][1].params.course, s.course);
     assert.equal(s.helper.length, 0);
 });
-test('existing native tab retains the standard course handler', async () => {
+test('opening another course from an existing native tab replaces the old course stack', async () => {
     const s = setup('home');
     await s.open(2836, 'presencial-site');
-    assert.equal(s.helper[0][0], 2836);
-    assert.equal(s.helper[0][2], 'presencial-site');
-    assert.equal(s.navigation.length, 0);
+    assert.deepEqual(s.fetched[0], [2836, 'presencial-site']);
+    assert.equal(s.navigation[0][0], '/main/home/course/2836');
+    assert.equal(s.navigation[0][1].reset, true);
+    assert.equal(s.navigation[0][1].params.course, s.course);
+    assert.equal(s.helper.length, 0);
 });
 test('rejected native route is reported instead of being treated as an opened course', async () => {
     const s = setup(null, false);

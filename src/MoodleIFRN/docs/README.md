@@ -12,6 +12,7 @@ Tudo que é específico do IFRN vive em `src/MoodleIFRN/` (login, serviços, pai
 | [PONTE-PAINEL-MOODLE.md](./PONTE-PAINEL-MOODLE.md) | SUAP → Painel AVA → sessão Moodle Mobile |
 | [PATCH-AO-ATUALIZAR.md](./PATCH-AO-ATUALIZAR.md) | Reaplicar o módulo após atualizar o Moodle Mobile |
 | [PLAY-STORE-BETA.md](./PLAY-STORE-BETA.md) | Criar a ficha Moodle IFRN e publicar um teste beta na Google Play |
+| [DESEMPENHO-PAINEL-2026-10-26.md](./DESEMPENHO-PAINEL-2026-10-26.md) | Reduzir gravações repetidas e recargas desnecessárias do Painel |
 
 ## Login e autenticação
 

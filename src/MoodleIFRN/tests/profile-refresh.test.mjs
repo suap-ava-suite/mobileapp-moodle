@@ -10,7 +10,9 @@ const key = 'ifrn_suap_oauth_profile_v1';
 function setup(profileOrigin = origin) {
     const storage = () => {
         const map = new Map();
-        return {getItem:k=>map.get(k) ?? null, setItem:(k,v)=>map.set(k,v), removeItem:k=>map.delete(k)};
+        let writes = 0;
+        return {getItem:k=>map.get(k) ?? null, setItem:(k,v)=>{writes++;map.set(k,v);},
+            removeItem:k=>map.delete(k), get writes(){return writes;}};
     };
     const sessionStorage=storage(), localStorage=storage();
     const old={profile:{identificacao:'123',nome_usual:'Nome antigo',nome_exibicao:'Nome antigo',
@@ -37,6 +39,25 @@ test('resposta válida atualiza ambos os snapshots, preservando foto, perfil, li
         assert.equal(JSON.parse(s.getItem('ifrn_painel_profile')).nome_usual,'Nome correto');
         assert.deepEqual(JSON.parse(s.getItem('ifrn_painel_dashboard')),{diarios:[{id:99}]});
     }
+});
+
+test('perfil idêntico não grava snapshots nem solicita recarregar o Painel',()=>{
+    const {update,sessionStorage,localStorage}=setup();
+    const incoming={id:7,matricula:'123',nome_usual:'Nome correto'};
+    assert.equal(update(incoming,origin+'/api/v2/usuario/info/',origin),true);
+    const before=sessionStorage.writes + localStorage.writes;
+    const saved=localStorage.getItem(key);
+    for(let i=0;i<20;i++) {
+        assert.equal(update(incoming,origin+'/api/v2/usuario/info/',origin),false);
+    }
+    assert.equal(sessionStorage.writes + localStorage.writes,before);
+    assert.equal(localStorage.getItem(key),saved);
+    // Repara cópia persistida ausente sem obrigar a recarregar a tela inalterada.
+    localStorage.removeItem(key);
+    assert.equal(update(incoming,origin+'/api/v2/usuario/info/',origin),false);
+    assert.equal(localStorage.getItem(key),saved);
+    // Uma mudança posterior ainda precisa atualizar a interface.
+    assert.equal(update({...incoming,nome_usual:'Outro nome oficial'},origin+'/api/v2/usuario/info/',origin),true);
 });
 test('não mistura contas, identidades conflitantes, respostas anônimas ou domínios',()=>{
     const {update,localStorage}=setup();

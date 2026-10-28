@@ -80,6 +80,10 @@ const SUAP_ORIGIN = 'https://suap.ifrn.edu.br';
 
 /** Opções do IAB: sem barra de URL; login SUAP continua usável quando exibido. */
 const PAINEL_IAB_CHROME = {
+    // O plugin Android preserva beforeload entre janelas. O SSO dos cursos usa
+    // "get"; o Painel precisa desativá-lo explicitamente para não parar redirects.
+    // A tipagem do wrapper omite "no", aceito pela implementação nativa.
+    beforeload: 'no' as NonNullable<Parameters<typeof CoreOpener.openInApp>[1]>['beforeload'],
     location: 'no' as const,
     hidden: 'yes' as const,
     footer: 'no' as const,
@@ -625,20 +629,15 @@ export class PainelAvaService {
                 });
             };
 
-            // Inicia oculto; só mostra login/autorização SUAP. Esconde no loadstart
-            // (antes do paint) ao voltar ao Painel ou em redirects sem interação.
-            // Páginas intermediárias também recebem CSS que oculta logos Moodle/web.
+            // Inicia oculto. Mantém a tela de carregamento do app durante loadstart
+            // e mostra o SUAP apenas em loadstop, quando a página já pode ser pintada.
+            // Páginas intermediárias ficam ocultas e recebem CSS antes do paint.
             const loadStartSubscription = browser.on('loadstart').subscribe((event) => {
                 const url = event.url || '';
 
                 if (url.startsWith(`${suapOrigin}/`)) {
-                    if (awaitingSuapIdentity || !needsSuapUserInteraction(url)) {
-                        hideBrowser();
-                        maskIntermediateWebPage(browser, url);
-                    } else if (!finished) {
-                        showBrowserForLogin();
-                    }
-                    // Login/autorização SUAP: não mascara — deixa a UI nativa do SUAP.
+                    hideBrowser();
+                    // SUAP só aparece quando seu loadstop confirmar que está pronto.
                     return;
                 }
 
