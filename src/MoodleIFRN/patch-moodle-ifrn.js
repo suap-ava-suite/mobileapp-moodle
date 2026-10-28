@@ -24,6 +24,8 @@ const FILES = {
     loginModule: path.join(PROJECT_ROOT, 'src/core/features/login/login.module.ts'),
     mainMenuModule: path.join(PROJECT_ROOT, 'src/core/features/mainmenu/mainmenu.module.ts'),
     courseIndex: path.join(PROJECT_ROOT, 'src/core/features/course/pages/index/index.ts'),
+    courseFormat: path.join(PROJECT_ROOT, 'src/core/features/course/components/course-format/course-format.ts'),
+    courseIndexTemplate: path.join(PROJECT_ROOT, 'src/core/features/course/components/course-index/course-index.html'),
     angularJson: path.join(PROJECT_ROOT, 'angular.json'),
     gulpfile: path.join(PROJECT_ROOT, 'gulpfile.js'),
     packageJson: path.join(PROJECT_ROOT, 'package.json'),
@@ -54,6 +56,41 @@ function patchCourseIndexRoute() {
     content = content.replace(currentRouteAssignment, patchedRouteAssignment);
     writeFile(FILES.courseIndex, content);
     console.log('✔ core course index — abas usam a rota ativada do curso');
+}
+
+/** Keeps the native course-index drawer styling hooks after Moodle updates. */
+function patchCourseIndexDrawerStyle() {
+    let format = readFile(FILES.courseFormat);
+    let template = readFile(FILES.courseIndexTemplate);
+    let changed = false;
+    const modalComponent = 'component: CoreCourseCourseIndexComponent,\n            initialBreakpoint: 1,';
+    const styledModalComponent = 'component: CoreCourseCourseIndexComponent,\n            cssClass: \'ifrn-course-index-modal\',\n            initialBreakpoint: 1,';
+    const sectionClass = '[class.item-hightlighted]="section.highlighted" [detail]="false">';
+    const styledSectionClass = '[class.item-hightlighted]="section.highlighted" [class.section-expanded]="section.expanded"\n            [detail]="false">';
+
+    if (!format.includes(styledModalComponent)) {
+        if (!format.includes(modalComponent)) {
+            throw new Error('Não foi possível localizar a abertura do índice lateral no course-format.ts.');
+        }
+        format = format.replace(modalComponent, styledModalComponent);
+        changed = true;
+    }
+
+    if (!template.includes(styledSectionClass)) {
+        if (!template.includes(sectionClass)) {
+            throw new Error('Não foi possível localizar a classe da seção no course-index.html.');
+        }
+        template = template.replace(sectionClass, styledSectionClass);
+        changed = true;
+    }
+
+    if (changed) {
+        writeFile(FILES.courseFormat, format);
+        writeFile(FILES.courseIndexTemplate, template);
+        console.log('✔ core course index — ganchos de estilo do menu aplicados');
+    } else {
+        console.log('• core course index já possui os ganchos de estilo do menu');
+    }
 }
 
 const MARKER = {
@@ -459,6 +496,7 @@ function main() {
     patchPackageScripts();
     patchIndexEarlyHandoff();
     patchCourseIndexRoute();
+    patchCourseIndexDrawerStyle();
     const menuChanged = patchCourseMenu(PROJECT_ROOT);
     patchLoadingAnimation(PROJECT_ROOT);
     console.log(menuChanged ? '✔ Menu IFRN registrado no curso nativo' : '• Menu IFRN do curso já estava atualizado');
@@ -469,8 +507,19 @@ function main() {
     console.log('  Próximo passo: npm run build:mobilemoodle');
 }
 
+function patchCourseMenusOnly() {
+    console.log('MoodleIFRN — reaplicando somente os menus do curso...\n');
+    patchCourseIndexDrawerStyle();
+    const menuChanged = patchCourseMenu(PROJECT_ROOT);
+    console.log(menuChanged ? '✔ Menu IFRN registrado no curso nativo' : '• Menu IFRN do curso já estava atualizado');
+}
+
 try {
-    main();
+    if (process.argv.includes('--course-menus-only')) {
+        patchCourseMenusOnly();
+    } else {
+        main();
+    }
 } catch (error) {
     console.error(`\n✗ ${error.message}`);
     process.exit(1);

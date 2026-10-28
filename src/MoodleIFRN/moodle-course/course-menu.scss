@@ -91,6 +91,14 @@
     text-overflow: ellipsis;
 }
 
+.ifrn-ava-menu-trigger {
+    background: var(--ifrn-primary-dark, #0c326f);
+
+    &:focus-visible {
+        outline-color: var(--ifrn-primary-light, #eaeff8);
+    }
+}
+
 .ifrn-ava-sidebar__toggle {
     width: 44px;
     height: 44px;
@@ -373,8 +381,162 @@
     }
 }
 
+/* Aparência do Painel AVA, adaptada ao drawer nativo do celular. */
+:host {
+    --ifrn-web-menu: #1351b4;
+    --ifrn-web-menu-dark: #0c326f;
+    --ifrn-web-menu-soft: #eaeff8;
+}
+
+.ifrn-ava-sidebar {
+    /* O ion-modal é anexado ao body e não herda variáveis declaradas em :host. */
+    --ifrn-web-menu: #1351b4;
+    --ifrn-web-menu-dark: #0c326f;
+    --ifrn-web-menu-soft: #eaeff8;
+    background: #fff;
+    color: #0c326f;
+}
+
+.ifrn-ava-sidebar__header {
+    margin: 0 12px 8px;
+    padding-top: calc(10px + max(var(--ion-safe-area-top, 0px), env(safe-area-inset-top, 0px)));
+}
+
+.ifrn-ava-sidebar__title {
+    color: #0c326f;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+}
+
+.ifrn-ava-sidebar__toggle {
+    background: var(--ifrn-primary-dark, #0c326f);
+    border-radius: 10px;
+}
+
+.ifrn-ava-sidebar__body {
+    padding: 4px 10px max(12px, env(safe-area-inset-bottom));
+}
+
+.ifrn-ava-sidebar__nav {
+    gap: 4px;
+}
+
+.ifrn-ava-nav-btn {
+    min-height: 52px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    color: #0c326f;
+    transition: background-color 150ms ease, color 150ms ease;
+
+    ion-icon {
+        color: #1351b4;
+        font-size: 1.1rem;
+    }
+
+    small {
+        color: #666;
+    }
+
+    &:hover:not(:disabled),
+    &:focus-visible:not(:disabled) {
+        background: #eaeff8;
+    }
+
+    &:active:not(:disabled) {
+        background: #c5d6f5;
+    }
+
+    &:disabled {
+        color: #888;
+
+        small,
+        ion-icon {
+            color: inherit;
+        }
+    }
+}
+
+.ifrn-ava-sidebar__divider {
+    margin: 8px 4px;
+    background: #e6e6e6;
+}
+
+/* O web usa controles arredondados e neutros; no celular mantemos alvo de toque confortável. */
+.ifrn-ava-a11y {
+    --ifrn-web-menu: #0c8d93;
+    --ifrn-web-menu-dark: #075e63;
+    --ifrn-web-menu-soft: #d8f4f1;
+    --ifrn-primary: var(--ifrn-web-menu);
+    --ifrn-primary-dark: var(--ifrn-web-menu-dark);
+    --ifrn-primary-light: var(--ifrn-web-menu-soft);
+    color: #333;
+}
+
+.ifrn-ava-a11y__header {
+    padding: 12px 14px;
+    padding-top: calc(12px + max(var(--ion-safe-area-top, 0px), env(safe-area-inset-top, 0px)));
+}
+
+.ifrn-ava-a11y__close {
+    background: #fde8e7;
+    color: #b42318;
+
+    ion-icon {
+        color: inherit;
+    }
+}
+
+.ifrn-ava-a11y__body {
+    padding: 10px 12px max(12px, env(safe-area-inset-bottom));
+}
+
+.ifrn-ava-a11y__options {
+    gap: 8px;
+}
+
+.ifrn-ava-check__label {
+    min-height: 48px;
+    padding: 10px 14px;
+    border-color: transparent;
+    border-radius: 18px;
+    background: #ededed;
+}
+
+.ifrn-ava-check__text {
+    gap: 8px;
+}
+
+.ifrn-ava-check.is-on .ifrn-ava-check__label,
+.ifrn-ava-check__input:checked + .ifrn-ava-check__label {
+    border-color: var(--ifrn-web-menu);
+    background: var(--ifrn-web-menu-soft);
+    box-shadow: 0 0 0 1px var(--ifrn-web-menu);
+}
+
+.ifrn-ava-check__ok {
+    color: var(--ifrn-web-menu);
+}
+
+.ifrn-ava-cycles {
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.ifrn-ava-cycle__btn {
+    min-height: 48px;
+    border-color: var(--ifrn-web-menu);
+    border-radius: 18px;
+    background: #ededed;
+    color: #333;
+
+    ion-icon {
+        color: var(--ifrn-web-menu-dark);
+    }
+}
+
 .ifrn-ava-cycle.is-on .ifrn-ava-cycle__btn {
-    color: var(--ifrn-primary, #1351b4);
-    border-color: var(--ifrn-primary, #1351b4);
-    box-shadow: 0 0 0 2px rgb(19 81 180 / 18%);
+    color: var(--ifrn-web-menu-dark);
+    border-color: var(--ifrn-web-menu);
+    background: var(--ifrn-web-menu-soft);
+    box-shadow: 0 0 0 1px var(--ifrn-web-menu);
 }

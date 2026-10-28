@@ -149,6 +149,112 @@ page-core-course-index ion-toolbar ion-button {
     --color: var(--ifrn-ava-dark);
 }
 
+/* Índice lateral da disciplina, aproximado ao drawer do AVA web. */
+ion-modal.ifrn-course-index-modal {
+    --width: min(86vw, 520px);
+    --height: 90vh;
+    --border-radius: 0 16px 16px 0;
+    --background: #f5f5f5;
+    --backdrop-opacity: 0.38;
+    --box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+    align-items: center;
+    justify-content: flex-start;
+}
+
+ion-modal.ifrn-course-index-modal::part(content) {
+    margin-inline-start: 0;
+    margin-inline-end: auto;
+    overflow: hidden;
+}
+
+ion-modal.ifrn-course-index-modal ion-header,
+ion-modal.ifrn-course-index-modal ion-toolbar {
+    --background: #f5f5f5;
+    --color: #292929;
+    --border-width: 0 0 1px;
+    --border-color: #dedede;
+}
+
+ion-modal.ifrn-course-index-modal ion-title h1 {
+    color: #292929;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+ion-modal.ifrn-course-index-modal ion-content {
+    --background: #f5f5f5;
+    --color: #4b535b;
+}
+
+ion-modal.ifrn-course-index-modal ion-list {
+    padding: 12px 14px 24px;
+    background: transparent;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.divider.section {
+    --background: transparent;
+    --color: #4b535b;
+    --padding-start: 4px;
+    --padding-end: 12px;
+    --inner-border-width: 0;
+    --min-height: 56px;
+    margin: 4px 0;
+    border-radius: 12px;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.divider.section h2 {
+    color: #292929;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.divider.section ion-icon.expandable-status-icon {
+    margin-inline-end: 8px;
+    padding: 10px;
+    border-radius: 50%;
+    background: #e8e8e8;
+    color: #4b535b;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.divider.section.section-expanded {
+    --background: transparent;
+    --color: #7440ad;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.divider.section.section-expanded h2 {
+    color: #7440ad;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.divider.section.section-expanded ion-icon.expandable-status-icon {
+    background: #ead9fa;
+    color: #7440ad;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.module {
+    --background: transparent;
+    --color: #4b535b;
+    --padding-start: 16px;
+    --padding-end: 12px;
+    --min-height: 50px;
+    --inner-border-width: 0;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.module .item-heading {
+    color: #4b535b;
+    font-size: 0.95rem;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.module ion-icon.completion_complete {
+    color: #31833d;
+}
+
+ion-modal.ifrn-course-index-modal ion-item.core-course-index-all {
+    --background: transparent;
+    --color: #4b535b;
+    --min-height: 48px;
+    font-weight: 600;
+}
+
 /* =========================================================
  * Banner + nome + progresso (.core-course-header)
  * ========================================================= */
@@ -531,6 +637,77 @@ page-core-course-index ion-router-outlet > * ion-content {
     }
 }
 
+/* As preferências de acessibilidade do curso também se aplicam aos itens do menu. */
+body.color_mode_low_contrast page-addon-messages-group-conversations,
+body.color_mode_low_contrast page-addon-messages-contacts,
+body.color_mode_low_contrast page-addon-messages-search,
+body.color_mode_low_contrast page-addon-messages-discussion,
+body.color_mode_low_contrast page-addon-notifications-list,
+body.color_mode_low_contrast page-addon-notifications-notification {
+    filter: saturate(0.5);
+}
+
+body.color_mode_grayscale page-addon-messages-group-conversations,
+body.color_mode_grayscale page-addon-messages-contacts,
+body.color_mode_grayscale page-addon-messages-search,
+body.color_mode_grayscale page-addon-messages-discussion,
+body.color_mode_grayscale page-addon-notifications-list,
+body.color_mode_grayscale page-addon-notifications-notification {
+    filter: grayscale(100%);
+}
+
+body.color_mode_colorblind page-addon-messages-group-conversations,
+body.color_mode_colorblind page-addon-messages-contacts,
+body.color_mode_colorblind page-addon-messages-search,
+body.color_mode_colorblind page-addon-messages-discussion,
+body.color_mode_colorblind page-addon-notifications-list,
+body.color_mode_colorblind page-addon-notifications-notification {
+    --ifrn-web-menu: #1f77b4;
+    --ifrn-web-menu-dark: #144e75;
+    --ifrn-web-menu-soft: #e4eef7;
+    --primary: #1f77b4;
+    --ion-color-primary: #1f77b4;
+}
+
+body.color_mode_high_contrast page-addon-messages-group-conversations,
+body.color_mode_high_contrast page-addon-messages-contacts,
+body.color_mode_high_contrast page-addon-messages-search,
+body.color_mode_high_contrast page-addon-messages-discussion,
+body.color_mode_high_contrast page-addon-messages-settings,
+body.color_mode_high_contrast page-addon-notifications-list,
+body.color_mode_high_contrast page-addon-notifications-notification,
+body.color_mode_high_contrast page-addon-notifications-settings {
+    --ifrn-surface: #111;
+    --ifrn-canvas: #000;
+    --ifrn-text: #fff;
+    --ifrn-muted: #ddd;
+    --ifrn-border: #777;
+    --ifrn-border-inner: #555;
+    --ion-background-color: #000;
+    --ion-item-background: #111;
+    --ion-text-color: #fff;
+}
+
+body[data-zoom="120"] page-addon-messages-group-conversations,
+body[data-zoom="120"] page-addon-messages-discussion,
+body[data-zoom="120"] page-addon-notifications-list,
+body[data-zoom="120"] page-addon-notifications-notification { font-size: 120%; }
+
+body[data-zoom="130"] page-addon-messages-group-conversations,
+body[data-zoom="130"] page-addon-messages-discussion,
+body[data-zoom="130"] page-addon-notifications-list,
+body[data-zoom="130"] page-addon-notifications-notification { font-size: 130%; }
+
+body[data-zoom="150"] page-addon-messages-group-conversations,
+body[data-zoom="150"] page-addon-messages-discussion,
+body[data-zoom="150"] page-addon-notifications-list,
+body[data-zoom="150"] page-addon-notifications-notification { font-size: 150%; }
+
+body[data-zoom="160"] page-addon-messages-group-conversations,
+body[data-zoom="160"] page-addon-messages-discussion,
+body[data-zoom="160"] page-addon-notifications-list,
+body[data-zoom="160"] page-addon-notifications-notification { font-size: 160%; }
+
 /* Marcador DevTools: computed style de page-core-course-index deve ter --ifrn-ava: #1351b4 */
 
 /* =========================================================
@@ -587,7 +764,7 @@ page-core-course-contents:has(ifrn-course-menu[data-index-ready="true"])
 
 /* Menu lateral esquerdo — igual Painel AVA (.ava-menu) */
 ion-modal.ifrn-ava-side-modal--left {
-    --width: min(400px, 100vw);
+    --width: min(380px, 100vw);
     --height: 100%;
     --max-width: 100vw;
     --border-radius: 0;
@@ -825,4 +1002,323 @@ body.color_mode_high_contrast ion-modal.ifrn-ava-side-modal--a11y {
     .ifrn-ava-a11y__title, .ifrn-ava-a11y__title ion-icon { color: #ff0; }
     .ifrn-ava-nav-btn small { color: #ddd; }
     .ifrn-ava-nav-btn:hover { background: #222; }
+}
+
+/* =========================================================
+ * Destinos do menu do curso: mensagens, notificações e blocos
+ * Paleta do AVA web, com dimensões próprias para toque e leitura no celular.
+ * ========================================================= */
+page-addon-messages-group-conversations,
+page-addon-messages-contacts,
+page-addon-messages-search,
+page-addon-messages-discussion,
+page-addon-messages-settings,
+page-addon-notifications-list,
+page-addon-notifications-notification,
+page-addon-notifications-settings {
+    --ifrn-web-menu: #0c8d93;
+    --ifrn-web-menu-dark: #075e63;
+    --ifrn-web-menu-soft: #d8f4f1;
+
+    --primary: var(--ifrn-web-menu);
+    --ion-color-primary: var(--ifrn-web-menu);
+    --ion-color-primary-contrast: #fff;
+    --ion-color-primary-shade: var(--ifrn-web-menu-dark);
+    --ion-color-primary-tint: #20a4aa;
+    --ion-background-color: var(--ifrn-canvas);
+    --ion-item-background: var(--ifrn-surface);
+    --ion-text-color: var(--ifrn-text);
+    --core-messages-message-bg: var(--ifrn-surface);
+    --core-messages-message-activated-bg: var(--ifrn-web-menu-soft);
+    --core-messages-message-mine-bg: var(--ifrn-web-menu);
+    --core-messages-message-mine-activated-bg: var(--ifrn-web-menu-dark);
+    --core-messages-message-note-text: rgb(255 255 255 / 78%);
+    --core-messages-discussion-badge: var(--ifrn-web-menu);
+}
+
+page-addon-messages-group-conversations,
+page-addon-messages-contacts,
+page-addon-messages-search,
+page-addon-messages-discussion,
+page-addon-messages-settings,
+page-addon-notifications-list,
+page-addon-notifications-notification,
+page-addon-notifications-settings {
+    background: var(--ifrn-canvas);
+
+    > ion-header ion-toolbar {
+        --background: var(--ifrn-surface);
+        --color: var(--ifrn-text);
+        --border-width: 0;
+        border-bottom: 2px solid var(--ifrn-web-menu);
+    }
+
+    ion-header ion-title,
+    ion-header ion-title h1 {
+        color: var(--ifrn-text);
+        font-weight: 700;
+    }
+
+    ion-header ion-back-button,
+    ion-header ion-button {
+        --color: var(--ifrn-web-menu-dark);
+    }
+
+    ion-content {
+        --background: var(--ifrn-canvas);
+        --color: var(--ifrn-text);
+    }
+}
+
+/* Conversas e contatos: linhas compactas que mantêm leitura e toque confortável. */
+page-addon-messages-group-conversations ion-list,
+page-addon-messages-contacts ion-list,
+page-addon-messages-search ion-list {
+    padding: 8px 10px 24px;
+    background: transparent;
+}
+
+page-addon-messages-group-conversations ion-accordion-group {
+    margin: 0 10px;
+}
+
+page-addon-messages-group-conversations ion-accordion > ion-item[slot="header"] {
+    --background: #ededed;
+    --color: var(--ifrn-text);
+    --inner-border-width: 0;
+    --min-height: 48px;
+    margin: 6px 0;
+    border-radius: 18px;
+    font-weight: 650;
+}
+
+page-addon-messages-group-conversations ion-accordion.accordion-expanded > ion-item[slot="header"] {
+    --background: var(--ifrn-web-menu-soft);
+    --color: var(--ifrn-web-menu-dark);
+}
+
+page-addon-messages-group-conversations ion-item.addon-message-discussion,
+page-addon-messages-contacts ion-item.addon-messages-conversation-item,
+page-addon-messages-search ion-item.addon-message-discussion {
+    --background: var(--ifrn-surface);
+    --color: var(--ifrn-text);
+    --padding-start: 12px;
+    --padding-end: 10px;
+    --inner-padding-end: 8px;
+    --min-height: 72px;
+    --inner-border-width: 0;
+    margin: 6px 2px;
+    border: 1px solid var(--ifrn-border-inner);
+    border-radius: 14px;
+    box-shadow: var(--ifrn-shadow);
+}
+
+page-addon-messages-group-conversations .addon-message-discussion[aria-current="page"],
+page-addon-messages-contacts .addon-messages-conversation-item[aria-current="page"],
+page-addon-messages-search .addon-message-discussion[aria-current="page"] {
+    --background: var(--ifrn-web-menu-soft);
+    border-color: var(--ifrn-web-menu);
+}
+
+page-addon-messages-group-conversations .addon-message-discussion .item-heading,
+page-addon-messages-contacts .addon-messages-conversation-item .item-heading,
+page-addon-messages-search .addon-message-discussion .item-heading {
+    color: var(--ifrn-text);
+    font-size: 0.98rem;
+    font-weight: 700;
+}
+
+page-addon-messages-group-conversations .addon-message-last-message,
+page-addon-messages-search .addon-message-last-message {
+    color: var(--ifrn-muted);
+    font-size: 0.88rem;
+}
+
+page-addon-messages-group-conversations ion-badge,
+page-addon-messages-contacts ion-badge {
+    --background: var(--ifrn-web-menu);
+    --color: #fff;
+    border-radius: 999px;
+}
+
+page-addon-messages-search core-search-box {
+    display: block;
+    padding: 8px 12px 2px;
+}
+
+page-addon-messages-search ion-item-divider {
+    --background: transparent;
+    --color: var(--ifrn-web-menu-dark);
+    padding-inline: 14px;
+    font-weight: 700;
+}
+
+/* Conversa: bolhas teal para mensagens enviadas e superfícies claras para recebidas. */
+page-addon-messages-discussion .addon-messages-discussion-container {
+    gap: 2px;
+    padding: 10px 6px 18px;
+    background: transparent;
+}
+
+page-addon-messages-discussion .addon-messages-date {
+    margin: 12px 0;
+    color: var(--ifrn-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+page-addon-messages-discussion core-message .message-box {
+    width: min(88%, 340px);
+    min-height: 40px;
+    margin: 4px 8px;
+    border: 1px solid var(--ifrn-border-inner);
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+}
+
+page-addon-messages-discussion core-message.is-mine {
+    --ion-text-color: #fff;
+    color: #fff;
+}
+
+page-addon-messages-discussion core-message.is-mine .message-box {
+    border-color: var(--ifrn-web-menu);
+}
+
+page-addon-messages-discussion core-message.is-mine .message-time {
+    color: rgb(255 255 255 / 78%);
+}
+
+page-addon-messages-discussion ion-footer ion-toolbar {
+    --background: var(--ifrn-surface);
+    --border-color: var(--ifrn-border-inner);
+    border-top: 1px solid var(--ifrn-border-inner);
+}
+
+page-addon-messages-discussion core-send-message-form {
+    --textarea-background: var(--ifrn-surface);
+    --textarea-color: var(--ifrn-text);
+    --textarea-border-color: var(--ifrn-web-menu);
+    --textarea-radius: 16px;
+}
+
+/* Notificações: cartões claros e compactos, com estado não lido em teal. */
+page-addon-notifications-list ion-item.addon-notification-item {
+    --background: var(--ifrn-surface);
+    --color: var(--ifrn-text);
+    --padding-start: 12px;
+    --padding-end: 12px;
+    --inner-padding-end: 6px;
+    --inner-border-width: 0;
+    margin: 8px 12px;
+    border: 1px solid var(--ifrn-border-inner);
+    border-radius: 14px;
+    box-shadow: var(--ifrn-shadow);
+}
+
+page-addon-notifications-list .addon-notification-item .item-heading {
+    color: var(--ifrn-text);
+    font-size: 0.98rem;
+    font-weight: 650;
+    line-height: 1.4;
+}
+
+page-addon-notifications-list .addon-notification-item ion-label > p:not(.item-heading) {
+    color: var(--ifrn-muted);
+}
+
+page-addon-notifications-list .addon-notification-item ion-note ion-icon {
+    color: var(--ifrn-web-menu);
+}
+
+page-addon-notifications-list .mark-all-as-read ion-chip {
+    --background: var(--ifrn-web-menu);
+    --color: #fff;
+    min-height: 42px;
+    border-radius: 999px;
+    box-shadow: 0 4px 12px rgb(12 141 147 / 22%);
+}
+
+page-addon-notifications-notification .list-item-limited-width {
+    padding: 10px 12px 28px;
+}
+
+page-addon-notifications-notification ion-item.core-notification-title,
+page-addon-notifications-notification ion-item.core-notification-body {
+    --background: var(--ifrn-surface);
+    --color: var(--ifrn-text);
+    --inner-border-width: 0;
+    padding-inline: 10px;
+}
+
+page-addon-notifications-notification ion-item.core-notification-title {
+    margin-top: 4px;
+    border: 1px solid var(--ifrn-border-inner);
+    border-bottom: 0;
+    border-radius: 14px 14px 0 0;
+}
+
+page-addon-notifications-notification ion-item.core-notification-body {
+    border: 1px solid var(--ifrn-border-inner);
+    border-top: 0;
+    border-radius: 0 0 14px 14px;
+}
+
+/* Gaveta de blocos aberta pelo menu do curso. */
+ion-modal.ifrn-course-block-modal {
+    --width: min(92vw, 420px);
+    --height: 100%;
+    --max-width: 420px;
+    --border-radius: 0 14px 14px 0;
+    --background: var(--ifrn-canvas);
+    --backdrop-opacity: 0.36;
+}
+
+ion-modal.ifrn-course-block-modal::part(content) {
+    margin-inline-start: 0;
+    margin-inline-end: auto;
+}
+
+ion-modal.ifrn-course-block-modal core-block-side-blocks > ion-header ion-toolbar {
+    --background: var(--ifrn-surface);
+    --color: var(--ifrn-text);
+    --border-width: 0;
+    border-bottom: 2px solid #0c8d93;
+}
+
+ion-modal.ifrn-course-block-modal core-block-side-blocks ion-title h1 {
+    color: var(--ifrn-text);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+ion-modal.ifrn-course-block-modal core-block-side-blocks ion-content {
+    --background: var(--ifrn-canvas);
+    --color: var(--ifrn-text);
+}
+
+ion-modal.ifrn-course-block-modal core-block-side-blocks ion-list {
+    padding: 10px 12px 24px;
+    background: transparent;
+}
+
+@media (max-width: 767px) {
+    ion-modal.ifrn-ava-side-modal--left {
+        --width: min(78vw, 320px);
+        --max-width: 320px;
+    }
+
+    ion-modal.ifrn-ava-side-modal--a11y {
+        --width: min(92vw, 380px);
+        --max-width: 380px;
+    }
+
+    page-addon-messages-discussion core-message .message-box {
+        width: min(90%, 340px);
+        margin-inline: 6px;
+    }
+
+    page-addon-notifications-list ion-item.addon-notification-item {
+        margin: 7px 10px;
+    }
 }
