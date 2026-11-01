@@ -136,6 +136,7 @@ test('cancel during validation wins over a late resolve or reject and closes exa
         const s=setup({timeoutMs:100,acceptToken:(_url,attempt)=>{guard=attempt;return accepted;}});
         const outcome=s.completion.then(()=> 'resolved',e=>e.message);
         s.emit('customscheme','moodlemobile://token=synthetic');
+        await tick();
         s.cancel();s.cancel();
         if(rejectLate) reject(new Error('synthetic'));else resolve();
         assert.match(await outcome,/cancelada/);

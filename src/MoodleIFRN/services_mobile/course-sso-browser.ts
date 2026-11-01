@@ -1,12 +1,17 @@
 import type { InAppBrowserObject } from '@awesome-cordova-plugins/in-app-browser/ngx';
 
+export interface CourseSsoAttempt {
+    assertActive: () => void;
+}
+
 export interface CourseSsoBrowserOptions {
     loginUrl: string;
     launchUrl?: string;
     siteUrl: string;
     open: (url: string) => InAppBrowserObject;
     isToken: (url: string) => boolean;
-    acceptToken: (url: string) => Promise<void>;
+    acceptToken: (url: string, attempt: CourseSsoAttempt) => Promise<void>;
+    isCurrent?: () => boolean;
     timeoutMs?: number;
 }
 
@@ -26,17 +31,30 @@ export function startCourseSsoBrowser(options: CourseSsoBrowserOptions): {
     const subscriptions: Array<{ unsubscribe: () => void }> = [];
     let settled = false;
     let accepting = false;
+    let browserClosed = false;
     let restoredLaunch = false;
     const visits = new Map<string, number>();
     let cancel = (): void => { /* Definido durante a criação da Promise. */ };
     const completion = new Promise<void>((resolve, reject) => {
+        const closeBrowser = (): void => {
+            if (browserClosed) {
+                return;
+            }
+            browserClosed = true;
+            subscriptions.forEach(subscription => subscription.unsubscribe());
+            subscriptions.length = 0;
+            try {
+                browser.close();
+            } catch { /* A janela nativa pode já ter sido encerrada. */ }
+        };
         const dispose = (): void => {
             clearTimeout(timer);
-            subscriptions.forEach(subscription => subscription.unsubscribe());
-            browser.close();
+            closeBrowser();
         };
         const fail = (message: string): void => {
-            if (settled || accepting) return;
+            if (settled) {
+                return;
+            }
             settled = true;
             dispose();
             reject(new Error(message));
@@ -44,6 +62,13 @@ export function startCourseSsoBrowser(options: CourseSsoBrowserOptions): {
         const timer = setTimeout(() => fail('A conexão automática do curso demorou demais. Tente novamente.'),
             options.timeoutMs ?? 45000);
         cancel = () => fail('Conexão do curso cancelada.');
+        const attempt: CourseSsoAttempt = {
+            assertActive: () => {
+                if (settled || options.isCurrent?.() === false) {
+                    throw new Error('A tentativa de conexão foi cancelada ou expirou.');
+                }
+            },
+        };
         const accept = (url: string): boolean => {
             // Alguns redirects do WebView envolvem o scheme em http(s) e removem o ":".
             // Reconhece apenas o callback móvel, antes de permitir qualquer navegação HTTP.
@@ -52,15 +77,21 @@ export function startCourseSsoBrowser(options: CourseSsoBrowserOptions): {
             if (!options.isToken(callback)) return false;
             if (settled || accepting) return true;
             accepting = true;
-            // Fecha a janela antes de o núcleo navegar; mantém o passport para a validação oficial.
-            dispose();
-            options.acceptToken(callback).then(() => {
+            // Fecha só a janela: o prazo e o cancelamento continuam durante a validação.
+            closeBrowser();
+            Promise.resolve().then(() => {
+                attempt.assertActive();
+
+                return options.acceptToken(callback, attempt);
+            }).then(() => {
+                if (settled) {
+                    return;
+                }
+                attempt.assertActive();
                 settled = true;
+                dispose();
                 resolve();
-            }, () => {
-                settled = true;
-                reject(new Error('Não foi possível validar a conexão automática deste curso.'));
-            });
+            }).catch(() => fail('Não foi possível validar a conexão automática deste curso.'));
             return true;
         };
         const allowed = (url: string): boolean => {

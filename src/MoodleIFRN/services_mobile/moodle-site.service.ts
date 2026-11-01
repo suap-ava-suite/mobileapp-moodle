@@ -622,6 +622,8 @@ export class MoodleSiteService {
     private oauthPreparation?: Promise<'switched' | 'opened' | 'already-active'>;
     private courseOAuthBrowser?: InAppBrowserObject;
     private cancelSilentCourseSso?: () => void;
+    private courseSsoGeneration = 0;
+    private courseSsoCleanup?: Promise<void>;
     private courseOAuthBrowserSubscriptions: Array<{ unsubscribe: () => void }> = [];
     private cancelledCourseId?: number;
 
@@ -769,15 +771,20 @@ export class MoodleSiteService {
 
     /** Fecha somente o InAppBrowser de OAuth dos cursos e descarta o launch pendente. */
     cancelCourseOAuthBrowser(): void {
-        this.cancelSilentCourseSso?.();
+        this.courseSsoGeneration = (this.courseSsoGeneration || 0) + 1;
+        const cancel = this.cancelSilentCourseSso;
+        cancel?.();
         this.cancelSilentCourseSso = undefined;
         const browser = this.courseOAuthBrowser;
         this.courseOAuthBrowser = undefined;
         this.courseOAuthBrowserSubscriptions.forEach(subscription => subscription.unsubscribe());
         this.courseOAuthBrowserSubscriptions = [];
-        if (browser) {
-            browser.close();
-            void CoreConfig.delete(LOGIN_SSO_LAUNCH_DATA).catch(() => undefined);
+        if (browser || cancel) {
+            this.oauthCallbackReceived = false;
+            if (!cancel) {
+                browser?.close();
+            }
+            this.courseSsoCleanup = CoreConfig.delete(LOGIN_SSO_LAUNCH_DATA).catch(() => undefined);
         }
     }
 
@@ -2164,16 +2171,33 @@ export class MoodleSiteService {
         siteCheck: CoreSiteCheckResponse,
         redirectData?: CoreRedirectPayload,
     ): Promise<void> {
+        this.cancelCourseOAuthBrowser();
+        const generation = this.courseSsoGeneration;
+        const owner = sessionStorage.getItem('ifrn_username');
+        const panelOwner = sessionStorage.getItem('ifrn_painel_owner');
+        const epoch = sessionStorage.getItem('ifrn_moodle_session_epoch');
+        const isCurrent = (): boolean => this.courseSsoGeneration === generation
+            && sessionStorage.getItem('ifrn_username') === owner
+            && sessionStorage.getItem('ifrn_painel_owner') === panelOwner
+            && sessionStorage.getItem('ifrn_moodle_session_epoch') === epoch;
+        await this.courseSsoCleanup;
+        if (!isCurrent()) {
+            throw new Error('A tentativa de conexão foi cancelada.');
+        }
         // auth_suap restaura `next`; misturar oauthsso do plugin OAuth2 com a URL
         // alternativa auth_suap gerou um ciclo real de login no Presencial.
         const launchUrl = await CoreLoginHelper.prepareForSSOLogin(siteCheck.siteUrl, undefined,
             siteCheck.config?.launchurl, redirectData);
+        if (!isCurrent()) {
+            throw new Error('A tentativa de conexão foi cancelada.');
+        }
         const login = new URL('auth/suap/login.php', `${siteCheck.siteUrl.replace(/\/$/, '')}/`);
         login.searchParams.set('next', launchUrl);
         const flow = startCourseSsoBrowser({
             loginUrl: login.href,
             launchUrl,
             siteUrl: siteCheck.siteUrl,
+            isCurrent,
             // Instância isolada: o dispatcher global do IAB pode encaminhar esquemas a apps externos.
             open: url => InAppBrowser.create(url, '_blank', {
                 hidden: 'yes', location: 'no', footer: 'no', toolbar: 'no',
@@ -2184,12 +2208,12 @@ export class MoodleSiteService {
                 usewkwebview: 'yes',
             }),
             isToken: url => CoreCustomURLSchemes.isCustomURLToken(url),
-            acceptToken: async url => {
+            acceptToken: async (url, attempt) => {
+                attempt.assertActive();
                 this.oauthCallbackReceived = true;
-                this.courseOAuthBrowser = undefined;
-                this.cancelSilentCourseSso = undefined;
                 // O núcleo continua validando passport, site e token; LOGIN valida a identidade.
                 await CoreCustomURLSchemes.handleCustomURL(url);
+                attempt.assertActive();
             },
         });
         this.courseOAuthBrowser = flow.browser;
@@ -2197,10 +2221,14 @@ export class MoodleSiteService {
         try {
             await flow.completion;
         } catch (error) {
-            await CoreConfig.delete(LOGIN_SSO_LAUNCH_DATA).catch(() => undefined);
+            if (isCurrent()) {
+                this.oauthCallbackReceived = false;
+                this.courseSsoCleanup = CoreConfig.delete(LOGIN_SSO_LAUNCH_DATA).catch(() => undefined);
+                await this.courseSsoCleanup;
+            }
             throw error;
         } finally {
-            if (this.courseOAuthBrowser === flow.browser) {
+            if (this.courseSsoGeneration === generation && this.courseOAuthBrowser === flow.browser) {
                 this.courseOAuthBrowser = undefined;
                 this.cancelSilentCourseSso = undefined;
             }

@@ -52,6 +52,7 @@ function loadService(overrides = {}) {
             prepareForSSOLogin: async (...args) => {
                 assert.equal(args[0], 'https://academico.ava.ifrn.edu.br');
                 assert.equal(args[4], undefined);
+                await overrides.prepare?.();
                 return 'https://academico.ava.ifrn.edu.br/admin/tool/mobile/launch.php';
             },
             openBrowserForOAuthLogin: async () => { externalFallbackCalls++; return true; },
@@ -87,10 +88,12 @@ test('course callback retains cancellation while native validation is pending', 
     const validation=deferred();
     const {MoodleSiteService,state}=loadService({acceptToken:()=>validation.promise});
     const service=Object.create(MoodleSiteService.prototype);
+    service.courseOAuthBrowserSubscriptions=[];
     const pending=service.openCourseOAuthInApp({siteUrl:'https://academico.ava.ifrn.edu.br',config:{}});
     const outcome=pending.then(()=> 'resolved',e=>e.message);
     await new Promise(r=>setImmediate(r));
     state().subscriptions.get('beforeload')({url:'moodlemobile://token=synthetic-a'});
+    await new Promise(r=>setImmediate(r));
     const canCancel=typeof service.cancelSilentCourseSso==='function';
     service.cancelCourseOAuthBrowser();
     validation.resolve();
@@ -105,10 +108,12 @@ test('late failure from attempt A cannot delete launch state or browser of attem
     const validation=new Promise((_ok,no)=>reject=no);
     const {MoodleSiteService,state}=loadService({acceptToken:()=>validation});
     const service=Object.create(MoodleSiteService.prototype);
+    service.courseOAuthBrowserSubscriptions=[];
     const pending=service.openCourseOAuthInApp({siteUrl:'https://academico.ava.ifrn.edu.br',config:{}});
     const outcome=pending.catch(e=>e.message);
     await new Promise(r=>setImmediate(r));
     state().subscriptions.get('beforeload')({url:'moodlemobile://token=synthetic-a'});
+    await new Promise(r=>setImmediate(r));
     service.cancelCourseOAuthBrowser();
     await new Promise(r=>setImmediate(r));
     const newerBrowser={close:()=>assert.fail('New browser must remain open')};
@@ -121,6 +126,37 @@ test('late failure from attempt A cannot delete launch state or browser of attem
     assert.equal(state().session.get('ifrn_moodle_oauth_pending'),'1');
     assert.equal(service.oauthCallbackReceived,false);
 });
+
+test('cancel during launch preparation prevents opening the browser or accepting any callback', async () => {
+    const preparation=deferred();
+    const {MoodleSiteService,state}=loadService({prepare:()=>preparation.promise});
+    const service=Object.create(MoodleSiteService.prototype);
+    service.courseOAuthBrowserSubscriptions=[];
+    const pending=service.openCourseOAuthInApp({siteUrl:'https://academico.ava.ifrn.edu.br',config:{}});
+    const outcome=pending.catch(e=>e.message);
+    await new Promise(r=>setImmediate(r));
+    service.cancelCourseOAuthBrowser();preparation.resolve();
+    assert.match(await outcome,/cancelada/);
+    assert.equal(state().browserUrl,undefined);assert.equal(state().callbackUrl,undefined);
+});
+
+test('account change or logout epoch rejects a late validation result', async () => {
+    for(const key of ['ifrn_username','ifrn_painel_owner','ifrn_moodle_session_epoch']) {
+        const validation=deferred();
+        const {MoodleSiteService,state}=loadService({acceptToken:()=>validation.promise});
+        const service=Object.create(MoodleSiteService.prototype);
+        service.courseOAuthBrowserSubscriptions=[];
+        const pending=service.openCourseOAuthInApp({siteUrl:'https://academico.ava.ifrn.edu.br',config:{}});
+        const outcome=pending.then(()=> 'resolved',e=>e.message);
+        await new Promise(r=>setImmediate(r));
+        state().subscriptions.get('beforeload')({url:'moodlemobile://token=synthetic-a'});
+        await new Promise(r=>setImmediate(r));
+        state().session.set(key,'synthetic-account-b');validation.resolve();
+        assert.match(await outcome,/validar/);
+    }
+});
+
+module.exports={loadService,deferred};
 
 function deferred() {
     let resolve;
@@ -193,6 +229,7 @@ test('course OAuth stays hidden inside the app and resumes the selected course n
 test('native course SSO preserves cookies, stays hidden and delegates token validation to Moodle', async () => {
     const { MoodleSiteService, state } = loadService();
     const service = Object.create(MoodleSiteService.prototype);
+    service.courseOAuthBrowserSubscriptions=[];
     const pending = service.openCourseOAuthInApp({siteUrl:'https://academico.ava.ifrn.edu.br',config:{}});
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(state().browserOptions.hidden,'yes');
