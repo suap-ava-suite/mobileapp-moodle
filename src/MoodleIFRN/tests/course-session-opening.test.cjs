@@ -41,6 +41,7 @@ function loadService(overrides = {}) {
         } }),
     };
     const mocks = {
+        '../mobilemoodle/core_mobile/course-session-flags': {COURSE_SESSION_EPOCH_KEY:'ifrn_moodle_session_epoch'},
         './course-sso-browser': ssoModule.exports,
         '@singletons': { InAppBrowser: { create: (url, target, options) => {
             assert.equal(target, '_blank'); browserUrl = url; browserOptions = options; return browser;
@@ -254,4 +255,83 @@ test('course tap resets the Ionic login route before entering the OAuth bridge',
     assert.ok(navigation, 'Panel must navigate directly to the course bridge');
     assert.match(navigation[0], /replaceUrl:\s*true/);
     assert.match(navigation[0], /queryParams:/);
+});
+
+function nativeHandler(gate) {
+    // Executa corpos reais do núcleo, somente lidos: as dependências externas usam dados sintéticos.
+    const extract=(file,names)=>{
+        const ast=ts.createSourceFile(file,fs.readFileSync(file,'utf8'),ts.ScriptTarget.Latest,true);
+        const methods=[];
+        for(const node of ast.statements)if(ts.isClassDeclaration(node))for(const member of node.members)
+            if(ts.isMethodDeclaration(member)&&names.includes(member.name.getText(ast)))methods.push(member.getText(ast));
+        assert.equal(methods.length,names.length);return methods.join('\n');
+    };
+    const state={persisted:0,logins:0,navigations:0};
+    const siteFactory={
+        makeAuthenticatedSite:()=>({fetchSiteInfo:()=>gate.promise}),
+        makeSite:(id,url,token,{info})=>({id,token,info,setOAuthId(){},setConfig(){}}),
+    };
+    const context={URL,console,CoreSitesFactory:siteFactory,CorePromiseUtils:{ignoreErrors:p=>p.catch(()=>undefined)},
+        CORE_SITE_CURRENT_SITE_ID_CONFIG:'synthetic-current-id',
+        CoreConfig:{set:async()=>{}},CoreEvents:{LOGIN:'login',SITE_ADDED:'added',SITE_UPDATED:'updated',
+            trigger:event=>{if(event==='login')state.logins++;}},
+        CoreLoginHelper:{isSiteUrlAllowed:async()=>true,getOAuthIdFromParams:()=>undefined},
+        CoreUrl:{decodeURIComponent:x=>x},ApplicationInit:{donePromise:Promise.resolve()},
+        CoreLoadings:{show:async()=>({dismiss:async()=>{}})},
+        CoreNavigator:{navigateToSiteHome:()=>state.navigations++},CoreSSO:{finishSSOAuthentication(){}},
+        CoreErrorHelper:{isCanceledError:()=>false,getErrorMessageFromError:e=>e.message},
+    };
+    const source=`class CoreSitesProvider { static VALID_VERSION=1;
+        ${extract('src/core/services/sites.ts',['newSite','login'])}
+    }
+    class NativeCallback {
+        ${extract('src/core/services/urlschemes.ts',['handleCustomURL','createSiteIfNeeded'])}
+    }
+    this.types={CoreSitesProvider,NativeCallback};`;
+    vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText,context);
+    const sites=new context.types.CoreSitesProvider();
+    Object.assign(sites,{
+        sites:{},sitesDB:{migrateSiteSchemas:async()=>{}},isValidMoodleVersion:()=>1,
+        createSiteID:()=> 'synthetic-site-a',getSite:async()=>undefined,getSiteConfig:async()=>({}),
+        getContentAllowedScriptUrlsFromConfig:()=>[],
+        addSite:async()=>state.persisted++,getCurrentSite:()=>sites.currentSite,
+    });
+    context.CoreSites=sites;
+    const handler=new context.types.NativeCallback();
+    Object.assign(handler,{lastUrls:{},isCustomURL:()=>true,isCustomURLToken:()=>true,
+        removeCustomURLScheme:url=>url.replace('moodlemobile://',''),
+        getCustomURLTokenData:async()=>({siteUrl:'https://academico.ava.ifrn.edu.br',token:'SYNTHETIC_A',isSSOToken:true})});
+    return {accept:async url=>{
+        try { return await handler.handleCustomURL(url); }
+        catch(e) { state.unexpectedError=e.message; throw e; }
+    },state,sites};
+}
+test('P0 PENDENTE: core handler in flight must not activate A or navigate after cancellation and account B',async()=>{
+    const gate=deferred();
+    const native=nativeHandler(gate);
+    const {MoodleSiteService,state}=loadService({acceptToken:native.accept});
+    const service=Object.create(MoodleSiteService.prototype);
+    service.courseOAuthBrowserSubscriptions=[];
+    const flow=service.openCourseOAuthInApp({siteUrl:'https://academico.ava.ifrn.edu.br',config:{}});
+    const outcome=flow.catch(e=>e.message);
+    await new Promise(r=>setImmediate(r));
+    state().subscriptions.get('beforeload')({url:'moodlemobile://token=synthetic-a'});
+    await new Promise(r=>setImmediate(r));
+    service.cancelCourseOAuthBrowser();
+    state().session.set('ifrn_username','synthetic-B');
+    native.sites.currentSite={id:'synthetic-site-b',getToken:()=> 'SYNTHETIC_B',isLoggedOut:()=>false};
+    gate.resolve({siteurl:'https://academico.ava.ifrn.edu.br',username:'synthetic-A'});
+    await outcome;await new Promise(r=>setImmediate(r));
+    assert.equal(native.state.unexpectedError,undefined,'Native contract fixture must reach its side effects');
+    assert.deepEqual({current:native.sites.currentSite.id,...native.state},
+        {current:'synthetic-site-b',persisted:0,logins:0,navigations:0});
+});
+
+test('native contract fixture accepts a valid synthetic token and creates one session without cancellation',async()=>{
+    const gate=deferred(),native=nativeHandler(gate);
+    const accepted=native.accept('moodlemobile://token=synthetic-a');
+    gate.resolve({siteurl:'https://academico.ava.ifrn.edu.br',username:'synthetic-A'});
+    await accepted;
+    assert.deepEqual({current:native.sites.currentSite.id,...native.state},
+        {current:'synthetic-site-a',persisted:1,logins:1,navigations:1});
 });
