@@ -17,6 +17,7 @@ import { Injectable, inject } from '@angular/core';
 import { CoreLang } from '@services/lang';
 import { CoreNavigator } from '@services/navigator';
 import { Observable, firstValueFrom, map, timeout } from 'rxjs';
+import { clearCourseSessionFlags } from '../mobilemoodle/core_mobile/course-session-flags';
 import { clearOAuthProfile, hasOAuthProfileMode, OAUTH_PROFILE_KEY, readOAuthProfile, saveOAuthProfile, profileIdentity }
     from '../mobilemoodle/core_mobile/oauth-profile';
 
@@ -358,10 +359,7 @@ export class AuthService {
         localStorage.removeItem('ifrn_painel_dashboard');
         sessionStorage.removeItem('ifrn_painel_owner');
         localStorage.removeItem('ifrn_painel_owner');
-        sessionStorage.removeItem('ifrn_moodle_pending_open_course');
-        sessionStorage.removeItem('ifrn_moodle_poc_oauth_pending');
-        sessionStorage.removeItem('ifrn_moodle_poc_resume_oauth');
-        sessionStorage.removeItem('ifrn_moodle_identity_mismatch');
+        clearCourseSessionFlags();
     }
 
     /**

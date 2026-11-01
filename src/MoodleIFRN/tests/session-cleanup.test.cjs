@@ -5,16 +5,24 @@ const ts = require('typescript');
 const test = require('node:test');
 const active = ['ifrn_moodle_oauth_pending','ifrn_moodle_resume_oauth'];
 const legacy = ['ifrn_moodle_poc_oauth_pending','ifrn_moodle_poc_resume_oauth'];
-const otherAttempt = ['ifrn_moodle_pending_open_course','ifrn_moodle_identity_mismatch'];
+const otherAttempt = ['ifrn_moodle_pending_open_course','ifrn_moodle_identity_mismatch','ifrn_course_origin','ifrn_course_id'];
 const preferences = ['app_language','ifrn_favourites_account-b','moodle_native_account-b','another_environment_session'];
 function setup(kind) {
     const session = new Map([...active,...legacy,...otherAttempt,...preferences].map(k=>[k,'synthetic']));
     const local = new Map(preferences.map(k=>[k,'synthetic']));
     const storage = map => ({getItem:k=>map.get(k)||null,removeItem:k=>map.delete(k),setItem:(k,v)=>map.set(k,v)});
     const mm = {invalidateCache:()=>{}};
-    const context = {exports:{},sessionStorage:storage(session),localStorage:storage(local),window:{},
-        require:id=> id==='./namespace' ? {MM:mm} : id==='@angular/core' ? {Injectable:()=>x=>x,inject:()=>({})} :
-            id.endsWith('oauth-profile') ? {OAUTH_PROFILE_KEY:'ifrn_oauth_profile'} : {}};
+    const context = {exports:{},sessionStorage:storage(session),localStorage:storage(local),window:{}};
+    context.require=id=> {
+        if(id.endsWith('course-session-flags')) {
+            const nested={...context,exports:{}};
+            vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/MoodleIFRN/mobilemoodle/core_mobile/course-session-flags.ts','utf8'),{
+                compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,nested);
+            return nested.exports;
+        }
+        return id==='./namespace' ? {MM:mm} : id==='@angular/core' ? {Injectable:()=>x=>x,inject:()=>({})} :
+            id.endsWith('oauth-profile') ? {OAUTH_PROFILE_KEY:'ifrn_oauth_profile'} : {};
+    };
     const file = kind==='service' ? 'services_mobile/auth.service.ts' : 'mobilemoodle/core_mobile/api-auth.ts';
     vm.runInNewContext(ts.transpileModule(fs.readFileSync(`src/MoodleIFRN/${file}`,'utf8'),{
         compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,context);
@@ -37,5 +45,11 @@ for (const kind of ['service','panel']) {
         s.session.set('ifrn_username','SYNTHETIC_B');
         assert.equal(s.session.has(active[0]),false);assert.equal(s.session.has(active[1]),false);
         assert.equal(s.session.get('ifrn_username'),'SYNTHETIC_B');
+    });
+    test(`${kind}: logout invalidates the captured attempt epoch once, including repeated logout`, () => {
+        const s=setup(kind);
+        const epoch=s.session.get('ifrn_moodle_session_epoch');s.logout();
+        const next=s.session.get('ifrn_moodle_session_epoch');
+        assert.notEqual(next,epoch);s.logout();assert.equal(s.session.get('ifrn_moodle_session_epoch'),next);
     });
 }

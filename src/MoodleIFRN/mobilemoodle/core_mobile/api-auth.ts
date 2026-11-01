@@ -11,6 +11,7 @@
  * Segurança: formato JWT, tamanho máximo, exp se existir; token inválido é apagado.
  */
 import { MM } from './namespace';
+import { clearCourseSessionFlags } from './course-session-flags';
 import { hasOAuthProfileMode, OAUTH_PROFILE_KEY } from './oauth-profile';
 
     /** Chave única no sessionStorage (só nesta aba / origem). */
@@ -130,10 +131,7 @@ import { hasOAuthProfileMode, OAUTH_PROFILE_KEY } from './oauth-profile';
                 storage.removeItem(key);
             }
         }
-        sessionStorage.removeItem('ifrn_moodle_pending_open_course');
-        sessionStorage.removeItem('ifrn_moodle_poc_oauth_pending');
-        sessionStorage.removeItem('ifrn_moodle_poc_resume_oauth');
-        sessionStorage.removeItem('ifrn_moodle_identity_mismatch');
+        clearCourseSessionFlags();
 
         if (typeof MM.invalidateCache === 'function') {
             MM.invalidateCache();

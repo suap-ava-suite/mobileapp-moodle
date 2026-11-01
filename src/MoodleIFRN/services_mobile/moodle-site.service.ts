@@ -47,6 +47,7 @@ import { selectSuapProvider } from './suap-provider';
 import type { InAppBrowserObject } from '@awesome-cordova-plugins/in-app-browser/ngx';
 import { InAppBrowser } from '@singletons';
 import { startCourseSsoBrowser } from './course-sso-browser';
+import { COURSE_SESSION_EPOCH_KEY } from '../mobilemoodle/core_mobile/course-session-flags';
 
 
 export const IFRN_MOODLE_PRESENCIAL_URL = 'https://presencial.ava.ifrn.edu.br';
@@ -2175,11 +2176,11 @@ export class MoodleSiteService {
         const generation = this.courseSsoGeneration;
         const owner = sessionStorage.getItem('ifrn_username');
         const panelOwner = sessionStorage.getItem('ifrn_painel_owner');
-        const epoch = sessionStorage.getItem('ifrn_moodle_session_epoch');
+        const epoch = sessionStorage.getItem(COURSE_SESSION_EPOCH_KEY);
         const isCurrent = (): boolean => this.courseSsoGeneration === generation
             && sessionStorage.getItem('ifrn_username') === owner
             && sessionStorage.getItem('ifrn_painel_owner') === panelOwner
-            && sessionStorage.getItem('ifrn_moodle_session_epoch') === epoch;
+            && sessionStorage.getItem(COURSE_SESSION_EPOCH_KEY) === epoch;
         await this.courseSsoCleanup;
         if (!isCurrent()) {
             throw new Error('A tentativa de conexão foi cancelada.');

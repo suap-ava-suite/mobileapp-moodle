@@ -98,6 +98,28 @@
   MM.isRetryable = isRetryable;
   MM.ApiError = ApiError;
 
+  // src/MoodleIFRN/mobilemoodle/core_mobile/course-session-flags.ts
+  var COURSE_SESSION_EPOCH_KEY = "ifrn_moodle_session_epoch";
+  var COURSE_SESSION_FLAGS = [
+    "ifrn_moodle_oauth_pending",
+    "ifrn_moodle_resume_oauth",
+    "ifrn_moodle_poc_oauth_pending",
+    "ifrn_moodle_poc_resume_oauth",
+    "ifrn_moodle_pending_open_course",
+    "ifrn_moodle_identity_mismatch",
+    "ifrn_course_origin",
+    "ifrn_course_id"
+  ];
+  function clearCourseSessionFlags() {
+    if (COURSE_SESSION_FLAGS.some((key) => sessionStorage.getItem(key) !== null)) {
+      const epoch = Number(sessionStorage.getItem(COURSE_SESSION_EPOCH_KEY)) || 0;
+      sessionStorage.setItem(COURSE_SESSION_EPOCH_KEY, String(epoch + 1));
+    }
+    for (const key of COURSE_SESSION_FLAGS) {
+      sessionStorage.removeItem(key);
+    }
+  }
+
   // src/MoodleIFRN/mobilemoodle/core_mobile/oauth-profile.ts
   var OAUTH_PROFILE_KEY = "ifrn_suap_oauth_profile_v1";
   var OAUTH_PROFILE_MAX_AGE_SECONDS = 30 * 24 * 3600;
@@ -256,10 +278,7 @@
         storage.removeItem(key);
       }
     }
-    sessionStorage.removeItem("ifrn_moodle_pending_open_course");
-    sessionStorage.removeItem("ifrn_moodle_poc_oauth_pending");
-    sessionStorage.removeItem("ifrn_moodle_poc_resume_oauth");
-    sessionStorage.removeItem("ifrn_moodle_identity_mismatch");
+    clearCourseSessionFlags();
     if (typeof MM.invalidateCache === "function") {
       MM.invalidateCache();
     }
