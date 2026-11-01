@@ -120,3 +120,41 @@ test('callback rejeitado pelo núcleo não cria conexão válida', async () => {
     s.emit('customscheme','moodlemobile://token=bad');
     await assert.rejects(s.completion,/validar/); assert.equal(s.closed,1);
 });
+
+test('timeout also bounds a callback validation that never finishes', async () => {
+    const s=setup({timeoutMs:10,acceptToken:()=>new Promise(()=>{})});
+    const outcome=s.completion.then(()=> 'resolved',e=>e.message);
+    s.emit('customscheme','moodlemobile://token=synthetic');
+    const result=await Promise.race([outcome,new Promise(r=>setTimeout(()=>r('still-pending'),60))]);
+    s.cancel();
+    assert.match(result,/demorou/);assert.equal(s.closed,1);assert.equal(s.subscriptions,0);
+});
+test('cancel during validation wins over a late resolve or reject and closes exactly once', async () => {
+    for(const rejectLate of [false,true]) {
+        let resolve,reject,guard;
+        const accepted=new Promise((ok,no)=>{resolve=ok;reject=no;});
+        const s=setup({timeoutMs:100,acceptToken:(_url,attempt)=>{guard=attempt;return accepted;}});
+        const outcome=s.completion.then(()=> 'resolved',e=>e.message);
+        s.emit('customscheme','moodlemobile://token=synthetic');
+        s.cancel();s.cancel();
+        if(rejectLate) reject(new Error('synthetic'));else resolve();
+        assert.match(await outcome,/cancelada/);
+        assert.throws(()=>guard.assertActive(),/cancelada|expirou/);
+        assert.equal(s.closed,1);assert.equal(s.subscriptions,0);
+    }
+});
+test('validation guard allows success but refuses mutations after a deadline', async () => {
+    let guard,finish;
+    const s=setup({timeoutMs:10,acceptToken:(_url,attempt)=>{guard=attempt;return new Promise(r=>finish=r);}});
+    const outcome=s.completion.catch(e=>e.message);
+    s.emit('customscheme','moodlemobile://token=synthetic');
+    const result=await Promise.race([outcome,new Promise(r=>setTimeout(()=>r('still-pending'),60))]);
+    finish();await tick();
+    assert.match(result,/demorou/);assert.throws(()=>guard.assertActive());assert.equal(s.closed,1);
+});
+test('synchronous callback exceptions become a rejected completion and release resources', async () => {
+    const s=setup({timeoutMs:20,acceptToken:()=>{throw new Error('synthetic');}});
+    const result=s.completion.catch(e=>e.message);
+    assert.doesNotThrow(()=>s.emit('customscheme','moodlemobile://token=synthetic'));
+    assert.match(await result,/validar/);assert.equal(s.closed,1);
+});

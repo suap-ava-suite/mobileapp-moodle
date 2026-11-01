@@ -12,7 +12,7 @@ class FakeCourseOpeningAttempt {
     cancel() {}
 }
 
-function loadService() {
+function loadService(overrides = {}) {
     const file = 'src/MoodleIFRN/services_mobile/moodle-site.service.ts';
     const output = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
@@ -59,7 +59,7 @@ function loadService() {
         '@services/config': { CoreConfig: { delete: async () => {} } },
         '@services/urlschemes': { CoreCustomURLSchemes: {
             isCustomURLToken: url => url.startsWith('moodlemobile://token='),
-            handleCustomURL: async url => callbackUrl = url,
+            handleCustomURL: async url => { callbackUrl = url; await overrides.acceptToken?.(url); },
             isCustomURL: () => true,
         } },
         '@static/opener': { CoreOpener: { openInApp: (url, options) => {
@@ -69,7 +69,7 @@ function loadService() {
         } } },
         '@static/events': { CoreEvents: { trigger: (event, data) => lastTriggeredEvent = { event, data } } },
     };
-    const context = { exports: {}, require: id => mocks[id] || {}, console, URL,
+    const context = { exports: {}, require: id => mocks[id] || {}, console, URL, setTimeout, clearTimeout,
         sessionStorage: { getItem: key => session.get(key) || null, removeItem: key => session.delete(key) },
         window: { handleOpenURL: url => callbackUrl = url } };
     vm.runInNewContext(output, context);
@@ -82,6 +82,45 @@ function loadService() {
             markExternalFallbackCall: () => externalFallbackCalls++ }),
     };
 }
+
+test('course callback retains cancellation while native validation is pending', async () => {
+    const validation=deferred();
+    const {MoodleSiteService,state}=loadService({acceptToken:()=>validation.promise});
+    const service=Object.create(MoodleSiteService.prototype);
+    const pending=service.openCourseOAuthInApp({siteUrl:'https://academico.ava.ifrn.edu.br',config:{}});
+    const outcome=pending.then(()=> 'resolved',e=>e.message);
+    await new Promise(r=>setImmediate(r));
+    state().subscriptions.get('beforeload')({url:'moodlemobile://token=synthetic-a'});
+    const canCancel=typeof service.cancelSilentCourseSso==='function';
+    service.cancelCourseOAuthBrowser();
+    validation.resolve();
+    const result=await outcome;
+    assert.equal(canCancel,true,'Cancellation handle must survive receipt of the callback');
+    assert.match(result,/cancelada/);
+    assert.equal(service.oauthCallbackReceived,false);
+});
+
+test('late failure from attempt A cannot delete launch state or browser of attempt B', async () => {
+    let reject;
+    const validation=new Promise((_ok,no)=>reject=no);
+    const {MoodleSiteService,state}=loadService({acceptToken:()=>validation});
+    const service=Object.create(MoodleSiteService.prototype);
+    const pending=service.openCourseOAuthInApp({siteUrl:'https://academico.ava.ifrn.edu.br',config:{}});
+    const outcome=pending.catch(e=>e.message);
+    await new Promise(r=>setImmediate(r));
+    state().subscriptions.get('beforeload')({url:'moodlemobile://token=synthetic-a'});
+    service.cancelCourseOAuthBrowser();
+    await new Promise(r=>setImmediate(r));
+    const newerBrowser={close:()=>assert.fail('New browser must remain open')};
+    service.courseOAuthBrowser=newerBrowser;
+    state().session.set('ifrn_moodle_oauth_pending','1');
+    service.oauthCallbackReceived=false;
+    reject(new Error('synthetic late failure'));
+    await outcome;
+    assert.equal(service.courseOAuthBrowser,newerBrowser);
+    assert.equal(state().session.get('ifrn_moodle_oauth_pending'),'1');
+    assert.equal(service.oauthCallbackReceived,false);
+});
 
 function deferred() {
     let resolve;
