@@ -1,4 +1,0 @@
- M src/assets/MoodleIFRN/navigation/early-course-handoff.js
- M src/core/features/login/login.module.ts
- M src/index.html
-?? analise-aparelho/

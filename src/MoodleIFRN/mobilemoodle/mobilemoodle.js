@@ -2129,13 +2129,8 @@
   App.renderCurso = renderCurso;
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/suap-timing.ts
-  var SAFE_STAGES = /* @__PURE__ */ new Set([
-    "panel-templates-ready",
-    "panel-dashboard-ready",
-    "panel-render-to-frame"
-  ]);
   function reportSuapDuration(stage, durationMs) {
-    if (!SAFE_STAGES.has(stage) || !Number.isFinite(durationMs) || durationMs < 0) {
+    if (true) {
       return;
     }
     console.info(`[IFRN-SUAP-TIMING] ${JSON.stringify({ stage, durationMs: Math.round(durationMs) })}`);
