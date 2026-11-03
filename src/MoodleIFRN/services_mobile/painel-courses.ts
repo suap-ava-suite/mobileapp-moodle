@@ -51,11 +51,21 @@ export const PAINEL_COURSES_SCRIPT = `(async function fetchPainelCourses(endpoin
       clearTimeout(timer);
     }
   };
-  for (let page = 1; ; page++) {
+  const pageUrl = (page) => {
     const url = new URL(endpoint, location.origin);
     url.searchParams.set("page", String(page));
     url.searchParams.set("page_size", "100");
-    const data = await request(url.pathname + url.search);
+    return url.pathname + url.search;
+  };
+  let page = 1;
+  let pageRequest = request(pageUrl(page));
+  const progressRequest = fetch("/api/v1/progresso/", {
+    headers: { accept: "application/json" },
+    credentials: "same-origin",
+    signal: AbortSignal.timeout(2500)
+  }).then((response) => response.ok ? response.json() : null).catch(() => null);
+  for (;; page++) {
+    const data = await pageRequest;
     if (page === 1) {
       Object.assign(result, data);
     }
@@ -76,21 +86,17 @@ export const PAINEL_COURSES_SCRIPT = `(async function fetchPainelCourses(endpoin
         added++;
       }
     }
-    if (!added) {
+    if (!added || (Object.prototype.hasOwnProperty.call(data, "next") && !data.next)) {
       break;
     }
     if (page >= 200) {
       throw new Error("H\xE1 cursos demais para carregar. Refine os filtros no Painel AVA.");
     }
+    pageRequest = request(pageUrl(page + 1));
   }
   try {
-    const response = await fetch("/api/v1/progresso/", {
-      headers: { accept: "application/json" },
-      credentials: "same-origin",
-      signal: AbortSignal.timeout(1e4)
-    });
-    if (response.ok) {
-      const data = await response.json();
+    const data = await progressRequest;
+    if (data) {
       const progress = /* @__PURE__ */ new Map();
       for (const item of Array.isArray(data.progresso) ? data.progresso : []) {
         progress.set(JSON.stringify([item.ambiente_id, item.id]), item);
