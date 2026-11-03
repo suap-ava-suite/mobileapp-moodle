@@ -1,3 +1,0 @@
-﻿_variables.scss : igual ao ZIP = True
-pre.scss : igual ao ZIP = True
-_fonts.scss : igual ao ZIP = True

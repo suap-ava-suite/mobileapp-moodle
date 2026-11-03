@@ -6,6 +6,12 @@
     "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     "editor.formatOnSave": true,
     "eslint.format.enable": true,
+    "eslint.rules.customizations": [
+        {
+            "rule": "header/header",
+            "severity": "off"
+        }
+    ],
     "html.format.wrapLineLength": 140,
     "files.eol": "\n",
     "files.trimFinalNewlines": true,
