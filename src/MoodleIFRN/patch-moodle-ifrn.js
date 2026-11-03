@@ -233,6 +233,13 @@ function patchLoginRedirect(content) {
     );
 }
 
+/** Remove the obsolete demo route after its feature folder has been deleted. */
+function stripUnusedHelloWorldRoute(content) {
+    const route = /\s*\{\s*path:\s*'hello-world'\s*,\s*loadComponent:\s*\(\)\s*=>\s*import\('@features\/hello_world\/hello-world'\)\s*\.then\(module\s*=>\s*module\.HelloWorldPage\)\s*,?\s*\}\s*,?/;
+
+    return content.replace(route, '\n');
+}
+
 function isLoginModulePatched(content) {
     return content.includes(MARKER.loginRoutesStart)
         && content.includes(MARKER.loginRoutesEnd)
@@ -247,11 +254,13 @@ function isLoginModulePatched(content) {
         && content.includes('@/MoodleIFRN/painel/painel')
         && content.includes('@/MoodleIFRN/ifrn-login/ifrn-login')
         && content.includes('@/MoodleIFRN/moodle-open-course/moodle-open-course')
-        && content.includes('@/MoodleIFRN/painel-enrol/painel-enrol');
+        && content.includes('@/MoodleIFRN/painel-enrol/painel-enrol')
+        && !content.includes("path: 'hello-world'");
 }
 
 function patchLoginModule() {
     let content = readFile(FILES.loginModule);
+    content = stripUnusedHelloWorldRoute(content);
     const oldGuardImport = "import { ifrnReconnectGuard } from '@/MoodleIFRN/navigation/navigation.guard';";
     const guardImport = "import { ifrnReconnectGuard, ifrnMarketplaceGuard } from '@/MoodleIFRN/navigation/navigation.guard';";
     content = content.replace(oldGuardImport, guardImport);

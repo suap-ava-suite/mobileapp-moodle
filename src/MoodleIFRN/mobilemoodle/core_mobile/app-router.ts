@@ -107,6 +107,8 @@ async function loadRoute(force: boolean): Promise<void> {
     const seq = ++routeSeq;
     const route = parseRoute();
 
+    App.showLoading?.(route.name === 'curso' ? 'Preparando o curso…' : 'Preparando o Painel AVA…');
+
     try {
         await loadTemplates();
         if (route.name === 'painel') {
@@ -153,19 +155,16 @@ async function loadRoute(force: boolean): Promise<void> {
             { route: route.name },
         );
 
-        App.showLoading?.(
-            route.name === 'curso'
-                ? 'Carregando curso...'
-                : 'Carregando painel...',
-        );
-
         if (route.name === 'curso') {
             /*
              * Dashboard primeiro:
              * define se o ID é courseid Moodle (Painel)
              * ou diário SUAP.
              */
+            App.showLoading?.('Localizando a disciplina…');
             const dashboard = await loadDashboard(force);
+
+            App.showLoading?.('Abrindo o conteúdo do curso…');
 
             const course = await window.MobileMoodleApi.getCourse(route.courseId, force);
 
@@ -184,6 +183,7 @@ async function loadRoute(force: boolean): Promise<void> {
         }
 
         const dashboardStartedAt = performance.now();
+        App.showLoading?.('Carregando seus cursos do Painel AVA…');
         const dashboard = await loadDashboard(force);
         reportSuapDuration('panel-dashboard-ready', performance.now() - dashboardStartedAt);
 

@@ -302,21 +302,9 @@ async function fetchPainelDashboard(): Promise<DashboardData> {
     }
     let profile = oauth?.profile || readPainelProfile();
 
-    // No login IFRN antigo o app possui o JWT oficial do SUAP. Sempre que ele
-    // estiver disponível, /api/rh/eu/ é a fonte principal do perfil. Isso evita
-    // usar o show_name capturado do HTML do Painel (que pode vir abreviado/cortado).
-    if (!oauth && typeof MM.getToken === 'function' && MM.getToken()) {
-        try {
-            const suapProfile = await MM.request('/api/rh/eu/', { softAuth: true });
-
-            if (suapProfile && typeof suapProfile === 'object' && !Array.isArray(suapProfile)) {
-                profile = suapProfile as Record<string, unknown>;
-                sessionStorage.setItem(PAINEL_PROFILE_KEY, JSON.stringify(profile));
-            }
-        } catch {
-            // Se o SUAP estiver indisponível, mantém o perfil já obtido do Painel.
-        }
-    }
+    // O painel já tem perfil salvo e validado no login. Não bloqueie o desenho
+    // da lista de cursos aguardando /api/rh/eu/: essa consulta é apenas de perfil
+    // e podia segurar o conteúdo até o timeout da API do SUAP.
 
     // O Angular obtém este JSON dentro de ava.ifrn.edu.br via OAuth/cookie e o
     // salva em sessionStorage. O mobilemoodle apenas consome a cópia local.

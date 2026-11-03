@@ -921,16 +921,6 @@
       throw new MM.ApiError(401, "Renove o acesso pelo SUAP. A sess\xE3o de teste expirou.");
     }
     let profile = oauth?.profile || readPainelProfile();
-    if (!oauth && typeof MM.getToken === "function" && MM.getToken()) {
-      try {
-        const suapProfile = await MM.request("/api/rh/eu/", { softAuth: true });
-        if (suapProfile && typeof suapProfile === "object" && !Array.isArray(suapProfile)) {
-          profile = suapProfile;
-          sessionStorage.setItem(PAINEL_PROFILE_KEY, JSON.stringify(profile));
-        }
-      } catch {
-      }
-    }
     const rawDiarios = Array.isArray(data) ? data : data.diarios || [];
     const rawCoordenacoes = Array.isArray(data) ? [] : data.coordenacoes || [];
     const rawAutoinscricoes = Array.isArray(data) ? [] : data.autoinscricoes || [];
@@ -2206,6 +2196,7 @@
     const routeStartedAt = performance.now();
     const seq = ++routeSeq;
     const route = parseRoute();
+    App.showLoading?.(route.name === "curso" ? "Preparando o curso\u2026" : "Preparando o Painel AVA\u2026");
     try {
       await loadTemplates();
       if (route.name === "painel") {
@@ -2235,11 +2226,10 @@
         "[IFRN-ROUTER] Sess\xE3o do Painel AVA v\xE1lida.",
         { route: route.name }
       );
-      App.showLoading?.(
-        route.name === "curso" ? "Carregando curso..." : "Carregando painel..."
-      );
       if (route.name === "curso") {
+        App.showLoading?.("Localizando a disciplina\u2026");
         const dashboard2 = await loadDashboard(force);
+        App.showLoading?.("Abrindo o conte\xFAdo do curso\u2026");
         const course = await window.MobileMoodleApi.getCourse(route.courseId, force);
         if (seq !== routeSeq) {
           return;
@@ -2252,6 +2242,7 @@
         window.MobileMoodleApi.invalidateCache();
       }
       const dashboardStartedAt = performance.now();
+      App.showLoading?.("Carregando seus cursos do Painel AVA\u2026");
       const dashboard = await loadDashboard(force);
       reportSuapDuration("panel-dashboard-ready", performance.now() - dashboardStartedAt);
       if (seq !== routeSeq) {

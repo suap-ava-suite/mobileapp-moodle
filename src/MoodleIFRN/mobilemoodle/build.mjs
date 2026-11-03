@@ -7,6 +7,7 @@ import { build } from 'esbuild';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { createHash } from 'crypto';
 import { compile } from 'sass';
 
 const root = dirname(fileURLToPath(import.meta.url));
@@ -64,6 +65,19 @@ try {
     // Folha bloqueante no <head>: o iframe nunca pinta as logos sem o tema
     // enquanto aguarda o bundle deferred, inclusive ao voltar do curso nativo.
     fs.writeFileSync(join(root, 'mobilemoodle.css'), themeCss);
+    const themeVersion = createHash('sha256').update(themeCss).digest('hex').slice(0, 12);
+    const indexPath = join(root, 'index.html');
+    const indexHtml = fs.readFileSync(indexPath, 'utf8');
+    const versionedIndexHtml = indexHtml.replace(
+        /(<link\s+id="ifrn-panel-theme"\s+rel="stylesheet"\s+href="mobilemoodle\.css)(?:\?v=[a-f0-9]+)?("\s*>)/,
+        `$1?v=${themeVersion}$2`,
+    );
+    if (versionedIndexHtml === indexHtml && !indexHtml.includes(`mobilemoodle.css?v=${themeVersion}`)) {
+        throw new Error('Não foi possível versionar a folha de tema IFRN no index.html.');
+    }
+    if (versionedIndexHtml !== indexHtml) {
+        fs.writeFileSync(indexPath, versionedIndexHtml);
+    }
     await build({
         absWorkingDir: projectRoot,
         entryPoints: [entry],

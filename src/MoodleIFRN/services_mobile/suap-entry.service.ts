@@ -265,6 +265,7 @@ export class SuapEntryService {
         expectedIdentity: string,
         onStatus: (message: string) => void,
     ): Promise<void> {
+        onStatus('Carregando cursos e confirmando seu perfil…');
         const panel = await firstValueFrom(this.painel.authenticateWithBrowser({ readOnly: true, reuseSession: false }));
         const identity = panelIdentity(panel.diagnosticProfile);
         const dashboard = panel.diagnosticDashboard;
