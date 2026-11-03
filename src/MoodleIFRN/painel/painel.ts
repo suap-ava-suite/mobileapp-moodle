@@ -11,6 +11,7 @@ import { MoodleSiteService } from '@/MoodleIFRN/services_mobile/moodle-site.serv
 import { resolveCourseSite } from '../mobilemoodle/core_mobile/course-target';
 import { CoreAlerts } from '@services/overlays/alerts';
 import { readPainelHostLayout } from '../navigation/painel-host-layout';
+import { reportSuapDuration } from '../services_mobile/suap-login-telemetry';
 
 export interface MoodleIfrnBridgeApi {
     openCourse: (courseId: number | string, courseName?: string, siteUrl?: string) => Promise<void>;
@@ -34,6 +35,8 @@ export class PainelPage implements OnInit, OnDestroy {
     private readonly moodleSite = inject(MoodleSiteService);
     private openingCourse = false;
     private bridgeApi?: MoodleIfrnBridgeApi;
+    private painelStartedAt = 0;
+    private painelFrameLoadReported = false;
 
     @ViewChild('painelFrame') painelFrame?: ElementRef<HTMLIFrameElement>;
 
@@ -41,6 +44,7 @@ export class PainelPage implements OnInit, OnDestroy {
     private hostAppearanceObserver?: MutationObserver;
 
     async ngOnInit(): Promise<void> {
+        this.painelStartedAt = performance.now();
         await CorePlatform.ready();
 
         const base = document.querySelector('base')?.getAttribute('href') || '/';
@@ -57,6 +61,15 @@ export class PainelPage implements OnInit, OnDestroy {
                 this.painelFrame?.nativeElement.contentWindow?.location.reload();
             }
         });
+    }
+
+    onPainelFrameLoad(): void {
+        if (this.painelFrameLoadReported || !this.painelStartedAt) {
+            return;
+        }
+
+        this.painelFrameLoadReported = true;
+        reportSuapDuration('panel-iframe-document-load', performance.now() - this.painelStartedAt);
     }
 
     ngOnDestroy(): void {
@@ -211,6 +224,7 @@ export class PainelPage implements OnInit, OnDestroy {
     }
 
     onIframeLoad(): void {
+        this.onPainelFrameLoad();
         this.hostAppearanceObserver?.disconnect();
         this.syncFrameAppearance();
         this.hostAppearanceObserver = new MutationObserver(() => this.syncFrameAppearance());

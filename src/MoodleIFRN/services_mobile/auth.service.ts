@@ -20,6 +20,7 @@ import { Observable, firstValueFrom, map, timeout } from 'rxjs';
 import { clearCourseSessionFlags } from '../mobilemoodle/core_mobile/course-session-flags';
 import { clearOAuthProfile, hasOAuthProfileMode, OAUTH_PROFILE_KEY, readOAuthProfile, saveOAuthProfile, profileIdentity }
     from '../mobilemoodle/core_mobile/oauth-profile';
+import { FRESH_PROFILE_SKIP_KEY } from './suap-login-telemetry';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 export interface AuthResponse {
@@ -342,6 +343,7 @@ export class AuthService {
      * Remove os tokens salvos.
      */
     logout(): void {
+        sessionStorage.removeItem(FRESH_PROFILE_SKIP_KEY);
         sessionStorage.removeItem(OAUTH_PROFILE_KEY);
         localStorage.removeItem(OAUTH_PROFILE_KEY);
         this.accessToken = null;

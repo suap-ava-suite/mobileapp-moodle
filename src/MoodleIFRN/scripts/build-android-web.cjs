@@ -8,6 +8,16 @@ const root = path.resolve(__dirname, '../../..');
 const logPath = path.join(root, 'src/MoodleIFRN/docs/auditoria-fluxo-2026-10-19/course-opening-cordova-build.log');
 fs.mkdirSync(path.dirname(logPath), {recursive:true});
 const log = fs.openSync(logPath, 'w');
+// Keep the targeted Android InAppBrowser inset fix versioned in MoodleIFRN;
+// Cordova prepare copies this patched source into the platform project.
+const iabPatch = spawnSync(process.execPath, ['src/MoodleIFRN/scripts/patch-inappbrowser-layout.cjs'], {
+    cwd: root, stdio: ['ignore', log, log],
+});
+if (iabPatch.error || iabPatch.status !== 0) {
+    fs.closeSync(log);
+    console.error('Android InAppBrowser patch failed; inspect ' + logPath);
+    process.exit(iabPatch.status || 1);
+}
 // ng run does not execute ionic:build:before. Regenerate the configuration so
 // trusted sites (and other config changes) really reach the packaged app.
 const buildEnvironment = { ...process.env, NODE_ENV: 'development' };

@@ -15,9 +15,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { CoreOpener } from '@static/opener';
+import { clearFreshPanelProfile, consumeFreshPanelProfile, reportSuapDuration } from './suap-login-telemetry';
 import { Observable, map, of, throwError, timeout } from 'rxjs';
 
-import { PAINEL_AVA_CONFIG, isPainelAvaBrowserUrl } from './painel-ava.config';
+import {
+    GOVBR_MOBILE_UNAVAILABLE_MESSAGE, PAINEL_AVA_CONFIG, isGovBrAuthenticationUrl, isPainelAvaBrowserUrl,
+} from './painel-ava.config';
 import { PAINEL_COURSES_SCRIPT } from './painel-courses';
 import { hasOAuthProfileMode, readOAuthDashboard, readOAuthProfile } from '../mobilemoodle/core_mobile/oauth-profile';
 import { refreshSavedProfileNames } from '../mobilemoodle/core_mobile/profile-refresh';
@@ -84,6 +87,9 @@ const PAINEL_IAB_CHROME = {
     // "get"; o Painel precisa desativá-lo explicitamente para não parar redirects.
     // A tipagem do wrapper omite "no", aceito pela implementação nativa.
     beforeload: 'no' as NonNullable<Parameters<typeof CoreOpener.openInApp>[1]>['beforeload'],
+    // O fork IFRN do InAppBrowser desenha a WebView sob o inset superior.
+    ifrnlayoutfullscreen: 'yes' as const,
+    hardwareback: 'yes' as const,
     location: 'no' as const,
     hidden: 'yes' as const,
     footer: 'no' as const,
@@ -418,9 +424,17 @@ export class PainelAvaService {
 
     /** Revalida apenas o perfil com cookies existentes, sem iniciar login ou consultar cursos. */
     refreshSavedProfile(): Promise<boolean> {
-        if (!readOAuthProfile()) {
+        const savedProfile = readOAuthProfile();
+        if (!savedProfile) {
+            clearFreshPanelProfile();
+
             return Promise.resolve(false);
         }
+
+        if (consumeFreshPanelProfile(savedProfile.identity)) {
+            return Promise.resolve(false);
+        }
+
         this.profileRefresh ??= new Promise<boolean>(resolve => {
             const origin = PAINEL_AVA_CONFIG.baseUrl;
             const endpoint = `${origin}/api/v2/usuario/info/`;
@@ -490,8 +504,12 @@ export class PainelAvaService {
      * Depois que a sessão web existir, consulta /api/v1/diarios/ dentro da origem
      * https://ava.ifrn.edu.br, sem copiar cookie, código OAuth ou senha para o app.
      */
-    authenticateWithBrowser(options: { reuseSession?: boolean; readOnly?: boolean } = {}): Observable<PainelAvaV1Result> {
+    authenticateWithBrowser(options: {
+        reuseSession?: boolean;
+        readOnly?: boolean;
+    } = {}): Observable<PainelAvaV1Result> {
         return new Observable<PainelAvaV1Result>((subscriber) => {
+            const browserFlowStartedAt = performance.now();
             const baseUrl = PAINEL_AVA_CONFIG.baseUrl.replace(/\/$/, '');
             const diariosPath = PAINEL_AVA_CONFIG.diariosPath;
             const query = PAINEL_AVA_CONFIG.diariosQuery ? `?${PAINEL_AVA_CONFIG.diariosQuery}` : '';
@@ -500,17 +518,59 @@ export class PainelAvaService {
             let finished = false;
             let probing = false;
             let painelHidden = true;
+            let hasEnteredSuapAuthentication = false;
             /** Após diários OK sem matrícula: consulta identidade no SUAP com a mesma sessão do IAB. */
             let awaitingSuapIdentity = false;
             let pendingRaw: unknown = null;
             let pendingProfile: Record<string, unknown> | null = null;
             let pendingProbeLog: unknown[] = [];
+            let suapVisibleStartedAt: number | undefined;
+            const navigationStartedAt = new Map<string, number>();
+            const onTiming = (stage: string, durationMs: number): void => {
+                reportSuapDuration(stage, durationMs);
+            };
+            const stageForUrl = (url: string): 'suap' | 'painel' | 'other' => {
+                try {
+                    const origin = new URL(url).origin;
+                    if (origin === suapOrigin) {
+                        return 'suap';
+                    }
+                    if (origin === baseUrl || origin === 'https://painel.ead.ifrn.edu.br') {
+                        return 'painel';
+                    }
+                } catch {
+                    // Esquemas de callback e URLs inválidas não entram nos logs.
+                }
+
+                return 'other';
+            };
+            const reportProbeTimings = (probeLog: unknown[]): void => {
+                for (const entry of probeLog) {
+                    if (!isPlainObject(entry) || typeof entry['path'] !== 'string'
+                        || typeof entry['elapsedMs'] !== 'number') {
+                        continue;
+                    }
+
+                    const path = entry['path'];
+                    const stage = path.includes('/api/v1/diarios/') ? 'courses-api-response'
+                        : path.includes('/api/v2/usuario/info/') ? 'panel-profile-api-response'
+                            : path.startsWith('suap:') ? 'suap-profile-api-response' : 'profile-api-response';
+                    onTiming(stage, entry['elapsedMs']);
+                    if (typeof entry['ttfbMs'] === 'number') {
+                        onTiming(`${stage}-ttfb-approx`, entry['ttfbMs']);
+                    }
+                }
+            };
 
             const hideBrowser = (): void => {
                 if (painelHidden) {
                     return;
                 }
                 painelHidden = true;
+                if (suapVisibleStartedAt !== undefined) {
+                    onTiming('suap-visible-wait', performance.now() - suapVisibleStartedAt);
+                    suapVisibleStartedAt = undefined;
+                }
                 try {
                     browser.hide();
                 } catch {
@@ -523,6 +583,7 @@ export class PainelAvaService {
                     return;
                 }
                 painelHidden = false;
+                suapVisibleStartedAt ??= performance.now();
                 try {
                     browser.show();
                 } catch {
@@ -533,12 +594,13 @@ export class PainelAvaService {
             // Login novo limpa cookies; retomada preserva a sessão web da mesma conta.
             // Sem isso, cookies do SUAP/Painel do usuário anterior fazem o
             // GET /api/v1/diarios/ devolver os cursos da conta errada.
-            // Sem barra de URL e com toolbar branca para não flashar tela preta/URLs.
+            // Sem chrome do InAppBrowser; a tela SUAP ocupa também o inset superior.
             const browser = CoreOpener.openInApp(`${baseUrl}/`, {
                 ...PAINEL_IAB_CHROME,
                 clearcache: options.reuseSession ? 'no' : 'yes',
                 clearsessioncache: options.reuseSession ? 'no' : 'yes',
             });
+            onTiming('inappbrowser-open-call', performance.now() - browserFlowStartedAt);
 
             // eslint-disable-next-line no-console
             console.log('[IFRN-PANEL] recuperação web iniciada em segundo plano');
@@ -609,9 +671,20 @@ export class PainelAvaService {
                     profileKeyCount: profileKeys.length,
                 }));
                 if (probeLog.length) {
+                    reportProbeTimings(probeLog);
                     // eslint-disable-next-line no-console
-                    console.log('[IFRN-PANEL] profile probes:', JSON.stringify(probeLog));
+                    console.log('[IFRN-PANEL] profile probes:', JSON.stringify(probeLog.map(entry => {
+                        if (!isPlainObject(entry)) {
+                            return { status: 'unknown' };
+                        }
+
+                        return {
+                            status: entry['status'], json: entry['json'],
+                            elapsedMs: entry['elapsedMs'],
+                        };
+                    })));
                 }
+                onTiming('browser-to-panel-data', performance.now() - browserFlowStartedAt);
                 subscriber.next(result);
                 subscriber.complete();
             };
@@ -634,10 +707,19 @@ export class PainelAvaService {
             // Páginas intermediárias ficam ocultas e recebem CSS antes do paint.
             const loadStartSubscription = browser.on('loadstart').subscribe((event) => {
                 const url = event.url || '';
+                navigationStartedAt.set(stageForUrl(url), performance.now());
+
+                if (hasEnteredSuapAuthentication && isGovBrAuthenticationUrl(url)) {
+                    finishWithError(GOVBR_MOBILE_UNAVAILABLE_MESSAGE);
+
+                    return;
+                }
 
                 if (url.startsWith(`${suapOrigin}/`)) {
+                    hasEnteredSuapAuthentication = true;
                     hideBrowser();
                     // SUAP só aparece quando seu loadstop confirmar que está pronto.
+
                     return;
                 }
 
@@ -648,6 +730,12 @@ export class PainelAvaService {
 
             const loadStopSubscription = browser.on('loadstop').subscribe((event) => {
                 const url = event.url || '';
+                const navigationStage = stageForUrl(url);
+                const navigationStart = navigationStartedAt.get(navigationStage);
+                if (navigationStart !== undefined) {
+                    onTiming(`browser-load-${navigationStage}`, performance.now() - navigationStart);
+                    navigationStartedAt.delete(navigationStage);
+                }
 
                 // Coleta de identidade após diários: permanece oculta; não reabre o login.
                 if (!finished && awaitingSuapIdentity && url.startsWith(`${suapOrigin}/`)) {
@@ -681,6 +769,13 @@ export class PainelAvaService {
                                 };
                             }
                             function fetchJson(path) {
+                                var startedAt = performance.now();
+                                function ttfb(response) {
+                                    var entries = performance.getEntriesByName(response.url);
+                                    var resource = entries.length ? entries[entries.length - 1] : null;
+                                    return resource && resource.responseStart >= resource.requestStart
+                                        ? Math.round(resource.responseStart - resource.requestStart) : null;
+                                }
                                 return fetch(path, {
                                     method: 'GET',
                                     headers: { 'Accept': 'application/json' },
@@ -688,11 +783,14 @@ export class PainelAvaService {
                                     redirect: 'follow'
                                 }).then(function (response) {
                                     var contentType = response.headers.get('content-type') || '';
-                                    probeLog.push({ path: 'suap:' + path, status: response.status, json: contentType.indexOf('application/json') !== -1 });
+                                    probeLog.push({ path: 'suap:' + path, status: response.status,
+                                        json: contentType.indexOf('application/json') !== -1,
+                                        elapsedMs: Math.round(performance.now() - startedAt), ttfbMs: ttfb(response) });
                                     if (!response.ok || contentType.indexOf('application/json') === -1) return null;
                                     return response.json();
                                 }).catch(function () {
-                                    probeLog.push({ path: 'suap:' + path, status: 0, json: false });
+                                    probeLog.push({ path: 'suap:' + path, status: 0, json: false,
+                                        elapsedMs: Math.round(performance.now() - startedAt), ttfbMs: null });
                                     return null;
                                 });
                             }
@@ -749,6 +847,13 @@ export class PainelAvaService {
                         var endpoint = ${JSON.stringify(diariosPath + query)};
                         var probeLog = [];
                         function fetchJson(path) {
+                            var startedAt = performance.now();
+                            function ttfb(response) {
+                                var entries = performance.getEntriesByName(response.url);
+                                var resource = entries.length ? entries[entries.length - 1] : null;
+                                return resource && resource.responseStart >= resource.requestStart
+                                    ? Math.round(resource.responseStart - resource.requestStart) : null;
+                            }
                             return fetch(path, {
                                 method: 'GET',
                                 headers: { 'Accept': 'application/json' },
@@ -756,13 +861,16 @@ export class PainelAvaService {
                                 redirect: 'follow'
                             }).then(function (response) {
                                 var contentType = response.headers.get('content-type') || '';
-                                probeLog.push({ path: path, status: response.status, json: contentType.indexOf('application/json') !== -1 });
+                                probeLog.push({ path: path, status: response.status,
+                                    json: contentType.indexOf('application/json') !== -1,
+                                    elapsedMs: Math.round(performance.now() - startedAt), ttfbMs: ttfb(response) });
                                 if (!response.ok || contentType.indexOf('application/json') === -1) {
                                     return null;
                                 }
                                 return response.json();
                             }).catch(function () {
-                                probeLog.push({ path: path, status: 0, json: false });
+                                probeLog.push({ path: path, status: 0, json: false,
+                                    elapsedMs: Math.round(performance.now() - startedAt), ttfbMs: null });
                                 return null;
                             });
                         }
@@ -903,24 +1011,32 @@ export class PainelAvaService {
                                 return new Promise(function (resolve) { setTimeout(function () { resolve(null); }, 800); });
                             };
 
-                            var rootRequest = fetch('/', {
-                                method: 'GET',
-                                credentials: 'same-origin',
-                                redirect: 'follow',
-                                headers: { 'Accept': 'text/html,application/xhtml+xml' }
-                            }).then(function (response) {
-                                var contentType = response.headers.get('content-type') || '';
-                                if (!response.ok || contentType.indexOf('text/html') === -1) return null;
-                                return response.text().then(parseRootProfile);
-                            }).catch(function () { return null; });
+                            function fetchRootProfile() {
+                                return fetch('/', {
+                                    method: 'GET',
+                                    credentials: 'same-origin',
+                                    redirect: 'follow',
+                                    headers: { 'Accept': 'text/html,application/xhtml+xml' }
+                                }).then(function (response) {
+                                    var contentType = response.headers.get('content-type') || '';
+                                    if (!response.ok || contentType.indexOf('text/html') === -1) return null;
+                                    return response.text().then(parseRootProfile);
+                                }).catch(function () { return null; });
+                            }
 
-                            Promise.all([
-                                Promise.race([rootRequest, shortTimeout()]),
-                                Promise.race([fetchUserInfo(), shortTimeout()])
-                            ]).then(function (results) {
-                                var htmlProfile = results[0] || currentProfile || null;
-                                var apiProfile = results[1] || null;
-                                sendSuccess(mergeProfiles(apiProfile, htmlProfile));
+                            // A identidade autenticada da API basta para liberar o painel.
+                            // Consulte o HTML legado somente quando os endpoints não identificarem a conta.
+                            Promise.race([fetchUserInfo(), shortTimeout()]).then(function (apiProfile) {
+                                if (apiProfile) {
+                                    sendSuccess(mergeProfiles(apiProfile, currentProfile));
+
+                                    return Promise.resolve(null);
+                                }
+
+                                return Promise.race([fetchRootProfile(), shortTimeout()]).then(function (htmlProfile) {
+                                    sendSuccess(mergeProfiles(htmlProfile || currentProfile, currentProfile));
+                                    return null;
+                                });
                             }).catch(function () {
                                 sendSuccess(currentProfile || null);
                             });

@@ -2128,6 +2128,19 @@
   App.renderPainel = renderPainel;
   App.renderCurso = renderCurso;
 
+  // src/MoodleIFRN/mobilemoodle/core_mobile/suap-timing.ts
+  var SAFE_STAGES = /* @__PURE__ */ new Set([
+    "panel-templates-ready",
+    "panel-dashboard-ready",
+    "panel-render-to-frame"
+  ]);
+  function reportSuapDuration(stage, durationMs) {
+    if (!SAFE_STAGES.has(stage) || !Number.isFinite(durationMs) || durationMs < 0) {
+      return;
+    }
+    console.info(`[IFRN-SUAP-TIMING] ${JSON.stringify({ stage, durationMs: Math.round(durationMs) })}`);
+  }
+
   // src/MoodleIFRN/mobilemoodle/core_mobile/app-router.ts
   /*!
    * app-router.ts
@@ -2195,10 +2208,14 @@
     return App.dashboardCache;
   }
   async function loadRoute(force) {
+    const routeStartedAt = performance.now();
     const seq = ++routeSeq;
     const route = parseRoute();
     try {
       await loadTemplates();
+      if (route.name === "painel") {
+        reportSuapDuration("panel-templates-ready", performance.now() - routeStartedAt);
+      }
       if (seq !== routeSeq) {
         return;
       }
@@ -2239,11 +2256,16 @@
         App.dashboardCache = null;
         window.MobileMoodleApi.invalidateCache();
       }
+      const dashboardStartedAt = performance.now();
       const dashboard = await loadDashboard(force);
+      reportSuapDuration("panel-dashboard-ready", performance.now() - dashboardStartedAt);
       if (seq !== routeSeq) {
         return;
       }
       App.renderPainel?.(dashboard);
+      requestAnimationFrame(() => {
+        reportSuapDuration("panel-render-to-frame", performance.now() - routeStartedAt);
+      });
     } catch (error) {
       if (seq !== routeSeq) {
         return;

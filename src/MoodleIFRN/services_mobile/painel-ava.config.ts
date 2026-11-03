@@ -43,10 +43,32 @@ export const PAINEL_AVA_CONFIG = {
     diariosQuery: 'q=&situacao=inprogress&semestre=&disciplina=&curso=&ambiente=',
 } as const;
 
+/** Mensagem estável que permite à tela oferecer os caminhos de recuperação do Gov.br. */
+export const GOVBR_MOBILE_UNAVAILABLE_MESSAGE =
+    'O acesso pelo Gov.br continuará no navegador e não criará uma sessão no aplicativo. '
+    + 'Para usar o AVA Mobile, volte e escolha o login tradicional do SUAP.';
+
 /** Compara origens exatas; não aceita prefixos, subdomínios ou HTTP. */
 export function isPainelAvaBrowserUrl(candidate: string): boolean {
     try {
         return PAINEL_AVA_CONFIG.browserOrigins.some(origin => new URL(candidate).origin === origin);
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Detecta páginas oficiais Gov.br sem aceitar domínios com sufixo enganoso.
+ *
+ * @param candidate Navegação que será analisada sem ser registrada em log.
+ * @returns Se a origem HTTPS pertence ao domínio gov.br.
+ */
+export function isGovBrAuthenticationUrl(candidate: string): boolean {
+    try {
+        const url = new URL(candidate);
+        const hostname = url.hostname.toLowerCase();
+
+        return url.protocol === 'https:' && (hostname === 'gov.br' || hostname.endsWith('.gov.br'));
     } catch {
         return false;
     }

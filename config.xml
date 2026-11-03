@@ -20,6 +20,7 @@
     <allow-intent href="geo:*" />
     <hook src="scripts/cordova-hooks/before_plugin_add.sh" type="before_plugin_add" />
     <hook src="scripts/cordova-hooks/ifrn-course-sso.js" type="after_prepare" />
+    <hook src="src/MoodleIFRN/scripts/cordova-inappbrowser-layout.js" type="after_prepare" />
     <preference name="permissions" value="none" />
     <preference name="orientation" value="default" />
     <preference name="target-device" value="universal" />

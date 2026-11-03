@@ -108,6 +108,17 @@ export class CoreCustomURLSchemesProvider {
      * @returns Promise resolved when done. If rejected, the parameter is of type CoreCustomURLSchemesHandleError.
      */
     async handleCustomURL(url: string): Promise<void> {
+        // BEGIN MoodleIFRN mobile SUAP callback
+        try {
+            const callback = new URL(url);
+            if (callback.protocol === `${CoreConstants.CONFIG.customurlscheme}:`
+                    && callback.hostname === 'ifrn-auth' && callback.pathname === '/callback') {
+                return;
+            }
+        } catch {
+            // The regular Moodle URL-scheme validation handles malformed URLs.
+        }
+        // END MoodleIFRN mobile SUAP callback
         if (!this.isCustomURL(url)) {
             throw this.createInvalidSchemeError(url);
         }

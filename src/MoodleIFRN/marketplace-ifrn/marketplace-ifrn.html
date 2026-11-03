@@ -122,6 +122,16 @@
                 @if (formError) {
                     <p class="welcome__error" role="alert">{{ formError }}</p>
                 }
+                @if (govBrUnavailable) {
+                    <div class="welcome__govbr-actions" role="group" aria-label="Opções de autenticação Gov.br">
+                        <ion-button expand="block" class="btn-enter" (click)="continueGovBrInBrowser()">
+                            Continuar no navegador
+                        </ion-button>
+                        <ion-button expand="block" fill="outline" class="btn-continue" (click)="retrySuapInApp()">
+                            Voltar ao login SUAP no app
+                        </ion-button>
+                    </div>
+                }
                 <p class="welcome__account">Acesse com sua conta SUAP</p>
 
 

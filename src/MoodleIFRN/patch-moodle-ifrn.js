@@ -30,6 +30,7 @@ const FILES = {
     gulpfile: path.join(PROJECT_ROOT, 'gulpfile.js'),
     packageJson: path.join(PROJECT_ROOT, 'package.json'),
     indexHtml: path.join(PROJECT_ROOT, 'src/index.html'),
+    coreUrlSchemes: path.join(PROJECT_ROOT, 'src/core/services/urlschemes.ts'),
 };
 
 /**
@@ -56,6 +57,23 @@ function patchCourseIndexRoute() {
     content = content.replace(currentRouteAssignment, patchedRouteAssignment);
     writeFile(FILES.courseIndex, content);
     console.log('✔ core course index — abas usam a rota ativada do curso');
+}
+
+/** Reserve one app deep-link route for the PKCE-protected SUAP mobile handoff. */
+function patchMobileAuthCallback() {
+    let content = readFile(FILES.coreUrlSchemes);
+    const guard = `        // BEGIN MoodleIFRN mobile SUAP callback\n        try {\n            const callback = new URL(url);\n            if (callback.protocol === \`${'${CoreConstants.CONFIG.customurlscheme}'}:\`\n                    && callback.hostname === 'ifrn-auth' && callback.pathname === '/callback') {\n                return;\n            }\n        } catch {\n            // The regular Moodle URL-scheme validation handles malformed URLs.\n        }\n        // END MoodleIFRN mobile SUAP callback\n`;
+    const anchor = '        if (!this.isCustomURL(url)) {';
+    if (content.includes('// BEGIN MoodleIFRN mobile SUAP callback')) {
+        console.log('• callback SUAP mobile já está reservado no handler de URL');
+        return;
+    }
+    if (!content.includes(anchor)) {
+        throw new Error('Não foi possível localizar a validação do handler de URL Moodle para o callback SUAP mobile.');
+    }
+    content = content.replace(anchor, `${guard}${anchor}`);
+    writeFile(FILES.coreUrlSchemes, content);
+    console.log('✔ callback SUAP mobile reservado antes da criação de site Moodle');
 }
 
 /** Keeps the native course-index drawer styling hooks after Moodle updates. */
@@ -490,6 +508,7 @@ function main() {
     console.log(`Projeto: ${PROJECT_ROOT}\n`);
 
     patchLoginModule();
+    patchMobileAuthCallback();
     patchMainMenuNavigation();
     patchAngularAssets();
     patchGulpfile();
@@ -514,8 +533,15 @@ function patchCourseMenusOnly() {
     console.log(menuChanged ? '✔ Menu IFRN registrado no curso nativo' : '• Menu IFRN do curso já estava atualizado');
 }
 
+function patchMobileAuthCallbackOnly() {
+    console.log('MoodleIFRN — aplicando somente o callback OAuth móvel...\n');
+    patchMobileAuthCallback();
+}
+
 try {
-    if (process.argv.includes('--course-menus-only')) {
+    if (process.argv.includes('--mobile-auth-callback-only')) {
+        patchMobileAuthCallbackOnly();
+    } else if (process.argv.includes('--course-menus-only')) {
         patchCourseMenusOnly();
     } else {
         main();

@@ -632,7 +632,7 @@ export class MoodleSiteService {
     private oauthReturnNavigating = false;
     private oauthCallbackReceived = false;
 
-    /** O overlay antigo foi removido; cada operação assíncrona tem seu próprio limite. */
+    /** Cobre a transição visual até o curso nativo estar pronto para aparecer. */
     showNativeCourseHandoff(): void {
         document.documentElement.classList.add('ifrn-course-opening');
         showHandoffLoading();
@@ -691,10 +691,9 @@ export class MoodleSiteService {
                 return;
             }
             const path = event.urlAfterRedirects || event.url;
-            // Curso nativo confirmado: tira o overlay na hora (mesmo com courseOpening).
+            // A rota pode chegar antes dos dados e do tema da página nativa.
+            // openCourseById libera a cobertura depois de confirmar o primeiro paint.
             if (/\/course(?:\/deep)*\/\d+/.test(path)) {
-                this.hideNativeCourseHandoff();
-
                 return;
             }
             if (path.includes('/login/painel')) {

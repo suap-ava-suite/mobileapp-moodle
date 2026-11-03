@@ -19,6 +19,7 @@
 
 import { MM, App } from './namespace';
 import { hasOAuthProfileMode, readOAuthProfile } from './oauth-profile';
+import { reportSuapDuration } from './suap-timing';
 
 let templatesReady: Promise<void> | null = null;
 
@@ -102,11 +103,15 @@ async function loadDashboard(force: boolean): Promise<DashboardData> {
  * @param force true = invalidate + refetch (refresh / retry).
  */
 async function loadRoute(force: boolean): Promise<void> {
+    const routeStartedAt = performance.now();
     const seq = ++routeSeq;
     const route = parseRoute();
 
     try {
         await loadTemplates();
+        if (route.name === 'painel') {
+            reportSuapDuration('panel-templates-ready', performance.now() - routeStartedAt);
+        }
 
         if (seq !== routeSeq) {
             return;
@@ -178,13 +183,18 @@ async function loadRoute(force: boolean): Promise<void> {
             window.MobileMoodleApi.invalidateCache();
         }
 
+        const dashboardStartedAt = performance.now();
         const dashboard = await loadDashboard(force);
+        reportSuapDuration('panel-dashboard-ready', performance.now() - dashboardStartedAt);
 
         if (seq !== routeSeq) {
             return;
         }
 
         App.renderPainel?.(dashboard);
+        requestAnimationFrame(() => {
+            reportSuapDuration('panel-render-to-frame', performance.now() - routeStartedAt);
+        });
     } catch (error) {
         if (seq !== routeSeq) {
             return;

@@ -32,6 +32,10 @@ test('login principal retoma redirects após curso e preserva a política de coo
         './painel-ava.config': { PAINEL_AVA_CONFIG: {
             baseUrl: 'https://ava.ifrn.edu.br', diariosPath: '/api/v1/diarios/',
         } },
+        './suap-login-telemetry': {
+            consumeFreshPanelProfile: () => false,
+            reportSuapDuration: () => {},
+        },
         './painel-courses': {},
         '../mobilemoodle/core_mobile/oauth-profile': {},
         '../mobilemoodle/core_mobile/profile-refresh': {},
@@ -45,7 +49,7 @@ test('login principal retoma redirects após curso e preserva a política de coo
         exports: mod.exports, require: name => {
             assert.ok(name in mocks, name);
             return mocks[name];
-        }, console: { log() {} }, URL,
+        }, console: { log() {} }, URL, performance: { now: () => 1 },
     });
     const service = new mod.exports.PainelAvaService();
     for (const reuseSession of [false, true]) {

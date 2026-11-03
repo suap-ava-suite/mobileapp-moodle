@@ -71,6 +71,9 @@ try {
         bundle: true,
         format: 'iife',
         target: 'es2020',
+        define: {
+            __IFRN_SUAP_TIMING__: JSON.stringify(process.env.NODE_ENV === 'development'),
+        },
         logLevel: 'warning',
         legalComments: 'inline',
     });

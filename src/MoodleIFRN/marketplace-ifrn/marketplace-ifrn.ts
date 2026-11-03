@@ -10,6 +10,9 @@ import { CorePlatform } from '@services/platform';
 import { CoreNavigator } from '@services/navigator';
 import { CoreOpener } from '@static/opener';
 import { SuapEntryService, SuapEntryAccountError } from '@/MoodleIFRN/services_mobile/suap-entry.service';
+import { reportSuapDuration } from '../services_mobile/suap-login-telemetry';
+import { CoreEvents } from '@static/events';
+import { GOVBR_MOBILE_UNAVAILABLE_MESSAGE } from '../services_mobile/painel-ava.config';
 
 @Component({
     selector: 'page-marketplace-ifrn',
@@ -25,9 +28,11 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private returnSubscription?: Subscription;
+    private mobileAuthFailureObserver?: { off: () => void };
     accountIssue: SuapEntryAccountError | null = null;
     accountSwitchStarted = false;
     formError = '';
+    govBrUnavailable = false;
     statusMessage = '';
     private nativeReturnQueued = false;
     private expectedIdentity = '';
@@ -78,6 +83,20 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
      */
     async ngOnInit(): Promise<void> {
         await CorePlatform.ready();
+        this.mobileAuthFailureObserver = CoreEvents.on('IFRN_SUAP_MOBILE_AUTH_FAILED', event => {
+            const message = (event as unknown as { message?: unknown })?.message;
+            this.formError = typeof message === 'string'
+                ? message : 'Não foi possível concluir o login SUAP. Tente novamente.';
+            this.loading = false;
+            this.waitingBrowser = false;
+            this.openingPainel = false;
+            this.statusMessage = '';
+        });
+        const pendingAuthError = sessionStorage.getItem('ifrn_mobile_suap_error_v1');
+        if (pendingAuthError) {
+            this.formError = pendingAuthError;
+            sessionStorage.removeItem('ifrn_mobile_suap_error_v1');
+        }
         const forceLogin = CoreNavigator.getRouteBooleanParam('forceLogin');
         this.expectedIdentity = forceLogin ? CoreNavigator.getRouteParam<string>('username') || '' : '';
         this.canContinue = !forceLogin && this.authService.isAuthenticated() && this.painelAvaService.hasDashboard();
@@ -119,6 +138,7 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.returnSubscription?.unsubscribe();
+        this.mobileAuthFailureObserver?.off();
     }
 
     ionViewDidEnter(): void {
@@ -172,8 +192,10 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         if (this.loading || this.waitingBrowser || this.openingPainel) {
             return;
         }
+        const entryStartedAt = performance.now();
         this.accountIssue = null;
         this.accountSwitchStarted = false;
+        this.govBrUnavailable = false;
         this.loading = true;
         this.waitingBrowser = false;
         this.nativeReturnQueued = false;
@@ -184,6 +206,7 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
             await this.router.navigate([], { relativeTo: this.route, replaceUrl: true,
                 queryParams: { nativeSuapReturn: null }, queryParamsHandling: 'merge' });
             await this.waitForTransitionPaint();
+            reportSuapDuration('marketplace-preflight', performance.now() - entryStartedAt);
             await this.suapEntry.loginWithSuap(this.expectedIdentity, message => this.statusMessage = message);
             // OAuth fica no navegador do sistema; mantém o splash até o callback.
             if (readNativeSuapEntry()) {
@@ -193,6 +216,7 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
             }
         } catch (error) {
             this.accountIssue = error instanceof SuapEntryAccountError ? error : null;
+            this.govBrUnavailable = error instanceof Error && error.message === GOVBR_MOBILE_UNAVAILABLE_MESSAGE;
             this.formError = error instanceof Error ? error.message : 'Não foi possível entrar. Tente novamente.';
         } finally {
             if (!this.waitingBrowser) {
@@ -217,6 +241,26 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     private openPainel(): void {
         this.openingPainel = false;
         void CoreNavigator.navigate('/login/painel');
+    }
+
+    /** Continua a autenticação oficial no browser externo, sem tentar criar sessão mobile. */
+    continueGovBrInBrowser(): void {
+        if (!this.govBrUnavailable || this.showTransition) {
+            return;
+        }
+
+        window.open('https://suap.ifrn.edu.br/accounts/login/', '_system');
+    }
+
+    /** Retorna ao fluxo SUAP tradicional embutido no app. */
+    retrySuapInApp(): void {
+        if (!this.govBrUnavailable || this.showTransition) {
+            return;
+        }
+
+        this.govBrUnavailable = false;
+        this.formError = '';
+        void this.enterAva();
     }
 
     /**

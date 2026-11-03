@@ -202,6 +202,12 @@
         -webkit-tap-highlight-color: transparent;
     }
 
+    .welcome__govbr-actions {
+        display: grid;
+        gap: 10px;
+        margin-top: 12px;
+    }
+
     ion-button.btn-enter,
     ion-button.btn-continue {
         --border-radius: 13px;
