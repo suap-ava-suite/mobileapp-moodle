@@ -272,13 +272,24 @@ function safeLogPayload(payload: Record<string, unknown>): string {
     return JSON.stringify(safe);
 }
 
-/** Loga diagnósticos de navegação somente com campos previamente permitidos. */
+/**
+ * Loga diagnósticos de navegação somente com campos previamente permitidos.
+ *
+ * @param stage Nome estático do evento de diagnóstico.
+ * @param context Dados candidatos, filtrados pela lista permitida.
+ */
 function logSiteDiagnostic(stage: string, context: Record<string, unknown>): void {
     // eslint-disable-next-line no-console
     console.log(SITE_LOG, stage, safeLogPayload(context));
 }
 
-/** Log seguro de erro CoreSites / WS (nunca token). */
+/**
+ * Log seguro de erro CoreSites / WS (nunca token ou texto externo do erro).
+ *
+ * @param stage Etapa interna que originou o erro.
+ * @param error Erro original; somente nome conhecido e flag crítica são registrados.
+ * @param context Contexto filtrado pela lista permitida.
+ */
 function logSiteError(stage: string, error: unknown, context?: Record<string, unknown>): void {
     const err = error as {
         message?: string;

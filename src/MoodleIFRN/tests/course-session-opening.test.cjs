@@ -250,7 +250,7 @@ test('native course SSO preserves cookies, stays hidden and delegates token vali
 
 test('course tap resets the Ionic login route before entering the OAuth bridge', () => {
     const panel = fs.readFileSync('src/MoodleIFRN/painel/painel.ts', 'utf8');
-    const navigation = panel.match(/this\.router\.navigate\(\['\/login\/moodle-open-course'\],[\s\S]*?\n            \}\);/);
+    const navigation = panel.match(/await this\.router\.navigate\(\['\/login\/moodle-open-course'\],[\s\S]*?\n\s*\}\s*\}\);/);
 
     assert.ok(navigation, 'Panel must navigate directly to the course bridge');
     assert.match(navigation[0], /replaceUrl:\s*true/);

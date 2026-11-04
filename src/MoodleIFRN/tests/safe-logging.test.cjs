@@ -40,6 +40,15 @@ test('error logs omit free text, stack, debug details and unapproved context pro
     assert.match(output,/synthetic-stage/);
     assert.match(output,/critical/);
     assert.match(output,/42/);
+
+    log.logSiteError('synthetic-type-error', Object.assign(new TypeError(secret), { critical: true }), {
+        courseId: 42,
+        siteUrl: 'https://presencial.ava.ifrn.edu.br/course/view.php?token=synthetic-token',
+    });
+    const typedErrorOutput = JSON.stringify(log.entries);
+    assert.ok(!typedErrorOutput.includes(secret), typedErrorOutput);
+    assert.ok(!typedErrorOutput.includes('synthetic-token'), typedErrorOutput);
+    assert.match(typedErrorOutput, /TypeError/);
 });
 test('course bridge diagnostics whitelist fields and redact URL parameters', () => {
     const log = logging();
@@ -47,6 +56,9 @@ test('course bridge diagnostics whitelist fields and redact URL parameters', () 
         courseId: 42,
         identityOnly: true,
         siteUrl: `https://presencial.ava.ifrn.edu.br/course/${secret}?token=${secret}`,
+        matricula: secret,
+        cpf: secret,
+        username: secret,
         message: secret,
     });
     const output = JSON.stringify(log.entries);

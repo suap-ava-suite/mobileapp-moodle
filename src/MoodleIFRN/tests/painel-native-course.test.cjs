@@ -11,95 +11,96 @@ function load(file, mocks, extra = {}) {
     }).outputText, context);
     return context.exports;
 }
-function setup(open = async () => 'opened') {
-    const token = {};
+
+function setup(navigate = async () => true) {
+    const tokens = { auth: {}, painel: {}, dashboard: {}, router: {} };
     const calls = [];
-    const navigation = [];
     const errors = [];
-    const routerToken = {};
-    const router = { navigate: async (...args) => navigation.push(args) };
-    const win = { location: { origin: 'http://localhost' }, addEventListener() {}, removeEventListener() {} };
-    const service = { ensureSessionAndOpenCourse: async (...args) => {
-        calls.push(args);
-        return open(...args);
-    } };
+    const stoppedRefreshes = [];
+    const rootClasses = new Set(['ifrn-course-context']);
+    const router = { navigate: async (...args) => { calls.push(args); return navigate(...args); } };
+    const painelAva = { stopProfileRefresh: () => stoppedRefreshes.push(true) };
+    const dashboard = {};
+    const alerts = { showError: async error => errors.push(error) };
     const { PainelPage } = load('src/MoodleIFRN/painel/painel.ts', {
-        '@angular/core': { Component: () => c => c, ViewChild: () => () => {},
-            inject: id => id === token ? service : id === routerToken ? router : { stopProfileRefresh() {} } },
-        '@angular/router': { Router: routerToken },
-        '@/MoodleIFRN/services_mobile/moodle-site.service': { MoodleSiteService: token },
-        '../mobilemoodle/core_mobile/course-target': load('src/MoodleIFRN/mobilemoodle/core_mobile/course-target.ts', {}),
-        '@services/navigator': { CoreNavigator: { navigate: async (...args) => navigation.push(args) } },
-        '@services/overlays/alerts': { CoreAlerts: { showError: async error => errors.push(error) } },
-    }, { window: win, document: { documentElement: { classList: { remove() {} } } } });
-    return { page: new PainelPage(), Page: PainelPage, win, service, calls, navigation, errors };
+        '@angular/core': {
+            Component: () => component => component,
+            HostListener: () => () => {},
+            ViewChild: () => () => {},
+            inject: token => token === tokens.router ? router
+                : token === tokens.painel ? painelAva
+                    : token === tokens.dashboard ? dashboard : {},
+        },
+        '@angular/router': { Router: tokens.router },
+        '@/core/shared.module': { CoreSharedModule: class {} },
+        '@/MoodleIFRN/services_mobile/auth.service': { AuthService: tokens.auth },
+        '@/MoodleIFRN/services_mobile/painel-ava.service': { PainelAvaService: tokens.painel },
+        '../mobilemoodle/core_mobile/course-target': load(
+            'src/MoodleIFRN/mobilemoodle/core_mobile/course-target.ts', {},
+        ),
+        '@services/navigator': { CoreNavigator: { navigate: async () => true } },
+        '@services/platform': { CorePlatform: { ready: async () => {} } },
+        '@services/overlays/alerts': { CoreAlerts: alerts },
+        '../services_mobile/suap-login-telemetry': { reportSuapDuration() {} },
+        '../services_mobile/ifrn-language': { useIfrnBrazilianPortuguese: async () => {} },
+        './painel-course-card': { PainelCourseCardComponent: class {} },
+        './painel-dashboard.service': { PainelDashboardService: tokens.dashboard },
+    }, {
+        document: { documentElement: { classList: { remove: name => rootClasses.delete(name) } } },
+        sessionStorage: { setItem() {} },
+    });
+
+    return { page: new PainelPage(), calls, errors, stoppedRefreshes, rootClasses };
 }
+
 const academic = 'https://academico.ava.ifrn.edu.br';
 const presencial = 'https://presencial.ava.ifrn.edu.br';
-test('panel opens native course directly and permits another click after completion', async () => {
-    const s = setup();
-    await s.page.handleOpenCourse(7, 'Course', academic);
-    await s.page.handleOpenCourse(7, 'Other environment', presencial);
-    assert.equal(s.calls.length, 2);
-    assert.equal(s.calls[0][2], 'Course');
-    assert.equal(s.calls[0][1], academic);
-    assert.equal(s.calls[1][1], presencial);
-    assert.equal(s.navigation.length, 0);
+
+test('panel routes the selected Moodle course directly to the native course bridge', async () => {
+    const state = setup();
+    state.page.openCourse({ moodle_course_id: 7, name: 'Curso teste', moodle_site_url: `${academic}/course/view.php?id=7` });
+    await new Promise(resolve => setImmediate(resolve));
+
+    assert.equal(state.calls.length, 1);
+    assert.equal(state.calls[0][0][0], '/login/moodle-open-course');
+    assert.equal(state.calls[0][1].replaceUrl, true);
+    assert.deepEqual(JSON.parse(JSON.stringify(state.calls[0][1].queryParams)), {
+        courseId: 7, courseName: 'Curso teste', siteUrl: academic, identityOnly: false, startOAuth: false,
+    });
 });
-test('no native session keeps the official connection route scoped to the target environment', async () => {
-    const s = setup(async () => 'need-connect');
-    await s.page.handleOpenCourse(7, 'Course', presencial);
-    assert.equal(s.navigation[0][0][0], '/login/moodle-open-course');
-    assert.equal(s.navigation[0][1].queryParams.siteUrl, presencial);
-    assert.equal(s.navigation[0][1].queryParams.identityOnly, false);
-    assert.equal(s.navigation[0][1].replaceUrl, true);
+
+test('duplicate course taps are ignored while the bridge navigation is pending', async () => {
+    let finishNavigation;
+    const state = setup(() => new Promise(resolve => { finishNavigation = resolve; }));
+    state.page.openCourse({ moodle_course_id: 7, name: 'Primeiro', moodle_site_url: academic });
+    state.page.openCourse({ moodle_course_id: 8, name: 'Segundo', moodle_site_url: presencial });
+    assert.equal(state.calls.length, 1);
+    assert.equal(state.stoppedRefreshes.length, 1);
+
+    finishNavigation(true);
+    await new Promise(resolve => setImmediate(resolve));
+    state.page.openCourse({ moodle_course_id: 8, name: 'Segundo', moodle_site_url: presencial });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(state.calls.length, 2);
+    assert.equal(state.calls[1][1].queryParams.siteUrl, presencial);
 });
-test('read, permission and identity errors open recovery without automatic OAuth', async () => {
-    const s = setup(async () => { throw new Error('Unavailable'); });
-    await s.page.handleOpenCourse(7, 'Course', academic);
-    assert.equal(s.navigation[0][1].queryParams.identityOnly, true);
-    assert.ok(s.service.lastError);
-});
-test('duplicate bridge messages cannot replace an in-progress course or environment', async () => {
-    let complete;
-    const s = setup(() => new Promise(resolve => { complete = resolve; }));
-    const pending = s.page.handleOpenCourse(7, 'Course', academic);
-    await s.page.handleOpenCourse(7, 'Other environment', presencial);
-    assert.equal(s.calls.length, 1);
-    complete('opened');
-    await pending;
-    assert.equal(s.navigation.length, 0);
-});
-test('unconfirmed environment never selects a default Moodle', async () => {
-    const s = setup();
+
+test('unconfirmed Moodle origins are rejected without falling back to a default site', async () => {
+    const state = setup();
     for (const site of [undefined, 'https://example.org', 'https://academico.ava.ifrn.edu.br.evil.example']) {
-        await s.page.handleOpenCourse(7, 'Course', site);
+        state.page.openCourse({ moodle_course_id: 7, name: 'Curso', moodle_site_url: site });
+        await new Promise(resolve => setImmediate(resolve));
     }
-    assert.equal(s.calls.length, 0);
-    assert.equal(s.errors.length, 3);
+
+    assert.equal(state.calls.length, 0);
+    assert.equal(state.errors.length, 3);
 });
 
-test('destroying an old Ionic panel does not unregister the active panel bridge', () => {
-    const s = setup();
-    s.page.registerBridge();
-    const current = new s.Page();
-    current.ionViewDidEnter();
-    const active = s.win.MoodleIfrnBridge;
-    s.page.ngOnDestroy();
-    assert.equal(s.win.MoodleIfrnBridge, active);
-    current.ngOnDestroy();
-    assert.equal(s.win.MoodleIfrnBridge, undefined);
-});
+test('panel teardown stops profile refresh and removes stale course context', () => {
+    const state = setup();
+    state.page.ngOnDestroy();
+    state.page.ionViewDidEnter();
 
-test('only the panel iframe on the app origin can post course commands', async () => {
-    const s = setup();
-    const source = {};
-    s.page.painelFrame = { nativeElement: { contentWindow: source } };
-    const data = { type: 'MOODLE_IFRN_OPEN_COURSE', courseId: 7, siteUrl: academic };
-    s.page.onWindowMessage({ source: {}, origin: 'http://localhost', data });
-    s.page.onWindowMessage({ source, origin: 'https://other.example', data });
-    assert.equal(s.calls.length, 0);
-    s.page.onWindowMessage({ source, origin: 'http://localhost', data });
-    assert.equal(s.calls.length, 1);
-    await Promise.resolve();
+    assert.equal(state.stoppedRefreshes.length, 1);
+    assert.equal(state.rootClasses.has('ifrn-course-context'), false);
 });
