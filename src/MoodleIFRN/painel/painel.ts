@@ -159,7 +159,7 @@ export class PainelPage implements OnInit, OnDestroy {
             // Recupera também contas persistidas após reiniciar o app. Com sessão
             // válida, o clique termina no curso nativo sem passar pela ponte OAuth.
             const result = await this.moodleSite.ensureSessionAndOpenCourse(id, target, courseName);
-            if (result === 'opened') {
+            if (result === 'opened' || result === 'cancelled') {
                 this.openingCourse = false;
 
                 return;

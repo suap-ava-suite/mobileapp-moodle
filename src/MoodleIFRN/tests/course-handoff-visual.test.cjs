@@ -104,4 +104,17 @@ test('course navigation does not release the cover before first-paint readiness'
     assert.ok(readiness >= 0, 'course opening must wait for the native themed first paint');
     assert.ok(performPromise > openStart && finalRelease > performPromise,
         'the cover must be released only when the async course opening operation settles');
+
+    const courseNavStart = source.indexOf('private handleCourseNavEnd(url: string): void {');
+    const courseNavEnd = source.indexOf('\n    /** Mesmo destino do goBack()', courseNavStart);
+    assert.ok(courseNavStart >= 0 && courseNavEnd > courseNavStart, 'expected the course navigation observer');
+    const courseNavigation = source.slice(courseNavStart, courseNavEnd);
+    const courseIndexStart = courseNavigation.indexOf('if (isCourseIndexPath(path, courseId))');
+    const courseIndexEnd = courseNavigation.indexOf('// Ainda não vimos o course index', courseIndexStart);
+    assert.ok(courseIndexStart >= 0 && courseIndexEnd > courseIndexStart, 'expected the course index branch');
+    assert.doesNotMatch(
+        courseNavigation.slice(courseIndexStart, courseIndexEnd),
+        /hideNativeCourseHandoff/,
+        'NavigationEnd must not expose the Moodle back button before the themed first paint is ready',
+    );
 });

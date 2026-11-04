@@ -637,7 +637,7 @@ export class MoodleSiteService {
     private sessionOpening?: {
         courseId: number;
         siteUrl?: string;
-        promise: Promise<'opened' | 'need-connect'>;
+        promise: Promise<'opened' | 'need-connect' | 'cancelled'>;
     };
     private oauthPreparation?: Promise<'switched' | 'opened' | 'already-active'>;
     private courseOAuthBrowser?: InAppBrowserObject;
@@ -646,6 +646,7 @@ export class MoodleSiteService {
     private courseSsoCleanup?: Promise<void>;
     private courseOAuthBrowserSubscriptions: Array<{ unsubscribe: () => void }> = [];
     private cancelledCourseId?: number;
+    private cancelledOpeningForPanelCourseId?: number;
 
     private navigationShellInitialized = false;
     private oauthReturnNavigating = false;
@@ -738,6 +739,9 @@ export class MoodleSiteService {
         // Overlays e abas internas mantêm prioridade. No índice do curso IFRN,
         // evita restaurar uma página em cache pertencente a outro ambiente.
         event.detail.register(BackButtonPriority.CORE_TABS - 1, (next) => {
+            if (this.cancelCourseOpeningForPanelExit()) {
+                return;
+            }
             if (!this.returnToPainelOnCourseExit()) {
                 next();
             }
@@ -749,7 +753,18 @@ export class MoodleSiteService {
         const button = path.find((target): target is HTMLElement =>
             target instanceof HTMLElement && target.tagName === 'ION-BACK-BUTTON',
         );
-        if (!button?.closest('.ifrn-course-back') || !this.returnToPainelOnCourseExit(false)) {
+        if (!button?.closest('.ifrn-course-back')) {
+            return;
+        }
+
+        if (this.cancelCourseOpeningForPanelExit()) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+
+            return;
+        }
+
+        if (!this.returnToPainelOnCourseExit(false)) {
             return;
         }
 
@@ -757,6 +772,32 @@ export class MoodleSiteService {
         event.stopImmediatePropagation();
         this.redirectToPainelAva();
     };
+
+    /** Cancela o handoff iniciado no Painel, sem deixar o Voltar nativo cair no Dashboard Moodle. */
+    private cancelCourseOpeningForPanelExit(): boolean {
+        if (this.cancelledOpeningForPanelCourseId && this.isNativeCourseHandoffActive()) {
+            return true;
+        }
+
+        if (sessionStorage.getItem(COURSE_ORIGIN_KEY) !== 'painel') {
+            return false;
+        }
+
+        const courseId = this.courseOpening?.courseId ?? this.sessionOpening?.courseId;
+        if (!Number.isSafeInteger(courseId) || !courseId) {
+            return false;
+        }
+
+        this.cancelledCourseId = courseId;
+        this.cancelledOpeningForPanelCourseId = courseId;
+        this.openingAttempt?.cancel();
+        this.clearPendingOpenCourse();
+        this.clearCourseOriginFlags();
+        this.hideNativeCourseHandoff();
+        this.redirectToPainelAva();
+
+        return true;
+    }
 
     /** Cancelamento explícito pelo usuário; nenhum redirecionamento automático. */
     dismissCourseRecovery(): void {
@@ -1186,7 +1227,6 @@ export class MoodleSiteService {
 
         // 1) Curso principal (index + tabs) ficou visível → liberar o retorno.
         if (isCourseIndexPath(path, courseId)) {
-            this.hideNativeCourseHandoff();
             if (!this.courseOpenedFromPainel) {
                 this.courseOpenedFromPainel = true;
                 // eslint-disable-next-line no-console
@@ -1285,7 +1325,7 @@ export class MoodleSiteService {
         courseId: number,
         siteUrl?: string,
         courseName?: string,
-    ): Promise<'opened' | 'need-connect'> {
+    ): Promise<'opened' | 'need-connect' | 'cancelled'> {
         if (this.sessionOpening) {
             // A repeated bridge callback for the same course/environment is the
             // same operation. Join it instead of showing a false concurrent-open
@@ -1298,9 +1338,18 @@ export class MoodleSiteService {
         }
         const attempt = new CourseOpeningAttempt();
         this.openingAttempt = attempt;
+        this.cancelledOpeningForPanelCourseId = undefined;
         this.cancelledCourseId = undefined;
         let opening!: NonNullable<MoodleSiteService['sessionOpening']>;
-        const promise = this.performEnsureSessionAndOpenCourse(courseId, siteUrl, courseName, attempt)
+        const promise = this.performEnsureSessionAndOpenCourse(courseId, siteUrl, courseName, attempt).catch((error) => {
+            if (attempt.cancelled && this.cancelledOpeningForPanelCourseId === courseId) {
+                this.cancelledOpeningForPanelCourseId = undefined;
+
+                return 'cancelled' as const;
+            }
+
+            throw error;
+        })
             .finally(() => {
                 if (this.sessionOpening === opening) {
                     this.sessionOpening = undefined;
@@ -1320,7 +1369,7 @@ export class MoodleSiteService {
         siteUrl: string | undefined,
         courseName: string | undefined,
         attempt: CourseOpeningAttempt,
-    ): Promise<'opened' | 'need-connect'> {
+    ): Promise<'opened' | 'need-connect' | 'cancelled'> {
         this.ensureLoginObserver();
         this.lastError = '';
         this.lastCourseAccessIssue = null;

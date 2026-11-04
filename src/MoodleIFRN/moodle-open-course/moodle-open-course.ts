@@ -303,7 +303,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
                 return;
             }
 
-            if (result === 'opened') {
+            if (result === 'opened' || result === 'cancelled') {
                 return;
             }
 

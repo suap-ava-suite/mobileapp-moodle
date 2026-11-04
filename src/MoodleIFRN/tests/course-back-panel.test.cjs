@@ -17,6 +17,7 @@ test('Android Back returns the IFRN course index to panel while delegating activ
     let atCourseIndex = true;
     let panelReturns = 0;
     let delegated = 0;
+    service.cancelCourseOpeningForPanelExit = () => false;
     service.returnToPainelOnCourseExit = () => {
         if (!atCourseIndex) return false;
         panelReturns++;
