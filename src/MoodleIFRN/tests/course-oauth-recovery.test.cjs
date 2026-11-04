@@ -47,6 +47,8 @@ function setup() {
         '@angular/core': { Component: () => c => c, inject: () => service },
         '@/MoodleIFRN/services_mobile/moodle-site.service': {
             resolveMoodleSiteUrl: url => url || 'https://presencial.ava.ifrn.edu.br',
+            logSiteDiagnostic() {},
+            logSiteError() {},
         },
         '@services/navigator': { CoreNavigator: navigator },
         '@static/events': { CoreEvents: { IAB_EXIT: 'iab-exit', on: (event, callback) => {

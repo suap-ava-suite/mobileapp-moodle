@@ -231,7 +231,7 @@ function safeLogPayload(payload: Record<string, unknown>): string {
         'moodleUsernameAvailable', 'moodleUserIdPresent', 'authAloneWouldMatch', 'matriculaWouldMatch',
         'cpfWouldMatchButIgnoredIfMatricula', 'hasSession', 'matches', 'hadSessionBefore', 'resumeAfterSwitch',
         'sessionMatchedBefore', 'hasNativeToken', 'loggedOut', 'storedMatchingLoggedOut', 'oauthFlowActive',
-        'loadSiteReturned', 'hasMatchingAfterLoad', 'identityVerified', 'hasConfig', 'found', 'opened',
+        'loadSiteReturned', 'hasMatchingAfterLoad', 'identityVerified', 'hasConfig', 'found', 'opened', 'identityOnly',
         'caseA_storedWrongAccount', 'caseB_needsBrowserOAuth', 'usernameAvailable'];
     const numbers = ['courseId', 'pendingCourseId', 'enrolledCount', 'candidateCount', 'preferredLength', 'moodleLength'];
     const urls = ['siteUrl', 'rawCandidate', 'targetSiteUrl', 'requested', 'resolved', 'url', 'launchurl'];
@@ -272,7 +272,24 @@ function safeLogPayload(payload: Record<string, unknown>): string {
     return JSON.stringify(safe);
 }
 
-/** Log seguro de erro CoreSites / WS (nunca token). */
+/**
+ * Loga diagnósticos de navegação somente com campos previamente permitidos.
+ *
+ * @param stage Nome estático do evento de diagnóstico.
+ * @param context Dados candidatos, filtrados pela lista permitida.
+ */
+function logSiteDiagnostic(stage: string, context: Record<string, unknown>): void {
+    // eslint-disable-next-line no-console
+    console.log(SITE_LOG, stage, safeLogPayload(context));
+}
+
+/**
+ * Log seguro de erro CoreSites / WS (nunca token ou texto externo do erro).
+ *
+ * @param stage Etapa interna que originou o erro.
+ * @param error Erro original; somente nome conhecido e flag crítica são registrados.
+ * @param context Contexto filtrado pela lista permitida.
+ */
 function logSiteError(stage: string, error: unknown, context?: Record<string, unknown>): void {
     const err = error as {
         message?: string;
@@ -288,6 +305,8 @@ function logSiteError(stage: string, error: unknown, context?: Record<string, un
         critical: err?.critical,
     }));
 }
+
+export { logSiteDiagnostic, logSiteError };
 
 /** Normaliza username Moodle/SUAP para comparação (sem logar o valor). */
 function normalizeIdentity(value: string | null | undefined): string | null {

@@ -17,6 +17,8 @@ import { CoreSharedModule } from '@/core/shared.module';
 import {
     IFRN_MOODLE_PRESENCIAL_URL,
     MoodleSiteService,
+    logSiteDiagnostic,
+    logSiteError,
     resolveMoodleSiteUrl,
 } from '@/MoodleIFRN/services_mobile/moodle-site.service';
 import { CoreNavigator } from '@services/navigator';
@@ -169,19 +171,12 @@ export class MoodleOpenCoursePage implements OnDestroy {
         const hasMatchingSession = this.moodleSite.hasMatchingPresencialSession(this.moodleSiteUrl);
         const identityOnly = CoreNavigator.getRouteBooleanParam('identityOnly');
 
-        // eslint-disable-next-line no-console
-        console.log('[IFRN-SITE] MoodleOpenCoursePage.init', JSON.stringify({
+        logSiteDiagnostic('course-bridge-init', {
             courseId: this.courseId,
-            pendingSiteUrl: pending?.siteUrl || null,
-            resolvedSiteUrl: this.moodleSiteUrl,
-            hasPresencialSession: hasUrlSession,
-            hasMatchingPresencialSession: hasMatchingSession,
+            hasSession: hasUrlSession,
+            matches: hasMatchingSession,
             identityOnly,
-            identityMismatchPending: this.moodleSite.isIdentityMismatchPending(),
-            initStarted: this.initStarted,
-        }));
-        // eslint-disable-next-line no-console
-        console.log('[IFRN-COURSE] courseId recebido do Painel =', this.courseId || null);
+        });
 
         if (this.moodleSite.lastError) {
             this.formError = this.moodleSite.lastError;
@@ -323,13 +318,10 @@ export class MoodleOpenCoursePage implements OnDestroy {
             if (entry !== this.entryVersion) {
                 return;
             }
-            // eslint-disable-next-line no-console
-            console.error('[IFRN-SITE] tryOpenOrPromptConnect erro', JSON.stringify({
-                message: error instanceof Error ? error.message : String(error),
-                stack: error instanceof Error ? error.stack : undefined,
+            logSiteError('course-bridge-open', error, {
                 siteUrl: this.moodleSiteUrl,
                 courseId: this.courseId,
-            }));
+            });
 
             this.revealBridgeError(
                 error instanceof Error
@@ -437,12 +429,10 @@ export class MoodleOpenCoursePage implements OnDestroy {
             if (entry !== this.entryVersion) {
                 return;
             }
-            // eslint-disable-next-line no-console
-            console.error('[IFRN-SITE] startOAuthFlow erro', JSON.stringify({
-                message: error instanceof Error ? error.message : String(error),
+            logSiteError('course-bridge-oauth', error, {
                 siteUrl: this.moodleSiteUrl,
                 courseId: this.courseId,
-            }));
+            });
 
             this.revealBridgeError(
                 error instanceof Error
