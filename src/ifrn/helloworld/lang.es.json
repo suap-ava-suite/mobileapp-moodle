@@ -1,5 +1,0 @@
-{
-    "content": "Has iniciado sesión mediante la autenticación de FastAPI.",
-    "success": "La autenticación se realizó correctamente.",
-    "title": "Hola mundo"
-}
