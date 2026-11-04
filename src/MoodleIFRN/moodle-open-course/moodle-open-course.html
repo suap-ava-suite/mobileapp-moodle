@@ -2,22 +2,21 @@
     class="moodle-open-course"
     [class.moodle-open-course--busy]="phase === 'loading' || phase === 'waiting-browser'">
 
-    @if (phase === 'loading' || phase === 'waiting-browser') {
+    @if (phase === 'loading') {
+        <!-- O overlay global da minhoca já cobre esta rota até o curso abrir. -->
+    } @else if (phase === 'waiting-browser') {
         <div class="moodle-open-course__silent" role="status" aria-live="polite" aria-busy="true">
             <div class="moodle-open-course__brand" aria-hidden="true">
-                <ion-spinner name="crescent" class="moodle-open-course__spinner"></ion-spinner>
+                <div class="moodle-open-course__gauge"><svg class="moodle-open-course__gauge-svg" viewBox="0 0 120 120">
+                    <defs><linearGradient id="moodle-course-gauge-grad" gradientUnits="userSpaceOnUse" x1="60" y1="6" x2="60" y2="114"><stop offset="0%" stop-color="#61c924"></stop><stop offset="55%" stop-color="#098e95"></stop><stop offset="100%" stop-color="#0b6064"></stop></linearGradient></defs>
+                    <circle class="moodle-open-course__gauge-track" cx="60" cy="60" r="54"></circle><circle class="moodle-open-course__gauge-arc" cx="60" cy="60" r="54"></circle>
+                </svg></div>
                 <img class="moodle-open-course__logo" src="mobilemoodle/static/theme/ifrn/img/splash-logo.png" alt="Painel AVA">
             </div>
-            <p class="moodle-open-course__text">
-                {{ phase === 'waiting-browser'
-                    ? 'Conectando ao curso...'
-                    : 'Carregando curso...' }}
+            <p class="moodle-open-course__text">Conectando ao curso...</p>
+            <p class="moodle-open-course__silent-hint">
+                Reutilizando sua sessão SUAP, sem sair do aplicativo.
             </p>
-            @if (phase === 'waiting-browser') {
-                <p class="moodle-open-course__silent-hint">
-                    Reutilizando sua sessão SUAP, sem sair do aplicativo.
-                </p>
-            }
             <ion-button fill="clear" class="moodle-open-course__silent-back" (click)="cancelOpening()">
                 Voltar ao Painel
             </ion-button>

@@ -417,6 +417,7 @@ export class PainelAvaService {
 
     private profileRefresh?: Promise<boolean>;
     private cancelProfileRefresh?: () => void;
+    private lastProfileRefresh?: { owner: string; at: number };
 
     stopProfileRefresh(): void {
         this.cancelProfileRefresh?.();
@@ -430,6 +431,13 @@ export class PainelAvaService {
 
             return Promise.resolve(false);
         }
+
+        const now = Date.now();
+        if (this.lastProfileRefresh?.owner === savedProfile.identity
+            && now - this.lastProfileRefresh.at < 5 * 60 * 1000) {
+            return Promise.resolve(false);
+        }
+        this.lastProfileRefresh = { owner: savedProfile.identity, at: now };
 
         if (consumeFreshPanelProfile(savedProfile.identity)) {
             return Promise.resolve(false);

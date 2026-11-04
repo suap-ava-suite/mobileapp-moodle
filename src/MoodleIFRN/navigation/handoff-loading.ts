@@ -81,19 +81,10 @@ export function showHandoffLoading(): void {
         zIndex: '1',
     });
 
-    const spinner = document.createElement('div');
-    spinner.setAttribute('aria-hidden', 'true');
-    Object.assign(spinner.style, {
-        position: 'absolute',
-        inset: '0',
-        width: '100%',
-        height: '100%',
-        boxSizing: 'border-box',
-        border: '3px solid rgba(19, 81, 180, 0.14)',
-        borderTopColor: '#1351b4',
-        borderRadius: '50%',
-        animation: 'ifrn-handoff-spin 1.1s linear infinite',
-    });
+    const gauge = document.createElement('div');
+    gauge.setAttribute('aria-hidden', 'true');
+    Object.assign(gauge.style, { position: 'absolute', inset: '0', animation: 'ifrn-handoff-spin 0.95s linear infinite' });
+    gauge.innerHTML = '<svg viewBox="0 0 120 120" style="display:block;width:100%;height:100%" aria-hidden="true"><defs><linearGradient id="ifrn-handoff-gauge-grad" gradientUnits="userSpaceOnUse" x1="60" y1="6" x2="60" y2="114"><stop offset="0%" stop-color="#61c924"></stop><stop offset="55%" stop-color="#098e95"></stop><stop offset="100%" stop-color="#0b6064"></stop></linearGradient></defs><circle cx="60" cy="60" r="54" fill="none" stroke="rgba(19,81,180,.14)" stroke-width="4"></circle><circle cx="60" cy="60" r="54" fill="none" stroke="url(#ifrn-handoff-gauge-grad)" stroke-dasharray="68 271" stroke-linecap="round" stroke-width="5"></circle></svg>';
 
     const message = document.createElement('div');
     message.textContent = 'Abrindo sua disciplina...';
@@ -106,7 +97,7 @@ export function showHandoffLoading(): void {
         document.head.appendChild(style);
     }
 
-    brand.append(logo, spinner);
+    brand.append(logo, gauge);
     content.append(brand, message);
     overlay.appendChild(content);
     (document.body || document.documentElement).appendChild(overlay);

@@ -1843,24 +1843,52 @@ export class MoodleSiteService {
             ])]));
 
             // Mantém os tokens da landing até a página estar visível, estilizada e sem transição ativa.
-            let frame = 0;
+            let readinessTimer = 0;
             try {
                 await attempt.stage('course-first-paint', () => new Promise<void>((resolve) => {
+                    // Os outlets Ionic podem manter o loading do conteúdo em
+                    // Shadow DOM, fora da árvore comum do documento.
+                    const hasVisibleLoading = (root: Document | ShadowRoot): boolean => {
+                        const selector = 'core-loading:not(.core-loading-loaded) .core-loading-container, ion-skeleton-text';
+                        if (Array.from(root.querySelectorAll<HTMLElement>(selector)).some(element =>
+                            element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden')) {
+                            return true;
+                        }
+                        for (const host of Array.from(root.querySelectorAll<HTMLElement>('*'))) {
+                            if (host.shadowRoot && hasVisibleLoading(host.shadowRoot)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    };
+
+                    // O primeiro paint pode preceder a criação dos skeletons.
+                    // Exige um intervalo curto sem loaders antes de revelar o curso.
+                    const loadingDeadline = performance.now() + 8000;
+                    let readySince: number | undefined;
                     const inspect = (): void => {
                         const page = Array.from(document.querySelectorAll<HTMLElement>('page-core-course-index'))
                             .find(element => !element.closest('.ion-page-hidden, .ion-page-invisible')
                                 && element.getClientRects().length > 0);
                         const transitioning = page?.getAnimations?.().some(animation => animation.playState === 'running');
-                        if (page && !transitioning && getComputedStyle(page).getPropertyValue('--ifrn-ava').trim()) {
+                        const styled = page && getComputedStyle(page).getPropertyValue('--ifrn-ava').trim();
+                        const ready = Boolean(page && styled && !transitioning && !hasVisibleLoading(document));
+                        const now = performance.now();
+                        if (ready) {
+                            readySince ??= now;
+                        } else {
+                            readySince = undefined;
+                        }
+                        if ((readySince !== undefined && now - readySince >= 300) || now >= loadingDeadline) {
                             resolve();
                         } else {
-                            frame = requestAnimationFrame(inspect);
+                            readinessTimer = window.setTimeout(inspect, 100);
                         }
                     };
-                    frame = requestAnimationFrame(() => { frame = requestAnimationFrame(inspect); });
-                }), 5000);
+                    readinessTimer = window.setTimeout(inspect, 0);
+                }), 10000);
             } finally {
-                cancelAnimationFrame(frame);
+                window.clearTimeout(readinessTimer);
             }
         } catch (error) {
             for (const loading of Array.from(document.querySelectorAll('ion-loading'))) {

@@ -1,11 +1,91 @@
-<ion-content [fullscreen]="true" [scrollY]="false" [scrollX]="false" class="painel-page-content">
-    <iframe
-        #painelFrame
-        *ngIf="safePainelUrl"
-        [src]="safePainelUrl"
-        class="painel-iframe"
-        title="Painel AVA"
-        allow="fullscreen"
-        (load)="onIframeLoad()">
-    </iframe>
+<ion-content [fullscreen]="true" class="painel-page-content">
+    <header class="ava-header">
+        <div class="ava-toolbar-inner">
+            <img class="ava-header-logo" src="mobilemoodle/static/theme/ifrn/img/ifrn-logo.png" alt="IFRN">
+            <div class="ava-header-brand">
+                <span class="ava-header-title">Painel AVA</span>
+                <span class="ava-header-subtitle">Ambiente Virtual de Aprendizagem</span>
+            </div>
+            <nav class="ava-header-actions" aria-label="Opções do painel">
+                <button type="button" class="ava-header-action" aria-label="Acessibilidade" (click)="openModal('accessibility')"><ion-icon name="accessibility-outline"></ion-icon></button>
+                <button type="button" class="ava-header-action" aria-label="Ajuda" (click)="openModal('help')"><ion-icon name="help-circle-outline"></ion-icon></button>
+                <button type="button" class="ava-header-action ava-header-profile" aria-label="Abrir perfil" (click)="openModal('profile')">
+                    <img *ngIf="avatarUrl" class="profile-image" [src]="avatarUrl" alt="" width="32" height="32" loading="eager" decoding="async" fetchpriority="high">
+                    <span *ngIf="!avatarUrl" class="profile-image profile-image--initials">{{ initials }}</span><span>{{ userName }}</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="painel-page">
+        <div class="ava-topbar" role="tablist" aria-label="Abas do painel">
+            <button *ngFor="let tab of tabs" type="button" class="ava-tab" [class.is-active]="activeTab === tab.key"
+                role="tab" [attr.aria-selected]="activeTab === tab.key" (click)="selectTab(tab.key)">
+                <span class="ava-tab__label-desktop">{{ tab.desktop }}</span><span class="ava-tab__label-mobile">{{ tab.mobile }}</span>
+            </button>
+        </div>
+        <div class="painel-filters">
+            <button type="button" class="painel-filter-button" (click)="openModal('filter')"><ion-icon name="options-outline"></ion-icon>Filtros</button>
+            <button type="button" class="painel-filter-chip" (click)="openModal('filter')">{{ filterLabels[activeFilter] || filterLabels['allincludinghidden'] }}<ion-icon name="chevron-down-outline"></ion-icon></button>
+        </div>
+        <section class="page-intro"><h2>{{ activeTabTitle }}</h2></section>
+        <div *ngIf="loading" class="boot-loading ava-splash" role="status" aria-live="polite">
+            <div class="ava-splash__brand" aria-hidden="true">
+                <div class="ava-splash__gauge"><svg class="ava-splash__gauge-svg" viewBox="0 0 120 120">
+                    <defs><linearGradient id="ava-splash-gauge-grad" gradientUnits="userSpaceOnUse" x1="60" y1="6" x2="60" y2="114"><stop offset="0%" stop-color="#61c924"></stop><stop offset="55%" stop-color="#098e95"></stop><stop offset="100%" stop-color="#0b6064"></stop></linearGradient></defs>
+                    <circle class="ava-splash__gauge-track" cx="60" cy="60" r="54"></circle><circle class="ava-splash__gauge-arc" cx="60" cy="60" r="54"></circle>
+                </svg></div>
+                <img class="ava-splash__logo" src="mobilemoodle/static/theme/ifrn/img/splash-logo.png" alt="">
+            </div>
+            <p class="ava-splash__text">Carregando painel...</p>
+        </div>
+        <div *ngIf="!loading && visibleCourses.length" class="card-container">
+            <ifrn-painel-course-card *ngFor="let course of visibleCourses; trackBy: trackCourse" [course]="course" [tab]="activeTab"
+                [favourite]="dashboardService.isFavourite(course)" [favouriteEnabled]="dashboardService.canEditFavourite(course)"
+                (open)="openCourse(course)" (enrol)="enrolCourse(course)" (cancelEnrol)="cancelEnrol()"
+                (favouriteChange)="toggleFavourite(course)"></ifrn-painel-course-card>
+        </div>
+        <div *ngIf="!loading && !visibleCourses.length" class="no-data">
+            <h3>{{ emptyTitle }}</h3><p>{{ emptyMessage }}</p>
+        </div>
+    </main>
+
+    <div class="sidebar-modal" *ngIf="modalType" (click)="closeModal()">
+        <div class="sidebar-modal__backdrop"></div>
+        <section class="sidebar-modal__panel" role="dialog" aria-modal="true" [attr.aria-labelledby]="'sidebar-modal-title'" (click)="$event.stopPropagation()">
+            <div class="sidebar-modal__header"><div class="sidebar-modal__header-title"><ion-icon [name]="modalIcon"></ion-icon><span id="sidebar-modal-title">{{ modalTitle }}</span></div>
+                <button type="button" class="sidebar-modal__close" aria-label="Fechar" (click)="closeModal()"><ion-icon name="close-outline"></ion-icon></button></div>
+            <div class="sidebar-modal__body" *ngIf="modalType === 'profile'">
+                <p class="ava-modal-body__user">{{ userName }}</p>
+                <div class="ava-button-options"><span class="modal-content-body-title">Links</span>
+                    <a class="modal-button-option" href="https://suap.ifrn.edu.br/comum/minha_conta/" target="_blank" rel="noopener noreferrer">Perfil no SUAP</a>
+                    <a class="modal-button-option" href="https://aberto.ava.ifrn.edu.br" target="_blank" rel="noopener noreferrer">AVA Aberto</a></div>
+                <button type="button" class="modal-button-option exit-button" (click)="logout()">Sair</button>
+            </div>
+            <div class="sidebar-modal__body" *ngIf="modalType === 'help'">
+                <a href="https://ajuda.ead.ifrn.edu.br/" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">Central de Ajuda</a>
+                <a href="https://ead.ifrn.edu.br/acesso-a-informacao/ouvidoria/" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">Ouvidoria</a>
+                <a href="https://ajuda.ead.ifrn.edu.br/agenda-telefonica-2022-campus-natal-zona-leste/" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">Contatos</a>
+                <div class="modal-content-body-help-options"><span class="modal-content-body-title">Centrais de Atendimento</span>
+                    <a href="https://bit.ly/41734xv" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">AVA (Moodle)</a>
+                    <a href="https://bit.ly/3odPfis" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">Secretaria Acadêmica</a>
+                    <a href="https://bit.ly/3KXiQEH" target="_blank" rel="noopener noreferrer" class="modal-content-body-help-link">Central de serviço SUAP</a></div>
+            </div>
+            <div class="sidebar-modal__body" *ngIf="modalType === 'filter'">
+                <label class="filter-select-area"><ion-icon name="book-outline"></ion-icon><select [(ngModel)]="pendingFilter">
+                    <option value="inprogress">Em andamento</option><option value="allincludinghidden">Todos os diários (lento)</option><option value="favourites">Favoritos</option><option value="hidden">Ocultos</option>
+                </select></label>
+                <button type="button" class="modal-content-body-filter-button" (click)="applyFilter()">Filtrar</button>
+                <button type="button" class="modal-content-body-filter-clear" (click)="clearFilter()"><ion-icon name="trash-outline"></ion-icon> Limpar filtros</button>
+            </div>
+            <div class="sidebar-modal__body accessiblity-options" *ngIf="modalType === 'accessibility'">
+                <div class="custom-checkbox-access" *ngFor="let option of accessibilityOptions">
+                    <input class="checkbox-access-input" type="checkbox" [id]="'panel-a11y-' + option.key" [checked]="a11y[option.key]" (change)="setAccessibility(option.key, $any($event.target).checked)">
+                    <label class="checkbox-access-label" [for]="'panel-a11y-' + option.key"><span class="label-container"><ion-icon class="icon-id" [name]="option.icon" aria-hidden="true"></ion-icon>{{ option.label }}</span><ion-icon class="icon-checked" name="checkmark-circle" aria-hidden="true"></ion-icon></label>
+                </div>
+                <div class="selector-cycle-access" [class.active]="zoom !== 100"><label>Zoom:</label><button type="button" class="cycle-btn" (click)="cycleZoom()"><ion-icon class="icon-id" name="search-outline" aria-hidden="true"></ion-icon>{{ zoom }}%<div class="cycle-indicators" aria-hidden="true"><span *ngFor="let level of zoomLevels" class="cycle-indicator" [class.active]="level <= zoom"></span></div></button></div>
+                <div class="selector-cycle-access" [class.active]="colorMode !== 'default'"><label>Modo de cor:</label><button type="button" class="cycle-btn" (click)="cycleColorMode()"><ion-icon class="icon-id" name="color-palette-outline" aria-hidden="true"></ion-icon>{{ colorModeLabel }}<div class="cycle-indicators" aria-hidden="true"><span *ngFor="let mode of colorModes" class="cycle-indicator" [class.active]="mode === colorMode"></span></div></button></div>
+            </div>
+        </section>
+    </div>
 </ion-content>

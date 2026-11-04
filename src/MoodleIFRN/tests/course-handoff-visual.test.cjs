@@ -5,6 +5,17 @@ const test = require('node:test');
 const vm = require('node:vm');
 const ts = require('typescript');
 
+test('course route does not render a second loader during native opening', () => {
+    const filename = path.join(__dirname, '..', 'moodle-open-course', 'moodle-open-course.html');
+    const template = fs.readFileSync(filename, 'utf8');
+    const loadingBranch = template.match(/@if \(phase === 'loading'\)([\s\S]*?)\} @else if \(phase === 'waiting-browser'\)/);
+
+    assert.ok(loadingBranch, 'expected a dedicated native-opening template branch');
+    assert.doesNotMatch(loadingBranch[1], /moodle-open-course__silent|ion-spinner|Carregando curso/);
+    assert.match(template, /@else if \(phase === 'waiting-browser'\)[\s\S]*?moodle-open-course__silent/,
+        'browser handoff keeps its own status while waiting for SUAP');
+});
+
 function loadHandoffModule() {
     const filename = path.join(__dirname, '..', 'navigation', 'handoff-loading.ts');
     const source = fs.readFileSync(filename, 'utf8');
@@ -75,15 +86,17 @@ test('course handoff uses the packaged IFRN logo and branded loading message', (
 
     const [content] = elements.get('ifrn-handoff-loading').children;
     const [brand, message] = content.children;
-    const [logo, spinner] = brand.children;
+    const [logo, gauge] = brand.children;
     assert.match(logo.src, /mobilemoodle\/static\/theme\/ifrn\/img\/splash-logo\.png$/);
     assert.equal(logo.alt, 'Moodle IFRN');
     assert.equal(brand.style.width, 'min(132px, 34vw)');
+    assert.equal(logo.style.width, '68%');
     assert.equal(logo.style.borderRadius, '50%');
     assert.equal(logo.style.objectFit, 'cover');
-    assert.equal(spinner.style.position, 'absolute');
-    assert.equal(spinner.style.width, '100%');
-    assert.equal(spinner.attributes['aria-hidden'], 'true');
+    assert.equal(gauge.style.position, 'absolute');
+    assert.equal(gauge.style.animation, 'ifrn-handoff-spin 0.95s linear infinite');
+    assert.equal(gauge.attributes['aria-hidden'], 'true');
+    assert.match(gauge.innerHTML, /stroke-dasharray="68 271"/);
     assert.equal(message.textContent, 'Abrindo sua disciplina...');
 });
 
@@ -102,6 +115,11 @@ test('course navigation does not release the cover before first-paint readiness'
     const performPromise = source.indexOf('this.performOpenCourseById(courseId, attempt)', openStart);
     const finalRelease = source.indexOf('this.hideNativeCourseHandoff();', performPromise);
     assert.ok(readiness >= 0, 'course opening must wait for the native themed first paint');
+    assert.match(source.slice(readiness, source.indexOf('} catch (error)', readiness)),
+        /host\.shadowRoot && hasVisibleLoading\(host\.shadowRoot\)/,
+        'handoff should cover loaders inside Ionic tab outlet shadow roots');
+    assert.match(source.slice(readiness, source.indexOf('} catch (error)', readiness)), /now - readySince >= 300/,
+        'handoff should wait briefly for late-created Moodle placeholders before releasing');
     assert.ok(performPromise > openStart && finalRelease > performPromise,
         'the cover must be released only when the async course opening operation settles');
 });
