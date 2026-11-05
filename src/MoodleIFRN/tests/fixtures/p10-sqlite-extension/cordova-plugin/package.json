@@ -1,0 +1,9 @@
+{
+  "name": "br.edu.ifrn.experimental.p11.sqlite-bridge",
+  "version": "0.1.0",
+  "description": "Isolated P0.11 Cordova SQLite ledger bridge fixture",
+  "cordova": {
+    "id": "br.edu.ifrn.experimental.p11.sqlite-bridge",
+    "platforms": ["android"]
+  }
+}

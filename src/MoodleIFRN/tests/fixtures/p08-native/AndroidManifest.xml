@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="br.edu.ifrn.experimental.p08.persistence" android:versionCode="1" android:versionName="p08-1">
+    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36" />
+    <application android:label="IFRN P08 persistence harness" android:allowBackup="false" android:debuggable="true" />
+    <instrumentation android:name="br.edu.ifrn.experimental.p08.PersistenceInstrumentation" android:targetPackage="br.edu.ifrn.experimental.p08.persistence" android:label="Isolated persistence tests" />
+</manifest>

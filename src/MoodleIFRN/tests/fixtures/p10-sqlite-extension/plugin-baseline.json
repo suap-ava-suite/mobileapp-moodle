@@ -1,0 +1,46 @@
+{
+  "name": "IFRN P0.10 experimental SQLite session ledger contract",
+  "status": "isolated-experiment-not-applied-to-plugin",
+  "upstream": {
+    "package": "cordova-sqlite-storage",
+    "version": "7.0.0",
+    "files": [
+      {
+        "path": "node_modules/cordova-sqlite-storage/src/android/io/sqlc/SQLitePlugin.java",
+        "sha256": "bd1f2e5c21598160e887879ec9031857653169c3d083b1cab2cc171c37b8546a"
+      },
+      {
+        "path": "node_modules/cordova-sqlite-storage/src/android/io/sqlc/SQLiteConnectorDatabase.java",
+        "sha256": "310700c7c93ec430f4e638fcba2cc372dbf310de818a401921ad9aab65b013ab"
+      },
+      {
+        "path": "node_modules/cordova-sqlite-storage/www/SQLitePlugin.js",
+        "sha256": "945591ddaca157e3811db492ef0d8761d64576c4ada7aa936e72b26111cd9f8b"
+      }
+    ]
+  },
+  "experimentalFiles": [
+    "ExperimentalSessionLedger.java",
+    "SQLiteSessionLedgerBridge.js",
+    "ledger.cjs",
+    "upstream-7.0.0/SQLitePlugin.java",
+    "upstream-7.0.0/SQLiteConnectorDatabase.java",
+    "upstream-7.0.0/SQLitePlugin.js"
+  ],
+  "upstreamSnapshotHashes": {
+    "upstream-7.0.0/SQLitePlugin.java": "bd1f2e5c21598160e887879ec9031857653169c3d083b1cab2cc171c37b8546a",
+    "upstream-7.0.0/SQLiteConnectorDatabase.java": "310700c7c93ec430f4e638fcba2cc372dbf310de818a401921ad9aab65b013ab",
+    "upstream-7.0.0/SQLitePlugin.js": "945591ddaca157e3811db492ef0d8761d64576c4ada7aa936e72b26111cd9f8b"
+  },
+  "actionsForFutureVersionedPatch": [
+    "sessionLedgerPublish",
+    "sessionLedgerReconcile"
+  ],
+  "patchPolicy": {
+    "preflightHashesAndAnchorsRequired": true,
+    "idempotent": true,
+    "inspectionWithoutWritingRequired": true,
+    "failClosedOnMismatch": true,
+    "rollbackByGit": true
+  }
+}
