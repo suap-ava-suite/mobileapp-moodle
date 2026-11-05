@@ -29,6 +29,10 @@ test('mobile callback is bound to current state, short-lived PKCE, returned user
     assert.match(callback, /mobile-auth\/bootstrap/);
     assert.match(callback, /identity !== tokens\.username/);
     assert.match(callback, /Array\.isArray\(bootstrap\.dashboard\.diarios\)/);
+    assert.match(callback, /\/api\/v2\/usuario\/info\//);
+    assert.match(callback, /profileHeaders\.set\('Authorization', `Bearer \$\{tokens\.access\}`\)/);
+    assert.match(callback, /if \(profileOwner === identity\)\s*\{\s*profile = mergeVerifiedPanelProfile\(profile, verifiedProfile, identity\)/);
+    assert.match(callback, /profile: \{ \.\.\.profile, identificacao: identity \}/);
 });
 
 test('returning from the system browser without an OAuth callback cancels the pending mobile attempt', () => {

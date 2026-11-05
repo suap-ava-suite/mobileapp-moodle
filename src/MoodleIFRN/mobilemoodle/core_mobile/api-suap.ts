@@ -16,6 +16,7 @@ interface SuapEu {
     nome_usual?: string;
     nome_social?: string;
     nome_registro?: string;
+    nome_completo?: string;
     foto?: string;
     tipo_usuario?: string;
     identificacao?: string;
@@ -170,11 +171,12 @@ function activityFromTrabalho(trabalho: SuapTrabalho): CourseActivity {
 
 function displayName(eu: SuapEu): string {
     return (
+        eu.nome_registro ||
+        eu.nome_completo ||
         eu.nome_exibicao ||
         eu.show_name ||
         eu.nome_usual ||
         eu.nome_social ||
-        eu.nome_registro ||
         eu.nome ||
         eu.identificacao ||
         'Usuário SUAP'

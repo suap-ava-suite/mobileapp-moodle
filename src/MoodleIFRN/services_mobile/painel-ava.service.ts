@@ -752,16 +752,24 @@ export class PainelAvaService {
                                     profileProbeLog: probeLog
                                 }));
                             }
+                            function cleanName(value) {
+                                return typeof value === 'string' ? value.replace(/\\s+/g, ' ').trim() : '';
+                            }
                             function fromJson(data, source) {
                                 if (!data || typeof data !== 'object') return null;
                                 var id = (data.identificacao || data.matricula || data.username || '').toString().trim();
                                 if (!id) return null;
+                                var displayName = cleanName(data.nome_exibicao || data.show_name)
+                                    || cleanName(data.nome_usual || data.nome_social || data.nome_registro || data.nome);
                                 return {
                                     matricula: id,
                                     identificacao: id,
                                     username: id,
-                                    nome: data.nome_usual || data.nome_social || data.nome || undefined,
+                                    nome_exibicao: displayName || undefined,
+                                    nome: displayName || undefined,
+                                    nome_registro: cleanName(data.nome_registro || data.nome_completo) || undefined,
                                     nome_usual: data.nome_usual || undefined,
+                                    nome_social: data.nome_social || undefined,
                                     foto: data.foto || data.url_foto_150x200 || undefined,
                                     url_foto_150x200: data.url_foto_150x200 || undefined,
                                     url_foto_75x100: data.url_foto_75x100 || undefined,
@@ -858,6 +866,7 @@ export class PainelAvaService {
                                 method: 'GET',
                                 headers: { 'Accept': 'application/json' },
                                 credentials: 'same-origin',
+                                cache: 'no-store',
                                 redirect: 'follow'
                             }).then(function (response) {
                                 var contentType = response.headers.get('content-type') || '';
@@ -933,14 +942,16 @@ export class PainelAvaService {
                                 var matricula = (data.matricula || data.identificacao || data.username || '').toString().trim();
                                 if (!matricula) return null;
                                 var foto = absoluteUrl(data.url_foto_150x200 || data.url_foto_75x100 || data.foto || '');
+                                var displayName = cleanName(data.nome_exibicao || data.show_name)
+                                    || cleanName(data.nome_usual || data.nome_social || data.nome_registro || data.nome);
                                 return {
                                     id: data.id,
                                     _profile_origin: location.origin,
                                     matricula: matricula,
                                     identificacao: matricula,
                                     username: matricula,
-                                    nome_exibicao: cleanName(data.nome_exibicao || data.show_name) || undefined,
-                                    nome: cleanName(data.nome_exibicao || data.show_name || data.nome_usual || data.nome_social || data.nome_registro || data.nome) || undefined,
+                                    nome_exibicao: displayName || undefined,
+                                    nome: displayName || undefined,
                                     nome_usual: cleanName(data.nome_usual) || undefined,
                                     nome_social: cleanName(data.nome_social) || undefined,
                                     nome_registro: cleanName(data.nome_registro) || undefined,
@@ -961,6 +972,16 @@ export class PainelAvaService {
                                         merged[key] = secondary[key];
                                     }
                                 });
+                                // A API autenticada é a fonte principal e segue o mesmo nome de exibição
+                                // usado pelo AVA web; o cabeçalho só completa campos ausentes.
+                                var nameKeys = ['nome_exibicao', 'show_name', 'nome_usual', 'nome_social',
+                                    'nome_registro', 'nome', 'nome_completo', 'display_name'];
+                                var primaryHasName = nameKeys.some(function (key) {
+                                    return typeof primary[key] === 'string' && primary[key].trim();
+                                });
+                                if (primaryHasName) {
+                                    nameKeys.forEach(function (key) { delete merged[key]; });
+                                }
                                 Object.keys(primary).forEach(function (key) {
                                     if (primary[key] !== undefined && primary[key] !== null && primary[key] !== '') {
                                         merged[key] = primary[key];
@@ -992,10 +1013,6 @@ export class PainelAvaService {
                             }
 
                             var currentProfile = profileFromDocument(document, 'dom-atual:#btn-toggle-profile > span');
-                            if (currentProfile && (currentProfile.matricula || currentProfile.identificacao || currentProfile.username)) {
-                                sendSuccess(currentProfile);
-                                return;
-                            }
 
                             function parseRootProfile(html) {
                                 if (!html || typeof html !== 'string') return null;
@@ -1024,10 +1041,14 @@ export class PainelAvaService {
                                 }).catch(function () { return null; });
                             }
 
-                            // A identidade autenticada da API basta para liberar o painel.
-                            // Consulte o HTML legado somente quando os endpoints não identificarem a conta.
-                            Promise.race([fetchUserInfo(), shortTimeout()]).then(function (apiProfile) {
+                            // Aguarde o perfil autenticado antes de escolher o nome.
+                            // O timeout curto descartava respostas válidas um pouco mais lentas,
+                            // deixando o cabeçalho DOM antigo vencer apenas no primeiro login.
+                            fetchUserInfo().then(function (apiProfile) {
                                 if (apiProfile) {
+                                    // A resposta autenticada da API é a fonte principal; o DOM só
+                                    // complementa campos ausentes. Não deixe um nome antigo do
+                                    // cabeçalho sobrescrever o perfil atual retornado pela API.
                                     sendSuccess(mergeProfiles(apiProfile, currentProfile));
 
                                     return Promise.resolve(null);

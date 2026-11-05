@@ -262,17 +262,17 @@ function profileDisplayName(profile: Record<string, unknown> | null): string {
         return '';
     };
 
-    // Mantém a mesma prioridade do Perfil.show_name no backend django-suap-auth:
-    // nome_usual, nome_social e nome_registro. O endpoint também devolve `nome`
-    // como fallback em nome_usual, então não o deixamos sombrear esses campos.
+    // /api/v2/usuario/info/ can return abbreviated display aliases while
+    // nome_registro contains the complete name. Prefer the registered name
+    // for the mobile profile and retain display aliases as fallbacks.
     const nome = pick(
+        'nome_registro',
+        'nome_completo',
         'nome_exibicao',
         'show_name',
         'nome_usual',
         'nome_social',
-        'nome_registro',
         'nome',
-        'nome_completo',
         'identificacao',
         'primeiro_nome',
         'name',

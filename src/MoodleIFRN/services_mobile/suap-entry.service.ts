@@ -187,11 +187,27 @@ export function mergeVerifiedPanelProfile(
             result['foto'] = fallback;
         }
     }
-    for (const key of ['nome_usual', 'nome_social', 'nome_registro'] as const) {
-        if (!present(result[key]) && present(panelProfile[key])) {
+    // O perfil Moodle pode ter um nome incompleto mesmo quando a consulta
+    // autenticada do Painel já trouxe a apresentação oficial desta identidade.
+    // O Painel só chega aqui depois da validação do proprietário acima, então
+    // seus campos de nome substituem os derivados do perfil Moodle.
+    // The mobile profile endpoint can return abbreviated display aliases.
+    // Prefer the identity's complete registered name when it is available.
+    const nameKeys = ['nome_registro', 'nome_completo', 'nome_exibicao', 'show_name', 'nome_usual', 'nome_social', 'nome'] as const;
+    for (const key of nameKeys) {
+        if (present(panelProfile[key])) {
             result[key] = panelProfile[key];
         }
     }
+
+    const verifiedDisplayName = nameKeys.map(key => panelProfile[key])
+        .find(value => typeof value === 'string' && value.trim());
+    if (typeof verifiedDisplayName === 'string') {
+        // Campo canônico consumido tanto pelo Painel Mobile quanto pelos
+        // componentes Angular da tela de perfil.
+        result['nome_exibicao'] = verifiedDisplayName.trim();
+    }
+
     return result;
 }
 
@@ -596,15 +612,43 @@ export class SuapEntryService {
                 username?: string; profile?: Profile; dashboard?: Profile;
             };
             const identity = panelIdentity(bootstrap.profile);
-            if (!identity || identity !== tokens.username || bootstrap.username !== identity) {
+            if (!bootstrap.profile || !identity || identity !== tokens.username || bootstrap.username !== identity) {
                 throw new Error('A identidade do Painel não corresponde ao vínculo escolhido no SUAP.');
             }
             if (!bootstrap.dashboard || !Array.isArray(bootstrap.dashboard.diarios)) {
                 throw new Error('O Painel não retornou uma lista de disciplinas válida.');
             }
 
+            // O bootstrap entrega perfil e cursos para abrir o Painel rapidamente,
+            // mas não garante que os campos de nome sejam a versão atual do perfil.
+            // Consulte a fonte autenticada antes de marcar o snapshot como recente;
+            // isso evita que um nome Moodle/SUAP antigo apareça no primeiro desenho.
+            let profile = bootstrap.profile;
+            try {
+                const profileHeaders = new Headers();
+                profileHeaders.set('Authorization', `Bearer ${tokens.access}`);
+                profileHeaders.set('Accept', 'application/json');
+                const profileResponse = await fetch(new URL('/api/v2/usuario/info/', PAINEL_AVA_CONFIG.baseUrl), {
+                    method: 'GET',
+                    credentials: 'omit',
+                    cache: 'no-store',
+                    redirect: 'error',
+                    headers: profileHeaders,
+                });
+                if (profileResponse.ok) {
+                    const verifiedProfile = await profileResponse.json() as Profile;
+                    const profileOwner = panelIdentity(verifiedProfile);
+                    if (profileOwner === identity) {
+                        profile = mergeVerifiedPanelProfile(profile, verifiedProfile, identity);
+                    }
+                }
+            } catch {
+                // O bootstrap continua suficiente para o login; não reutilize dados
+                // de outra identidade se a atualização autenticada não estiver disponível.
+            }
+
             this.staged = {
-                profile: { ...bootstrap.profile, identificacao: identity },
+                profile: { ...profile, identificacao: identity },
                 dashboard: bootstrap.dashboard,
                 until: Date.now() + 180000,
             };

@@ -7,7 +7,7 @@ import test from 'node:test';
 function loadFunction(path, declaration) {
     const source = readFileSync(new URL(path, import.meta.url), 'utf8');
     const start = source.indexOf(declaration);
-    assert.notEqual(start, -1, `Não encontrou ${declaration}`);
+    assert.notEqual(start, -1, `Function not found: ${declaration}`);
     const bodyStart = source.indexOf('{', start);
     let depth = 0;
     let end = -1;
@@ -18,7 +18,7 @@ function loadFunction(path, declaration) {
             break;
         }
     }
-    assert.notEqual(end, -1, `Corpo incompleto em ${declaration}`);
+    assert.notEqual(end, -1, `Incomplete function: ${declaration}`);
     const functionSource = `${source.slice(start, end)}\nmodule.exports = ${declaration.match(/function\s+(\w+)/)[1]};`;
     const js = transformSync(functionSource, { loader: 'ts', format: 'cjs', target: 'es2020' }).code;
     const context = vm.createContext({ module: { exports: {} }, sessionStorage: { getItem: () => null } });
@@ -29,19 +29,27 @@ function loadFunction(path, declaration) {
 const painelName = loadFunction('../mobilemoodle/core_mobile/api-painel.ts', 'function profileDisplayName(');
 const suapName = loadFunction('../mobilemoodle/core_mobile/api-suap.ts', 'function displayName(');
 
-test('nome oficial calculado pelo backend tem prioridade sobre os campos separados', () => {
-    const profile = { nome_social: 'Matheu Soare', nome_usual: 'Matheus Soares', nome_registro: 'Matheus Soares Silva' };
-    assert.equal(painelName(profile), 'Matheus Soares');
-    assert.equal(painelName({ ...profile, nome_exibicao: 'Matheus Soares' }), 'Matheus Soares');
-    assert.equal(painelName({ ...profile, nome_exibicao: 'Matheus Soares', nome_usual: 'Matheu Soare' }), 'Matheus Soares');
-    assert.equal(suapName(profile), 'Matheus Soares');
-    assert.equal(painelName({ nome_usual: 'Nome incompleto', show_name: 'Nome oficial completo' }), 'Nome oficial completo');
-    assert.equal(suapName({ nome_usual: 'Nome incompleto', show_name: 'Nome oficial completo' }), 'Nome oficial completo');
-    assert.equal(suapName({ nome_usual: 'Nome incompleto', nome_exibicao: 'Nome oficial completo' }), 'Nome oficial completo');
+test('complete registered name wins over abbreviated display aliases', () => {
+    const profile = {
+        nome_social: 'Synthetic Short Social',
+        nome_usual: 'Synthetic Short Usual',
+        nome_registro: 'Synthetic Complete Registered Name',
+    };
+    assert.equal(painelName(profile), 'Synthetic Complete Registered Name');
+    assert.equal(painelName({ ...profile, nome_exibicao: 'Synthetic Short Official Display' }), 'Synthetic Complete Registered Name');
+    assert.equal(suapName(profile), 'Synthetic Complete Registered Name');
 });
 
-test('usa nome social ou de registro quando não há nome usual válido', () => {
-    assert.equal(painelName({ nome_usual: 'Matheus...', nome_social: 'Matheus Soares' }), 'Matheus Soares');
-    assert.equal(painelName({ nome_registro: 'Matheus Soares' }), 'Matheus Soares');
-    assert.equal(suapName({ nome_social: 'Matheus Soares' }), 'Matheus Soares');
+test('display aliases remain fallbacks when the registered name is absent', () => {
+    assert.equal(painelName({ nome_exibicao: 'Synthetic Official Display', nome_usual: 'Synthetic Usual Name' }), 'Synthetic Official Display');
+    assert.equal(painelName({ nome_usual: 'Synthetic Usual Name', nome_social: 'Synthetic Social Name' }), 'Synthetic Usual Name');
+    assert.equal(suapName({ nome_exibicao: 'Synthetic Official Display', nome_usual: 'Synthetic Usual Name' }), 'Synthetic Official Display');
+});
+
+test('registered name is used when no usual or social display name exists', () => {
+    assert.equal(painelName({ nome_usual: 'Synthetic Usual Name' }), 'Synthetic Usual Name');
+    assert.equal(painelName({ nome_social: 'Synthetic Social Name' }), 'Synthetic Social Name');
+    assert.equal(suapName({ nome_social: 'Synthetic Social Name' }), 'Synthetic Social Name');
+    assert.equal(painelName({ nome_registro: 'Synthetic Registered Name' }), 'Synthetic Registered Name');
+    assert.equal(suapName({ nome_registro: 'Synthetic Registered Name' }), 'Synthetic Registered Name');
 });
