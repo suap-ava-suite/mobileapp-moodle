@@ -29,15 +29,15 @@ function loadFunction(path, declaration) {
 const painelName = loadFunction('../mobilemoodle/core_mobile/api-painel.ts', 'function profileDisplayName(');
 const suapName = loadFunction('../mobilemoodle/core_mobile/api-suap.ts', 'function displayName(');
 
-test('complete registered name wins over abbreviated display aliases', () => {
+test('short AVA display name wins over registered name', () => {
     const profile = {
         nome_social: 'Synthetic Short Social',
         nome_usual: 'Synthetic Short Usual',
         nome_registro: 'Synthetic Complete Registered Name',
     };
-    assert.equal(painelName(profile), 'Synthetic Complete Registered Name');
-    assert.equal(painelName({ ...profile, nome_exibicao: 'Synthetic Short Official Display' }), 'Synthetic Complete Registered Name');
-    assert.equal(suapName(profile), 'Synthetic Complete Registered Name');
+    assert.equal(painelName(profile), 'Synthetic Short Usual');
+    assert.equal(painelName({ ...profile, nome_exibicao: 'Synthetic Short Official Display' }), 'Synthetic Short Official Display');
+    assert.equal(suapName(profile), 'Synthetic Short Usual');
 });
 
 test('display aliases remain fallbacks when the registered name is absent', () => {

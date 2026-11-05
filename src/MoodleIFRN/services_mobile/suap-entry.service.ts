@@ -191,9 +191,9 @@ export function mergeVerifiedPanelProfile(
     // autenticada do Painel já trouxe a apresentação oficial desta identidade.
     // O Painel só chega aqui depois da validação do proprietário acima, então
     // seus campos de nome substituem os derivados do perfil Moodle.
-    // The mobile profile endpoint can return abbreviated display aliases.
-    // Prefer the identity's complete registered name when it is available.
-    const nameKeys = ['nome_registro', 'nome_completo', 'nome_exibicao', 'show_name', 'nome_usual', 'nome_social', 'nome'] as const;
+    // Keep the short display name used by the AVA web profile when available.
+    // Preserve the registered name as a fallback for profiles without an alias.
+    const nameKeys = ['nome_exibicao', 'show_name', 'nome_usual', 'nome_social', 'nome_registro', 'nome_completo', 'nome'] as const;
     for (const key of nameKeys) {
         if (present(panelProfile[key])) {
             result[key] = panelProfile[key];

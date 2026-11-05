@@ -487,7 +487,7 @@
     };
   }
   function displayName(eu) {
-    return eu.nome_registro || eu.nome_completo || eu.nome_exibicao || eu.show_name || eu.nome_usual || eu.nome_social || eu.nome || eu.identificacao || "Usu\xE1rio SUAP";
+    return eu.nome_exibicao || eu.show_name || eu.nome_usual || eu.nome_social || eu.nome_registro || eu.nome_completo || eu.nome || eu.identificacao || "Usu\xE1rio SUAP";
   }
   function roleFromTipo(tipo) {
     const value = (tipo || "").toLowerCase();
@@ -894,12 +894,12 @@
       return "";
     };
     const nome = pick(
-      "nome_registro",
-      "nome_completo",
       "nome_exibicao",
       "show_name",
       "nome_usual",
       "nome_social",
+      "nome_registro",
+      "nome_completo",
       "nome",
       "identificacao",
       "primeiro_nome",

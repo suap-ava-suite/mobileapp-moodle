@@ -44,7 +44,7 @@ test('perfil do Painel validado substitui nome nativo incompleto antes do primei
     assert.equal(merged.nome_exibicao, 'Synthetic Official Name');
 });
 
-test('nome registrado completo prevalece sobre aliases abreviados do Painel', () => {
+test('nome usual curto do Painel prevalece sobre nome registrado no primeiro perfil', () => {
     const merged = mergeVerifiedPanelProfile({
         matricula: 'synthetic-student',
         nome_usual: 'Synthetic Short Usual',
@@ -56,19 +56,19 @@ test('nome registrado completo prevalece sobre aliases abreviados do Painel', ()
         _name_source: 'GET /api/v2/usuario/info/',
     }, 'synthetic-student');
 
-    assert.equal(merged.nome_exibicao, 'Synthetic Complete Registered Name');
+    assert.equal(merged.nome_exibicao, 'Synthetic Short Usual');
     assert.equal(merged.nome_usual, 'Synthetic Short Usual');
     assert.equal(merged.nome_registro, 'Synthetic Complete Registered Name');
 });
 
-test('nome registrado completo prevalece sobre alias explícito abreviado', () => {
+test('alias de exibição validado prevalece sobre nome registrado', () => {
     const merged = mergeVerifiedPanelProfile({ matricula: 'synthetic-student' }, {
         matricula: 'synthetic-student',
         nome_exibicao: 'Synthetic Official Display',
         nome_registro: 'Synthetic Complete Registered Name',
     }, 'synthetic-student');
 
-    assert.equal(merged.nome_exibicao, 'Synthetic Complete Registered Name');
+    assert.equal(merged.nome_exibicao, 'Synthetic Official Display');
 });
 
 test('nome do Painel de outra identidade não substitui o perfil Moodle', () => {

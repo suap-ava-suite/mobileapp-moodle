@@ -262,16 +262,15 @@ function profileDisplayName(profile: Record<string, unknown> | null): string {
         return '';
     };
 
-    // /api/v2/usuario/info/ can return abbreviated display aliases while
-    // nome_registro contains the complete name. Prefer the registered name
-    // for the mobile profile and retain display aliases as fallbacks.
+    // Keep the AVA web display name (usual/social) when available. The
+    // registered name is a fallback when no display alias exists.
     const nome = pick(
-        'nome_registro',
-        'nome_completo',
         'nome_exibicao',
         'show_name',
         'nome_usual',
         'nome_social',
+        'nome_registro',
+        'nome_completo',
         'nome',
         'identificacao',
         'primeiro_nome',
