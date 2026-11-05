@@ -106,6 +106,7 @@
         "cordova-plugin-customurlscheme": "5.0.2",
         "cordova-plugin-device": "3.0.0",
         "cordova-plugin-file": "8.1.3",
+        "cordova-plugin-ifrn-customtabs": "file:src/MoodleIFRN/plugins/cordova-plugin-ifrn-customtabs",
         "cordova-plugin-local-notification": "1.0.0",
         "cordova-plugin-network-information": "3.0.0",
         "cordova-plugin-prevent-override": "1.0.1",
@@ -239,7 +240,8 @@
             "nl.kingsquare.cordova.background-audio": {},
             "cordova-plugin-fingerprint-aio": {
                 "FACEID_USAGE_DESCRIPTION": "Use o Face ID para entrar com segurança no aplicativo."
-            }
+            },
+            "cordova-plugin-ifrn-customtabs": {}
         }
     }
 }

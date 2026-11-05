@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    id="cordova-plugin-ifrn-customtabs" version="1.0.0">
+    <name>IFRN Custom Tabs</name>
+    <description>Abertura segura de autenticação Gov.br no navegador do sistema.</description>
+    <license>Apache-2.0</license>
+    <platform name="android">
+        <js-module src="www/ifrn-custom-tabs.js" name="IfrnCustomTabs">
+            <clobbers target="window.ifrnCustomTabs" />
+        </js-module>
+        <framework src="androidx.browser:browser:1.8.0" />
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="IfrnCustomTabs">
+                <param name="android-package" value="br.edu.ifrn.cordova.customtabs.IfrnCustomTabs" />
+            </feature>
+        </config-file>
+        <config-file target="AndroidManifest.xml" parent="/manifest">
+            <queries>
+                <intent>
+                    <action android:name="android.support.customtabs.action.CustomTabsService" />
+                </intent>
+            </queries>
+        </config-file>
+        <source-file src="src/android/IfrnCustomTabs.java"
+            target-dir="src/br/edu/ifrn/cordova/customtabs" />
+    </platform>
+</plugin>
