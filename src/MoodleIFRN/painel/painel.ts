@@ -43,9 +43,8 @@ export class PainelPage implements OnInit, OnDestroy {
     safePainelUrl?: SafeResourceUrl;
     private hostAppearanceObserver?: MutationObserver;
 
-    async ngOnInit(): Promise<void> {
+    ngOnInit(): void {
         this.painelStartedAt = performance.now();
-        await CorePlatform.ready();
 
         const base = document.querySelector('base')?.getAttribute('href') || '/';
         const root = base.endsWith('/') ? base : `${base}/`;
@@ -56,11 +55,20 @@ export class PainelPage implements OnInit, OnDestroy {
         this.safePainelUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
 
         this.registerBridge();
-        void this.painelAva.refreshSavedProfile().then(updated => {
-            if (updated) {
-                this.painelFrame?.nativeElement.contentWindow?.location.reload();
-            }
-        });
+        void this.refreshProfileWhenPlatformIsReady();
+    }
+
+    /**
+     * Permite ao iframe começar a carregar os assets locais imediatamente.
+     * A revalidação pode usar plugins Cordova, então continua após platform.ready.
+     */
+    private async refreshProfileWhenPlatformIsReady(): Promise<void> {
+        await CorePlatform.ready();
+
+        const updated = await this.painelAva.refreshSavedProfile();
+        if (updated) {
+            this.painelFrame?.nativeElement.contentWindow?.location.reload();
+        }
     }
 
     onPainelFrameLoad(): void {
