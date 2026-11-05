@@ -156,11 +156,13 @@
                         <div class="welcome__govbr-actions" role="group" aria-label="Opções de autenticação Gov.br">
                             @if (!govBrBrowserReturned) {
                                 <ion-button expand="block" class="btn-enter" (click)="continueGovBrInBrowser()"
-                                    [disabled]="govBrBrowserOpened">
-                                    {{ govBrBrowserOpened ? 'Login aberto no navegador' : 'Abrir Gov.br no navegador' }}
+                                    [disabled]="govBrBrowserOpened || govBrBrowserOpening">
+                                    {{ govBrBrowserOpened || govBrBrowserOpening
+                                        ? 'Login aberto no navegador' : 'Abrir Gov.br no navegador' }}
                                 </ion-button>
                             }
-                            <ion-button expand="block" fill="outline" class="btn-continue" (click)="retrySuapInApp()">
+                            <ion-button expand="block" fill="outline" class="btn-continue" (click)="retrySuapInApp()"
+                                [disabled]="govBrBrowserOpened || govBrBrowserOpening">
                                 Voltar ao login SUAP no app
                             </ion-button>
                         </div>
