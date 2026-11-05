@@ -537,6 +537,11 @@ export interface MoodleSessionSummary {
 export class MoodleSiteService {
 
     private readonly logger = CoreLogger.getInstance('MoodleSiteService');
+
+    /** Prepara o idioma IFRN durante a tela do Painel, fora do caminho do clique no curso. */
+    prepareCourseLanguage(): Promise<void> {
+        return useIfrnBrazilianPortuguese();
+    }
     private readonly authService = inject(AuthService);
     private readonly painelAva = inject(PainelAvaService);
     private readonly router = inject(Router);

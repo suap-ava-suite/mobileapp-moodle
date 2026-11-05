@@ -65,7 +65,14 @@ export class PainelPage implements OnInit, OnDestroy {
     private async refreshProfileWhenPlatformIsReady(): Promise<void> {
         await CorePlatform.ready();
 
-        const updated = await this.painelAva.refreshSavedProfile();
+        // Traduções e revalidação de perfil rodam em segundo plano enquanto o
+        // iframe do Painel carrega, retirando a preparação do idioma do clique
+        // na primeira disciplina. Uma falha de idioma continua sendo tentada
+        // pelo fluxo normal de abertura do curso.
+        const [updated] = await Promise.all([
+            this.painelAva.refreshSavedProfile(),
+            this.moodleSite.prepareCourseLanguage().catch(() => undefined),
+        ]);
         if (updated) {
             this.painelFrame?.nativeElement.contentWindow?.location.reload();
         }

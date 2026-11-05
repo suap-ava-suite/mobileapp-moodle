@@ -2800,16 +2800,31 @@ const IFRN_PT_BR: Record<string, string> = {
 };
 
 let languageInitialized = false;
+let languageInitialization: Promise<void> | null = null;
 
 /** Pré-carrega a tabela, evitando depender de assets/lang/pt-br.json. */
 export async function useIfrnBrazilianPortuguese(force = false): Promise<void> {
     if (languageInitialized && !force && CoreLang.getCurrentLanguageSync() === 'pt-br') {
         return;
     }
-    Translate.setTranslation('pt-br', IFRN_PT_BR, true);
-    await CoreLang.changeCurrentLanguage('pt-br');
-    // Mantém as traduções IFRN após os eventos da mudança de idioma.
-    Translate.setTranslation('pt-br', IFRN_PT_BR, true);
-    languageInitialized = true;
+    if (languageInitialization) {
+        return languageInitialization;
+    }
+
+    const initialization = (async (): Promise<void> => {
+        Translate.setTranslation('pt-br', IFRN_PT_BR, true);
+        await CoreLang.changeCurrentLanguage('pt-br');
+        // Mantém as traduções IFRN após os eventos da mudança de idioma.
+        Translate.setTranslation('pt-br', IFRN_PT_BR, true);
+        languageInitialized = true;
+    })();
+    languageInitialization = initialization;
+    try {
+        await initialization;
+    } finally {
+        if (languageInitialization === initialization) {
+            languageInitialization = null;
+        }
+    }
 }
 

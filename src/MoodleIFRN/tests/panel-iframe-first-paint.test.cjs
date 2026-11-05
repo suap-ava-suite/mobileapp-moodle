@@ -41,16 +41,16 @@ test('iframe do Painel começa antes da espera pelos plugins Cordova', () => {
     assert.equal(contains(init, ts.isAwaitExpression), false, 'ngOnInit não deve bloquear a primeira renderização');
 });
 
-test('operações Cordova continuam esperando a plataforma antes da revalidação de perfil', () => {
+test('perfil e idioma são preparados em paralelo depois da plataforma, fora do caminho do clique', () => {
     const refresh = findMethod('refreshProfileWhenPlatformIsReady');
-    const awaitedCalls = [];
-    contains(refresh, node => {
-        if (ts.isAwaitExpression(node)) {
-            awaitedCalls.push(node.expression.getText(file));
-        }
+    const awaitPlatform = [...refresh.body.statements].findIndex(statement => contains(statement, node =>
+        ts.isAwaitExpression(node) && node.expression.getText(file) === 'CorePlatform.ready()'));
+    const prepareBoth = [...refresh.body.statements].findIndex(statement => contains(statement, node =>
+        ts.isCallExpression(node) && node.expression.getText(file) === 'Promise.all'));
 
-        return false;
-    });
-
-    assert.deepEqual(awaitedCalls, ['CorePlatform.ready()', 'this.painelAva.refreshSavedProfile()']);
+    assert.ok(awaitPlatform >= 0, 'tarefas que dependem do Cordova devem esperar platform.ready()');
+    assert.ok(prepareBoth > awaitPlatform, 'perfil e idioma devem começar após a plataforma ficar pronta');
+    assert.match(refresh.getText(file), /this\.painelAva\.refreshSavedProfile\(\)/);
+    assert.match(refresh.getText(file), /this\.moodleSite\.prepareCourseLanguage\(\)/);
+    assert.match(refresh.getText(file), /prepareCourseLanguage\(\)\.catch\(\(\) => undefined\)/);
 });
