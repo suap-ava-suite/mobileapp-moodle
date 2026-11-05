@@ -1,5 +1,5 @@
 import { AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { readNativeSuapEntry } from '../navigation/suap-entry-state';
@@ -27,15 +27,30 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     private readonly suapEntry = inject(SuapEntryService);
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
+    private readonly zone = inject(NgZone);
     private returnSubscription?: Subscription;
     private mobileAuthFailureObserver?: { off: () => void };
     accountIssue: SuapEntryAccountError | null = null;
     accountSwitchStarted = false;
     formError = '';
     govBrUnavailable = false;
+    govBrBrowserOpened = false;
+    govBrBrowserReturned = false;
+    govBrBrowserError = '';
     statusMessage = '';
     private nativeReturnQueued = false;
     private expectedIdentity = '';
+    private readonly onResume = (): void => {
+        if (!this.govBrBrowserOpened) {
+            return;
+        }
+
+        this.zone.run(() => {
+            this.govBrBrowserOpened = false;
+            this.govBrBrowserReturned = true;
+            this.govBrUnavailable = true;
+        });
+    };
 
     /**
      * Garante que o overlay já esteja pintado antes de abrir o InAppBrowser nativo.
@@ -83,6 +98,7 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
      */
     async ngOnInit(): Promise<void> {
         await CorePlatform.ready();
+        document.addEventListener('resume', this.onResume);
         this.mobileAuthFailureObserver = CoreEvents.on('IFRN_SUAP_MOBILE_AUTH_FAILED', event => {
             const message = (event as unknown as { message?: unknown })?.message;
             this.formError = typeof message === 'string'
@@ -139,6 +155,8 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.returnSubscription?.unsubscribe();
         this.mobileAuthFailureObserver?.off();
+        document.removeEventListener('resume', this.onResume);
+        this.painelAvaService.clearGovBrRedirectUrl();
     }
 
     ionViewDidEnter(): void {
@@ -196,6 +214,9 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         this.accountIssue = null;
         this.accountSwitchStarted = false;
         this.govBrUnavailable = false;
+        this.govBrBrowserOpened = false;
+        this.govBrBrowserReturned = false;
+        this.govBrBrowserError = '';
         this.loading = true;
         this.waitingBrowser = false;
         this.nativeReturnQueued = false;
@@ -217,7 +238,11 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         } catch (error) {
             this.accountIssue = error instanceof SuapEntryAccountError ? error : null;
             this.govBrUnavailable = error instanceof Error && error.message === GOVBR_MOBILE_UNAVAILABLE_MESSAGE;
-            this.formError = error instanceof Error ? error.message : 'Não foi possível entrar. Tente novamente.';
+            this.govBrBrowserOpened = false;
+            this.govBrBrowserReturned = false;
+            this.govBrBrowserError = '';
+            this.formError = this.govBrUnavailable ? ''
+                : error instanceof Error ? error.message : 'Não foi possível entrar. Tente novamente.';
         } finally {
             if (!this.waitingBrowser) {
                 this.loading = false;
@@ -243,13 +268,26 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         void CoreNavigator.navigate('/login/painel');
     }
 
-    /** Continua a autenticação oficial no browser externo, sem tentar criar sessão mobile. */
+    /** Abre no navegador do sistema o redirect oficial recebido do SUAP. */
     continueGovBrInBrowser(): void {
-        if (!this.govBrUnavailable || this.showTransition) {
+        if (!this.govBrUnavailable || this.showTransition || this.govBrBrowserOpened) {
             return;
         }
 
-        window.open('https://suap.ifrn.edu.br/accounts/login/', '_system');
+        const redirectUrl = this.painelAvaService.consumeGovBrRedirectUrl();
+        if (!redirectUrl) {
+            this.govBrBrowserError = 'O link oficial expirou. Volte ao login SUAP e inicie novamente.';
+            return;
+        }
+
+        try {
+            window.open(redirectUrl, '_system');
+            this.govBrBrowserError = '';
+            this.govBrBrowserReturned = false;
+            this.govBrBrowserOpened = true;
+        } catch {
+            this.govBrBrowserError = 'Não foi possível abrir o navegador seguro. Tente novamente pelo login SUAP.';
+        }
     }
 
     /** Retorna ao fluxo SUAP tradicional embutido no app. */
@@ -259,6 +297,10 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         }
 
         this.govBrUnavailable = false;
+        this.govBrBrowserOpened = false;
+        this.govBrBrowserReturned = false;
+        this.govBrBrowserError = '';
+        this.painelAvaService.clearGovBrRedirectUrl();
         this.formError = '';
         void this.enterAva();
     }
@@ -309,6 +351,10 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     cancelConnection(): void {
         this.suapEntry.cancelConnection();
         this.suapEntry.cancel();
+        this.painelAvaService.clearGovBrRedirectUrl();
+        this.govBrUnavailable = false;
+        this.govBrBrowserOpened = false;
+        this.govBrBrowserReturned = false;
         this.waitingBrowser = false;
         this.loading = false;
         this.openingPainel = false;

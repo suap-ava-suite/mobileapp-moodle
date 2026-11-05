@@ -46,9 +46,15 @@ test('Gov.br ends the in-app attempt and offers an explicit external-browser cho
     assert.match(source, /finishWithError\(GOVBR_MOBILE_UNAVAILABLE_MESSAGE\)/);
     assert.doesNotMatch(source, /authorization_id/);
     assert.match(source, /const loadStartSubscription = browser\.on\('loadstart'\)[\s\S]*?if \(hasEnteredSuapAuthentication && isGovBrAuthenticationUrl\(url\)\)[\s\S]*?return;/);
-    assert.match(marketplace, /window\.open\('https:\/\/suap\.ifrn\.edu\.br\/accounts\/login\/', '_system'\)/);
+    assert.match(marketplace, /consumeGovBrRedirectUrl\(\)/);
+    assert.match(marketplace, /window\.open\(redirectUrl, '_system'\)/);
+    assert.doesNotMatch(marketplace, /window\.open\('https:\/\/suap\.ifrn\.edu\.br\/accounts\/login\//);
+    assert.match(source, /this\.govBrRedirectHandoff\.capture\(url\)/);
+    assert.match(source, /consumeGovBrRedirectUrl\(\): string \| null/);
     assert.match(marketplace, /error\.message === GOVBR_MOBILE_UNAVAILABLE_MESSAGE/);
-    assert.match(template, /Continuar no navegador/);
+    assert.match(template, /govBrBrowserReturned \? 'Você voltou ao Moodle IFRN'/);
+    assert.match(template, /não criou uma sessão no aplicativo/);
+    assert.match(template, /Abrir Gov\.br no navegador/);
     assert.match(template, /Voltar ao login SUAP no app/);
 });
 

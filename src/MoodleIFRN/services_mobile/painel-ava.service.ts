@@ -21,6 +21,7 @@ import { Observable, map, of, throwError, timeout } from 'rxjs';
 import {
     GOVBR_MOBILE_UNAVAILABLE_MESSAGE, PAINEL_AVA_CONFIG, isGovBrAuthenticationUrl, isPainelAvaBrowserUrl,
 } from './painel-ava.config';
+import { GovBrRedirectHandoff } from './govbr-redirect-handoff';
 import { PAINEL_COURSES_SCRIPT } from './painel-courses';
 import { hasOAuthProfileMode, readOAuthDashboard, readOAuthProfile } from '../mobilemoodle/core_mobile/oauth-profile';
 import { refreshSavedProfileNames } from '../mobilemoodle/core_mobile/profile-refresh';
@@ -417,6 +418,17 @@ export class PainelAvaService {
 
     private profileRefresh?: Promise<boolean>;
     private cancelProfileRefresh?: () => void;
+    private readonly govBrRedirectHandoff = new GovBrRedirectHandoff();
+
+    /** Consome uma vez o redirect HTTPS recebido do SUAP, sem persistir parâmetros OAuth. */
+    consumeGovBrRedirectUrl(): string | null {
+        return this.govBrRedirectHandoff.consume();
+    }
+
+    /** Descarta o redirect de autenticação ao cancelar ou reiniciar a tentativa. */
+    clearGovBrRedirectUrl(): void {
+        this.govBrRedirectHandoff.clear();
+    }
 
     stopProfileRefresh(): void {
         this.cancelProfileRefresh?.();
@@ -510,6 +522,7 @@ export class PainelAvaService {
         readOnly?: boolean;
     } = {}): Observable<PainelAvaV1Result> {
         return new Observable<PainelAvaV1Result>((subscriber) => {
+            this.govBrRedirectHandoff.clear();
             const browserFlowStartedAt = performance.now();
             const baseUrl = PAINEL_AVA_CONFIG.baseUrl.replace(/\/$/, '');
             const diariosPath = PAINEL_AVA_CONFIG.diariosPath;
@@ -711,6 +724,7 @@ export class PainelAvaService {
                 navigationStartedAt.set(stageForUrl(url), performance.now());
 
                 if (hasEnteredSuapAuthentication && isGovBrAuthenticationUrl(url)) {
+                    this.govBrRedirectHandoff.capture(url);
                     finishWithError(GOVBR_MOBILE_UNAVAILABLE_MESSAGE);
 
                     return;

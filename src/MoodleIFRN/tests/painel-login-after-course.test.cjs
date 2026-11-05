@@ -36,6 +36,11 @@ test('login principal retoma redirects após curso e preserva a política de coo
             consumeFreshPanelProfile: () => false,
             reportSuapDuration: () => {},
         },
+        './govbr-redirect-handoff': { GovBrRedirectHandoff: class {
+            clear() {}
+            capture() { return true; }
+            consume() { return null; }
+        } },
         './painel-courses': {},
         '../mobilemoodle/core_mobile/oauth-profile': {},
         '../mobilemoodle/core_mobile/profile-refresh': {},
