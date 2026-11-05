@@ -55,7 +55,11 @@ export function markFreshPanelProfile(owner: string, storage: Storage = sessionS
         return;
     }
 
-    storage.setItem(FRESH_PROFILE_SKIP_KEY, JSON.stringify({ owner: normalizedOwner, until: now + FRESH_PROFILE_SKIP_MAX_AGE_MS }));
+    storage.setItem(FRESH_PROFILE_SKIP_KEY, JSON.stringify({
+        owner: normalizedOwner,
+        until: now + FRESH_PROFILE_SKIP_MAX_AGE_MS,
+        verified: true,
+    }));
 }
 
 /**
@@ -74,9 +78,9 @@ export function consumeFreshPanelProfile(owner: string, storage: Storage = sessi
 
     storage.removeItem(FRESH_PROFILE_SKIP_KEY);
 
-    let record: { owner?: unknown; until?: unknown };
+    let record: { owner?: unknown; until?: unknown; verified?: unknown };
     try {
-        record = JSON.parse(raw) as { owner?: unknown; until?: unknown };
+        record = JSON.parse(raw) as { owner?: unknown; until?: unknown; verified?: unknown };
     } catch {
         return false;
     }
@@ -84,7 +88,7 @@ export function consumeFreshPanelProfile(owner: string, storage: Storage = sessi
     const until = record.until;
     const currentOwner = owner.trim().toLowerCase();
 
-    return typeof record.owner === 'string' && !!currentOwner && record.owner === currentOwner
+    return record.verified === true && typeof record.owner === 'string' && !!currentOwner && record.owner === currentOwner
         && Number.isSafeInteger(until) && Number(until) > now
         && Number(until) - now <= FRESH_PROFILE_SKIP_MAX_AGE_MS;
 }

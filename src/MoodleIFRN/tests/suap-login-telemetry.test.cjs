@@ -43,11 +43,19 @@ test('profile refresh skip is short-lived and consumed exactly once', () => {
     markFreshPanelProfile('20232014050033', storage, 10_000);
 
     assert.deepEqual(JSON.parse(storage.getItem(FRESH_PROFILE_SKIP_KEY)), {
-        owner: '20232014050033', until: 70_000,
+        owner: '20232014050033', until: 70_000, verified: true,
     });
     assert.equal(consumeFreshPanelProfile('20232014050033', storage, 20_000), true);
     assert.equal(storage.getItem(FRESH_PROFILE_SKIP_KEY), null);
     assert.equal(consumeFreshPanelProfile('20232014050033', storage, 20_001), false);
+});
+
+test('legacy freshness marker from a login commit does not skip server revalidation', () => {
+    const storage = memoryStorage();
+    const { consumeFreshPanelProfile, FRESH_PROFILE_SKIP_KEY } = load(storage);
+    storage.setItem(FRESH_PROFILE_SKIP_KEY, JSON.stringify({ owner: 'synthetic-user', until: 70_000 }));
+    assert.equal(consumeFreshPanelProfile('synthetic-user', storage, 10_000), false);
+    assert.equal(storage.getItem(FRESH_PROFILE_SKIP_KEY), null);
 });
 
 test('expired or malformed profile marker never skips a future refresh', () => {
@@ -89,12 +97,14 @@ test('production and testing builds suppress timing messages', () => {
     assert.deepEqual(telemetry.defaultLogs, []);
 });
 
-test('fresh profile bypass is wired only to the post-login refresh path', () => {
+test('profile is revalidated before the Angular login flow navigates to the Panel', () => {
     const painel = fs.readFileSync('src/MoodleIFRN/services_mobile/painel-ava.service.ts', 'utf8');
     const suap = fs.readFileSync('src/MoodleIFRN/services_mobile/suap-entry.service.ts', 'utf8');
 
     assert.match(painel, /if \(consumeFreshPanelProfile\(savedProfile\.identity\)\) \{\s*return Promise\.resolve\(false\);/);
-    assert.match(suap, /markFreshPanelProfile\(ownerKey\);[\s\S]*?this\.authService\.openMobileMoodle\('\/painel'\);/);
+    assert.doesNotMatch(suap, /markFreshPanelProfile\(ownerKey\)/);
+    assert.match(painel, /refreshSavedProfileNames\(data\.profile, data\.url, origin, true,[\s\S]*?markFreshPanelProfile\(savedProfile\.identity\)/);
+    assert.match(suap, /await this\.painel\.refreshSavedProfile\(\);[\s\S]*?this\.authService\.openMobileMoodle\('\/painel'\);/);
     assert.match(suap, /cancel\(\): void \{\s*clearFreshPanelProfile\(\);/);
 });
 
@@ -131,7 +141,7 @@ test('actual profile refresh method skips the redundant browser after successful
     assert.equal(browserOpens, 0);
 });
 
-test('actual SUAP commit binds the one-shot profile marker and dashboard to the validated owner', () => {
+test('actual SUAP commit refreshes the profile before navigating to the Panel', async () => {
     const suapSource = fs.readFileSync('src/MoodleIFRN/services_mobile/suap-entry.service.ts', 'utf8');
     const ast = ts.createSourceFile('suap-entry.service.ts', suapSource, ts.ScriptTarget.Latest, true);
     const methods = new Map();
@@ -158,6 +168,7 @@ test('actual SUAP commit binds the one-shot profile marker and dashboard to the 
         markFreshPanelProfile: (owner, storage) => telemetry.markFreshPanelProfile(owner, storage, 11_000),
         clearFreshPanelProfile: storage => telemetry.clearFreshPanelProfile(storage),
         endNativeSuapEntry() {},
+        refreshOrder: [],
         sessionStorage: session,
         localStorage: local,
         Promise,
@@ -171,8 +182,9 @@ test('actual SUAP commit binds the one-shot profile marker and dashboard to the 
             sessionStorage.setItem(OAUTH_PROFILE_KEY, value);
             localStorage.setItem(OAUTH_PROFILE_KEY, value);
           },
-          openMobileMoodle: route => { this.route = route; },
+          openMobileMoodle: route => { refreshOrder.push('navigate'); this.route = route; },
         };
+        this.painel = { refreshSavedProfile: async () => { refreshOrder.push('refresh'); } };
         this.biometricService = { disable() {} };
       }
       ${methods.get('commit')}
@@ -182,12 +194,11 @@ test('actual SUAP commit binds the one-shot profile marker and dashboard to the 
     }).outputText;
     vm.runInNewContext(runnable, context);
     const harness = new context.CommitHarness();
-    harness.commit();
+    await harness.commit();
 
-    const marker = JSON.parse(session.getItem(telemetry.FRESH_PROFILE_SKIP_KEY));
-    assert.equal(marker.owner, '20232014050033');
-    assert.equal(marker.until, 71_000);
+    assert.equal(session.getItem(telemetry.FRESH_PROFILE_SKIP_KEY), null);
     assert.equal(session.getItem('ifrn_painel_owner'), '20232014050033');
     assert.equal(JSON.parse(session.getItem('ifrn_painel_dashboard')).diarios[0].id, 43);
     assert.equal(harness.route, '/painel');
+    assert.deepEqual(context.refreshOrder, ['refresh', 'navigate']);
 });

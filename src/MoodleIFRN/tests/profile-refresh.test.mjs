@@ -28,7 +28,10 @@ function setup(profileOrigin = origin) {
 }
 test('resposta válida atualiza ambos os snapshots, preservando foto, perfil, listas e prazo',()=>{
     const {update,sessionStorage,localStorage,old}=setup();
-    assert.equal(update({id:7,matricula:'123',nome_usual:'Nome correto'},origin+'/api/v2/usuario/info/',origin),true);
+    let verified = false;
+    assert.equal(update({id:7,matricula:'123',nome_usual:'Nome correto'},origin+'/api/v2/usuario/info/',origin,false,
+        ()=>{verified=true;}),true);
+    assert.equal(verified,true);
     for (const s of [sessionStorage,localStorage]) {
         const p=JSON.parse(s.getItem(key));
         assert.equal(p.profile.nome_usual,'Nome correto');
@@ -47,9 +50,11 @@ test('perfil idêntico não grava snapshots nem solicita recarregar o Painel',()
     assert.equal(update(incoming,origin+'/api/v2/usuario/info/',origin),true);
     const before=sessionStorage.writes + localStorage.writes;
     const saved=localStorage.getItem(key);
+    let verified = false;
     for(let i=0;i<20;i++) {
-        assert.equal(update(incoming,origin+'/api/v2/usuario/info/',origin),false);
+        assert.equal(update(incoming,origin+'/api/v2/usuario/info/',origin,false,()=>{verified=true;}),false);
     }
+    assert.equal(verified,true);
     assert.equal(sessionStorage.writes + localStorage.writes,before);
     assert.equal(localStorage.getItem(key),saved);
     // Repara cópia persistida ausente sem obrigar a recarregar a tela inalterada.
@@ -65,7 +70,9 @@ test('não mistura contas, identidades conflitantes, respostas anônimas ou dom�
     for (const p of [{id:7,matricula:'456',nome_usual:'Outra conta'},
         {id:7,matricula:'123',identificacao:'456',nome_usual:'Conflito'},
         {id:0,matricula:'123',nome_usual:'Anônimo'}]) {
-        assert.equal(update(p,origin+'/api/v2/usuario/info/',origin),false);
+        let verified = false;
+        assert.equal(update(p,origin+'/api/v2/usuario/info/',origin,false,()=>{verified=true;}),false);
+        assert.equal(verified,false);
     }
     assert.equal(update({id:7,matricula:'123',nome_usual:'Outro ambiente'},
         'https://painel.ead.ifrn.edu.br/api/v2/usuario/info/',origin),false);

@@ -15,7 +15,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { CoreOpener } from '@static/opener';
-import { clearFreshPanelProfile, consumeFreshPanelProfile, reportSuapDuration } from './suap-login-telemetry';
+import { clearFreshPanelProfile, consumeFreshPanelProfile, markFreshPanelProfile, reportSuapDuration } from './suap-login-telemetry';
 import { Observable, map, of, throwError, timeout } from 'rxjs';
 
 import {
@@ -485,7 +485,8 @@ export class PainelAvaService {
                     return;
                 }
                 try {
-                    finish(!!data.profile && refreshSavedProfileNames(data.profile, data.url, origin, true));
+                    finish(!!data.profile && refreshSavedProfileNames(data.profile, data.url, origin, true,
+                        () => markFreshPanelProfile(savedProfile.identity)));
                 } catch {
                     finish(false);
                 }

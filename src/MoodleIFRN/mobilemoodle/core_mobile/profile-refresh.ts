@@ -8,6 +8,7 @@ export function refreshSavedProfileNames(
     responseUrl: string,
     expectedOrigin: string,
     allowLegacyOrigin: boolean = false,
+    onVerified?: () => void,
 ): boolean {
     const snapshot = readOAuthProfile();
     const url = new URL(responseUrl);
@@ -50,6 +51,11 @@ export function refreshSavedProfileNames(
         if (storage.getItem('ifrn_painel_profile') !== serializedProfile) {
             storage.setItem('ifrn_painel_profile', serializedProfile);
         }
+    }
+    try {
+        onVerified?.();
+    } catch {
+        // Profile persistence remains valid even if the optional refresh marker cannot be stored.
     }
     return changed;
 }

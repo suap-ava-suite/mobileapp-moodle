@@ -14,7 +14,7 @@ import { SuapBrowserService } from './suap-browser.service';
 import { CoreOpener } from '@static/opener';
 import { OAUTH_PROFILE_KEY, OAUTH_PROFILE_MAX_AGE_SECONDS, profileIdentity } from '../mobilemoodle/core_mobile/oauth-profile';
 import { beginNativeSuapEntry, readNativeSuapEntry, endNativeSuapEntry, markNativeSuapEntryAuthenticated } from '../navigation/suap-entry-state';
-import { clearFreshPanelProfile, FRESH_PROFILE_SKIP_KEY, markFreshPanelProfile, reportSuapDuration }
+import { clearFreshPanelProfile, FRESH_PROFILE_SKIP_KEY, reportSuapDuration }
     from './suap-login-telemetry';
 import { PAINEL_AVA_CONFIG } from './painel-ava.config';
 
@@ -297,7 +297,7 @@ export class SuapEntryService {
         }
 
         this.staged = { profile: { ...panel.diagnosticProfile, identificacao: identity }, dashboard, until: Date.now() + 180000 };
-        this.commit();
+        await this.commit();
         onStatus('');
     }
 
@@ -450,7 +450,7 @@ export class SuapEntryService {
                 until: Date.now() + 180000,
                 siteId: site.getId(),
             };
-            this.commit();
+            await this.commit();
         } finally {
             this.loading = false;
             onStatus('');
@@ -458,7 +458,7 @@ export class SuapEntryService {
     }
 
     /** Persiste somente após matrícula do painel coincidir com o username Moodle. */
-    private commit(): void {
+    private async commit(): Promise<void> {
         const value = this.staged;
         const site = CoreSites.getCurrentSite();
         if (!value || value.until <= Date.now() || (value.siteId && (!site || site.isLoggedOut()
@@ -485,8 +485,10 @@ export class SuapEntryService {
             localStorage.removeItem('ifrn_painel_token');
             this.biometricService.disable();
             this.cancel();
+            // Refresh the confirmed profile before navigating so the Panel
+            // consumes the current short display name instead of a stale cache.
+            await this.painel.refreshSavedProfile();
             // Vincula a dispensa ao proprietário validado no mesmo resultado do login.
-            markFreshPanelProfile(ownerKey);
             this.authService.openMobileMoodle('/painel');
         } catch (error) {
             for (const { storage, values } of backup) {
@@ -658,7 +660,7 @@ export class SuapEntryService {
                 this.mobileLoginTimer = undefined;
             }
             reportSuapDuration('suap-callback-to-profile-and-courses', performance.now() - callbackStartedAt);
-            this.commit();
+            await this.commit();
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Não foi possível concluir a autenticação SUAP.';
             this.failMobileLogin(message);
