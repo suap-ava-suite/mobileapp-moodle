@@ -760,13 +760,17 @@ export class PainelAvaService {
                                 if (!data || typeof data !== 'object') return null;
                                 var id = (data.identificacao || data.matricula || data.username || '').toString().trim();
                                 if (!id) return null;
-                                var displayName = cleanName(data.nome_exibicao || data.show_name)
+                                var officialDisplayName = cleanName(data.nome_exibicao || data.show_name);
+                                var displayName = officialDisplayName
                                     || cleanName(data.nome_usual || data.nome_social || data.nome_registro || data.nome);
                                 return {
                                     matricula: id,
                                     identificacao: id,
                                     username: id,
-                                    nome_exibicao: displayName || undefined,
+                                    // Só marque como canônico um alias que a API enviou explicitamente.
+                                    // O fallback pode estar abreviado; mergeProfiles compara com o cabeçalho
+                                    // da mesma sessão autenticada antes de escolher o nome exibido.
+                                    nome_exibicao: officialDisplayName || undefined,
                                     nome: displayName || undefined,
                                     nome_registro: cleanName(data.nome_registro || data.nome_completo) || undefined,
                                     nome_usual: data.nome_usual || undefined,
@@ -943,7 +947,8 @@ export class PainelAvaService {
                                 var matricula = (data.matricula || data.identificacao || data.username || '').toString().trim();
                                 if (!matricula) return null;
                                 var foto = absoluteUrl(data.url_foto_150x200 || data.url_foto_75x100 || data.foto || '');
-                                var displayName = cleanName(data.nome_exibicao || data.show_name)
+                                var officialDisplayName = cleanName(data.nome_exibicao || data.show_name);
+                                var displayName = officialDisplayName
                                     || cleanName(data.nome_usual || data.nome_social || data.nome_registro || data.nome);
                                 return {
                                     id: data.id,
@@ -951,7 +956,8 @@ export class PainelAvaService {
                                     matricula: matricula,
                                     identificacao: matricula,
                                     username: matricula,
-                                    nome_exibicao: displayName || undefined,
+                                    // Não promova um fallback potencialmente abreviado a nome oficial.
+                                    nome_exibicao: officialDisplayName || undefined,
                                     nome: displayName || undefined,
                                     nome_usual: cleanName(data.nome_usual) || undefined,
                                     nome_social: cleanName(data.nome_social) || undefined,
@@ -967,6 +973,12 @@ export class PainelAvaService {
                             function mergeProfiles(primary, secondary) {
                                 if (!primary) return secondary || null;
                                 if (!secondary) return primary;
+                                var primaryIdentity = String(primary.matricula || primary.identificacao || primary.username || '').trim();
+                                var secondaryIdentity = String(secondary.matricula || secondary.identificacao || secondary.username || '').trim();
+                                if (primaryIdentity && secondaryIdentity
+                                        && primaryIdentity.toLowerCase() !== secondaryIdentity.toLowerCase()) {
+                                    return primary;
+                                }
                                 var merged = {};
                                 Object.keys(secondary).forEach(function (key) {
                                     if (secondary[key] !== undefined && secondary[key] !== null && secondary[key] !== '') {
@@ -988,6 +1000,16 @@ export class PainelAvaService {
                                         merged[key] = primary[key];
                                     }
                                 });
+
+                                // Sem nome oficial explícito na API, prefira o texto mostrado pelo
+                                // cabeçalho do AVA na mesma sessão. Se os dois perfis expõem identidade,
+                                // ela precisa coincidir antes de associar esse nome ao perfil.
+                                var officialDisplayName = cleanName(primary.nome_exibicao || primary.show_name);
+                                var headerDisplayName = cleanName(secondary.nome_exibicao || secondary.nome || secondary.nome_usual);
+                                if (!officialDisplayName && headerDisplayName) {
+                                    merged.nome_exibicao = headerDisplayName;
+                                }
+
                                 return merged;
                             }
 

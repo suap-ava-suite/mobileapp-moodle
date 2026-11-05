@@ -52,7 +52,7 @@ test('Gov.br ends the in-app attempt and offers an explicit external-browser cho
     assert.match(template, /Voltar ao login SUAP no app/);
 });
 
-test('a delayed successful profile API response still overrides stale DOM name without HTML fallback', async () => {
+test('a delayed profile response keeps the AVA header display name when the API has no explicit alias', async () => {
     const source = fs.readFileSync(path.join(root, 'services_mobile', 'painel-ava.service.ts'), 'utf8');
     const start = source.indexOf('var currentProfile = profileFromDocument(document');
     const endMarker = '}).catch(function () {\n                                sendSuccess(currentProfile || null);\n                            });';
@@ -65,14 +65,18 @@ test('a delayed successful profile API response still overrides stale DOM name w
     let rootRequests = 0;
     const profile = {
         matricula: 'synthetic-user', identificacao: 'synthetic-user',
-        nome_usual: 'Synthetic Official Full Name',
+        nome_usual: 'Synthetic Abbreviated Alias',
     };
-    const mergeProfiles = vm.runInNewContext(`(${extractFunction(source, 'function mergeProfiles(')})`);
+    const mergeProfiles = vm.runInNewContext(`(${extractFunction(source, 'function mergeProfiles(')})`, {
+        cleanName: value => typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '',
+    });
     const context = {
         Promise,
+        cleanName: value => typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '',
         document: {},
         setTimeout: callback => setTimeout(callback, 0),
-        profileFromDocument: () => ({ nome: 'Synthetic Stale Name', nome_exibicao: 'Synthetic Stale Name' }),
+        profileFromDocument: () => ({ matricula: 'synthetic-user', nome: 'Synthetic Full AVA Header Name',
+            nome_exibicao: 'Synthetic Full AVA Header Name' }),
         sendSuccess: value => { result = value; resolveResult(); },
         mergeProfiles,
         fetchUserInfo: () => new Promise(resolve => setTimeout(() => resolve(profile), 20)),
@@ -83,17 +87,20 @@ test('a delayed successful profile API response still overrides stale DOM name w
     await completed;
 
     assert.equal(result.matricula, 'synthetic-user');
-    assert.equal(result.nome_usual, 'Synthetic Official Full Name');
-    assert.equal(result.nome_exibicao, undefined);
+    assert.equal(result.nome_usual, 'Synthetic Abbreviated Alias');
+    assert.equal(result.nome_exibicao, 'Synthetic Full AVA Header Name');
     assert.equal(result.nome, undefined);
     assert.equal(rootRequests, 0);
 });
 
-test('API name aliases cannot be shadowed by stale DOM aliases, while DOM remains a fallback when API has no name', () => {
+test('an explicit API display name wins, and a DOM alias from another identity is rejected', () => {
     const source = fs.readFileSync(path.join(root, 'services_mobile', 'painel-ava.service.ts'), 'utf8');
-    const mergeProfiles = vm.runInNewContext(`(${extractFunction(source, 'function mergeProfiles(')})`);
+    const mergeProfiles = vm.runInNewContext(`(${extractFunction(source, 'function mergeProfiles(')})`, {
+        cleanName: value => typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '',
+    });
     const apiProfile = {
         identificacao: 'synthetic-user',
+        nome_exibicao: 'Synthetic Official Display Name',
         nome_registro: 'Synthetic Registered Full Name',
         nome: 'Synthetic Registered Full Name',
     };
@@ -104,13 +111,15 @@ test('API name aliases cannot be shadowed by stale DOM aliases, while DOM remain
     };
     const merged = mergeProfiles(apiProfile, staleDom);
 
-    assert.equal(merged.nome_exibicao, undefined);
+    assert.equal(merged.nome_exibicao, 'Synthetic Official Display Name');
     assert.equal(merged.nome_usual, undefined);
     assert.equal(merged.nome_registro, 'Synthetic Registered Full Name');
     assert.equal(merged.foto, staleDom.foto);
 
-    const apiWithoutName = mergeProfiles({ identificacao: 'synthetic-user' }, staleDom);
-    assert.equal(apiWithoutName.nome_exibicao, 'Synthetic Stale Header Name');
+    const apiWithoutName = mergeProfiles({ identificacao: 'synthetic-user' }, {
+        matricula: 'another-synthetic-user', nome_exibicao: 'Synthetic Other Account Name',
+    });
+    assert.equal(apiWithoutName.nome_exibicao, undefined);
 });
 
 test('SUAP and Painel profile mappers follow the AVA web display-name precedence', () => {
@@ -129,9 +138,14 @@ test('SUAP and Painel profile mappers follow the AVA web display-name precedence
 
     for (const mapped of [suapFromJson(response, 'synthetic SUAP response'),
         panelFromUserInfo(response, 'synthetic Panel response')]) {
-        assert.equal(mapped.nome_exibicao, 'Synthetic Incomplete Usual');
+        assert.equal(mapped.nome_exibicao, undefined);
         assert.equal(mapped.nome, 'Synthetic Incomplete Usual');
         assert.equal(mapped.nome_registro, 'Synthetic Complete Registered Name');
         assert.equal(mapped.nome_usual, 'Synthetic Incomplete Usual');
     }
+
+    const explicitPanelName = panelFromUserInfo({
+        ...response, nome_exibicao: 'Synthetic Explicit Display Name',
+    }, 'synthetic Panel response');
+    assert.equal(explicitPanelName.nome_exibicao, 'Synthetic Explicit Display Name');
 });
