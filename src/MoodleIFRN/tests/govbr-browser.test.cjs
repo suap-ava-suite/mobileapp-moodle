@@ -74,6 +74,73 @@ test('Android bridge opens the exact URL, exposes native mode, and rejects concu
     assert.equal(await nextAttempt, 'external-browser');
 });
 
+test('iOS Safari view reports dismissal without treating it as authentication', async () => {
+    const url = 'https://sso.acesso.gov.br/authorize?state=synthetic';
+    let resolveOpened;
+    let notifyReturned;
+    const browserWindow = {
+        cordova: {},
+        ifrnCustomTabs: {
+            open(value, success, _error, returned) {
+                assert.equal(value, url);
+                resolveOpened = success;
+                notifyReturned = returned;
+            },
+        },
+    };
+    const { GovBrBrowserService } = loadService(browserWindow);
+    const service = new GovBrBrowserService();
+    let returned = false;
+    const opening = service.open(url, () => { returned = true; });
+
+    resolveOpened('safari-view-controller');
+    assert.equal(await opening, 'safari-view-controller');
+    assert.equal(returned, false);
+    await assert.rejects(service.open(url), /janela/i);
+
+    notifyReturned();
+    assert.equal(returned, true);
+    const nextOpening = service.open(url);
+    resolveOpened('safari-view-controller');
+    assert.equal(await nextOpening, 'safari-view-controller');
+});
+
+test('Cordova plugin declares Safari Services for iOS while retaining the shared Android bridge', () => {
+    const pluginRoot = path.join(__dirname, '..', 'plugins', 'cordova-plugin-ifrn-customtabs');
+    const pluginXml = fs.readFileSync(path.join(pluginRoot, 'plugin.xml'), 'utf8');
+    const pluginPackage = JSON.parse(fs.readFileSync(path.join(pluginRoot, 'package.json'), 'utf8'));
+    const iosSource = fs.readFileSync(path.join(pluginRoot, 'src', 'ios', 'IfrnSafariBrowser.m'), 'utf8');
+
+    assert.match(pluginXml, /<platform name="android">/);
+    assert.match(pluginXml, /<platform name="ios">/);
+    assert.match(pluginXml, /<framework src="SafariServices\.framework"\s*\/>/);
+    assert.match(pluginXml, /ios-package" value="IfrnSafariBrowser"/);
+    assert.deepEqual(pluginPackage.cordova.platforms, ['android', 'ios']);
+    assert.match(iosSource, /SFSafariViewController/);
+    assert.match(iosSource, /browser-returned/);
+    assert.doesNotMatch(iosSource, /ASWebAuthenticationSession/);
+});
+
+test('shared Cordova bridge separates browser-opened and browser-returned callbacks', () => {
+    const bridgeSource = fs.readFileSync(path.join(__dirname, '..', 'plugins', 'cordova-plugin-ifrn-customtabs',
+        'www', 'ifrn-custom-tabs.js'), 'utf8');
+    let nativeCallback;
+    const module = { exports: {} };
+    vm.runInNewContext(bridgeSource, {
+        module,
+        exports: module.exports,
+        require: () => callback => { nativeCallback = callback; },
+    });
+
+    const states = [];
+    module.exports.open('https://sso.acesso.gov.br/authorize?state=synthetic',
+        mode => states.push(mode), assert.fail, () => states.push('returned'));
+    nativeCallback('safari-view-controller');
+    nativeCallback('browser-returned');
+
+    assert.deepEqual(states, ['safari-view-controller', 'returned']);
+});
+
 test('fallback uses the system browser and permits retry after return or launch failure', async () => {
     const url = 'https://sso.acesso.gov.br/authorize?state=synthetic';
     const opened = [];

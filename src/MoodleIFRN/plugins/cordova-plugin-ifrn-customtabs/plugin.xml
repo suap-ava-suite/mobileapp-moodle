@@ -2,13 +2,13 @@
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
     id="cordova-plugin-ifrn-customtabs" version="1.0.0">
-    <name>IFRN Custom Tabs</name>
-    <description>Abertura segura de autenticação Gov.br no navegador do sistema.</description>
+    <name>IFRN Secure Browser</name>
+    <description>Abre autenticação Gov.br em Custom Tabs no Android e Safari no iOS.</description>
     <license>Apache-2.0</license>
+    <js-module src="www/ifrn-custom-tabs.js" name="IfrnCustomTabs">
+        <clobbers target="window.ifrnCustomTabs" />
+    </js-module>
     <platform name="android">
-        <js-module src="www/ifrn-custom-tabs.js" name="IfrnCustomTabs">
-            <clobbers target="window.ifrnCustomTabs" />
-        </js-module>
         <framework src="androidx.browser:browser:1.8.0" />
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="IfrnCustomTabs">
@@ -24,5 +24,14 @@
         </config-file>
         <source-file src="src/android/IfrnCustomTabs.java"
             target-dir="src/br/edu/ifrn/cordova/customtabs" />
+    </platform>
+    <platform name="ios">
+        <framework src="SafariServices.framework" />
+        <config-file target="config.xml" parent="/*">
+            <feature name="IfrnCustomTabs">
+                <param name="ios-package" value="IfrnSafariBrowser" />
+            </feature>
+        </config-file>
+        <source-file src="src/ios/IfrnSafariBrowser.m" />
     </platform>
 </plugin>

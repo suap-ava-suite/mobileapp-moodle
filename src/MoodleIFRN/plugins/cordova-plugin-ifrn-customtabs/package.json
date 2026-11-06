@@ -1,11 +1,11 @@
 {
   "name": "cordova-plugin-ifrn-customtabs",
   "version": "1.0.0",
-  "description": "Abre autenticação Gov.br em Chrome Custom Tabs, com fallback para o navegador externo.",
+  "description": "Abre autenticação Gov.br em Custom Tabs no Android e Safari Services no iOS.",
   "cordova": {
     "id": "cordova-plugin-ifrn-customtabs",
-    "platforms": ["android"]
+    "platforms": ["android", "ios"]
   },
-  "keywords": ["ecosystem:cordova", "cordova-android", "custom-tabs"],
+  "keywords": ["ecosystem:cordova", "cordova-android", "cordova-ios", "custom-tabs", "safari-services"],
   "license": "Apache-2.0"
 }

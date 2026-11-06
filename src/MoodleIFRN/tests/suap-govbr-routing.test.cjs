@@ -47,7 +47,7 @@ test('Gov.br ends the in-app attempt and offers an explicit external-browser cho
     assert.doesNotMatch(source, /authorization_id/);
     assert.match(source, /const loadStartSubscription = browser\.on\('loadstart'\)[\s\S]*?if \(hasEnteredSuapAuthentication && isGovBrAuthenticationUrl\(url\)\)[\s\S]*?return;/);
     assert.match(marketplace, /consumeGovBrRedirectUrl\(\)/);
-    assert.match(marketplace, /this\.govBrBrowser\.open\(redirectUrl\)/);
+    assert.match(marketplace, /this\.govBrBrowser\.open\(redirectUrl(?:,\s*\(\)\s*=>)?/);
     assert.doesNotMatch(marketplace, /window\.open\(redirectUrl, '_system'\)/);
     assert.doesNotMatch(marketplace, /window\.open\('https:\/\/suap\.ifrn\.edu\.br\/accounts\/login\//);
     assert.match(source, /this\.govBrRedirectHandoff\.capture\(url\)/);

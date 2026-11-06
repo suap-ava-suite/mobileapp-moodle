@@ -14,10 +14,15 @@
 
 import { Injectable } from '@angular/core';
 
-export type GovBrBrowserMode = 'custom-tab' | 'external-browser';
+export type GovBrBrowserMode = 'custom-tab' | 'safari-view-controller' | 'external-browser';
 
 interface IfrnCustomTabsBridge {
-    open(url: string, success: (mode: string) => void, error: (message: string) => void): void;
+    open(
+        url: string,
+        success: (mode: string) => void,
+        error: (message: string) => void,
+        returned?: () => void,
+    ): void;
 }
 
 declare global {
@@ -63,7 +68,7 @@ export class GovBrBrowserService {
 
     private opening = false;
 
-    async open(url: string): Promise<GovBrBrowserMode> {
+    async open(url: string, onReturned?: () => void): Promise<GovBrBrowserMode> {
         if (!isGovBrAuthorizationUrl(url)) {
             throw new Error('O destino oficial de autenticação é inválido.');
         }
@@ -81,9 +86,17 @@ export class GovBrBrowserService {
             }
 
             const mode = await new Promise<string>((resolve, reject) => {
-                bridge.open(url, resolve, () => reject(new Error('Não foi possível abrir o navegador seguro.')));
+                bridge.open(
+                    url,
+                    resolve,
+                    () => reject(new Error('Não foi possível abrir o navegador seguro.')),
+                    () => {
+                        this.onBrowserReturned();
+                        onReturned?.();
+                    },
+                );
             });
-            if (mode !== 'custom-tab' && mode !== 'external-browser') {
+            if (mode !== 'custom-tab' && mode !== 'safari-view-controller' && mode !== 'external-browser') {
                 throw new Error('O navegador não confirmou a abertura da autenticação.');
             }
 

@@ -292,7 +292,14 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
 
         this.govBrBrowserOpening = true;
         try {
-            await this.govBrBrowser.open(redirectUrl);
+            await this.govBrBrowser.open(redirectUrl, () => {
+                this.zone.run(() => {
+                    this.govBrBrowserOpening = false;
+                    this.govBrBrowserOpened = false;
+                    this.govBrBrowserReturned = true;
+                    this.govBrUnavailable = true;
+                });
+            });
             this.govBrBrowserError = '';
             this.govBrBrowserReturned = false;
             this.govBrBrowserOpened = true;
