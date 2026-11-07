@@ -36,7 +36,7 @@ test('Gov.br URL detection accepts official HTTPS hosts and rejects lookalike or
     assert.equal(isGovBrAuthenticationUrl('not a url'), false);
 });
 
-test('Gov.br ends the in-app attempt and offers an explicit external-browser choice', () => {
+test('Gov.br redirect opens the secure browser directly and only shows recovery after return or error', () => {
     const source = fs.readFileSync(path.join(root, 'services_mobile', 'painel-ava.service.ts'), 'utf8');
     const marketplace = fs.readFileSync(path.join(root, 'marketplace-ifrn', 'marketplace-ifrn.ts'), 'utf8');
     const template = fs.readFileSync(path.join(root, 'marketplace-ifrn', 'marketplace-ifrn.html'), 'utf8');
@@ -47,7 +47,9 @@ test('Gov.br ends the in-app attempt and offers an explicit external-browser cho
     assert.doesNotMatch(source, /authorization_id/);
     assert.match(source, /const loadStartSubscription = browser\.on\('loadstart'\)[\s\S]*?if \(hasEnteredSuapAuthentication && isGovBrAuthenticationUrl\(url\)\)[\s\S]*?return;/);
     assert.match(marketplace, /consumeGovBrRedirectUrl\(\)/);
-    assert.match(marketplace, /this\.govBrBrowser\.open\(redirectUrl(?:,\s*\(\)\s*=>)?/);
+    assert.match(marketplace, /openGovBrImmediately = this\.govBrUnavailable/);
+    assert.match(marketplace, /if \(openGovBrImmediately\) \{\s*await this\.continueGovBrInBrowser\(\)/);
+    assert.match(marketplace, /this\.govBrBrowser\.open\(redirectUrl/);
     assert.doesNotMatch(marketplace, /window\.open\(redirectUrl, '_system'\)/);
     assert.doesNotMatch(marketplace, /window\.open\('https:\/\/suap\.ifrn\.edu\.br\/accounts\/login\//);
     assert.match(source, /this\.govBrRedirectHandoff\.capture\(url\)/);
@@ -55,7 +57,9 @@ test('Gov.br ends the in-app attempt and offers an explicit external-browser cho
     assert.match(marketplace, /error\.message === GOVBR_MOBILE_UNAVAILABLE_MESSAGE/);
     assert.match(template, /govBrBrowserReturned \? 'Você voltou ao Moodle IFRN'/);
     assert.match(template, /não criou uma sessão no aplicativo/);
-    assert.match(template, /Abrir Gov\.br no navegador/);
+    assert.match(template, /govBrUnavailable && \(govBrBrowserReturned \|\| govBrBrowserError\)/);
+    assert.doesNotMatch(template, /Abrir Gov\.br no navegador/);
+    assert.doesNotMatch(template, /Tentar abrir Gov\.br novamente/);
     assert.match(template, /Voltar ao login SUAP no app/);
 });
 

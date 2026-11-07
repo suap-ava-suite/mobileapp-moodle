@@ -122,7 +122,7 @@
                 @if (formError) {
                     <p class="welcome__error" role="alert">{{ formError }}</p>
                 }
-                @if (govBrUnavailable) {
+                @if (govBrUnavailable && (govBrBrowserReturned || govBrBrowserError)) {
                     <section class="welcome__govbr-card" aria-labelledby="govbr-title">
                         <div class="welcome__govbr-heading">
                             <span class="welcome__govbr-icon" aria-hidden="true">
@@ -131,7 +131,7 @@
                             <div>
                                 <p class="welcome__govbr-eyebrow">Autenticação oficial</p>
                                 <h2 id="govbr-title">
-                                    {{ govBrBrowserReturned ? 'Você voltou ao Moodle IFRN' : 'Continue no Gov.br' }}
+                                    {{ govBrBrowserReturned ? 'Você voltou ao Moodle IFRN' : 'Não foi possível abrir o navegador' }}
                                 </h2>
                             </div>
                         </div>
@@ -140,27 +140,11 @@
                                 A autenticação no navegador não criou uma sessão no aplicativo. Volte ao login
                                 tradicional do SUAP para acessar o Painel AVA Mobile.
                             </p>
-                        } @else {
-                            <p class="welcome__govbr-copy">
-                                A página oficial será aberta no navegador do sistema, com o endereço gov.br visível.
-                                O aplicativo não recebe senhas, cookies ou tokens e não confirmará login ao retornar.
-                            </p>
-                            <p class="welcome__govbr-domain">
-                                <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
-                                Autenticação oficial em domínio HTTPS gov.br
-                            </p>
                         }
                         @if (govBrBrowserError) {
                             <p class="welcome__error" role="alert">{{ govBrBrowserError }}</p>
                         }
                         <div class="welcome__govbr-actions" role="group" aria-label="Opções de autenticação Gov.br">
-                            @if (!govBrBrowserReturned) {
-                                <ion-button expand="block" class="btn-enter" (click)="continueGovBrInBrowser()"
-                                    [disabled]="govBrBrowserOpened || govBrBrowserOpening">
-                                    {{ govBrBrowserOpened || govBrBrowserOpening
-                                        ? 'Login aberto no navegador' : 'Abrir Gov.br no navegador' }}
-                                </ion-button>
-                            }
                             <ion-button expand="block" fill="outline" class="btn-continue" (click)="retrySuapInApp()"
                                 [disabled]="govBrBrowserOpened || govBrBrowserOpening">
                                 Voltar ao login SUAP no app

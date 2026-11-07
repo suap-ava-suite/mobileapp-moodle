@@ -79,12 +79,15 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     waitingBrowser = false;
     openingPainel = false;
 
-    /** Overlay de transição cobre preparação, OAuth externo e abertura do painel. */
+    /** Overlay de transição cobre preparação, navegador seguro e abertura do Painel. */
     get showTransition(): boolean {
-        return this.loading || this.waitingBrowser || this.openingPainel;
+        return this.loading || this.waitingBrowser || this.openingPainel || this.govBrBrowserOpening;
     }
 
     get transitionCaption(): string {
+        if (this.govBrBrowserOpening) {
+            return 'Abrindo o navegador seguro...';
+        }
         if (this.waitingBrowser) {
             return 'Conclua o login no navegador';
         }
@@ -228,6 +231,7 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         this.nativeReturnQueued = false;
         this.formError = '';
         this.statusMessage = 'Acessando o SUAP…';
+        let openGovBrImmediately = false;
         try {
             // Um novo retorno deve mudar a query, mesmo na tela Ionic em cache.
             await this.router.navigate([], { relativeTo: this.route, replaceUrl: true,
@@ -244,6 +248,7 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         } catch (error) {
             this.accountIssue = error instanceof SuapEntryAccountError ? error : null;
             this.govBrUnavailable = error instanceof Error && error.message === GOVBR_MOBILE_UNAVAILABLE_MESSAGE;
+            openGovBrImmediately = this.govBrUnavailable;
             this.govBrBrowserOpened = false;
             this.govBrBrowserReturned = false;
             this.govBrBrowserError = '';
@@ -257,6 +262,10 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
                 this.canContinue = !this.expectedIdentity && this.authService.isAuthenticated()
                     && this.painelAvaService.hasDashboard();
             }
+        }
+        if (openGovBrImmediately) {
+            await this.continueGovBrInBrowser();
+            return;
         }
         // O retorno pode chegar antes de openBrowserForOAuthLogin resolver.
         // Reprocessar depois de liberar loading em vez de descartá-lo.
@@ -291,6 +300,8 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         }
 
         this.govBrBrowserOpening = true;
+        this.govBrBrowserError = '';
+        this.govBrBrowserReturned = false;
         try {
             await this.govBrBrowser.open(redirectUrl, () => {
                 this.zone.run(() => {
@@ -301,7 +312,7 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
                 });
             });
             this.govBrBrowserError = '';
-            this.govBrBrowserReturned = false;
+            this.govBrBrowserOpening = false;
             this.govBrBrowserOpened = true;
         } catch {
             this.govBrBrowserOpening = false;
