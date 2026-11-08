@@ -107,6 +107,10 @@ html.ifrn-course-context page-core-course-index core-navbar-buttons ion-button:h
     display: none;
 }
 
+html.ifrn-course-context page-core-course-index ion-header ion-buttons[slot="end"] > ion-button:has(ion-icon[name="fas-cloud-arrow-down"]) {
+    display: none;
+}
+
 html.ifrn-course-context page-core-site-preferences ion-item.addon-storagemanager-settings-handler {
     display: none;
 }
