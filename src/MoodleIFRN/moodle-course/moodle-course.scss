@@ -119,6 +119,132 @@ html.ifrn-course-context ion-modal core-course-module-summary ion-card:has(ion-i
     display: none;
 }
 
+/* Modal lateral de detalhes do curso: usa os tokens IFRN sem alterar os dados. */
+html.ifrn-course-context ion-modal.core-modal-lateral:has(page-core-course-summary) {
+    --background: var(--ifrn-canvas);
+    --border-radius: 16px 0 0 16px;
+    --box-shadow: -8px 0 24px rgb(7 29 65 / 18%);
+}
+
+html.ifrn-course-context ion-modal.core-modal-lateral:has(page-core-course-summary)::part(content) {
+    background: var(--ifrn-canvas);
+    border-inline-start: 3px solid var(--ifrn-primary);
+}
+
+html.ifrn-course-context page-core-course-summary {
+    --thumb-height: 148px;
+    --ion-font-family: var(--ifrn-font);
+    --ion-background-color: var(--ifrn-canvas);
+    --ion-text-color: var(--ifrn-text);
+    --primary: var(--ifrn-primary);
+    --primary-shade: var(--ifrn-active);
+    --primary-tint: var(--ifrn-selected);
+    --primary-contrast: var(--ifrn-primary-contrast);
+    --ion-color-primary: var(--ifrn-primary);
+    --ion-color-primary-rgb: var(--ifrn-primary-rgb);
+    --ion-color-primary-contrast: var(--ifrn-primary-contrast);
+    --ion-color-primary-contrast-rgb: var(--ifrn-primary-contrast-rgb);
+    --ion-color-primary-shade: var(--ifrn-active);
+    --ion-color-primary-tint: var(--ifrn-selected-mid);
+    color: var(--ifrn-text);
+    font-family: var(--ifrn-font);
+}
+
+html.ifrn-course-context page-core-course-summary ion-header ion-toolbar {
+    --background: var(--ifrn-surface);
+    --color: var(--ifrn-text);
+    --border-width: 0 0 3px;
+    --border-color: var(--ifrn-primary);
+    --min-height: 56px;
+    box-shadow: none;
+}
+
+html.ifrn-course-context page-core-course-summary ion-header ion-button {
+    --color: var(--ifrn-primary);
+    --ripple-color: var(--ifrn-selected);
+}
+
+html.ifrn-course-context page-core-course-summary ion-content {
+    --background: var(--ifrn-canvas);
+    --color: var(--ifrn-text);
+}
+
+html.ifrn-course-context page-core-course-summary core-course-image.page-top {
+    --core-image-size: var(--thumb-height);
+    background: linear-gradient(135deg, var(--ifrn-primary), var(--ifrn-active));
+}
+
+html.ifrn-course-context page-core-course-summary core-course-image.page-top::after {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    background: rgba(var(--ifrn-primary-rgb), 0.56);
+    pointer-events: none;
+}
+
+html.ifrn-course-context page-core-course-summary .course-container {
+    border: 1px solid var(--ifrn-border-inner);
+    border-radius: 16px 16px 0 0;
+    background: var(--ifrn-surface);
+    box-shadow: var(--ifrn-shadow);
+}
+
+html.ifrn-course-context page-core-course-summary ion-item {
+    --background: transparent;
+    --color: var(--ifrn-text);
+    --border-color: var(--ifrn-border-inner);
+}
+
+html.ifrn-course-context page-core-course-summary .course-name h1 {
+    color: var(--ifrn-text);
+    font-family: var(--ifrn-font);
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+html.ifrn-course-context page-core-course-summary .core-course-shortname {
+    color: var(--ifrn-muted);
+    font-weight: 600;
+}
+
+html.ifrn-course-context page-core-course-summary .core-course-progress {
+    margin: 8px 0 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--ifrn-border-inner);
+    border-radius: var(--ifrn-radius-lg);
+    background: var(--ifrn-surface);
+}
+
+html.ifrn-course-context page-core-course-summary .core-course-progress core-progress-bar {
+    --progressbar-color: var(--ifrn-primary);
+    --progressbar-background: var(--ifrn-border-blue);
+    --text-color: var(--ifrn-active);
+    --height: 10px;
+    width: 100%;
+}
+
+html.ifrn-course-context page-core-course-summary .core-course-progress .core-progress-text {
+    color: var(--ifrn-active);
+    font-weight: 700;
+}
+
+html.ifrn-course-context page-core-course-summary .core-course-dates {
+    border: 1px solid var(--ifrn-border-inner);
+    border-radius: var(--ifrn-radius-lg);
+    background: var(--ifrn-ava-soft);
+    color: var(--ifrn-text);
+}
+
+html.ifrn-course-context page-core-course-summary ion-footer {
+    border-top: 1px solid var(--ifrn-border-inner);
+    background: var(--ifrn-surface);
+}
+
+html.ifrn-course-context page-core-course-summary ion-footer ion-button {
+    --border-radius: var(--ifrn-radius-lg);
+}
+
 /* =========================================================
  * Toolbar / cabeçalho limpo
  * ========================================================= */
