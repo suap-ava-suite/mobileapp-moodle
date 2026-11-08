@@ -14,6 +14,14 @@
    */
   var MM = window.MobileMoodle = window.MobileMoodle || {};
   var App = MM.App = MM.App || {};
+  function postIfrnHostMessage(message) {
+    const parent = window.parent;
+    if (!parent || parent === window) {
+      return false;
+    }
+    parent.postMessage(message, window.location.origin);
+    return true;
+  }
 
   // src/MoodleIFRN/mobilemoodle/core_mobile/api-errors.ts
   /*!
@@ -966,13 +974,18 @@
     inFlight: null
   };
   var courseCache = /* @__PURE__ */ new Map();
+  var forcedCourseRequests = /* @__PURE__ */ new WeakSet();
+  var cacheGeneration = 0;
+  var dashboardRequestIsForced = false;
   function isCacheFresh(fetchedAt) {
     return Boolean(fetchedAt) && Date.now() - fetchedAt < CACHE_TTL_MS;
   }
   function invalidateCache() {
+    cacheGeneration++;
     dashboardCache.value = null;
     dashboardCache.fetchedAt = 0;
     dashboardCache.inFlight = null;
+    dashboardRequestIsForced = false;
     courseCache.clear();
   }
   async function fetchDashboardPreferPainel() {
@@ -990,17 +1003,28 @@
     if (!force && dashboardCache.value && isCacheFresh(dashboardCache.fetchedAt)) {
       return Promise.resolve(dashboardCache.value);
     }
-    if (dashboardCache.inFlight && !force) {
+    if (dashboardCache.inFlight && (!force || dashboardRequestIsForced)) {
       return dashboardCache.inFlight;
     }
-    dashboardCache.inFlight = fetchDashboardPreferPainel().then((dashboard) => {
-      dashboardCache.value = dashboard;
-      dashboardCache.fetchedAt = Date.now();
+    const generation = cacheGeneration;
+    const request2 = fetchDashboardPreferPainel().then((dashboard) => {
+      if (generation !== cacheGeneration) {
+        throw new MM.ApiError(401, "A sess\xE3o mudou durante o carregamento. Atualize o Painel.");
+      }
+      if (dashboardCache.inFlight === request2) {
+        dashboardCache.value = dashboard;
+        dashboardCache.fetchedAt = Date.now();
+      }
       return dashboard;
     }).finally(() => {
-      dashboardCache.inFlight = null;
+      if (dashboardCache.inFlight === request2) {
+        dashboardCache.inFlight = null;
+        dashboardRequestIsForced = false;
+      }
     });
-    return dashboardCache.inFlight;
+    dashboardCache.inFlight = request2;
+    dashboardRequestIsForced = force;
+    return request2;
   }
   function pruneCourseCache() {
     if (courseCache.size <= MAX_COURSE_CACHE) {
@@ -1039,11 +1063,12 @@
       courseCache.set(id, entry);
       pruneCourseCache();
     }
-    if (!force && entry.value && isCacheFresh(entry.fetchedAt)) {
-      return Promise.resolve(entry.value);
+    const currentEntry = entry;
+    if (!force && currentEntry.value && isCacheFresh(currentEntry.fetchedAt)) {
+      return Promise.resolve(currentEntry.value);
     }
-    if (entry.inFlight && !force) {
-      return entry.inFlight;
+    if (currentEntry.inFlight && (!force || forcedCourseRequests.has(currentEntry.inFlight))) {
+      return currentEntry.inFlight;
     }
     const fromPainel = (dashboardCache.value?.diarios || dashboardCache.value?.courses || []).find((item) => String(item.id) === id && item.source === "painel");
     if (fromPainel) {
@@ -1063,15 +1088,27 @@
       entry.fetchedAt = Date.now();
       return Promise.resolve(course);
     }
-    entry.inFlight = MM.fetchSuapCourse(id).then((course) => {
+    const generation = cacheGeneration;
+    const request2 = MM.fetchSuapCourse(id).then((course) => {
+      if (generation !== cacheGeneration) {
+        throw new MM.ApiError(401, "A sess\xE3o mudou durante o carregamento do curso. Tente novamente.");
+      }
       const enriched = enrichCourseFromDashboard(course, id);
-      entry.value = enriched;
-      entry.fetchedAt = Date.now();
+      if (courseCache.get(id) === currentEntry && currentEntry.inFlight === request2) {
+        currentEntry.value = enriched;
+        currentEntry.fetchedAt = Date.now();
+      }
       return enriched;
     }).finally(() => {
-      entry.inFlight = null;
+      if (currentEntry.inFlight === request2) {
+        currentEntry.inFlight = null;
+      }
     });
-    return entry.inFlight;
+    if (force) {
+      forcedCourseRequests.add(request2);
+    }
+    currentEntry.inFlight = request2;
+    return request2;
   }
   async function getCoursesList() {
     const dashboard = await getDashboard(false);
@@ -1206,7 +1243,7 @@
       if (bridge?.openCourse) {
         bridge.openCourse(id, courseName, siteUrl);
       } else {
-        window.parent.postMessage({ type: "MOODLE_IFRN_OPEN_COURSE", courseId: id, courseName, siteUrl }, "*");
+        postIfrnHostMessage({ type: "MOODLE_IFRN_OPEN_COURSE", courseId: id, courseName, siteUrl });
       }
       return;
     }
@@ -1245,11 +1282,11 @@
       return;
     }
     if (window.parent && window.parent !== window) {
-      window.parent.postMessage({
+      postIfrnHostMessage({
         type: "MOODLE_IFRN_OPEN_ENROL",
         courseId: id,
         ambienteId: envId
-      }, "*");
+      });
       return;
     }
     window.location.assign(resolvePainelEnrolUrl(id, envId));
@@ -3028,7 +3065,7 @@
       return;
     }
     if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: "MOODLE_IFRN_LOGOUT" }, "*");
+      postIfrnHostMessage({ type: "MOODLE_IFRN_LOGOUT" });
       return;
     }
     const loginUrl = typeof App.resolveLoginUrl === "function" ? App.resolveLoginUrl() : "/login/marketplace-ifrn";

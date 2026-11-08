@@ -17,8 +17,11 @@ test('iframe forwards clicks without replacing the active pending course, includ
         const entries = new Map([['ifrn_moodle_pending_open_course', 'original-pending']]);
         const parent = direct ? { MoodleIfrnBridge: { openCourse: (...args) => calls.push(args) } }
             : { postMessage: message => calls.push(message) };
-        load('src/MoodleIFRN/mobilemoodle/core_mobile/app-utils.ts', { './namespace': { App, MM: {} } }, {
-            window: { parent }, document: {
+        const window = { parent, location: { origin: 'http://localhost' } };
+        load('src/MoodleIFRN/mobilemoodle/core_mobile/app-utils.ts', { './namespace': {
+            App, MM: {}, postIfrnHostMessage: message => parent.postMessage(message, window.location.origin),
+        } }, {
+            window: { ...window, MobileMoodle: {} }, document: {
                 getElementsByTagName: () => [{ src: 'http://localhost/mobilemoodle/mobilemoodle.js' }],
             }, sessionStorage: { setItem: (key, value) => entries.set(key, value) },
         });

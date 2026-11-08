@@ -8,7 +8,7 @@
  * - fetchText de partials HTML
  * - URL de volta ao login IFRN
  */
-import { MM, App } from './namespace';
+import { App, postIfrnHostMessage } from './namespace';
 
     /**
      * Base onde estão pages/, static/, etc.
@@ -176,7 +176,7 @@ import { MM, App } from './namespace';
             if (bridge?.openCourse) {
                 bridge.openCourse(id, courseName, siteUrl);
             } else {
-                window.parent.postMessage({ type: 'MOODLE_IFRN_OPEN_COURSE', courseId: id, courseName, siteUrl }, '*');
+                postIfrnHostMessage({ type: 'MOODLE_IFRN_OPEN_COURSE', courseId: id, courseName, siteUrl });
             }
 
             return;
@@ -227,11 +227,11 @@ import { MM, App } from './namespace';
         }
 
         if (window.parent && window.parent !== window) {
-            window.parent.postMessage({
+            postIfrnHostMessage({
                 type: 'MOODLE_IFRN_OPEN_ENROL',
                 courseId: id,
                 ambienteId: envId,
-            }, '*');
+            });
             return;
         }
 

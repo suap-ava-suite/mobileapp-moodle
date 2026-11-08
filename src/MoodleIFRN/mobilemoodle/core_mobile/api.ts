@@ -25,15 +25,22 @@ import { MM } from './namespace';
     };
 
     const courseCache = new Map<string, CourseCacheEntry>();
+    const forcedCourseRequests = new WeakSet<Promise<CourseData>>();
+    let cacheGeneration = 0;
+    let dashboardRequestIsForced = false;
 
     function isCacheFresh(fetchedAt: number): boolean {
         return Boolean(fetchedAt) && Date.now() - fetchedAt < CACHE_TTL_MS;
     }
 
     function invalidateCache(): void {
+        // Respostas já iniciadas podem chegar depois do logout ou da troca de
+        // conta. A geração impede que elas publiquem dados no cache novo.
+        cacheGeneration++;
         dashboardCache.value = null;
         dashboardCache.fetchedAt = 0;
         dashboardCache.inFlight = null;
+        dashboardRequestIsForced = false;
         courseCache.clear();
     }
 
@@ -51,6 +58,7 @@ import { MM } from './namespace';
 
         // eslint-disable-next-line no-console
         console.log('[IFRN-PANEL] buscando diarios no Painel AVA');
+
         return MM.fetchPainelDashboard();
     }
 
@@ -66,22 +74,36 @@ import { MM } from './namespace';
             return Promise.resolve(dashboardCache.value);
         }
 
-        if (dashboardCache.inFlight && !force) {
+        if (dashboardCache.inFlight && (!force || dashboardRequestIsForced)) {
             return dashboardCache.inFlight;
         }
 
-        dashboardCache.inFlight = fetchDashboardPreferPainel()
+        const generation = cacheGeneration;
+        const request = fetchDashboardPreferPainel()
             .then((dashboard) => {
-                dashboardCache.value = dashboard;
-                dashboardCache.fetchedAt = Date.now();
+                if (generation !== cacheGeneration) {
+                    throw new MM.ApiError(401, 'A sessão mudou durante o carregamento. Atualize o Painel.');
+                }
+
+                // Uma atualização forçada mais nova é a única que pode publicar
+                // enquanto ambas as respostas ainda estão em trânsito.
+                if (dashboardCache.inFlight === request) {
+                    dashboardCache.value = dashboard;
+                    dashboardCache.fetchedAt = Date.now();
+                }
 
                 return dashboard;
             })
             .finally(() => {
-                dashboardCache.inFlight = null;
+                if (dashboardCache.inFlight === request) {
+                    dashboardCache.inFlight = null;
+                    dashboardRequestIsForced = false;
+                }
             });
+        dashboardCache.inFlight = request;
+        dashboardRequestIsForced = force;
 
-        return dashboardCache.inFlight;
+        return request;
     }
 
     /** Remove a entrada mais antiga quando o Map passa do limite. */
@@ -133,13 +155,14 @@ import { MM } from './namespace';
             courseCache.set(id, entry);
             pruneCourseCache();
         }
+        const currentEntry = entry;
 
-        if (!force && entry.value && isCacheFresh(entry.fetchedAt)) {
-            return Promise.resolve(entry.value);
+        if (!force && currentEntry.value && isCacheFresh(currentEntry.fetchedAt)) {
+            return Promise.resolve(currentEntry.value);
         }
 
-        if (entry.inFlight && !force) {
-            return entry.inFlight;
+        if (currentEntry.inFlight && (!force || forcedCourseRequests.has(currentEntry.inFlight))) {
+            return currentEntry.inFlight;
         }
 
         // Card do Painel já tem courseid Moodle: monta detalhe mínimo sem SUAP.
@@ -166,19 +189,32 @@ import { MM } from './namespace';
             return Promise.resolve(course);
         }
 
-        entry.inFlight = MM.fetchSuapCourse(id)
+        const generation = cacheGeneration;
+        const request = MM.fetchSuapCourse(id)
             .then((course) => {
+                if (generation !== cacheGeneration) {
+                    throw new MM.ApiError(401, 'A sessão mudou durante o carregamento do curso. Tente novamente.');
+                }
+
                 const enriched = enrichCourseFromDashboard(course, id);
-                entry!.value = enriched;
-                entry!.fetchedAt = Date.now();
+                if (courseCache.get(id) === currentEntry && currentEntry.inFlight === request) {
+                    currentEntry.value = enriched;
+                    currentEntry.fetchedAt = Date.now();
+                }
 
                 return enriched;
             })
             .finally(() => {
-                entry!.inFlight = null;
+                if (currentEntry.inFlight === request) {
+                    currentEntry.inFlight = null;
+                }
             });
+        if (force) {
+            forcedCourseRequests.add(request);
+        }
+        currentEntry.inFlight = request;
 
-        return entry.inFlight;
+        return request;
     }
 
     /** Atalho: só a lista `courses` do dashboard. */

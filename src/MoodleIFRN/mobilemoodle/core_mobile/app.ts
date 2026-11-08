@@ -13,7 +13,7 @@
  * hashchange → navega sem recarregar a página.
  */
 import { initKeyboardInsets } from './app-keyboard';
-import { MM, App } from './namespace';
+import { App, postIfrnHostMessage } from './namespace';
 
 
     // Referências DOM usadas por views / sidebar / status
@@ -46,7 +46,7 @@ import { MM, App } from './namespace';
         }
 
         if (window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: 'MOODLE_IFRN_LOGOUT' }, '*');
+            postIfrnHostMessage({ type: 'MOODLE_IFRN_LOGOUT' });
             return;
         }
 
