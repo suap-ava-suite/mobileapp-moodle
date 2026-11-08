@@ -2,11 +2,17 @@ import { inject, provideAppInitializer } from '@angular/core';
 import { CanActivateChildFn, CanActivateFn, Router } from '@angular/router';
 import { MoodleSiteService } from '@/MoodleIFRN/services_mobile/moodle-site.service';
 import { readNativeSuapEntry } from './suap-entry-state';
-import { isNativeMoodleLanding } from './navigation-policy';
+import { isCourseStorageManagerRoute, isNativeMoodleLanding } from './navigation-policy';
 
 /** Executado antes de ativar a landing: não depende de o usuário ter aberto um curso. */
 export const ifrnMainMenuGuard: CanActivateFn & CanActivateChildFn = (_route, state) => {
     const service = inject(MoodleSiteService);
+
+    // Mantém o gerenciador de downloads fora da interface IFRN sem remover
+    // os serviços offline e de armazenamento usados pelo Moodle.
+    if (isCourseStorageManagerRoute(state.url) && service.isCurrentSiteIfrn()) {
+        return false;
+    }
 
     if (!isNativeMoodleLanding(state.url)) {
         return true;

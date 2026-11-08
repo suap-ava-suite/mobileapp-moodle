@@ -101,6 +101,20 @@ page-core-course-index {
     color: var(--ifrn-text);
 }
 
+/* Remove apenas os pontos de entrada do gerenciador de downloads no app IFRN.
+ * A rota também é bloqueada pelo guard; dados offline e sincronização permanecem. */
+html.ifrn-course-context page-core-course-index core-navbar-buttons ion-button:has(ion-icon[name="fas-cloud-arrow-down"]) {
+    display: none;
+}
+
+html.ifrn-course-context page-core-site-preferences ion-item.addon-storagemanager-settings-handler {
+    display: none;
+}
+
+html.ifrn-course-context ion-modal core-course-module-summary ion-card:has(ion-icon[name="fas-cloud-arrow-down"]) {
+    display: none;
+}
+
 /* =========================================================
  * Toolbar / cabeçalho limpo
  * ========================================================= */

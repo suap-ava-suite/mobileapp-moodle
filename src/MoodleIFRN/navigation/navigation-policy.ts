@@ -16,3 +16,12 @@ export function isNativeMoodleLanding(url: string): boolean {
         || (parts[1] === 'courses' && ['list', 'mycourses'].includes(parts[2]))
     );
 }
+
+/** Identifies only the Moodle course-storage manager routes. */
+export function isCourseStorageManagerRoute(url: string): boolean {
+    const path = url.split(/[?#]/)[0].replace(/\/+$/, '');
+    const parts = path.split('/').filter(Boolean).map((part) => part.split(';')[0]);
+    const last = parts.at(-1);
+
+    return last === 'storage' || (parts.at(-2) === 'storage' && /^\d+$/.test(last ?? ''));
+}

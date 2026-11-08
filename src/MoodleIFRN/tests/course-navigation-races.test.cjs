@@ -33,6 +33,7 @@ function guardSetup() {
     const service = {
         getCourseRecoveryTarget: () => null, isIdentityMismatchPending: () => false,
         isNativeCourseHandoffActive: () => false, returnToPainelOnCourseExit: () => false,
+        isCurrentSiteIfrn: () => true,
         hasAuthenticatedPainel: () => true, showNativeCourseHandoff() {}, hideNativeCourseHandoff() {},
         setPendingOpenCourse() {},
     };
@@ -60,6 +61,26 @@ test('course opening and course activities are never redirected by the landing g
     for (const url of ['/main/home/course/7', '/main/home/mod_forum/7']) {
         assert.equal(guards.ifrnMainMenuGuard({}, { url }), true);
     }
+});
+
+test('IFRN course-download routes are blocked without changing other course routes', () => {
+    const { service, guards } = guardSetup();
+    for (const url of ['/main/home/storage', '/main/home/storage/42', '/main/settings/storage/42?from=course']) {
+        assert.equal(guards.ifrnMainMenuGuard({}, { url }), false, url);
+    }
+    assert.equal(guards.ifrnMainMenuGuard({}, { url: '/main/home/course/42' }), true);
+
+    service.isCurrentSiteIfrn = () => false;
+    assert.equal(guards.ifrnMainMenuGuard({}, { url: '/main/home/storage/42' }), true);
+});
+
+test('download UI selectors target only Moodle course download controls', () => {
+    const styles = fs.readFileSync('src/MoodleIFRN/moodle-course/moodle-course.scss', 'utf8');
+
+    assert.match(styles, /html\.ifrn-course-context page-core-course-index core-navbar-buttons ion-button:has\(ion-icon\[name="fas-cloud-arrow-down"\]\)/);
+    assert.match(styles, /html\.ifrn-course-context page-core-site-preferences ion-item\.addon-storagemanager-settings-handler/);
+    assert.match(styles, /html\.ifrn-course-context ion-modal core-course-module-summary ion-card:has\(ion-icon\[name="fas-cloud-arrow-down"\]\)/);
+    assert.doesNotMatch(styles, /(^|\n)\s*ion-button\s*\{[^}]*display:\s*none/s);
 });
 test('session recovery retains the Moodle environment with the course ID', () => {
     const { service, guards } = guardSetup();
