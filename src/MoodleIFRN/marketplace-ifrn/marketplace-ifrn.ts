@@ -1,11 +1,24 @@
+// (C) Copyright 2015 Moodle Pty Ltd.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import { AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
-import { Component, OnInit, OnDestroy, NgZone, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, NgZone, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { readNativeSuapEntry } from '../navigation/suap-entry-state';
 import { CoreSharedModule } from '@/core/shared.module';
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
-import { CoreLang } from '@services/lang';
 import { CorePlatform } from '@services/platform';
 import { CoreNavigator } from '@services/navigator';
 import { CoreOpener } from '@static/opener';
@@ -20,6 +33,7 @@ import { GovBrBrowserService } from '../services_mobile/govbr-browser.service';
     templateUrl: './marketplace-ifrn.html',
     styleUrls: ['../moodle-open-course/moodle-open-course.scss', './marketplace-ifrn.scss'],
     imports: [CoreSharedModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MarketplaceIfrnPage implements OnInit, OnDestroy {
 
@@ -32,15 +46,36 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     private readonly zone = inject(NgZone);
     private returnSubscription?: Subscription;
     private mobileAuthFailureObserver?: { off: () => void };
-    accountIssue: SuapEntryAccountError | null = null;
-    accountSwitchStarted = false;
-    formError = '';
-    govBrUnavailable = false;
-    govBrBrowserOpened = false;
-    govBrBrowserOpening = false;
-    govBrBrowserReturned = false;
-    govBrBrowserError = '';
-    statusMessage = '';
+    private readonly accountIssueState = signal<SuapEntryAccountError | null>(null);
+    private readonly accountSwitchStartedState = signal(false);
+    private readonly formErrorState = signal('');
+    private readonly govBrUnavailableState = signal(false);
+    private readonly govBrBrowserOpenedState = signal(false);
+    private readonly govBrBrowserOpeningState = signal(false);
+    private readonly govBrBrowserReturnedState = signal(false);
+    private readonly govBrBrowserErrorState = signal('');
+    private readonly statusMessageState = signal('');
+
+    // Os getters mantêm os templates/handlers existentes e registram as
+    // dependências dos signals durante a renderização OnPush.
+    get accountIssue(): SuapEntryAccountError | null { return this.accountIssueState(); }
+    set accountIssue(value: SuapEntryAccountError | null) { this.accountIssueState.set(value); }
+    get accountSwitchStarted(): boolean { return this.accountSwitchStartedState(); }
+    set accountSwitchStarted(value: boolean) { this.accountSwitchStartedState.set(value); }
+    get formError(): string { return this.formErrorState(); }
+    set formError(value: string) { this.formErrorState.set(value); }
+    get govBrUnavailable(): boolean { return this.govBrUnavailableState(); }
+    set govBrUnavailable(value: boolean) { this.govBrUnavailableState.set(value); }
+    get govBrBrowserOpened(): boolean { return this.govBrBrowserOpenedState(); }
+    set govBrBrowserOpened(value: boolean) { this.govBrBrowserOpenedState.set(value); }
+    get govBrBrowserOpening(): boolean { return this.govBrBrowserOpeningState(); }
+    set govBrBrowserOpening(value: boolean) { this.govBrBrowserOpeningState.set(value); }
+    get govBrBrowserReturned(): boolean { return this.govBrBrowserReturnedState(); }
+    set govBrBrowserReturned(value: boolean) { this.govBrBrowserReturnedState.set(value); }
+    get govBrBrowserError(): string { return this.govBrBrowserErrorState(); }
+    set govBrBrowserError(value: string) { this.govBrBrowserErrorState.set(value); }
+    get statusMessage(): string { return this.statusMessageState(); }
+    set statusMessage(value: string) { this.statusMessageState.set(value); }
     private nativeReturnQueued = false;
     private expectedIdentity = '';
     private readonly onResume = (): void => {
@@ -59,6 +94,7 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
 
     /**
      * Garante que o overlay já esteja pintado antes de abrir o InAppBrowser nativo.
+     *
      * @returns Conclui após dois ciclos de pintura.
      */
     private async waitForTransitionPaint(): Promise<void> {
@@ -72,33 +108,46 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     readonly currentYear = new Date().getFullYear();
     readonly welcomeImageSrc = 'mobilemoodle/static/theme/ifrn/img/alunos-ifrn-biblioteca-enhanced.webp';
 
-    canContinue = false;
-    continueLabel = 'Continuar no AVA';
-    loading = false;
+    private readonly canContinueState = signal(false);
+    get canContinue(): boolean { return this.canContinueState(); }
+    set canContinue(value: boolean) { this.canContinueState.set(value); }
+
+    readonly continueLabel = 'Continuar no AVA';
+    private readonly loadingState = signal(false);
+    get loading(): boolean { return this.loadingState(); }
+    set loading(value: boolean) { this.loadingState.set(value); }
     /** OAuth Moodle/SUAP aberto no navegador externo; overlay permanece até o retorno. */
-    waitingBrowser = false;
-    openingPainel = false;
+    private readonly waitingBrowserState = signal(false);
+    get waitingBrowser(): boolean { return this.waitingBrowserState(); }
+    set waitingBrowser(value: boolean) { this.waitingBrowserState.set(value); }
+    private readonly openingPainelState = signal(false);
+    get openingPainel(): boolean { return this.openingPainelState(); }
+    set openingPainel(value: boolean) { this.openingPainelState.set(value); }
 
     /** Overlay de transição cobre preparação, navegador seguro e abertura do Painel. */
-    get showTransition(): boolean {
-        return this.loading || this.waitingBrowser || this.openingPainel || this.govBrBrowserOpening;
-    }
+    private readonly showTransitionState = computed(() => this.loadingState() || this.waitingBrowserState()
+        || this.openingPainelState() || this.govBrBrowserOpeningState());
 
-    get transitionCaption(): string {
-        if (this.govBrBrowserOpening) {
+    get showTransition(): boolean { return this.showTransitionState(); }
+
+    private readonly transitionCaptionState = computed(() => {
+        if (this.govBrBrowserOpeningState()) {
             return 'Abrindo o navegador seguro...';
         }
-        if (this.waitingBrowser) {
+        if (this.waitingBrowserState()) {
             return 'Conclua o login no navegador';
         }
-        if (this.openingPainel) {
+        if (this.openingPainelState()) {
             return 'Abrindo painel...';
         }
-        if (this.statusMessage) {
-            return this.statusMessage;
+        if (this.statusMessageState()) {
+            return this.statusMessageState();
         }
+
         return 'Carregando painel...';
-    }
+    });
+
+    get transitionCaption(): string { return this.transitionCaptionState(); }
 
     /**
      * O Marketplace é a única tela de entrada.
