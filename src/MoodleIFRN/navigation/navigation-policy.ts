@@ -17,11 +17,16 @@ export function isNativeMoodleLanding(url: string): boolean {
     );
 }
 
-/** Identifies only the Moodle course-storage manager routes. */
+/**
+ * Identifica apenas as rotas do gerenciador de downloads de cursos Moodle.
+ *
+ * @param url URL da rota.
+ * @returns Se a rota pertence ao gerenciador de downloads.
+ */
 export function isCourseStorageManagerRoute(url: string): boolean {
     const path = url.split(/[?#]/)[0].replace(/\/+$/, '');
     const parts = path.split('/').filter(Boolean).map((part) => part.split(';')[0]);
-    const last = parts.at(-1);
+    const last = parts[parts.length - 1];
 
-    return last === 'storage' || (parts.at(-2) === 'storage' && /^\d+$/.test(last ?? ''));
+    return last === 'storage' || (parts[parts.length - 2] === 'storage' && /^\d+$/.test(last ?? ''));
 }
