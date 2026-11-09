@@ -55,6 +55,7 @@ export class PainelPage implements OnInit, OnDestroy {
         this.safePainelUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
 
         this.registerBridge();
+        document.addEventListener('resume', this.onAppResume);
         void this.refreshProfileWhenPlatformIsReady();
     }
 
@@ -74,8 +75,23 @@ export class PainelPage implements OnInit, OnDestroy {
             this.moodleSite.prepareCourseLanguage().catch(() => undefined),
         ]);
         if (updated) {
-            this.painelFrame?.nativeElement.contentWindow?.location.reload();
+            this.reloadPainelFrame();
         }
+    }
+
+    /** Revalida o perfil ao voltar do segundo plano e atualiza o iframe se mudou. */
+    private onAppResume = (): void => {
+        void this.painelAva.refreshSavedProfile()
+            .then(updated => {
+                if (updated) {
+                    this.reloadPainelFrame();
+                }
+            })
+            .catch(() => undefined);
+    };
+
+    private reloadPainelFrame(): void {
+        this.painelFrame?.nativeElement.contentWindow?.location.reload();
     }
 
     onPainelFrameLoad(): void {
@@ -88,6 +104,7 @@ export class PainelPage implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        document.removeEventListener('resume', this.onAppResume);
         this.painelAva.stopProfileRefresh();
         this.hostAppearanceObserver?.disconnect();
         this.unregisterBridge();

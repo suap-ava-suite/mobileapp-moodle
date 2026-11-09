@@ -54,3 +54,12 @@ test('perfil e idioma são preparados em paralelo depois da plataforma, fora do 
     assert.match(refresh.getText(file), /this\.moodleSite\.prepareCourseLanguage\(\)/);
     assert.match(refresh.getText(file), /prepareCourseLanguage\(\)\.catch\(\(\) => undefined\)/);
 });
+
+test('perfil é revalidado ao retomar o app e o listener é removido ao sair do Painel', () => {
+    const init = findMethod('ngOnInit');
+    const destroy = findMethod('ngOnDestroy');
+
+    assert.match(init.getText(file), /document\.addEventListener\('resume', this\.onAppResume\)/);
+    assert.match(destroy.getText(file), /document\.removeEventListener\('resume', this\.onAppResume\)/);
+    assert.match(source, /private onAppResume = \(\): void => \{[\s\S]*?refreshSavedProfile\(\)[\s\S]*?reloadPainelFrame\(\)/);
+});
