@@ -1015,12 +1015,12 @@ export class PainelAvaService {
                                     }
                                 });
 
-                                // Sem nome oficial explícito na API, prefira o texto mostrado pelo
-                                // cabeçalho do AVA na mesma sessão. Se os dois perfis expõem identidade,
-                                // ela precisa coincidir antes de associar esse nome ao perfil.
-                                var officialDisplayName = cleanName(primary.nome_exibicao || primary.show_name);
-                                var headerDisplayName = cleanName(secondary.nome_exibicao || secondary.nome || secondary.nome_usual);
-                                if (!officialDisplayName && headerDisplayName) {
+                                // Só use o cabeçalho da página como fallback se a API autenticada
+                                // não tiver fornecido nenhum campo de nome.
+                                var headerDisplayName = cleanName(
+                                    secondary.nome_exibicao || secondary.nome || secondary.nome_usual,
+                                );
+                                if (!primaryHasName && headerDisplayName) {
                                     merged.nome_exibicao = headerDisplayName;
                                 }
 
