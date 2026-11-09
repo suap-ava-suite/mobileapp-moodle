@@ -28,7 +28,30 @@ function loadService(overrides = {}) {
     let browserScriptResult = false;
     let externalFallbackCalls = 0;
     let lastTriggeredEvent;
-    const session = new Map([['ifrn_moodle_oauth_pending', '1']]);
+    const session = new Map([
+        ['ifrn_moodle_oauth_pending', '1'],
+        ['ifrn_username', 'synthetic-owner'],
+        ['ifrn_painel_owner', 'synthetic-owner'],
+        ['ifrn_moodle_session_epoch', 'synthetic-epoch'],
+    ]);
+    let coreGeneration = 0;
+    let activeCoreAttempt;
+    const defaultCoreSites = {
+        beginSessionAttempt: async (owner, epoch, isOwnerCurrent, validateIdentity) => {
+            const attempt = { attemptId: `test-${++coreGeneration}`, generation: coreGeneration, owner, epoch,
+                state: 'pending', isOwnerCurrent, validateIdentity };
+            activeCoreAttempt = attempt;
+            return attempt;
+        },
+        cancelSessionAttempt: attempt => {
+            if (attempt.state === 'committed' || attempt.state === 'unknown') return;
+            attempt.state = 'cancelled';
+            if (activeCoreAttempt === attempt) activeCoreAttempt = undefined;
+        },
+        isSessionAttemptCurrent: attempt => activeCoreAttempt === attempt && attempt.generation === coreGeneration
+            && attempt.state !== 'cancelled' && attempt.state !== 'unknown' && attempt.isOwnerCurrent(),
+    };
+    const coreSites = overrides.coreSites || defaultCoreSites;
     const browser = {
         close: () => browserClosed = true,
         show: () => browserShown = true,
@@ -59,9 +82,18 @@ function loadService(overrides = {}) {
             openBrowserForOAuthLogin: async () => { externalFallbackCalls++; return true; },
         } },
         '@services/config': { CoreConfig: { delete: async () => {} } },
+        '@services/sites': { CoreSites: coreSites },
         '@services/urlschemes': { CoreCustomURLSchemes: {
             isCustomURLToken: url => url.startsWith('moodlemobile://token='),
-            handleCustomURL: async url => { callbackUrl = url; await overrides.acceptToken?.(url); },
+            handleCustomURL: async (url, attempt) => {
+                callbackUrl = url;
+                if (overrides.coreHandler) return overrides.coreHandler(url, attempt);
+                await overrides.acceptToken?.(url, attempt);
+                if (attempt && !coreSites.isSessionAttemptCurrent(attempt)) {
+                    throw new Error('Synthetic session attempt was superseded.');
+                }
+                if (attempt) attempt.state = 'committed';
+            },
             isCustomURL: () => true,
         } },
         '@static/opener': { CoreOpener: { openInApp: (url, options) => {
@@ -75,6 +107,10 @@ function loadService(overrides = {}) {
         sessionStorage: { getItem: key => session.get(key) || null, removeItem: key => session.delete(key) },
         window: { handleOpenURL: url => callbackUrl = url } };
     vm.runInNewContext(output, context);
+    context.exports.MoodleSiteService.prototype.getExpectedIdentityCandidates = () => [{
+        key: 'perfil.matricula',
+        value: session.get('ifrn_painel_owner') || session.get('ifrn_username') || '',
+    }];
 
     return {
         MoodleSiteService: context.exports.MoodleSiteService,
@@ -306,12 +342,204 @@ function nativeHandler(gate) {
         catch(e) { state.unexpectedError=e.message; throw e; }
     },state,sites};
 }
+function realNativeHandler(gateForToken, options = {}) {
+    const extract = (file, names) => {
+        const ast = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+        const methods = [];
+        for (const node of ast.statements) if (ts.isClassDeclaration(node)) for (const member of node.members) {
+            if (ts.isMethodDeclaration(member) && names.includes(member.name.getText(ast))) methods.push(member.getText(ast));
+        }
+        assert.equal(methods.length, names.length);
+        return methods.join('\n');
+    };
+    const state = { persisted: 0, logins: 0, navigations: 0, secureWrites: 0, tableWrites: 0,
+        secureCollections: new Map(), siteRecords: new Map(), cacheRecords: new Map(), attemptRecord: undefined };
+    const matches = (record, attemptId, generation, owner, epoch) => record
+        && record.attemptId === attemptId && record.generation === generation
+        && record.owner === owner && record.epoch === epoch;
+    const db = {
+        getAllRecords: async table => table === 'ifrn_session_attempts'
+            ? (state.attemptRecord ? [structuredClone(state.attemptRecord)] : [])
+            : [...state.siteRecords.values()].map(record => structuredClone(record)),
+        getRecord: async (table, conditions) => {
+            if (table === 'ifrn_session_attempts' && state.attemptRecord?.id === conditions.id) {
+                return structuredClone(state.attemptRecord);
+            }
+            if (table === 'sites_2' && state.siteRecords.has(conditions.id)) {
+                return structuredClone(state.siteRecords.get(conditions.id));
+            }
+            throw new Error('synthetic record not found');
+        },
+        executeBatch: async statements => {
+            let attempt = state.attemptRecord && structuredClone(state.attemptRecord);
+            const siteRecords = new Map([...state.siteRecords].map(([id, record]) => [id, structuredClone(record)]));
+            for (const [sql, params] of statements) {
+                if (sql.includes('INSERT OR REPLACE INTO ifrn_session_attempts')) {
+                    const [id, attemptId, generation, status, previousSiteId, owner, epoch] = params;
+                    if (!attempt || attempt.id !== id || attempt.generation <= generation) {
+                        attempt = { id, attemptId, generation, state: status, previousSiteId, owner, epoch };
+                    }
+                } else if (sql.includes('SET state = ?, siteId = NULL, credentialKey = NULL')) {
+                    const [status, id] = params;
+                    if (params.length === 4) {
+                        const [, generation, tombstoneId, maxGeneration] = params;
+                        if (attempt?.id === tombstoneId && attempt.generation < maxGeneration) {
+                            attempt = { ...attempt, state: status, generation, siteId: null, credentialKey: null };
+                        }
+                    } else if (params.length === 9) {
+                        const [, , attemptId, generation, owner, epoch, expectedState, siteId, credentialKey] = params;
+                        if (attempt?.id === id && attempt.state === expectedState && attempt.siteId === siteId
+                            && attempt.credentialKey === credentialKey && matches(attempt, attemptId, generation, owner, epoch)) {
+                            attempt = { ...attempt, state: status, siteId: null, credentialKey: null };
+                        }
+                    } else if (attempt?.id === id) {
+                        attempt = { ...attempt, state: status, siteId: null, credentialKey: null };
+                    }
+                } else if (sql.includes('UPDATE sites_2 SET siteUrl')) {
+                    const [siteUrl, token, info, privateToken, config, loggedOut, oauthId, credentialKey, id, oldKey] = params;
+                    const record = siteRecords.get(id);
+                    if (record?.credentialKey === oldKey) {
+                        siteRecords.set(id, { id, siteUrl, token, info, privateToken, config, loggedOut, oauthId, credentialKey });
+                    }
+                } else if (sql.includes('DELETE FROM sites_2 WHERE id = ? AND credentialKey = ?')) {
+                    const [id, credentialKey] = params;
+                    if (siteRecords.get(id)?.credentialKey === credentialKey) siteRecords.delete(id);
+                } else if (sql.includes('UPDATE ifrn_session_attempts SET state = ?, siteId = ?')) {
+                    const [status, siteId, credentialKey, id, attemptId, generation, owner, epoch, expectedState] = params;
+                    if (attempt?.id === id && attempt.state === expectedState
+                        && matches(attempt, attemptId, generation, owner, epoch)) {
+                        attempt = { ...attempt, state: status, siteId, credentialKey };
+                    }
+                } else if (sql.includes('UPDATE ifrn_session_attempts SET state = ?')) {
+                    const [status, id, attemptId, generation, owner, epoch, expectedState, secondState] = params;
+                    if (attempt?.id === id && [expectedState, secondState].includes(attempt.state)
+                        && matches(attempt, attemptId, generation, owner, epoch)) {
+                        attempt = { ...attempt, state: status };
+                    }
+                } else if (sql.includes('INSERT OR REPLACE INTO sites_2')) {
+                    const [id, siteUrl, token, info, privateToken, config, loggedOut, oauthId, credentialKey,
+                        activeId, attemptId, generation, owner, epoch, expectedState] = params;
+                    if (matches(attempt, attemptId, generation, owner, epoch) && attempt.state === expectedState) {
+                        siteRecords.set(id, { id, siteUrl, token, info, privateToken, config, loggedOut, oauthId, credentialKey });
+                    }
+                } else {
+                    throw new Error('Unexpected SQL in real core fixture.');
+                }
+            }
+            state.attemptRecord = attempt;
+            state.siteRecords = siteRecords;
+            state.persisted = siteRecords.size;
+            if (statements.some(([sql]) => sql.includes('UPDATE ifrn_session_attempts SET state = ?, siteId = ?'))) {
+                await options.afterPublicationCommit?.();
+            }
+        },
+    };
+    const siteFactory = {
+        makeAuthenticatedSite: (_siteUrl, token) => ({ fetchSiteInfo: () => gateForToken(token).promise }),
+        makeSite: (id, url, token, { info, privateToken }) => ({
+            id, url, token, privateToken, info,
+            getId() { return id; }, getURL() { return url; }, getToken() { return token; }, getInfo() { return info; },
+            isLoggedOut() { return false; }, setOAuthId() {}, setConfig() {}, getStoredConfig() { return {}; },
+        }),
+    };
+    const secureStorage = {
+        storeDurable: async (data, key) => {
+            state.secureWrites++;
+            await options.durableGateForToken?.(data.token)?.promise;
+            state.secureCollections.set(key, { ...data });
+        },
+        deleteCollection: async key => state.secureCollections.delete(key),
+    };
+    class SyntheticCoreError extends Error {}
+    class SyntheticURLSchemeError extends Error {}
+    const ownerStorage = new Map([['ifrn_painel_owner','synthetic-owner']]);
+    const webStorage = {
+        getItem: key => ownerStorage.get(key) ?? null,
+        setItem: (key, value) => ownerStorage.set(key, String(value)),
+        removeItem: key => ownerStorage.delete(key),
+    };
+    const context = {
+        URL, console, Md5: { hashStr: value => `hash:${value}` }, CoreSitesFactory: siteFactory, CorePromiseUtils: {
+            ignoreErrors: promise => Promise.resolve(promise).catch(() => undefined),
+        },
+        CoreAppDB: { getDB: () => db }, CoreNative: { plugin: name => name === 'secureStorage' ? secureStorage : undefined },
+        IFRN_SESSION_ATTEMPTS_TABLE_NAME: 'ifrn_session_attempts', SITES_TABLE_NAME: 'sites_2',
+        CORE_SITE_CURRENT_SITE_ID_CONFIG: 'current_site_id', CoreError: SyntheticCoreError,
+        CoreConfig: { has: async () => true, get: async () => '', set: async () => {}, delete: async () => {} },
+        CoreEvents: { LOGIN: 'login', SITE_ADDED: 'added', SITE_UPDATED: 'updated', trigger: event => {
+            if (event === 'login') state.logins++;
+        } },
+        CoreLoginHelper: { isSiteUrlAllowed: async () => true, getOAuthIdFromParams: () => undefined },
+        CoreUrl: { decodeURIComponent: value => value }, CoreConstants: { CONFIG: { customurlscheme: 'moodlemobile' } },
+        ApplicationInit: { donePromise: Promise.resolve() }, CoreLoadings: { show: async () => ({ dismiss: async () => {} }) },
+        CoreNavigator: { navigateToSiteHome: () => { state.navigations++; return Promise.resolve(); } },
+        CoreSSO: { finishSSOAuthentication() {} }, CoreContentLinksHelper: { confirmLinkToSite: async () => {} },
+        CoreErrorHelper: { isCanceledError: () => false, getErrorMessageFromError: error => error.message },
+        CoreCustomURLSchemesHandleError: SyntheticURLSchemeError, sessionStorage: webStorage, localStorage: webStorage,
+    };
+    const source = `class CoreSitesProvider { static VALID_VERSION = 1;
+        ${extract('src/core/services/sites.ts', ['beginSessionAttempt', 'cancelSessionAttempt', 'isSessionAttemptCurrent',
+            'assertSessionAttemptCurrent', 'isSessionAttemptIdCurrent', 'newSite', 'newSiteWithSessionAttempt', 'login',
+            'rollbackUnactivatedSessionAttempt', 'migrateCurrentSiteLegacyTable', 'getStoredCurrentSiteId',
+            'getPersistedSessionOwner', 'removeStoredCurrentSite'])}
+    }
+    class CoreCustomURLSchemesProvider {
+        ${extract('src/core/services/urlschemes.ts', ['handleCustomURL', 'createSiteIfNeeded'])}
+    }
+    this.types = { CoreSitesProvider, CoreCustomURLSchemesProvider };`;
+    vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText, context);
+    const sites = new context.types.CoreSitesProvider();
+    Object.assign(sites, {
+        sessionAttemptsReady: true, sessionAttemptGeneration: 0, activeSessionAttempt: undefined,
+        sites: {}, sitesDB: { migrateSiteSchemas: async () => {} }, isValidMoodleVersion: () => 1,
+        createSiteID: (url, username) => `synthetic-${url.includes('presencial') ? 'p' : 'a'}-${username}`,
+        getSite: async id => {
+            const record = state.siteRecords.get(id);
+            return record ? siteFactory.makeSite(id, record.siteUrl, 'STORED', { info: JSON.parse(record.info) }) : undefined;
+        },
+        getSiteConfig: async () => ({}), sitesTable: {
+            getOneByPrimaryKey: async ({ id }) => state.siteRecords.has(id)
+                ? structuredClone(state.siteRecords.get(id)) : undefined,
+            insert: async () => { state.tableWrites++; },
+            update: async () => { state.tableWrites++; },
+            syncCacheRecord: record => state.cacheRecords.set(record.id, structuredClone(record)),
+        },
+        getCurrentSite: () => sites.currentSite, getCurrentSiteId: () => sites.currentSite?.id || '',
+    });
+    context.CoreSites = sites;
+    const handler = new context.types.CoreCustomURLSchemesProvider();
+    Object.assign(handler, {
+        lastUrls: {}, logger: { debug() {} }, isCustomURL: () => true, isCustomURLToken: () => true,
+        isCustomURLLink: () => false, removeCustomURLScheme: value => value.replace('moodlemobile://', ''),
+        getCustomURLTokenData: async url => {
+            const tokenValue = decodeURIComponent(url.match(/(?:[?&]|\/)token=([^&]+)/)?.[1] || '');
+            const token = tokenValue.replace(/^synthetic-([ab])$/i,
+                (_match, suffix) => `SYNTHETIC_${suffix.toUpperCase()}`);
+            return { siteUrl: 'https://academico.ava.ifrn.edu.br', token,
+                privateToken: `PRIVATE_${token}`, isSSOToken: true };
+        },
+    });
+
+    return {
+        accept: async (url, attempt) => {
+            try { return await handler.handleCustomURL(url, attempt); }
+            catch (error) { state.unexpectedError = error.message; throw error; }
+        },
+        state, sites,
+    };
+}
+
 test('P0 PENDENTE: core handler in flight must not activate A or navigate after cancellation and account B',async()=>{
-    const gate=deferred();
-    const native=nativeHandler(gate);
-    const {MoodleSiteService,state}=loadService({acceptToken:native.accept});
+    const gateA=deferred(),gateB=deferred();
+    gateB.resolve({siteurl:'https://academico.ava.ifrn.edu.br',username:'synthetic-B'});
+    const native=realNativeHandler(token => token === 'SYNTHETIC_A' ? gateA : gateB);
+    const {MoodleSiteService,state}=loadService({coreHandler:native.accept,coreSites:native.sites});
     const service=Object.create(MoodleSiteService.prototype);
     service.courseOAuthBrowserSubscriptions=[];
+    state().session.set('ifrn_username','synthetic-A');
+    state().session.set('ifrn_painel_owner','synthetic-A');
+    state().session.set('ifrn_moodle_session_epoch','synthetic-epoch-A');
+    service.getExpectedIdentityCandidates=()=>[{key:'perfil.matricula',value:state().session.get('ifrn_painel_owner')}];
     const flow=service.openCourseOAuthInApp({siteUrl:'https://academico.ava.ifrn.edu.br',config:{}});
     const outcome=flow.catch(e=>e.message);
     await new Promise(r=>setImmediate(r));
@@ -319,19 +547,154 @@ test('P0 PENDENTE: core handler in flight must not activate A or navigate after 
     await new Promise(r=>setImmediate(r));
     service.cancelCourseOAuthBrowser();
     state().session.set('ifrn_username','synthetic-B');
-    native.sites.currentSite={id:'synthetic-site-b',getToken:()=> 'SYNTHETIC_B',isLoggedOut:()=>false};
-    gate.resolve({siteurl:'https://academico.ava.ifrn.edu.br',username:'synthetic-A'});
+    state().session.set('ifrn_painel_owner','synthetic-B');
+    state().session.set('ifrn_moodle_session_epoch','synthetic-epoch-B');
+    native.sites.currentSite={id:'synthetic-site-b',info:{username:'synthetic-B'},getId(){return this.id;},getToken:()=> 'SYNTHETIC_B',
+        getInfo(){return this.info;},isLoggedOut:()=>false};
+    const flowB=service.openCourseOAuthInApp({siteUrl:'https://academico.ava.ifrn.edu.br',config:{}});
+    const flowBOutcome=flowB.catch(error=>error.message);
+    await new Promise(r=>setImmediate(r));
+    state().subscriptions.get('beforeload')({url:'moodlemobile://token=synthetic-b'});
+    const flowBResult=await flowBOutcome;
+    assert.equal(flowBResult,undefined,String(flowBResult));
+    assert.equal(native.state.attemptRecord?.owner,'synthetic-b');
+    assert.equal(native.state.attemptRecord?.state,'committed');
+    gateA.resolve({siteurl:'https://academico.ava.ifrn.edu.br',username:'synthetic-A'});
     await outcome;await new Promise(r=>setImmediate(r));
-    assert.equal(native.state.unexpectedError,undefined,'Native contract fixture must reach its side effects');
-    assert.deepEqual({current:native.sites.currentSite.id,...native.state},
-        {current:'synthetic-site-b',persisted:0,logins:0,navigations:0});
+    assert.deepEqual({current:native.sites.currentSite.id,persisted:native.state.persisted,
+        cache:native.state.cacheRecords.get('synthetic-a-synthetic-B')?.credentialKey,
+        tableWrites:native.state.tableWrites,owner:native.state.attemptRecord.owner,
+        logins:native.state.logins,navigations:native.state.navigations},
+        {current:'synthetic-a-synthetic-B',persisted:1,cache:`ifrn-session-${native.state.attemptRecord.attemptId}`,
+            tableWrites:0,owner:'synthetic-b',logins:1,navigations:1});
+    service.cancelCourseOAuthBrowser();
+    await flowBOutcome;
+});
+
+test('a cancelled attempt cannot publish after its secure credential write returns',async()=>{
+    const durableA=deferred();
+    const gateForToken=token=>({promise:Promise.resolve({
+        siteurl:'https://academico.ava.ifrn.edu.br',username:token==='SYNTHETIC_A'?'synthetic-A':'synthetic-B',
+    })});
+    const native=realNativeHandler(gateForToken,{durableGateForToken:token=>token==='SYNTHETIC_A'?durableA:undefined});
+    const {MoodleSiteService,state}=loadService({coreHandler:native.accept,coreSites:native.sites});
+    const service=Object.create(MoodleSiteService.prototype);
+    service.courseOAuthBrowserSubscriptions=[];
+    state().session.set('ifrn_username','synthetic-A');
+    state().session.set('ifrn_painel_owner','synthetic-A');
+    state().session.set('ifrn_moodle_session_epoch','synthetic-epoch-A');
+    service.getExpectedIdentityCandidates=()=>[{key:'perfil.matricula',value:state().session.get('ifrn_painel_owner')}];
+
+    const flowA=service.openCourseOAuthInApp({siteUrl:'https://academico.ava.ifrn.edu.br',config:{}});
+    const outcomeA=flowA.catch(error=>error.message);
+    await new Promise(r=>setImmediate(r));
+    state().subscriptions.get('beforeload')({url:'moodlemobile://token=synthetic-a'});
+    for (let i=0;i<20 && native.state.secureWrites===0;i++) await new Promise(r=>setImmediate(r));
+    assert.equal(native.state.secureWrites,1,'A must be suspended inside the durable secure write');
+
+    service.cancelCourseOAuthBrowser();
+    state().session.set('ifrn_username','synthetic-B');
+    state().session.set('ifrn_painel_owner','synthetic-B');
+    state().session.set('ifrn_moodle_session_epoch','synthetic-epoch-B');
+    const flowB=service.openCourseOAuthInApp({siteUrl:'https://academico.ava.ifrn.edu.br',config:{}});
+    const outcomeB=flowB.catch(error=>error.message);
+    await new Promise(r=>setImmediate(r));
+    state().subscriptions.get('beforeload')({url:'moodlemobile://token=synthetic-b'});
+    assert.equal(await outcomeB,undefined);
+
+    durableA.resolve();
+    await outcomeA;
+    assert.equal(native.state.attemptRecord.owner,'synthetic-b');
+    assert.equal(native.state.attemptRecord.state,'committed');
+    assert.deepEqual([...native.state.secureCollections.keys()], [`ifrn-session-${native.state.attemptRecord.attemptId}`]);
+    assert.deepEqual([...native.state.siteRecords.values()].map(record=>JSON.parse(record.info).username),['synthetic-B']);
+    assert.equal(native.state.logins,1);
+    assert.equal(native.state.navigations,1);
+});
+
+test('a cancellation during a committed SQLite write revokes only its candidate before account B completes',async()=>{
+    const publicationAck=deferred();
+    let publicationReached;
+    let holdFirstPublication=true;
+    const publicationStarted=new Promise(resolve=>publicationReached=resolve);
+    const gateForToken=token=>({promise:Promise.resolve({
+        siteurl:'https://academico.ava.ifrn.edu.br',username:token==='SYNTHETIC_A'?'synthetic-owner':'synthetic-owner',
+    })});
+    const native=realNativeHandler(gateForToken,{afterPublicationCommit:async()=>{
+        if (!holdFirstPublication) return;
+        holdFirstPublication=false;
+        publicationReached();
+        await publicationAck.promise;
+    }});
+    const {MoodleSiteService,state}=loadService({coreHandler:native.accept,coreSites:native.sites});
+    const service=Object.create(MoodleSiteService.prototype);
+    service.courseOAuthBrowserSubscriptions=[];
+    service.getExpectedIdentityCandidates=()=>[{key:'perfil.matricula',value:state().session.get('ifrn_painel_owner')}];
+
+    const flowA=service.openCourseOAuthInApp({siteUrl:'https://academico.ava.ifrn.edu.br',config:{}});
+    const outcomeA=flowA.catch(error=>error.message);
+    await new Promise(r=>setImmediate(r));
+    state().subscriptions.get('beforeload')({url:'moodlemobile://token=synthetic-a'});
+    await Promise.race([
+        publicationStarted,
+        outcomeA.then(error=>{throw new Error(`Attempt A failed before the publication commit: ${error}`);}),
+        new Promise((_,reject)=>setTimeout(()=>reject(new Error('Timed out waiting for the synthetic publication commit.')),3000)),
+    ]);
+    assert.equal(native.state.attemptRecord.state,'committed','the synthetic SQLite transaction has committed while its ACK is held');
+
+    service.cancelCourseOAuthBrowser();
+    const flowB=service.openCourseOAuthInApp({siteUrl:'https://academico.ava.ifrn.edu.br',config:{}});
+    const outcomeB=flowB.catch(error=>error.message);
+    await new Promise(r=>setImmediate(r));
+    state().subscriptions.get('beforeload')({url:'moodlemobile://token=synthetic-b'});
+    assert.equal(await outcomeB,undefined);
+    const attemptB=native.state.attemptRecord.attemptId;
+
+    publicationAck.resolve();
+    await outcomeA;
+    await new Promise(r=>setImmediate(r));
+    assert.equal(native.state.attemptRecord.attemptId,attemptB);
+    assert.equal(native.state.attemptRecord.state,'committed');
+    assert.deepEqual([...native.state.secureCollections.keys()],[`ifrn-session-${attemptB}`]);
+    assert.deepEqual([...native.state.siteRecords.values()].map(record=>JSON.parse(record.info).username),['synthetic-owner']);
+    assert.equal(native.state.siteRecords.values().next().value.credentialKey,`ifrn-session-${attemptB}`);
+    assert.equal(native.state.logins,1);
+    assert.equal(native.state.navigations,1);
+});
+
+test('logout tombstone cannot be undone by a delayed cancel and same-account re-entry gets a newer generation',async()=>{
+    const native=realNativeHandler(() => deferred());
+    const {sites}=native;
+    const first=await sites.beginSessionAttempt('synthetic-owner','epoch-1',()=>true,()=>true);
+    assert.equal(first.generation,1);
+
+    await sites.removeStoredCurrentSite();
+    assert.equal(native.state.attemptRecord.state,'logged-out');
+    assert.equal(await sites.getStoredCurrentSiteId(),'');
+
+    sites.cancelSessionAttempt(first);
+    await new Promise(r=>setImmediate(r));
+    assert.equal(native.state.attemptRecord.state,'logged-out','late cancellation must not clear the durable logout marker');
+
+    const reentry=await sites.beginSessionAttempt('synthetic-owner','epoch-2',()=>true,()=>true);
+    assert.ok(reentry.generation>first.generation);
+    assert.equal(reentry.previousSiteId,undefined);
+    assert.equal(await sites.getStoredCurrentSiteId(),'','an incomplete re-entry cannot restore a prior candidate');
 });
 
 test('native contract fixture accepts a valid synthetic token and creates one session without cancellation',async()=>{
-    const gate=deferred(),native=nativeHandler(gate);
-    const accepted=native.accept('moodlemobile://token=synthetic-a');
-    gate.resolve({siteurl:'https://academico.ava.ifrn.edu.br',username:'synthetic-A'});
-    await accepted;
-    assert.deepEqual({current:native.sites.currentSite.id,...native.state},
-        {current:'synthetic-site-a',persisted:1,logins:1,navigations:1});
+    const gate=deferred(),native=realNativeHandler(() => gate);
+    const {MoodleSiteService,state}=loadService({coreHandler:native.accept,coreSites:native.sites});
+    const service=Object.create(MoodleSiteService.prototype);
+    service.courseOAuthBrowserSubscriptions=[];
+    service.getExpectedIdentityCandidates=()=>[{key:'perfil.matricula',value:state().session.get('ifrn_painel_owner')}];
+    const pending=service.openCourseOAuthInApp({siteUrl:'https://academico.ava.ifrn.edu.br',config:{}});
+    await new Promise(r=>setImmediate(r));
+    state().subscriptions.get('beforeload')({url:'moodlemobile://token=synthetic-a'});
+    await new Promise(r=>setImmediate(r));
+    gate.resolve({siteurl:'https://academico.ava.ifrn.edu.br',username:'synthetic-owner'});
+    await pending;
+    assert.deepEqual({current:native.sites.currentSite.id,persisted:native.state.persisted,
+        logins:native.state.logins,navigations:native.state.navigations},
+        {current:'synthetic-a-synthetic-owner',persisted:1,logins:1,navigations:1});
 });

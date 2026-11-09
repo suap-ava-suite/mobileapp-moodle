@@ -1,0 +1,69 @@
+{
+  "schema": "ifrn-core-patch/v1",
+  "id": "ifrn-p0.4-session-isolation.v1",
+  "baseCommit": "4942598b6",
+  "patchPath": "src/MoodleIFRN/patches/p0.4-session-isolation.patch",
+  "patchSha256": "777dc0627d17bfd0ca9ec885207e481cd023d5b120ceff3f50c491abda53824b",
+  "targets": [
+    {
+      "path": "cordova-plugin-moodleapp/src/android/SecureStorage.java",
+      "baseSha256": "c84b2c946e083f039cb9ec7b953141cae14bb7d731fce96246db7d3b6c875dd2",
+      "postSha256": "4b9c0f9e2efcd228fa0926921cddbb32f0d6da83525c7a62c4ff656888f5be01"
+    },
+    {
+      "path": "cordova-plugin-moodleapp/src/ios/SecureStorage.m",
+      "baseSha256": "a78e54bb6e842f37ba6edee904c2e8e27b5adae88ce93aab4dc1602276d0016b",
+      "postSha256": "1ce996c8e94b1e30e238b6c4c335b7a835ff14db176e8647b4ee4d8522f189f6"
+    },
+    {
+      "path": "cordova-plugin-moodleapp/src/ts/plugins/SecureStorage.ts",
+      "baseSha256": "fca2798559066a796433beeb715a76660e51ca66ae433e90e102fc017f49c8d7",
+      "postSha256": "3b3891678c6e9ef7398915fce93e4b1fc71a552b164d5c86d8170ab5514c39af"
+    },
+    {
+      "path": "src/core/classes/database/database-table-proxy.ts",
+      "baseSha256": "426954343fbef017300adb1fc46277e51d8870d837ab9f7dc1a5da1e0db44f35",
+      "postSha256": "49daf5b257c65582a45faf8412420efc0905d4c8c3a3ffe2bed881ec307cc7d8"
+    },
+    {
+      "path": "src/core/classes/database/database-table.ts",
+      "baseSha256": "4def63310e1d4c80ca6014b0659852f2cb323943c96c8cd76351ba42988b4447",
+      "postSha256": "72febd3d0378df676d3cd5ca5b8d8cfa121ef0c8672d2ef5473cc0fbf01fef59"
+    },
+    {
+      "path": "src/core/classes/database/eager-database-table.ts",
+      "baseSha256": "f7cfbe78b5922ba11b8986943d97e1ed9e203af0175789038b6c7c2945c49ec9",
+      "postSha256": "d7f93cf0174312f7d109e992a5d93905d37c43cb069422ef81d2c2721e228690"
+    },
+    {
+      "path": "src/core/classes/tests/database-table.test.ts",
+      "baseSha256": "fc45ade457b110e94ee76ec1dc2a7fc2bd9099bafc0d16853fe0f5eaebe66069",
+      "postSha256": "4675646c250cc3e7e09e05f3dd74112c43a646e956e5d8e9fd0b8f632ada033b"
+    },
+    {
+      "path": "src/core/features/emulator/classes/SecureStorage.ts",
+      "baseSha256": "957f7b163c8450ee438acb50bc5f20c7517fd41b1efc31fae7eb1338484d0f3d",
+      "postSha256": "dbfa5fefbd05325d5fb8081ea411dab30d72184d692660b6b58905ecbda65b86"
+    },
+    {
+      "path": "src/core/services/database/sites.ts",
+      "baseSha256": "6b5dc665996056d5d6754f50240e9a5e372d2a28fd013c1275a91f0262283709",
+      "postSha256": "dcba9ac25ecafdcae903c0358586b3e7b6370199e587045c0c606eed34c588b3"
+    },
+    {
+      "path": "src/core/services/sites.ts",
+      "baseSha256": "8a2d0d27df80ca48817348bce2113fa7a54b959231e598d5097692f2b53ab13d",
+      "postSha256": "acef5f83d9a2fa979aa02a05f364208b3b40a74f39b03fa8ed6bbc8d8d163973"
+    },
+    {
+      "path": "src/core/services/urlschemes.ts",
+      "baseSha256": "4fb889bbefab9366749f298e5a69b4f179cfa75800e586c64f1b0a1673a9b44c",
+      "postSha256": "5f39d8dbcbe1baa5cb3d7cc44d9a0872f8420a7acb5cd5e58970bfef6428e37d"
+    },
+    {
+      "path": "src/core/static/events.ts",
+      "baseSha256": "19e6278786dfb300f90e390ccbba9d51688702b02308c386aff708ce788b3372",
+      "postSha256": "05dc708d6e524dcc22a2f3ed90706dc978f176e8cfb2478caa1e9f5f224fc49b"
+    }
+  ]
+}

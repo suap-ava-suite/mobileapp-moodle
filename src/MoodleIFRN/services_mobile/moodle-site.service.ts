@@ -32,7 +32,7 @@ import {
 import { markNativeSuapEntryAuthenticated } from '@/MoodleIFRN/navigation/suap-entry-state';
 import { isNativeMoodleLanding } from '@/MoodleIFRN/navigation/navigation-policy';
 import { CoreNavigator, CoreRedirectPayload } from '@services/navigator';
-import { CoreSites, CoreSiteCheckResponse } from '@services/sites';
+import { CoreSites, CoreSiteCheckResponse, CoreSitesSessionAttempt } from '@services/sites';
 import { CoreSitesFactory } from '@services/sites-factory';
 import { CoreConfig } from '@services/config';
 import { CoreCustomURLSchemes } from '@services/urlschemes';
@@ -646,6 +646,8 @@ export class MoodleSiteService {
     };
     private oauthPreparation?: Promise<'switched' | 'opened' | 'already-active'>;
     private courseOAuthBrowser?: InAppBrowserObject;
+    private courseCoreSessionAttempt?: CoreSitesSessionAttempt;
+
     private cancelSilentCourseSso?: () => void;
     private courseSsoGeneration = 0;
     private courseSsoCleanup?: Promise<void>;
@@ -837,6 +839,10 @@ export class MoodleSiteService {
     /** Fecha somente o InAppBrowser de OAuth dos cursos e descarta o launch pendente. */
     cancelCourseOAuthBrowser(): void {
         this.courseSsoGeneration = (this.courseSsoGeneration || 0) + 1;
+        if (this.courseCoreSessionAttempt) {
+            CoreSites.cancelSessionAttempt(this.courseCoreSessionAttempt);
+            this.courseCoreSessionAttempt = undefined;
+        }
         const cancel = this.cancelSilentCourseSso;
         cancel?.();
         this.cancelSilentCourseSso = undefined;
@@ -2266,34 +2272,66 @@ export class MoodleSiteService {
         }
         const login = new URL('auth/suap/login.php', `${siteCheck.siteUrl.replace(/\/$/, '')}/`);
         login.searchParams.set('next', launchUrl);
-        const flow = startCourseSsoBrowser({
-            loginUrl: login.href,
-            launchUrl,
-            siteUrl: siteCheck.siteUrl,
+        const attemptOwner = (panelOwner || sessionStorage.getItem('ifrn_username') || '').trim().toLowerCase();
+        const ownerEpoch = epoch || '0';
+        const identityCandidates = this.getExpectedIdentityCandidates();
+        if (!attemptOwner || !identityCandidates.length) {
+            throw new Error('Não foi possível confirmar a identidade SUAP para iniciar a sessão Moodle.');
+        }
+        const coreAttempt = await CoreSites.beginSessionAttempt(
+            attemptOwner,
+            ownerEpoch,
             isCurrent,
-            // Instância isolada: o dispatcher global do IAB pode encaminhar esquemas a apps externos.
-            open: url => InAppBrowser.create(url, '_blank', {
-                hidden: 'yes', location: 'no', footer: 'no', toolbar: 'no',
-                clearcache: 'no', clearsessioncache: 'no', beforeload: 'get',
-                // Hook Android: mantém o UA normal do WebView só nesta janela.
-                // Evita sessões particionadas duplicadas no retorno OAuth do Moodle.
-                ...{ omitappuseragent: 'yes' },
-                usewkwebview: 'yes',
-            }),
-            isToken: url => CoreCustomURLSchemes.isCustomURLToken(url),
-            acceptToken: async (url, attempt) => {
-                attempt.assertActive();
-                this.oauthCallbackReceived = true;
-                // O núcleo continua validando passport, site e token; LOGIN valida a identidade.
-                await CoreCustomURLSchemes.handleCustomURL(url);
-                attempt.assertActive();
-            },
-        });
+            username => matchMoodleAgainstCandidates(username, identityCandidates).matches,
+        );
+        if (!isCurrent()) {
+            CoreSites.cancelSessionAttempt(coreAttempt);
+            throw new Error('A tentativa de conexão foi cancelada.');
+        }
+        this.courseCoreSessionAttempt = coreAttempt;
+        let flow: ReturnType<typeof startCourseSsoBrowser>;
+        try {
+            flow = startCourseSsoBrowser({
+                loginUrl: login.href,
+                launchUrl,
+                siteUrl: siteCheck.siteUrl,
+                isCurrent,
+                // Instância isolada: o dispatcher global do IAB pode encaminhar esquemas a apps externos.
+                open: url => InAppBrowser.create(url, '_blank', {
+                    hidden: 'yes', location: 'no', footer: 'no', toolbar: 'no',
+                    clearcache: 'no', clearsessioncache: 'no', beforeload: 'get',
+                    // Hook Android: mantém o UA normal do WebView só nesta janela.
+                    // Evita sessões particionadas duplicadas no retorno OAuth do Moodle.
+                    ...{ omitappuseragent: 'yes' },
+                    usewkwebview: 'yes',
+                }),
+                isToken: url => CoreCustomURLSchemes.isCustomURLToken(url),
+                acceptToken: async (url, attempt) => {
+                    attempt.assertActive();
+                    this.oauthCallbackReceived = true;
+                    // O núcleo continua validando passport, site e token; LOGIN valida a identidade.
+                    await CoreCustomURLSchemes.handleCustomURL(url, coreAttempt);
+                    attempt.assertActive();
+                    if (!CoreSites.isSessionAttemptCurrent(coreAttempt) || coreAttempt.state !== 'committed') {
+                        throw new Error('A tentativa de sessão Moodle não foi confirmada.');
+                    }
+                },
+            });
+        } catch (error) {
+            CoreSites.cancelSessionAttempt(coreAttempt);
+            if (this.courseCoreSessionAttempt === coreAttempt) {
+                this.courseCoreSessionAttempt = undefined;
+            }
+            throw error;
+        }
         this.courseOAuthBrowser = flow.browser;
         this.cancelSilentCourseSso = flow.cancel;
         try {
             await flow.completion;
         } catch (error) {
+            if (coreAttempt.state !== 'committed') {
+                CoreSites.cancelSessionAttempt(coreAttempt);
+            }
             if (isCurrent()) {
                 this.oauthCallbackReceived = false;
                 this.courseSsoCleanup = CoreConfig.delete(LOGIN_SSO_LAUNCH_DATA).catch(() => undefined);
@@ -2301,6 +2339,9 @@ export class MoodleSiteService {
             }
             throw error;
         } finally {
+            if (this.courseCoreSessionAttempt === coreAttempt) {
+                this.courseCoreSessionAttempt = undefined;
+            }
             if (this.courseSsoGeneration === generation && this.courseOAuthBrowser === flow.browser) {
                 this.courseOAuthBrowser = undefined;
                 this.cancelSilentCourseSso = undefined;
