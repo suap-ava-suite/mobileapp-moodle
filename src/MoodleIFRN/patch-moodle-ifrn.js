@@ -494,12 +494,6 @@ function patchPackageScripts() {
 function patchIndexEarlyHandoff() {
     let content = readFile(FILES.indexHtml);
 
-    // Copia o script desativado para assets públicos caso ainda haja referência legada.
-    const assetDir = path.join(PROJECT_ROOT, 'src/assets/MoodleIFRN/navigation');
-    const srcScript = path.join(SCRIPT_DIR, 'navigation/early-course-handoff.js');
-    fs.mkdirSync(assetDir, { recursive: true });
-    fs.copyFileSync(srcScript, path.join(assetDir, 'early-course-handoff.js'));
-
     if (content.includes(MARKER.earlyHandoffStart) && content.includes(MARKER.earlyHandoffEnd)) {
         content = replaceBetweenMarkers(
             content,

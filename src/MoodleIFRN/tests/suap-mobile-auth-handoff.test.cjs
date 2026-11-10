@@ -49,6 +49,7 @@ test('build patch reserves only the exact app callback before Moodle site creati
 
     assert.match(patcher, /patchMobileAuthCallback/);
     assert.match(patcher, /--mobile-auth-callback-only/);
+    assert.doesNotMatch(patcher, /src\/assets\/MoodleIFRN\/navigation/);
     assert.match(core, /callback\.hostname === 'ifrn-auth' && callback\.pathname === '\/callback'/);
     assert.ok(core.indexOf("callback.hostname === 'ifrn-auth'") < core.indexOf('if (!this.isCustomURL(url))'));
 });
