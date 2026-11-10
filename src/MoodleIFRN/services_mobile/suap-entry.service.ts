@@ -485,11 +485,11 @@ export class SuapEntryService {
             localStorage.removeItem('ifrn_painel_token');
             this.biometricService.disable();
             this.cancel();
-            // Refresh the confirmed profile before navigating so the Panel
-            // consumes the current short display name instead of a stale cache.
-            await this.painel.refreshSavedProfile();
-            // Vincula a dispensa ao proprietário validado no mesmo resultado do login.
+            // O perfil e o nome de exibição já foram validados junto com a
+            // identidade e persistidos acima. Não aguarde outra ida ao navegador
+            // antes de abrir o Painel; a tela revalida o perfil em segundo plano.
             this.authService.openMobileMoodle('/painel');
+            void this.painel.refreshSavedProfile().catch(() => undefined);
         } catch (error) {
             for (const { storage, values } of backup) {
                 for (const { key, value: old } of values) {

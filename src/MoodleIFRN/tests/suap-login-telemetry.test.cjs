@@ -97,14 +97,15 @@ test('production and testing builds suppress timing messages', () => {
     assert.deepEqual(telemetry.defaultLogs, []);
 });
 
-test('profile is revalidated before the Angular login flow navigates to the Panel', () => {
+test('profile refresh does not block navigation to the Panel after verified profile persistence', () => {
     const painel = fs.readFileSync('src/MoodleIFRN/services_mobile/painel-ava.service.ts', 'utf8');
     const suap = fs.readFileSync('src/MoodleIFRN/services_mobile/suap-entry.service.ts', 'utf8');
 
     assert.match(painel, /if \(consumeFreshPanelProfile\(savedProfile\.identity\)\) \{\s*return Promise\.resolve\(false\);/);
     assert.doesNotMatch(suap, /markFreshPanelProfile\(ownerKey\)/);
     assert.match(painel, /refreshSavedProfileNames\(data\.profile, data\.url, origin, true,[\s\S]*?markFreshPanelProfile\(savedProfile\.identity\)/);
-    assert.match(suap, /await this\.painel\.refreshSavedProfile\(\);[\s\S]*?this\.authService\.openMobileMoodle\('\/painel'\);/);
+    assert.match(suap, /this\.authService\.openMobileMoodle\('\/painel'\);\s*void this\.painel\.refreshSavedProfile\(\)\.catch\(\(\) => undefined\);/);
+    assert.match(suap, /profile: mergeVerifiedPanelProfile\(profile, panel\.diagnosticProfile, identity\),[\s\S]*?this\.authService\.openMobileMoodle\('\/painel'\);/);
     assert.match(suap, /cancel\(\): void \{\s*clearFreshPanelProfile\(\);/);
 });
 
@@ -141,7 +142,7 @@ test('actual profile refresh method skips the redundant browser after successful
     assert.equal(browserOpens, 0);
 });
 
-test('actual SUAP commit refreshes the profile before navigating to the Panel', async () => {
+test('actual SUAP commit starts profile refresh after navigating to the Panel', async () => {
     const suapSource = fs.readFileSync('src/MoodleIFRN/services_mobile/suap-entry.service.ts', 'utf8');
     const ast = ts.createSourceFile('suap-entry.service.ts', suapSource, ts.ScriptTarget.Latest, true);
     const methods = new Map();
@@ -200,5 +201,5 @@ test('actual SUAP commit refreshes the profile before navigating to the Panel', 
     assert.equal(session.getItem('ifrn_painel_owner'), '20232014050033');
     assert.equal(JSON.parse(session.getItem('ifrn_painel_dashboard')).diarios[0].id, 43);
     assert.equal(harness.route, '/painel');
-    assert.deepEqual(context.refreshOrder, ['refresh', 'navigate']);
+    assert.deepEqual(context.refreshOrder, ['navigate', 'refresh']);
 });
