@@ -60,8 +60,8 @@ test('Gov.br redirect is stopped before WebView navigation and shown inside the 
     assert.match(marketplace, /error\.message === GOVBR_MOBILE_UNAVAILABLE_MESSAGE/);
     assert.match(template, /@if \(govBrUnavailable\)/);
     assert.match(template, /welcome__govbr-card--screen/);
-    assert.match(template, /Você voltou ao Moodle IFRN/);
-    assert.match(template, /não cria uma sessão no Painel AVA/);
+    assert.doesNotMatch(template, /govBrBrowserReturned|Você voltou ao Moodle IFRN|não cria uma sessão no Painel AVA/);
+    assert.match(marketplace, /this\.govBrUnavailable = false;/);
     assert.doesNotMatch(template, /Abrir Gov\.br no navegador/);
     assert.doesNotMatch(template, /Tentar abrir Gov\.br novamente/);
     assert.match(template, /Voltar ao login SUAP no app/);

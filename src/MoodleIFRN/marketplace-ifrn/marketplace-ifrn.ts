@@ -52,7 +52,6 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     private readonly govBrUnavailableState = signal(false);
     private readonly govBrBrowserOpenedState = signal(false);
     private readonly govBrBrowserOpeningState = signal(false);
-    private readonly govBrBrowserReturnedState = signal(false);
     private readonly govBrBrowserErrorState = signal('');
     private readonly statusMessageState = signal('');
 
@@ -70,8 +69,6 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     set govBrBrowserOpened(value: boolean) { this.govBrBrowserOpenedState.set(value); }
     get govBrBrowserOpening(): boolean { return this.govBrBrowserOpeningState(); }
     set govBrBrowserOpening(value: boolean) { this.govBrBrowserOpeningState.set(value); }
-    get govBrBrowserReturned(): boolean { return this.govBrBrowserReturnedState(); }
-    set govBrBrowserReturned(value: boolean) { this.govBrBrowserReturnedState.set(value); }
     get govBrBrowserError(): string { return this.govBrBrowserErrorState(); }
     set govBrBrowserError(value: string) { this.govBrBrowserErrorState.set(value); }
     get statusMessage(): string { return this.statusMessageState(); }
@@ -87,8 +84,7 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
             this.govBrBrowser.onBrowserReturned();
             this.govBrBrowserOpening = false;
             this.govBrBrowserOpened = false;
-            this.govBrBrowserReturned = true;
-            this.govBrUnavailable = true;
+            this.govBrUnavailable = false;
         });
     };
 
@@ -273,7 +269,6 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         this.govBrUnavailable = false;
         this.govBrBrowserOpened = false;
         this.govBrBrowserOpening = false;
-        this.govBrBrowserReturned = false;
         this.govBrBrowserError = '';
         this.loading = true;
         this.waitingBrowser = false;
@@ -299,7 +294,6 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
             this.govBrUnavailable = error instanceof Error && error.message === GOVBR_MOBILE_UNAVAILABLE_MESSAGE;
             openGovBrImmediately = this.govBrUnavailable;
             this.govBrBrowserOpened = false;
-            this.govBrBrowserReturned = false;
             this.govBrBrowserError = '';
             this.formError = this.govBrUnavailable ? ''
                 : error instanceof Error ? error.message : 'Não foi possível entrar. Tente novamente.';
@@ -350,14 +344,12 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
 
         this.govBrBrowserOpening = true;
         this.govBrBrowserError = '';
-        this.govBrBrowserReturned = false;
         try {
             await this.govBrBrowser.open(redirectUrl, () => {
                 this.zone.run(() => {
                     this.govBrBrowserOpening = false;
                     this.govBrBrowserOpened = false;
-                    this.govBrBrowserReturned = true;
-                    this.govBrUnavailable = true;
+                    this.govBrUnavailable = false;
                 });
             });
             this.govBrBrowserError = '';
@@ -377,7 +369,6 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
 
         this.govBrUnavailable = false;
         this.govBrBrowserOpened = false;
-        this.govBrBrowserReturned = false;
         this.govBrBrowserError = '';
         this.painelAvaService.clearGovBrRedirectUrl();
         this.formError = '';
@@ -433,7 +424,6 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         this.painelAvaService.clearGovBrRedirectUrl();
         this.govBrUnavailable = false;
         this.govBrBrowserOpened = false;
-        this.govBrBrowserReturned = false;
         this.waitingBrowser = false;
         this.loading = false;
         this.openingPainel = false;

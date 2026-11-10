@@ -25,6 +25,16 @@ interface IfrnCustomTabsBridge {
     ): void;
 }
 
+interface CordovaRuntimeWithExec {
+    exec?: (
+        success: (mode: string) => void,
+        error: (message: string) => void,
+        service: string,
+        action: string,
+        args: string[],
+    ) => void;
+}
+
 declare global {
     interface Window {
         ifrnCustomTabs?: IfrnCustomTabsBridge;
@@ -78,11 +88,23 @@ export class GovBrBrowserService {
 
         this.opening = true;
         try {
-            const bridge = window.cordova ? window.ifrnCustomTabs : undefined;
+            const cordova = (window as unknown as { cordova?: CordovaRuntimeWithExec }).cordova;
+            const bridge = cordova ? window.ifrnCustomTabs ?? (cordova.exec ? {
+                open: (target: string, success: (mode: string) => void, error: (message: string) => void,
+                    returned?: () => void): void => {
+                    let opened = false;
+                    cordova.exec!(mode => {
+                        if (mode === 'browser-returned') {
+                            returned?.();
+                        } else if (!opened) {
+                            opened = true;
+                            success(mode);
+                        }
+                    }, error, 'IfrnCustomTabs', 'open', [target]);
+                },
+            } : undefined) : undefined;
             if (!bridge) {
-                window.open(url, '_system');
-
-                return 'external-browser';
+                throw new Error('A ponte do navegador seguro esta indisponivel nesta instalacao.');
             }
 
             const mode = await new Promise<string>((resolve, reject) => {

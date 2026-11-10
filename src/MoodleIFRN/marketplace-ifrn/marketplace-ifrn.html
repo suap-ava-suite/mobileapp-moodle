@@ -106,8 +106,7 @@
                             <p class="welcome__govbr-eyebrow">Autenticação oficial</p>
                             <h1 id="govbr-title">
                                 {{ govBrBrowserError ? 'Não foi possível abrir o navegador' :
-                                    (govBrBrowserReturned ? 'Você voltou ao Moodle IFRN' :
-                                        (govBrBrowserOpened ? 'Continue no navegador seguro' : 'Acessando o Gov.br')) }}
+                                    (govBrBrowserOpened ? 'Continue no navegador seguro' : 'Acessando o Gov.br') }}
                             </h1>
                         </div>
                     </div>
@@ -120,11 +119,6 @@
                     @if (govBrBrowserOpened) {
                         <p class="welcome__govbr-copy" role="status" aria-live="polite">
                             A autenticação está sendo feita no site oficial do Gov.br. O app não acessa suas credenciais.
-                        </p>
-                    }
-                    @if (govBrBrowserReturned) {
-                        <p class="welcome__govbr-copy" role="status" aria-live="polite">
-                            O retorno do navegador não cria uma sessão no Painel AVA. Para entrar no app, volte ao login SUAP.
                         </p>
                     }
                     @if (govBrBrowserError) {

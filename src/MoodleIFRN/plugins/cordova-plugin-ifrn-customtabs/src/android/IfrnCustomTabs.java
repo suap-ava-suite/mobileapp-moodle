@@ -2,16 +2,21 @@ package br.edu.ifrn.cordova.customtabs;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.net.Uri;
 import android.text.TextUtils;
 import androidx.browser.customtabs.CustomTabsClient;
+import androidx.browser.customtabs.CustomTabsService;
 import androidx.browser.customtabs.CustomTabsIntent;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /** Abre somente o endpoint oficial de autorização Gov.br no browser do sistema. */
 public final class IfrnCustomTabs extends CordovaPlugin {
@@ -76,8 +81,7 @@ public final class IfrnCustomTabs extends CordovaPlugin {
             return;
         }
 
-        String browserPackage = CustomTabsClient.getPackageName(cordova.getActivity(), null);
-        if (!TextUtils.isEmpty(browserPackage)) {
+        for (String browserPackage : getCustomTabsProviders()) {
             try {
                 CustomTabsIntent customTabs = new CustomTabsIntent.Builder()
                         .setShowTitle(true)
@@ -92,14 +96,31 @@ public final class IfrnCustomTabs extends CordovaPlugin {
             }
         }
 
-        try {
-            Intent externalBrowser = new Intent(Intent.ACTION_VIEW, uri);
-            cordova.getActivity().startActivity(externalBrowser);
-            sendOpened(callbackContext, "external-browser");
-        } catch (ActivityNotFoundException | SecurityException error) {
-            releaseOpening();
-            callbackContext.error("Não há navegador disponível para abrir a autenticação.");
+        releaseOpening();
+        callbackContext.error("Não há navegador com suporte a Custom Tabs disponível.");
+    }
+
+    private List<String> getCustomTabsProviders() {
+        ArrayList<String> packages = new ArrayList<>();
+        String preferred = CustomTabsClient.getPackageName(cordova.getActivity(), null);
+        if (!TextUtils.isEmpty(preferred)) {
+            packages.add(preferred);
         }
+
+        Intent serviceIntent = new Intent(CustomTabsService.ACTION_CUSTOM_TABS_CONNECTION);
+        List<ResolveInfo> services = cordova.getActivity().getPackageManager()
+                .queryIntentServices(serviceIntent, 0);
+        ArrayList<String> discovered = new ArrayList<>();
+        for (ResolveInfo service : services) {
+            if (service.serviceInfo != null && !TextUtils.isEmpty(service.serviceInfo.packageName)
+                    && !packages.contains(service.serviceInfo.packageName)) {
+                discovered.add(service.serviceInfo.packageName);
+            }
+        }
+        Collections.sort(discovered);
+        packages.addAll(discovered);
+
+        return packages;
     }
 
     private synchronized void releaseOpening() {

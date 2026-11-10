@@ -74,6 +74,39 @@ test('Android bridge opens the exact URL, exposes native mode, and rejects concu
     assert.equal(await nextAttempt, 'external-browser');
 });
 
+test('Cordova exec recupera a ponte nativa sem encaminhar a autenticação ao navegador externo', async () => {
+    const url = 'https://sso.acesso.gov.br/authorize?state=synthetic';
+    let nativeCall;
+    let externalOpenCount = 0;
+    const browserWindow = {
+        cordova: {
+            exec(success, error, service, action, args) {
+                nativeCall = { success, error, service, action, args };
+            },
+        },
+        open: () => externalOpenCount++,
+    };
+    const { GovBrBrowserService } = loadService(browserWindow);
+    const service = new GovBrBrowserService();
+    const opening = service.open(url);
+
+    assert.equal(nativeCall.service, 'IfrnCustomTabs');
+    assert.equal(nativeCall.action, 'open');
+    assert.deepEqual(Array.from(nativeCall.args), [url]);
+    nativeCall.success('custom-tab');
+    assert.equal(await opening, 'custom-tab');
+    assert.equal(externalOpenCount, 0);
+});
+
+test('Cordova com ponte indisponível falha sem abrir navegador externo', async () => {
+    let externalOpenCount = 0;
+    const { GovBrBrowserService } = loadService({ cordova: {}, open: () => externalOpenCount++ });
+    const service = new GovBrBrowserService();
+
+    await assert.rejects(service.open('https://sso.acesso.gov.br/authorize?state=synthetic'), /ponte do navegador seguro/i);
+    assert.equal(externalOpenCount, 0);
+});
+
 test('iOS Safari view reports dismissal without treating it as authentication', async () => {
     const url = 'https://sso.acesso.gov.br/authorize?state=synthetic';
     let resolveOpened;
@@ -123,6 +156,8 @@ test('Cordova plugin declares Safari Services for iOS while retaining the shared
     assert.match(androidSource, /result\.setKeepCallback\(true\)/);
     assert.match(androidSource, /public void onResume\(boolean multitasking\)/);
     assert.match(androidSource, /"browser-returned"/);
+    assert.match(androidSource, /queryIntentServices\(serviceIntent, 0\)/);
+    assert.doesNotMatch(androidSource, /Intent\.ACTION_VIEW/);
 });
 
 test('shared Cordova bridge separates browser-opened and browser-returned callbacks', () => {
@@ -145,24 +180,30 @@ test('shared Cordova bridge separates browser-opened and browser-returned callba
     assert.deepEqual(states, ['safari-view-controller', 'returned']);
 });
 
-test('fallback uses the system browser and permits retry after return or launch failure', async () => {
+test('sem uma ponte nativa o app falha fechado sem abrir navegador externo', async () => {
     const url = 'https://sso.acesso.gov.br/authorize?state=synthetic';
     const opened = [];
     const { GovBrBrowserService } = loadService({ open: (...args) => opened.push(args) });
     const service = new GovBrBrowserService();
 
-    assert.equal(await service.open(url), 'external-browser');
-    assert.equal(opened[0][0], url);
-    assert.equal(opened[0][1], '_system');
-    service.onBrowserReturned();
+    await assert.rejects(service.open(url), /ponte do navegador seguro/i);
+    assert.equal(opened.length, 0);
+});
 
+test('falha nativa libera nova tentativa sem trocar para navegador externo', async () => {
+    const url = 'https://sso.acesso.gov.br/authorize?state=synthetic';
     let attempt = 0;
-    const failureWindow = { open: () => {
+    const failureWindow = { cordova: { exec: (success, error) => {
         attempt++;
-        if (attempt === 1) throw new Error('synthetic launch failure');
-    } };
+        if (attempt === 1) {
+            error('synthetic launch failure');
+        } else {
+            success('custom-tab');
+        }
+    } } };
     const { GovBrBrowserService: ServiceWithFailure } = loadService(failureWindow);
     const failedService = new ServiceWithFailure();
-    await assert.rejects(failedService.open(url), /synthetic launch failure/);
-    assert.equal(await failedService.open(url), 'external-browser');
+    await assert.rejects(failedService.open(url), /navegador seguro/i);
+    assert.equal(await failedService.open(url), 'custom-tab');
+    assert.equal(attempt, 2);
 });
