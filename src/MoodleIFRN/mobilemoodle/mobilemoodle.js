@@ -2724,6 +2724,15 @@
       "sidebar-active-filters": "filter"
     };
     document.addEventListener("click", (event) => {
+      const profileLink = event.target instanceof Element ? event.target.closest("#profile-suap-link") : null;
+      if (profileLink) {
+        event.preventDefault();
+        closeModal();
+        if (!postIfrnHostMessage({ type: "MOODLE_IFRN_OPEN_SUAP_PROFILE" })) {
+          window.alert("N\xE3o foi poss\xEDvel abrir o Perfil SUAP dentro do aplicativo. Volte ao Painel e tente novamente.");
+        }
+        return;
+      }
       const button = event.target instanceof Element ? event.target.closest(actionSelector) : null;
       if (button && triggers[button.id]) {
         openModal(triggers[button.id]);

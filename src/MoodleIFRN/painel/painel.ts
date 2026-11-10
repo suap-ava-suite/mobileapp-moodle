@@ -12,6 +12,7 @@ import { resolveCourseSite } from '../mobilemoodle/core_mobile/course-target';
 import { CoreAlerts } from '@services/overlays/alerts';
 import { readPainelHostLayout } from '../navigation/painel-host-layout';
 import { reportSuapDuration } from '../services_mobile/suap-login-telemetry';
+import { SuapProfileBrowserService } from '../services_mobile/suap-profile-browser.service';
 
 export interface MoodleIfrnBridgeApi {
     openCourse: (courseId: number | string, courseName?: string, siteUrl?: string) => Promise<void>;
@@ -33,15 +34,21 @@ export class PainelPage implements OnInit, OnDestroy {
     private readonly authService = inject(AuthService);
     private readonly painelAva = inject(PainelAvaService);
     private readonly moodleSite = inject(MoodleSiteService);
+    private readonly suapProfileBrowser = inject(SuapProfileBrowserService);
     private openingCourse = false;
     private bridgeApi?: MoodleIfrnBridgeApi;
     private painelStartedAt = 0;
     private painelFrameLoadReported = false;
+    private destroyed = false;
 
     @ViewChild('painelFrame') painelFrame?: ElementRef<HTMLIFrameElement>;
 
     safePainelUrl?: SafeResourceUrl;
     private hostAppearanceObserver?: MutationObserver;
+    suapProfileScreenOpen = false;
+    suapProfileLoading = false;
+    suapProfileError = '';
+    private suapProfileInBrowser = false;
 
     ngOnInit(): void {
         this.painelStartedAt = performance.now();
@@ -104,8 +111,10 @@ export class PainelPage implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.destroyed = true;
         document.removeEventListener('resume', this.onAppResume);
         this.painelAva.stopProfileRefresh();
+        this.suapProfileBrowser.close();
         this.hostAppearanceObserver?.disconnect();
         this.unregisterBridge();
     }
@@ -160,8 +169,72 @@ export class PainelPage implements OnInit, OnDestroy {
             case 'MOODLE_IFRN_MARKETPLACE':
                 void this.handleGoToMarketplace();
                 break;
+            case 'MOODLE_IFRN_OPEN_SUAP_PROFILE':
+                this.openSuapProfile();
+                break;
         }
     };
+
+    private openSuapProfile(): void {
+        if (this.openingCourse || this.suapProfileLoading || this.suapProfileInBrowser) {
+            return;
+        }
+
+        this.suapProfileScreenOpen = true;
+        this.suapProfileLoading = true;
+        this.suapProfileError = '';
+        this.suapProfileBrowser.open({
+            onReady: () => {
+                if (this.destroyed) {
+                    return;
+                }
+                this.suapProfileLoading = false;
+                this.suapProfileInBrowser = true;
+                this.suapProfileScreenOpen = false;
+            },
+            onError: message => {
+                if (this.destroyed) {
+                    return;
+                }
+                this.suapProfileLoading = false;
+                this.suapProfileInBrowser = false;
+                this.suapProfileError = message;
+                this.suapProfileScreenOpen = true;
+            },
+            onExit: () => {
+                if (this.destroyed) {
+                    return;
+                }
+                this.suapProfileLoading = false;
+                this.suapProfileInBrowser = false;
+                if (!this.suapProfileError) {
+                    this.suapProfileScreenOpen = false;
+                }
+            },
+        });
+    }
+
+    retrySuapProfile(): void {
+        this.suapProfileError = '';
+        this.suapProfileInBrowser = false;
+        this.openSuapProfile();
+    }
+
+    closeSuapProfileScreen(): void {
+        this.suapProfileBrowser.close();
+        this.suapProfileScreenOpen = false;
+        this.suapProfileLoading = false;
+        this.suapProfileInBrowser = false;
+        this.suapProfileError = '';
+    }
+
+    onSuapProfileScreenDismiss(): void {
+        if (this.suapProfileInBrowser) {
+            return;
+        }
+
+        this.closeSuapProfileScreen();
+    }
 
     private async handleOpenCourse(
         courseId: number | string,

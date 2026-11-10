@@ -9,3 +9,41 @@
         (load)="onIframeLoad()">
     </iframe>
 </ion-content>
+
+<ion-modal
+    [isOpen]="suapProfileScreenOpen"
+    [backdropDismiss]="false"
+    cssClass="ifrn-suap-profile-modal"
+    (didDismiss)="onSuapProfileScreenDismiss()">
+    <ng-template>
+        <ion-header class="suap-profile-screen__header">
+            <ion-toolbar>
+                <ion-buttons slot="start">
+                    <ion-button aria-label="Voltar ao Painel" (click)="closeSuapProfileScreen()">
+                        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+                    </ion-button>
+                </ion-buttons>
+                <ion-title>Perfil SUAP</ion-title>
+            </ion-toolbar>
+        </ion-header>
+        <ion-content class="suap-profile-screen__content" [fullscreen]="true">
+            @if (suapProfileLoading) {
+                <div class="suap-profile-screen__state" role="status" aria-live="polite">
+                    <ion-spinner name="crescent" aria-label="Carregando Perfil SUAP"></ion-spinner>
+                    <p>Abrindo seu perfil oficial do SUAP…</p>
+                </div>
+            } @else if (suapProfileError) {
+                <div class="suap-profile-screen__state" role="alert">
+                    <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
+                    <p>{{ suapProfileError }}</p>
+                    <div class="suap-profile-screen__actions">
+                        <ion-button expand="block" (click)="retrySuapProfile()">Tentar novamente</ion-button>
+                        <ion-button expand="block" fill="outline" (click)="closeSuapProfileScreen()">
+                            Voltar ao Painel
+                        </ion-button>
+                    </div>
+                </div>
+            }
+        </ion-content>
+    </ng-template>
+</ion-modal>

@@ -6,7 +6,7 @@
  * openModal(type) clona o template correspondente (tpl-modal-*) e preenche
  * o painel #sidebar-modal. bindSidebar() liga os botões uma vez no boot.
  */
-import { App } from './namespace';
+import { App, postIfrnHostMessage } from './namespace';
 
 
     /** Rótulos exibidos no chip “FILTRADO POR:”. */
@@ -229,6 +229,19 @@ import { App } from './namespace';
             'sidebar-active-filters': 'filter',
         };
         document.addEventListener('click', (event) => {
+            const profileLink = event.target instanceof Element
+                ? event.target.closest<HTMLAnchorElement>('#profile-suap-link')
+                : null;
+            if (profileLink) {
+                event.preventDefault();
+                closeModal();
+                if (!postIfrnHostMessage({ type: 'MOODLE_IFRN_OPEN_SUAP_PROFILE' })) {
+                    window.alert('Não foi possível abrir o Perfil SUAP dentro do aplicativo. Volte ao Painel e tente novamente.');
+                }
+
+                return;
+            }
+
             const button = event.target instanceof Element
                 ? event.target.closest<HTMLElement>(actionSelector)
                 : null;

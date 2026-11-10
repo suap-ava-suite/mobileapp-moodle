@@ -30,3 +30,61 @@
     overflow: hidden;
     overscroll-behavior: none;
 }
+
+ion-modal.ifrn-suap-profile-modal {
+    --height: 100%;
+    --width: 100%;
+    --border-radius: 0;
+    --background: var(--ifrn-surface, #ffffff);
+}
+
+.suap-profile-screen__header ion-toolbar {
+    --background: var(--ifrn-primary, #1351b4);
+    --color: #ffffff;
+    --border-width: 0;
+}
+
+.suap-profile-screen__header ion-button {
+    --color: #ffffff;
+}
+
+.suap-profile-screen__content {
+    --background: var(--ifrn-surface, #ffffff);
+}
+
+.suap-profile-screen__state {
+    align-items: center;
+    box-sizing: border-box;
+    color: var(--ifrn-ink, #17324d);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    justify-content: center;
+    min-height: 100%;
+    padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+    text-align: center;
+}
+
+.suap-profile-screen__state ion-spinner {
+    color: var(--ifrn-primary, #1351b4);
+    height: 36px;
+    width: 36px;
+}
+
+.suap-profile-screen__state > ion-icon {
+    color: var(--ifrn-primary, #1351b4);
+    font-size: 40px;
+}
+
+.suap-profile-screen__state p {
+    line-height: 1.5;
+    margin: 0;
+    max-width: 34ch;
+}
+
+.suap-profile-screen__actions {
+    display: grid;
+    gap: 10px;
+    margin-top: 8px;
+    width: min(100%, 360px);
+}
