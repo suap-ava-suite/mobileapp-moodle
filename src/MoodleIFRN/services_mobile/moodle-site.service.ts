@@ -268,8 +268,33 @@ function safeLogPayload(payload: Record<string, unknown>): string {
             safe[key] = payload[key];
         }
     }
+    if (Array.isArray(payload.errorFrames)) {
+        safe.errorFrames = payload.errorFrames
+            .filter((frame): frame is string => typeof frame === 'string'
+                && /^[A-Za-z0-9_$.[\]<>-]{1,100}$/.test(frame))
+            .slice(0, 8);
+    }
 
     return JSON.stringify(safe);
+}
+
+/**
+ * Extract function names only; stack paths, URLs, query strings and error text are discarded.
+ *
+ * @param error Error whose stack should be reduced to function names.
+ * @returns Safe function names from up to eight stack frames.
+ */
+function safeErrorFrames(error: unknown): string[] {
+    const stack = (error as { stack?: unknown } | null)?.stack;
+    if (typeof stack !== 'string') {
+        return [];
+    }
+
+    return stack.split('\n').flatMap((line) => {
+        const frame = line.match(/^\s*at\s+(?:async\s+)?([A-Za-z0-9_$.[\]<>-]{1,100})(?:\s|\(|$)/)?.[1];
+
+        return frame ? [frame] : [];
+    }).slice(0, 8);
 }
 
 /**
@@ -303,6 +328,7 @@ function logSiteError(stage: string, error: unknown, context?: Record<string, un
         ...context,
         errorName: err?.name || (error instanceof Error ? error.constructor.name : typeof error),
         critical: err?.critical,
+        errorFrames: safeErrorFrames(error),
     }));
 }
 
@@ -1850,10 +1876,9 @@ export class MoodleSiteService {
             const enrolled = await attempt.stage('enrolments-cache-or-network', () => CoreCourses.getUserCourses(true, currentSiteId));
             courses = enrolled.map((course) => this.toCourseSummary(course));
         } catch (error) {
-            // eslint-disable-next-line no-console
-            console.error(COURSE_LOG, 'buscar cursos erro', safeLogPayload({
-                message: error instanceof Error ? error.message : String(error),
-            }));
+            logSiteError('course-enrolments', error, {
+                siteIdPresent: !!CoreSites.getCurrentSiteId(),
+            });
 
             throw error instanceof Error
                 ? error
@@ -1948,13 +1973,11 @@ export class MoodleSiteService {
                 }
             }
             // eslint-disable-next-line no-console
-            console.error(COURSE_LOG, 'getAndOpenCourse / navegação FALHOU', safeLogPayload({
+            logSiteError('course-native-helper-navigation', error, {
                 courseId,
                 siteIdPresent: !!siteId,
                 path: normalizeAppPath(CoreNavigator.getCurrentPath() || ''),
-                message: error instanceof Error ? error.message : String(error),
-                stack: error instanceof Error ? error.stack : undefined,
-            }));
+            });
             this.clearCourseOriginFlags();
             throw error;
         } finally {
@@ -2511,11 +2534,9 @@ export class MoodleSiteService {
             // getAndOpenCourse já navega para o curso nativo.
         } catch (error) {
             // eslint-disable-next-line no-console
-            console.error(COURSE_LOG, 'abrir curso pendente após OAuth falhou', safeLogPayload({
+            logSiteError('course-after-oauth-open', error, {
                 courseId: pending.courseId,
-                message: error instanceof Error ? error.message : String(error),
-                stack: error instanceof Error ? error.stack : undefined,
-            }));
+            });
             this.lastError = error instanceof Error
                 ? error.message
                 : 'Falha ao abrir o curso Moodle após autenticação.';

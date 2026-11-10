@@ -7,7 +7,7 @@ const test = require('node:test');
 function logging() {
     const source = fs.readFileSync('src/MoodleIFRN/services_mobile/moodle-site.service.ts', 'utf8');
     const ast = ts.createSourceFile('service.ts', source, ts.ScriptTarget.Latest, true);
-    const names = new Set(['sanitizeUrlForLog', 'safeLogPayload', 'logSiteError', 'logSiteDiagnostic', 'identityLog']);
+    const names = new Set(['sanitizeUrlForLog', 'safeLogPayload', 'safeErrorFrames', 'logSiteError', 'logSiteDiagnostic', 'identityLog']);
     const selected = ast.statements.filter(n => ts.isFunctionDeclaration(n) && names.has(n.name?.text))
         .map(n => n.getText(ast)).join('\n');
     const js = ts.transpileModule(selected, {compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;
@@ -28,10 +28,11 @@ for (const raw of [callback, `http://moodlemobile//token=${secret}`, `https://${
         assert.ok(!result.includes(secret), result);
     });
 }
-test('error logs omit free text, stack, debug details and unapproved context properties', () => {
+test('error logs keep stack function names but omit free text, paths, debug details and unapproved fields', () => {
     const log = logging();
     log.logSiteError('synthetic-stage', {name:secret,message:`password=${secret}`,critical:true,
-        stack:secret,debug:{code:secret,details:callback}}, {
+        stack:`CoreError: ${secret}\n    at CoreSitesProvider.getSite (https://suap.ifrn.edu.br/path?token=${secret}:1:2)\n    at async MoodleSiteService.ensureMatchingMoodleSession (file://${secret})`,
+        debug:{code:secret,details:callback}}, {
         token:secret,credentials:{password:secret},headers:{Authorization:`Bearer ${secret}`},
         courseId:42,siteUrl:`https://suap.ifrn.edu.br/${secret}?token=${secret}`,
     });
@@ -40,6 +41,9 @@ test('error logs omit free text, stack, debug details and unapproved context pro
     assert.match(output,/synthetic-stage/);
     assert.match(output,/critical/);
     assert.match(output,/42/);
+    assert.match(output,/CoreSitesProvider\.getSite/);
+    assert.match(output,/MoodleSiteService\.ensureMatchingMoodleSession/);
+    assert.ok(!output.includes('https://'));
 
     log.logSiteError('synthetic-type-error', Object.assign(new TypeError(secret), { critical: true }), {
         courseId: 42,
@@ -104,4 +108,11 @@ test('course bridge does not serialize raw errors or URLs into console logs', ()
     }
     visit(ast);
     assert.deepEqual(unsafe, []);
+});
+test('course opening failures route through the sanitized stack logger', () => {
+    const source = fs.readFileSync('src/MoodleIFRN/services_mobile/moodle-site.service.ts', 'utf8');
+    assert.match(source, /logSiteError\('course-enrolments', error/);
+    assert.match(source, /logSiteError\('course-native-helper-navigation', error/);
+    assert.match(source, /logSiteError\('course-after-oauth-open', error/);
+    assert.doesNotMatch(source, /console\.error\(COURSE_LOG,\s*'buscar cursos erro'/);
 });

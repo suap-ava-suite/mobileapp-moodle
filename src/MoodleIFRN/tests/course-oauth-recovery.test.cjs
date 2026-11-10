@@ -7,7 +7,7 @@ function load(file, mocks, extra = {}) {
     const js = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     }).outputText;
-    const context = { exports: {}, require: id => mocks[id] || {}, console, ...extra };
+    const context = { exports: {}, require: id => mocks[id] || {}, console, queueMicrotask, ...extra };
     vm.runInNewContext(js, context);
     return context.exports;
 }
@@ -20,8 +20,9 @@ test('selects SUAP by name, retaining the ID advertised by each environment', ()
     const academic = { name: 'suap', url: 'https://academico.ava.ifrn.edu.br/auth/oauth2/login.php?id=1' };
     assert.equal(selectSuapProvider([academic]), academic);
 });
-function setup() {
-    const timers = new Map(); let sequence = 0; let browserCalls = 0; let released = 0;
+function setup(platformReady = async () => {}) {
+    const timers = new Map(); let sequence = 0; let browserCalls = 0; let released = 0; let alertCalls = 0;
+    let ensureCalls = 0;
     const eventHandlers = new Map();
     let pending = { courseId: 2836, siteUrl: 'https://presencial.ava.ifrn.edu.br' };
     const service = {
@@ -32,7 +33,7 @@ function setup() {
         resumePendingOAuthCourse: async () => false,
         shouldResumeOAuthAfterSiteSwitch: () => false,
         consumeOAuthResume: () => false,
-        ensureSessionAndOpenCourse: async () => 'need-connect',
+        ensureSessionAndOpenCourse: async () => { ensureCalls++; return 'need-connect'; },
         startSuapOAuthLogin: async () => { browserCalls++; return 'opened'; },
         releaseOAuthBrowserWait: () => { released++; },
         hasCourseOAuthCallbackReceived: () => false,
@@ -55,18 +56,30 @@ function setup() {
             eventHandlers.set(event, callback);
             return { off() {} };
         } } },
-        '@services/platform': { CorePlatform: { ready: async () => {} } },
-        '@services/overlays/alerts': { CoreAlerts: { showError: async () => {} } },
+        '@services/platform': { CorePlatform: { ready: platformReady } },
+        '@services/overlays/alerts': { CoreAlerts: { showError: async () => { alertCalls++; } } },
     }, {
         setTimeout: (fn, ms) => { const id = ++sequence; timers.set(id, { fn, ms }); return id; },
         clearTimeout: id => timers.delete(id),
         window: { setTimeout: (fn, ms) => { const id = ++sequence; timers.set(id, { fn, ms }); return id; } },
     });
     return { page: new MoodleOpenCoursePage(), service, timers, navigator,
-        get browserCalls() { return browserCalls; }, get released() { return released; },
+        get browserCalls() { return browserCalls; }, get released() { return released; }, get alertCalls() { return alertCalls; },
+        get ensureCalls() { return ensureCalls; },
         emitIabExit() { eventHandlers.get('iab-exit')?.(); },
         get pending() { return pending; } };
 }
+test('course bridge keeps one inline error instead of duplicating it in a native alert', async () => {
+    const s = setup();
+    s.page.courseId = 2836;
+    s.service.ensureSessionAndOpenCourse = async () => { throw new Error('No records found.'); };
+
+    await s.page.tryOpenOrPromptConnect(false);
+
+    assert.equal(s.page.phase, 'error');
+    assert.equal(s.page.formError, 'Não foi possível localizar os dados locais necessários para abrir este curso. Tente novamente.');
+    assert.equal(s.alertCalls, 0);
+});
 test('missing browser return ends waiting and permits a new official attempt for the same environment', async () => {
     const s = setup(); await s.page.ionViewWillEnter();
     assert.equal(s.page.phase, 'waiting-browser'); assert.equal(s.page.loading, false);
@@ -198,6 +211,23 @@ test('session inspection failure displays an error without browser authenticatio
     assert.equal(s.browserCalls, 0);
     assert.equal(s.page.phase, 'error');
     assert.ok(s.page.formError);
+});
+test('fallback Angular entry and the matching Ionic lifecycle event initialize the course once', async () => {
+    let releasePlatform;
+    const s = setup(() => new Promise(resolve => { releasePlatform = resolve; }));
+
+    s.page.ngOnInit();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(typeof releasePlatform, 'function');
+
+    await s.page.ionViewWillEnter();
+    assert.equal(s.ensureCalls, 0, 'the matching Ionic event must not start a second pending entry');
+
+    releasePlatform();
+    await new Promise(resolve => setImmediate(resolve));
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(s.ensureCalls, 1);
+    assert.equal(s.browserCalls, 1);
 });
 test('releasing a stalled browser preserves the pending course, account checks and saved credentials', () => {
     const entries = new Map([

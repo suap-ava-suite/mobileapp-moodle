@@ -22,7 +22,6 @@ import {
     resolveMoodleSiteUrl,
 } from '@/MoodleIFRN/services_mobile/moodle-site.service';
 import { CoreNavigator } from '@services/navigator';
-import { CoreAlerts } from '@services/overlays/alerts';
 import { CorePlatform } from '@services/platform';
 
 /** Estados da ponte Painel → Moodle (bate com o template). */
@@ -65,18 +64,22 @@ export class MoodleOpenCoursePage implements OnDestroy {
     /** Evita segundo ngOnInit disparar o fluxo na mesma instância. */
     private initStarted = false;
     private entryVersion = 0;
+    private fallbackLifecycleActive = false;
+    private skipNextIonicEntry = false;
     private browserWaitTimer?: ReturnType<typeof setTimeout>;
 
     /**
      * Algumas navegações vindas do iframe do Painel montam a rota sem repassar
      * o lifecycle Ionic. Inicia a mesma entrada como fallback após o primeiro
-     * ciclo Angular; se o lifecycle normal rodar antes, entryVersion evita
-     * executar o fluxo duas vezes.
+     * ciclo Angular; se o fallback iniciar primeiro, ignora a chamada Ionic
+     * correspondente para não repetir a preparação do curso.
      */
     ngOnInit(): void {
         queueMicrotask(() => {
             if (this.entryVersion === 0) {
+                this.fallbackLifecycleActive = true;
                 void this.ionViewWillEnter();
+                this.fallbackLifecycleActive = false;
             }
         });
     }
@@ -90,6 +93,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
         // Invalida também awaits ainda pendentes: sair da ponte não pode
         // disparar OAuth ou recolocar a UI de erro depois em outra tela.
         this.entryVersion++;
+        this.skipNextIonicEntry = false;
         this.clearBrowserWait();
     }
 
@@ -134,6 +138,15 @@ export class MoodleOpenCoursePage implements OnDestroy {
     }
 
     async ionViewWillEnter(): Promise<void> {
+        if (this.skipNextIonicEntry && !this.fallbackLifecycleActive) {
+            this.skipNextIonicEntry = false;
+
+            return;
+        }
+        if (this.fallbackLifecycleActive) {
+            this.skipNextIonicEntry = true;
+        }
+
         this.clearBrowserWait();
         // O Ionic mantém a ponte em cache: cada toque precisa reler curso e ambiente.
         const entry = ++this.entryVersion;
@@ -323,11 +336,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
                 courseId: this.courseId,
             });
 
-            this.revealBridgeError(
-                error instanceof Error
-                    ? error.message
-                    : 'Não foi possível abrir o curso Moodle.',
-            );
+            this.revealBridgeError(this.getUserFacingError(error, 'Não foi possível abrir o curso Moodle.'));
             this.moodleSite.lastError = this.formError;
 
             // Se /main já abriu e o deep-link falhou, mostrar o erro e a opção
@@ -343,9 +352,6 @@ export class MoodleOpenCoursePage implements OnDestroy {
                     },
                 });
             }
-            void CoreAlerts.showError(error, {
-                default: 'Não foi possível abrir o curso Moodle.',
-            });
         } finally {
             if (entry !== this.entryVersion) {
                 return;
@@ -434,14 +440,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
                 courseId: this.courseId,
             });
 
-            this.revealBridgeError(
-                error instanceof Error
-                    ? error.message
-                    : 'Não foi possível iniciar a autenticação SUAP.',
-            );
-            void CoreAlerts.showError(error, {
-                default: 'Não foi possível iniciar a autenticação SUAP.',
-            });
+            this.revealBridgeError(this.getUserFacingError(error, 'Não foi possível iniciar a autenticação SUAP.'));
         } finally {
             if (entry !== this.entryVersion) {
                 return;
@@ -459,6 +458,24 @@ export class MoodleOpenCoursePage implements OnDestroy {
         this.formError = message;
         this.phase = 'error';
         this.moodleSite.hideNativeCourseHandoff();
+    }
+
+    /** Translate a known local database miss without exposing raw storage errors in the UI.
+     *
+     * @param error Error to display.
+     * @param fallback Generic message for non-Error values.
+     * @returns User-facing message.
+     */
+    private getUserFacingError(error: unknown, fallback: string): string {
+        const message = typeof error === 'object' && error !== null && 'message' in error
+            && typeof error.message === 'string'
+            ? error.message.trim()
+            : '';
+        if (/^No records found\.?$/i.test(message)) {
+            return 'Não foi possível localizar os dados locais necessários para abrir este curso. Tente novamente.';
+        }
+
+        return message || fallback;
     }
 
     private isBridgeInError(): boolean {
