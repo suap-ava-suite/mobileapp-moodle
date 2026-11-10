@@ -93,6 +93,7 @@ function loadService() {
         browser,
         nativeCalls,
         govUrls,
+        isAllowedInternalBrowserNavigation: module.exports.isAllowedInternalBrowserNavigation,
         isAllowedSuapProfileNavigation: module.exports.isAllowedSuapProfileNavigation,
         returnFromGov: () => govReturned?.(),
     };
@@ -113,6 +114,47 @@ test('Perfil SUAP aceita apenas HTTPS no host oficial, sem credenciais ou porta 
     ]) {
         assert.equal(isAllowedSuapProfileNavigation(url), false, url);
     }
+});
+
+test('páginas de ajuda aceitam seus hosts e links curtos exatos, sem liberar outros redirecionadores', () => {
+    const { isAllowedInternalBrowserNavigation } = loadService();
+    const helpPage = {
+        title: 'AVA (Moodle)',
+        url: 'https://bit.ly/41734xv',
+        allowedHosts: ['suap.ifrn.edu.br'],
+        allowedUrls: ['https://bit.ly/41734xv'],
+    };
+
+    assert.equal(isAllowedInternalBrowserNavigation(helpPage.url, helpPage), true);
+    assert.equal(isAllowedInternalBrowserNavigation('https://suap.ifrn.edu.br/accounts/login/', helpPage), true);
+    for (const url of [
+        'https://bit.ly/outro-link',
+        'https://suap.ifrn.edu.br.attacker.test/accounts/login/',
+        'http://suap.ifrn.edu.br/accounts/login/',
+        'https://user@suap.ifrn.edu.br/accounts/login/',
+        'https://suap.ifrn.edu.br:444/accounts/login/',
+    ]) {
+        assert.equal(isAllowedInternalBrowserNavigation(url, helpPage), false, url);
+    }
+});
+
+test('página de ajuda reutiliza o mesmo InAppBrowser e rejeita uma segunda janela simultânea', () => {
+    const { service, browser, nativeCalls } = loadService();
+    const page = {
+        title: 'Central de Ajuda',
+        url: 'https://ajuda.ead.ifrn.edu.br/',
+        allowedHosts: ['ajuda.ead.ifrn.edu.br'],
+    };
+    const states = [];
+
+    service.openPage(page, { onReady: () => states.push('ready'), onError: message => states.push(message), onExit: () => {} });
+    service.openPage(page, { onReady: assert.fail, onError: message => states.push(message), onExit: () => {} });
+
+    assert.equal(nativeCalls.length, 1);
+    assert.equal(nativeCalls[0].url, page.url);
+    assert.match(states[0], /já existe uma página aberta/i);
+    browser.emit('loadstop', { url: page.url });
+    assert.deepEqual(states.slice(1), ['ready']);
 });
 
 test('Perfil usa InAppBrowser interno, mantém cookies e mostra a página somente após o primeiro loadstop seguro', () => {
@@ -162,8 +204,13 @@ test('redirecionamento Gov.br fecha o InAppBrowser e usa somente o navegador seg
     const { service, browser, govUrls, returnFromGov } = loadService();
     const states = [];
     const govUrl = 'https://sso.acesso.gov.br/authorize?state=synthetic&authorization_id=synthetic';
+    const helpPage = {
+        title: 'AVA (Moodle)',
+        url: 'https://ajuda.ead.ifrn.edu.br/',
+        allowedHosts: ['ajuda.ead.ifrn.edu.br'],
+    };
 
-    service.open({ onReady: assert.fail, onError: message => states.push(message), onExit: () => states.push('exit') });
+    service.openPage(helpPage, { onReady: assert.fail, onError: message => states.push(message), onExit: () => states.push('exit') });
     browser.emit('beforeload', { url: govUrl });
     assert.equal(browser.loaded.length, 0);
     assert.equal(browser.closed, 1);
@@ -173,7 +220,7 @@ test('redirecionamento Gov.br fecha o InAppBrowser e usa somente o navegador seg
     assert.deepEqual(govUrls, [govUrl]);
     assert.deepEqual(states, []);
     returnFromGov();
-    assert.match(states[0], /autenticação Gov\.br/);
+    assert.match(states[0], /autenticação Gov\.br.*AVA \(Moodle\)/);
     assert.doesNotMatch(states[0], /synthetic|authorization_id/);
 });
 
@@ -183,6 +230,7 @@ test('o link do perfil envia um comando same-origin ao Angular sem target extern
     const bundle = fs.readFileSync(path.join(root, 'mobilemoodle', 'mobilemoodle.js'), 'utf8');
     const painel = fs.readFileSync(path.join(root, 'painel', 'painel.ts'), 'utf8');
     const template = fs.readFileSync(path.join(root, 'painel', 'painel.html'), 'utf8');
+    const serviceSource = fs.readFileSync(servicePath, 'utf8');
 
     assert.match(html, /id="profile-suap-link" href="https:\/\/suap\.ifrn\.edu\.br\/comum\/minha_conta\/"/);
     assert.doesNotMatch(html, /id="profile-suap-link"[^>]*target=/);
@@ -195,7 +243,14 @@ test('o link do perfil envia um comando same-origin ao Angular sem target extern
     assert.doesNotMatch(generatedHandler, /window\.open\s*\(/);
     assert.match(painel, /event\.origin !== window\.location\.origin/);
     assert.match(painel, /case 'MOODLE_IFRN_OPEN_SUAP_PROFILE':\s*this\.openSuapProfile\(\)/);
-    assert.match(template, /<ion-title>Perfil SUAP<\/ion-title>/);
+    assert.match(template, /<ion-title>\{\{ internalPageTitle \}\}<\/ion-title>/);
+    assert.match(serviceSource, /title: 'Perfil SUAP'/);
+    const helpBridgeCall = bundle.indexOf('MOODLE_IFRN_OPEN_HELP_LINK');
+    assert.notEqual(helpBridgeCall, -1, 'the generated panel bundle must include the Help bridge action');
+    const helpClickStart = bundle.lastIndexOf('if (helpLink)', helpBridgeCall);
+    const profileClickStart = bundle.indexOf('const profileLink', helpBridgeCall);
+    assert.ok(helpClickStart >= 0 && profileClickStart > helpClickStart);
+    assert.doesNotMatch(bundle.slice(helpClickStart, profileClickStart), /closeModal\(\)/);
     assert.match(template, /Tentar novamente/);
     assert.match(template, /Voltar ao Painel/);
 });

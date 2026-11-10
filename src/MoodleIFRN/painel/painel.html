@@ -11,34 +11,34 @@
 </ion-content>
 
 <ion-modal
-    [isOpen]="suapProfileScreenOpen"
+    [isOpen]="internalPageScreenOpen"
     [backdropDismiss]="false"
     cssClass="ifrn-suap-profile-modal"
-    (didDismiss)="onSuapProfileScreenDismiss()">
+    (didDismiss)="onInternalPageScreenDismiss()">
     <ng-template>
         <ion-header class="suap-profile-screen__header">
             <ion-toolbar>
                 <ion-buttons slot="start">
-                    <ion-button aria-label="Voltar ao Painel" (click)="closeSuapProfileScreen()">
+                    <ion-button aria-label="Voltar ao Painel" (click)="closeInternalPageScreen()">
                         <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
                     </ion-button>
                 </ion-buttons>
-                <ion-title>Perfil SUAP</ion-title>
+                <ion-title>{{ internalPageTitle }}</ion-title>
             </ion-toolbar>
         </ion-header>
         <ion-content class="suap-profile-screen__content" [fullscreen]="true">
-            @if (suapProfileLoading) {
+            @if (internalPageLoading) {
                 <div class="suap-profile-screen__state" role="status" aria-live="polite">
-                    <ion-spinner name="crescent" aria-label="Carregando Perfil SUAP"></ion-spinner>
-                    <p>Abrindo seu perfil oficial do SUAP…</p>
+                    <ion-spinner name="crescent" aria-label="Carregando conteúdo"></ion-spinner>
+                    <p>Abrindo {{ internalPageTitle }}…</p>
                 </div>
-            } @else if (suapProfileError) {
+            } @else if (internalPageError) {
                 <div class="suap-profile-screen__state" role="alert">
                     <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
-                    <p>{{ suapProfileError }}</p>
+                    <p>{{ internalPageError }}</p>
                     <div class="suap-profile-screen__actions">
-                        <ion-button expand="block" (click)="retrySuapProfile()">Tentar novamente</ion-button>
-                        <ion-button expand="block" fill="outline" (click)="closeSuapProfileScreen()">
+                        <ion-button expand="block" (click)="retryInternalPage()">Tentar novamente</ion-button>
+                        <ion-button expand="block" fill="outline" (click)="closeInternalPageScreen()">
                             Voltar ao Painel
                         </ion-button>
                     </div>

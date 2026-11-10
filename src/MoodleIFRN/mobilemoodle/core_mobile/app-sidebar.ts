@@ -229,6 +229,23 @@ import { App, postIfrnHostMessage } from './namespace';
             'sidebar-active-filters': 'filter',
         };
         document.addEventListener('click', (event) => {
+            const helpLink = event.target instanceof Element
+                ? event.target.closest<HTMLAnchorElement>('[data-ifrn-help-id]')
+                : null;
+            if (helpLink) {
+                event.preventDefault();
+                // Mantém a Ajuda aberta por baixo do InAppBrowser; ao voltar,
+                // o estudante retorna ao mesmo ponto do Painel.
+                const helpId = helpLink.dataset.ifrnHelpId;
+                if (!helpId || !postIfrnHostMessage({ type: 'MOODLE_IFRN_OPEN_HELP_LINK', helpId })) {
+                    window.alert(
+                        'Não foi possível abrir este item de ajuda dentro do aplicativo. Volte ao Painel e tente novamente.',
+                    );
+                }
+
+                return;
+            }
+
             const profileLink = event.target instanceof Element
                 ? event.target.closest<HTMLAnchorElement>('#profile-suap-link')
                 : null;

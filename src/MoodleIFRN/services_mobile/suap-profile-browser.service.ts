@@ -5,6 +5,20 @@ import { GovBrBrowserService, isGovBrAuthorizationUrl } from './govbr-browser.se
 
 export const SUAP_PROFILE_URL = 'https://suap.ifrn.edu.br/comum/minha_conta/';
 
+export interface InternalBrowserPage {
+    title: string;
+    url: string;
+    allowedHosts: readonly string[];
+    /** URLs exatas, usadas somente para redirecionadores conhecidos como links curtos. */
+    allowedUrls?: readonly string[];
+}
+
+export const SUAP_PROFILE_PAGE: InternalBrowserPage = {
+    title: 'Perfil SUAP',
+    url: SUAP_PROFILE_URL,
+    allowedHosts: ['suap.ifrn.edu.br'],
+};
+
 export interface SuapProfileBrowserHandlers {
     onReady: () => void;
     onError: (message: string) => void;
@@ -19,6 +33,7 @@ type SuapProfileBrowser = ReturnType<typeof CoreOpener.openInApp>;
 
 interface BrowserAttempt {
     id: number;
+    page: InternalBrowserPage;
     browser?: SuapProfileBrowser;
     handlers: SuapProfileBrowserHandlers;
     subscriptions: BrowserSubscription[];
@@ -34,6 +49,17 @@ interface BrowserAttempt {
  * @returns Se o destino pertence ao host oficial do SUAP.
  */
 export function isAllowedSuapProfileNavigation(candidate: string): boolean {
+    return isAllowedInternalBrowserNavigation(candidate, SUAP_PROFILE_PAGE);
+}
+
+/**
+ * Valida HTTPS somente para hosts ou URLs exatas configuradas pelo aplicativo.
+ *
+ * @param candidate URL recebida do InAppBrowser.
+ * @param page Configuração local da página aberta.
+ * @returns Se o destino está autorizado pela configuração local.
+ */
+export function isAllowedInternalBrowserNavigation(candidate: string, page: InternalBrowserPage): boolean {
     if (typeof candidate !== 'string' || !candidate || candidate.length > 8192 || candidate !== candidate.trim()) {
         return false;
     }
@@ -47,19 +73,33 @@ export function isAllowedSuapProfileNavigation(candidate: string): boolean {
 
     try {
         const url = new URL(candidate);
-
-        return url.protocol === 'https:'
-            && url.hostname.toLowerCase() === 'suap.ifrn.edu.br'
+        const secureWebUrl = url.protocol === 'https:'
             && !url.username
             && !url.password
             && (!url.port || url.port === '443');
+        if (!secureWebUrl) {
+            return false;
+        }
+
+        const host = url.hostname.toLowerCase();
+        if (page.allowedHosts.some(allowedHost => host === allowedHost.toLowerCase())) {
+            return true;
+        }
+
+        return page.allowedUrls?.some(allowedUrl => {
+            try {
+                return new URL(allowedUrl).href === url.href;
+            } catch {
+                return false;
+            }
+        }) ?? false;
     } catch {
         return false;
     }
 }
 
 /**
- * Gerencia a página oficial do Perfil SUAP em um InAppBrowser interno.
+ * Gerencia as páginas autorizadas do Painel e do Perfil SUAP em um InAppBrowser interno.
  * Não copia cookies, não lê conteúdo remoto e não envia a navegação ao Chrome.
  */
 @Injectable({ providedIn: 'root' })
@@ -73,14 +113,25 @@ export class SuapProfileBrowserService {
     private readonly govBrBrowser = inject(GovBrBrowserService);
 
     open(handlers: SuapProfileBrowserHandlers): void {
+        this.openPage(SUAP_PROFILE_PAGE, handlers);
+    }
+
+    openPage(page: InternalBrowserPage, handlers: SuapProfileBrowserHandlers): void {
+        if (!isAllowedInternalBrowserNavigation(page.url, page)) {
+            this.run(() => handlers.onError('O endereço solicitado não está autorizado para abertura interna.'));
+
+            return;
+        }
+
         if (this.attempt || this.secureGovBrowserOpening) {
-            this.run(() => handlers.onError('Já existe uma janela do Perfil SUAP aberta.'));
+            this.run(() => handlers.onError('Já existe uma página aberta dentro do aplicativo.'));
 
             return;
         }
 
         const attempt: BrowserAttempt = {
             id: ++this.nextAttemptId,
+            page,
             handlers,
             subscriptions: [],
             shown: false,
@@ -89,7 +140,7 @@ export class SuapProfileBrowserService {
         this.attempt = attempt;
 
         try {
-            attempt.browser = CoreOpener.openInApp(SUAP_PROFILE_URL, {
+            attempt.browser = CoreOpener.openInApp(page.url, {
                 beforeload: 'get',
                 clearcache: 'no',
                 clearsessioncache: 'no',
@@ -106,12 +157,12 @@ export class SuapProfileBrowserService {
             this.subscribe(attempt, 'loadstart', event => this.handleNavigation(attempt, event.url, false));
             this.subscribe(attempt, 'loadstop', event => this.handleLoadStop(attempt, event.url));
             this.subscribe(attempt, 'loaderror', () => this.fail(
-attempt,
-                'Não foi possível carregar o Perfil SUAP. Verifique a conexão e tente novamente.',
-));
+                attempt,
+                `Não foi possível carregar ${page.title}. Verifique a conexão e tente novamente.`,
+            ));
             this.subscribe(attempt, 'exit', () => this.finish(attempt));
         } catch {
-            this.fail(attempt, 'Não foi possível abrir o Perfil SUAP dentro do aplicativo.');
+            this.fail(attempt, `Não foi possível abrir ${page.title} dentro do aplicativo.`);
         }
     }
 
@@ -147,12 +198,12 @@ attempt,
 
     private handleNavigation(attempt: BrowserAttempt, url: string, paused: boolean): void {
         if (!url) {
-            this.fail(attempt, 'O SUAP solicitou um endereço inválido.');
+            this.fail(attempt, 'A página solicitou um endereço inválido.');
 
             return;
         }
 
-        if (isAllowedSuapProfileNavigation(url)) {
+        if (isAllowedInternalBrowserNavigation(url, attempt.page)) {
             if (paused) {
                 attempt.browser?._loadAfterBeforeload(url);
             }
@@ -166,11 +217,11 @@ attempt,
             return;
         }
 
-        this.fail(attempt, 'O Perfil SUAP tentou abrir um endereço não autorizado.');
+        this.fail(attempt, `${attempt.page.title} tentou abrir um endereço não autorizado.`);
     }
 
     private handleLoadStop(attempt: BrowserAttempt, url: string): void {
-        if (!isAllowedSuapProfileNavigation(url)) {
+        if (!isAllowedInternalBrowserNavigation(url, attempt.page)) {
             this.handleNavigation(attempt, url, false);
 
             return;
@@ -185,7 +236,7 @@ attempt,
             attempt.browser?.show();
             this.run(() => attempt.handlers.onReady());
         } catch {
-            this.fail(attempt, 'Não foi possível exibir o Perfil SUAP dentro do aplicativo.');
+            this.fail(attempt, `Não foi possível exibir ${attempt.page.title} dentro do aplicativo.`);
         }
     }
 
@@ -212,7 +263,7 @@ attempt,
         this.dispose(attempt);
 
         if (govRedirect) {
-            this.openSecureGovBrowser(govRedirect, attempt.handlers);
+            this.openSecureGovBrowser(govRedirect, attempt.handlers, attempt.page.title);
 
             return;
         }
@@ -220,12 +271,12 @@ attempt,
         this.run(() => attempt.handlers.onExit());
     }
 
-    private openSecureGovBrowser(url: string, handlers: SuapProfileBrowserHandlers): void {
+    private openSecureGovBrowser(url: string, handlers: SuapProfileBrowserHandlers, pageTitle: string): void {
         this.secureGovBrowserOpening = true;
         const returned = (): void => {
             this.secureGovBrowserOpening = false;
             this.run(() => handlers.onError(
-                'O SUAP solicitou autenticação Gov.br. Ao voltar, tente abrir o Perfil SUAP novamente.',
+                `O SUAP solicitou autenticação Gov.br. Ao voltar, tente abrir ${pageTitle} novamente.`,
             ));
         };
 

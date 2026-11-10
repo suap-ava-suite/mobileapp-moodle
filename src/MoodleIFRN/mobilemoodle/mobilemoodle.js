@@ -2724,6 +2724,15 @@
       "sidebar-active-filters": "filter"
     };
     document.addEventListener("click", (event) => {
+      const helpLink = event.target instanceof Element ? event.target.closest("[data-ifrn-help-id]") : null;
+      if (helpLink) {
+        event.preventDefault();
+        const helpId = helpLink.dataset.ifrnHelpId;
+        if (!helpId || !postIfrnHostMessage({ type: "MOODLE_IFRN_OPEN_HELP_LINK", helpId })) {
+          window.alert("N\xE3o foi poss\xEDvel abrir este item de ajuda dentro do aplicativo. Volte ao Painel e tente novamente.");
+        }
+        return;
+      }
       const profileLink = event.target instanceof Element ? event.target.closest("#profile-suap-link") : null;
       if (profileLink) {
         event.preventDefault();

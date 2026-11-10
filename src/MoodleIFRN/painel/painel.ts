@@ -12,7 +12,12 @@ import { resolveCourseSite } from '../mobilemoodle/core_mobile/course-target';
 import { CoreAlerts } from '@services/overlays/alerts';
 import { readPainelHostLayout } from '../navigation/painel-host-layout';
 import { reportSuapDuration } from '../services_mobile/suap-login-telemetry';
-import { SuapProfileBrowserService } from '../services_mobile/suap-profile-browser.service';
+import {
+    type InternalBrowserPage,
+    SUAP_PROFILE_PAGE,
+    SuapProfileBrowserService,
+} from '../services_mobile/suap-profile-browser.service';
+import { getPainelHelpLink } from '../services_mobile/painel-help-links';
 
 export interface MoodleIfrnBridgeApi {
     openCourse: (courseId: number | string, courseName?: string, siteUrl?: string) => Promise<void>;
@@ -45,10 +50,12 @@ export class PainelPage implements OnInit, OnDestroy {
 
     safePainelUrl?: SafeResourceUrl;
     private hostAppearanceObserver?: MutationObserver;
-    suapProfileScreenOpen = false;
-    suapProfileLoading = false;
-    suapProfileError = '';
-    private suapProfileInBrowser = false;
+    internalPageTitle = '';
+    internalPageScreenOpen = false;
+    internalPageLoading = false;
+    internalPageError = '';
+    private internalPageInBrowser = false;
+    private currentInternalPage?: InternalBrowserPage;
 
     ngOnInit(): void {
         this.painelStartedAt = performance.now();
@@ -172,68 +179,87 @@ export class PainelPage implements OnInit, OnDestroy {
             case 'MOODLE_IFRN_OPEN_SUAP_PROFILE':
                 this.openSuapProfile();
                 break;
+            case 'MOODLE_IFRN_OPEN_HELP_LINK':
+                this.openHelpLink(data.helpId);
+                break;
         }
     };
 
     private openSuapProfile(): void {
-        if (this.openingCourse || this.suapProfileLoading || this.suapProfileInBrowser) {
+        this.openInternalPage(SUAP_PROFILE_PAGE);
+    }
+
+    private openHelpLink(helpId: unknown): void {
+        const page = getPainelHelpLink(helpId);
+        if (!page) {
             return;
         }
 
-        this.suapProfileScreenOpen = true;
-        this.suapProfileLoading = true;
-        this.suapProfileError = '';
-        this.suapProfileBrowser.open({
+        this.openInternalPage(page);
+    }
+
+    private openInternalPage(page: InternalBrowserPage, retry = false): void {
+        if (this.openingCourse || this.internalPageLoading || this.internalPageInBrowser
+            || (this.internalPageScreenOpen && !retry)) {
+            return;
+        }
+
+        this.currentInternalPage = page;
+        this.internalPageTitle = page.title;
+        this.internalPageScreenOpen = true;
+        this.internalPageLoading = true;
+        this.internalPageError = '';
+        this.suapProfileBrowser.openPage(page, {
             onReady: () => {
                 if (this.destroyed) {
                     return;
                 }
-                this.suapProfileLoading = false;
-                this.suapProfileInBrowser = true;
-                this.suapProfileScreenOpen = false;
+                this.internalPageLoading = false;
+                this.internalPageInBrowser = true;
+                this.internalPageScreenOpen = false;
             },
             onError: message => {
                 if (this.destroyed) {
                     return;
                 }
-                this.suapProfileLoading = false;
-                this.suapProfileInBrowser = false;
-                this.suapProfileError = message;
-                this.suapProfileScreenOpen = true;
+                this.internalPageLoading = false;
+                this.internalPageInBrowser = false;
+                this.internalPageError = message;
+                this.internalPageScreenOpen = true;
             },
             onExit: () => {
                 if (this.destroyed) {
                     return;
                 }
-                this.suapProfileLoading = false;
-                this.suapProfileInBrowser = false;
-                if (!this.suapProfileError) {
-                    this.suapProfileScreenOpen = false;
+                this.internalPageLoading = false;
+                this.internalPageInBrowser = false;
+                if (!this.internalPageError) {
+                    this.internalPageScreenOpen = false;
                 }
             },
         });
     }
 
-    retrySuapProfile(): void {
-        this.suapProfileError = '';
-        this.suapProfileInBrowser = false;
-        this.openSuapProfile();
+    retryInternalPage(): void {
+        if (this.currentInternalPage) {
+            this.openInternalPage(this.currentInternalPage, true);
+        }
     }
 
-    closeSuapProfileScreen(): void {
+    closeInternalPageScreen(): void {
         this.suapProfileBrowser.close();
-        this.suapProfileScreenOpen = false;
-        this.suapProfileLoading = false;
-        this.suapProfileInBrowser = false;
-        this.suapProfileError = '';
+        this.internalPageScreenOpen = false;
+        this.internalPageLoading = false;
+        this.internalPageInBrowser = false;
+        this.internalPageError = '';
     }
 
-    onSuapProfileScreenDismiss(): void {
-        if (this.suapProfileInBrowser) {
+    onInternalPageScreenDismiss(): void {
+        if (this.internalPageInBrowser) {
             return;
         }
 
-        this.closeSuapProfileScreen();
+        this.closeInternalPageScreen();
     }
 
     private async handleOpenCourse(
