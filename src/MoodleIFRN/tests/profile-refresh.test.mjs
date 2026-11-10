@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { buildSync } from 'esbuild';
 import vm from 'node:vm';
+import { fileURLToPath } from 'node:url';
 
-const code = buildSync({entryPoints:['src/MoodleIFRN/mobilemoodle/core_mobile/profile-refresh.ts'], bundle:true,
+const code = buildSync({entryPoints:[fileURLToPath(new URL('../mobilemoodle/core_mobile/profile-refresh.ts', import.meta.url))], bundle:true,
     write:false, platform:'node', format:'cjs'}).outputFiles[0].text;
 const origin = 'https://ava.ifrn.edu.br';
 const key = 'ifrn_suap_oauth_profile_v1';
@@ -54,7 +55,7 @@ test('perfil idêntico não grava snapshots nem solicita recarregar o Painel',()
     for(let i=0;i<20;i++) {
         assert.equal(update(incoming,origin+'/api/v2/usuario/info/',origin,false,()=>{verified=true;}),false);
     }
-    assert.equal(verified,true);
+    assert.equal(verified,false);
     assert.equal(sessionStorage.writes + localStorage.writes,before);
     assert.equal(localStorage.getItem(key),saved);
     // Repara cópia persistida ausente sem obrigar a recarregar a tela inalterada.
@@ -80,6 +81,21 @@ test('não mistura contas, identidades conflitantes, respostas anônimas ou dom�
     const other=setup('https://painel.ead.ifrn.edu.br');
     assert.equal(other.update({id:7,matricula:'123',nome_usual:'Nome'},origin+'/api/v2/usuario/info/',origin,true),false);
 });
+
+test('resposta autenticada sem mudanca do nome nao marca o perfil como fresco',()=>{
+    const {update,localStorage}=setup();
+    let freshMarked=false;
+    assert.equal(update({id:7,matricula:'123',nome_usual:'Nome antigo'},origin+'/api/v2/usuario/info/',origin,false,
+        ()=>{freshMarked=true;}),false);
+    assert.equal(freshMarked,false);
+    const saved=JSON.parse(localStorage.getItem(key));
+    assert.equal(saved.profile.nome_usual,'Nome antigo');
+    assert.equal(saved.profile._name_source,'GET /api/v2/usuario/info/');
+    assert.equal(update({id:7,matricula:'123',nome_usual:'Nome correto'},origin+'/api/v2/usuario/info/',origin,false,
+        ()=>{freshMarked=true;}),true);
+    assert.equal(freshMarked,true);
+    assert.equal(JSON.parse(localStorage.getItem(key)).profile.nome_usual,'Nome correto');
+});
 test('migração de snapshot legado exige autorização explícita da origem e mantém expiração',()=>{
     const {update,localStorage,sessionStorage,old}=setup(null);
     const p={id:7,matricula:'123',nome_usual:'Nome atualizado'};
@@ -90,4 +106,11 @@ test('migração de snapshot legado exige autorização explícita da origem e m
     localStorage.setItem(key,JSON.stringify(expired));
     sessionStorage.setItem(key,JSON.stringify(expired));
     assert.equal(update(p,origin+'/api/v2/usuario/info/',origin,true),false);
+});
+
+test('nome_completo autenticado funciona como fallback quando os aliases estao ausentes',()=>{
+    const {update,localStorage}=setup();
+    assert.equal(update({id:7,matricula:'123',nome_completo:'Nome completo registrado'},
+        origin+'/api/v2/usuario/info/',origin,false),true);
+    assert.equal(JSON.parse(localStorage.getItem(key)).profile.nome_completo,'Nome completo registrado');
 });
