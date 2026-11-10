@@ -611,6 +611,9 @@ export class PainelAvaService {
             // Sem chrome do InAppBrowser; a tela SUAP ocupa também o inset superior.
             const browser = CoreOpener.openInApp(`${baseUrl}/`, {
                 ...PAINEL_IAB_CHROME,
+                // Intercepta o redirecionamento Gov.br antes de a URL ser
+                // carregada na WebView. As demais navegações continuam iguais.
+                beforeload: 'get',
                 clearcache: options.reuseSession ? 'no' : 'yes',
                 clearsessioncache: options.reuseSession ? 'no' : 'yes',
             });
@@ -627,6 +630,28 @@ export class PainelAvaService {
                 awaitingSuapIdentity = false;
                 subscriber.error(new Error(message));
             };
+
+            const beforeLoadSubscription = browser.on('beforeload').subscribe((event) => {
+                const url = event.url || '';
+                if (!url || finished) {
+                    return;
+                }
+
+                if (url.startsWith(`${suapOrigin}/`)) {
+                    hasEnteredSuapAuthentication = true;
+                }
+
+                if (hasEnteredSuapAuthentication && isGovBrAuthenticationUrl(url)) {
+                    this.govBrRedirectHandoff.capture(url);
+                    finishWithError(GOVBR_MOBILE_UNAVAILABLE_MESSAGE);
+
+                    return;
+                }
+
+                // O InAppBrowser pausa cada GET enquanto beforeload está ativo;
+                // libera os destinos normais sem alterar os redirecionamentos.
+                browser._loadAfterBeforeload(url);
+            });
 
             const finishWithDashboard = (
                 raw: unknown,
@@ -1183,6 +1208,7 @@ export class PainelAvaService {
 
             return () => {
                 finished = true;
+                beforeLoadSubscription.unsubscribe();
                 loadStartSubscription.unsubscribe();
                 loadStopSubscription.unsubscribe();
                 messageSubscription.unsubscribe();

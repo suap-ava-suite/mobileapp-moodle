@@ -110,6 +110,7 @@ test('Cordova plugin declares Safari Services for iOS while retaining the shared
     const pluginXml = fs.readFileSync(path.join(pluginRoot, 'plugin.xml'), 'utf8');
     const pluginPackage = JSON.parse(fs.readFileSync(path.join(pluginRoot, 'package.json'), 'utf8'));
     const iosSource = fs.readFileSync(path.join(pluginRoot, 'src', 'ios', 'IfrnSafariBrowser.m'), 'utf8');
+    const androidSource = fs.readFileSync(path.join(pluginRoot, 'src', 'android', 'IfrnCustomTabs.java'), 'utf8');
 
     assert.match(pluginXml, /<platform name="android">/);
     assert.match(pluginXml, /<platform name="ios">/);
@@ -119,6 +120,9 @@ test('Cordova plugin declares Safari Services for iOS while retaining the shared
     assert.match(iosSource, /SFSafariViewController/);
     assert.match(iosSource, /browser-returned/);
     assert.doesNotMatch(iosSource, /ASWebAuthenticationSession/);
+    assert.match(androidSource, /result\.setKeepCallback\(true\)/);
+    assert.match(androidSource, /public void onResume\(boolean multitasking\)/);
+    assert.match(androidSource, /"browser-returned"/);
 });
 
 test('shared Cordova bridge separates browser-opened and browser-returned callbacks', () => {

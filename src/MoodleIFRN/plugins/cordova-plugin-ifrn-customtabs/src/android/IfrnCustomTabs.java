@@ -9,6 +9,7 @@ import androidx.browser.customtabs.CustomTabsClient;
 import androidx.browser.customtabs.CustomTabsIntent;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -18,6 +19,7 @@ public final class IfrnCustomTabs extends CordovaPlugin {
     private static final String GOVBR_AUTH_HOST = "sso.acesso.gov.br";
     private static final int MAX_URL_LENGTH = 8192;
     private boolean opening;
+    private CallbackContext returnCallback;
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
@@ -83,7 +85,7 @@ public final class IfrnCustomTabs extends CordovaPlugin {
                         .build();
                 customTabs.intent.setPackage(browserPackage);
                 customTabs.launchUrl(cordova.getActivity(), uri);
-                callbackContext.success("custom-tab");
+                sendOpened(callbackContext, "custom-tab");
                 return;
             } catch (ActivityNotFoundException | SecurityException error) {
                 // A seleção do provider pode ficar obsoleta entre a consulta e a abertura.
@@ -93,7 +95,7 @@ public final class IfrnCustomTabs extends CordovaPlugin {
         try {
             Intent externalBrowser = new Intent(Intent.ACTION_VIEW, uri);
             cordova.getActivity().startActivity(externalBrowser);
-            callbackContext.success("external-browser");
+            sendOpened(callbackContext, "external-browser");
         } catch (ActivityNotFoundException | SecurityException error) {
             releaseOpening();
             callbackContext.error("Não há navegador disponível para abrir a autenticação.");
@@ -102,12 +104,31 @@ public final class IfrnCustomTabs extends CordovaPlugin {
 
     private synchronized void releaseOpening() {
         opening = false;
+        returnCallback = null;
+    }
+
+    private void sendOpened(CallbackContext callbackContext, String mode) {
+        synchronized (this) {
+            returnCallback = callbackContext;
+        }
+
+        PluginResult result = new PluginResult(PluginResult.Status.OK, mode);
+        result.setKeepCallback(true);
+        callbackContext.sendPluginResult(result);
     }
 
     @Override
     public void onResume(boolean multitasking) {
         super.onResume(multitasking);
-        releaseOpening();
+        CallbackContext callback;
+        synchronized (this) {
+            callback = returnCallback;
+            returnCallback = null;
+            opening = false;
+        }
+        if (callback != null) {
+            callback.sendPluginResult(new PluginResult(PluginResult.Status.OK, "browser-returned"));
+        }
     }
 
     @Override

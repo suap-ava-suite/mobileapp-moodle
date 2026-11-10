@@ -9,12 +9,15 @@ test('login principal retoma redirects após curso e preserva a política de coo
     let nativeBeforeload = 'get'; // Estado deixado pela janela anterior de curso no Android.
     let opened;
     let closed = 0;
+    let capturedGovUrl = '';
+    const resumedUrls = [];
     const listeners = new Map();
     const browser = {
         on: name => ({ subscribe: callback => {
             listeners.set(name, callback);
             return { unsubscribe: () => listeners.delete(name) };
         } }),
+        _loadAfterBeforeload: url => resumedUrls.push(url),
         hide() {}, show() {}, executeScript: async () => [],
     };
     const mocks = {
@@ -29,16 +32,20 @@ test('login principal retoma redirects após curso e preserva a política de coo
             closeInAppBrowser: () => closed++,
         } },
         rxjs,
-        './painel-ava.config': { PAINEL_AVA_CONFIG: {
+        './painel-ava.config': {
+            GOVBR_MOBILE_UNAVAILABLE_MESSAGE: 'Gov.br usa navegador seguro.',
+            isGovBrAuthenticationUrl: url => new URL(url).hostname === 'sso.acesso.gov.br',
+            PAINEL_AVA_CONFIG: {
             baseUrl: 'https://ava.ifrn.edu.br', diariosPath: '/api/v1/diarios/',
-        } },
+            },
+        },
         './suap-login-telemetry': {
             consumeFreshPanelProfile: () => false,
             reportSuapDuration: () => {},
         },
         './govbr-redirect-handoff': { GovBrRedirectHandoff: class {
             clear() {}
-            capture() { return true; }
+            capture(url) { capturedGovUrl = url; return true; }
             consume() { return null; }
         } },
         './painel-courses': {},
@@ -60,13 +67,30 @@ test('login principal retoma redirects após curso e preserva a política de coo
     for (const reuseSession of [false, true]) {
         nativeBeforeload = 'get';
         const subscription = service.authenticateWithBrowser({ reuseSession, readOnly: true }).subscribe();
-        assert.equal(nativeBeforeload, 'no', 'não pode aguardar beforeload de outro fluxo');
+        assert.equal(nativeBeforeload, 'get', 'intercepta o redirecionamento Gov.br antes do carregamento');
         assert.equal(opened.url, 'https://ava.ifrn.edu.br/');
         assert.equal(opened.options.hidden, 'yes');
         assert.equal(opened.options.clearcache, reuseSession ? 'no' : 'yes');
         assert.equal(opened.options.clearsessioncache, reuseSession ? 'no' : 'yes');
+        const normalRedirect = 'https://suap.ifrn.edu.br/o/authorize/';
+        listeners.get('beforeload')({ url: normalRedirect });
+        assert.equal(resumedUrls.at(-1), normalRedirect, 'redirecionamentos normais continuam no InAppBrowser');
         subscription.unsubscribe();
         assert.equal(listeners.size, 0);
     }
-    assert.equal(closed, 2);
+
+    let govError = '';
+    const govSubscription = service.authenticateWithBrowser({ readOnly: true }).subscribe({
+        error: error => { govError = error.message; },
+    });
+    const suapLoginUrl = 'https://suap.ifrn.edu.br/accounts/login/';
+    listeners.get('beforeload')({ url: suapLoginUrl });
+    const govUrl = 'https://sso.acesso.gov.br/authorize?state=synthetic';
+    listeners.get('beforeload')({ url: govUrl });
+    assert.equal(capturedGovUrl, govUrl);
+    assert.equal(govError, 'Gov.br usa navegador seguro.');
+    assert.equal(resumedUrls.includes(govUrl), false, 'Gov.br não pode ser carregado na WebView');
+    assert.equal(listeners.size, 0);
+    govSubscription.unsubscribe();
+    assert.equal(closed, 3);
 });
