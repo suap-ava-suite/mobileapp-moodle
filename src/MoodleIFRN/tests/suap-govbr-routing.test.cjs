@@ -36,13 +36,16 @@ test('Gov.br URL detection accepts official HTTPS hosts and rejects lookalike or
     assert.equal(isGovBrAuthenticationUrl('not a url'), false);
 });
 
-test('Gov.br redirect opens the secure browser directly and only shows recovery after return or error', () => {
+test('Gov.br redirect is stopped before WebView navigation and shown inside the Angular wrapper', () => {
     const source = fs.readFileSync(path.join(root, 'services_mobile', 'painel-ava.service.ts'), 'utf8');
     const marketplace = fs.readFileSync(path.join(root, 'marketplace-ifrn', 'marketplace-ifrn.ts'), 'utf8');
     const template = fs.readFileSync(path.join(root, 'marketplace-ifrn', 'marketplace-ifrn.html'), 'utf8');
 
     assert.match(source, /hasEnteredSuapAuthentication && isGovBrAuthenticationUrl\(url\)/);
     assert.match(source, /hasEnteredSuapAuthentication = true;/);
+    assert.match(source, /beforeload: 'get'/);
+    assert.match(source, /const beforeLoadSubscription = browser\.on\('beforeload'\)/);
+    assert.match(source, /browser\._loadAfterBeforeload\(url\)/);
     assert.match(source, /finishWithError\(GOVBR_MOBILE_UNAVAILABLE_MESSAGE\)/);
     assert.doesNotMatch(source, /authorization_id/);
     assert.match(source, /const loadStartSubscription = browser\.on\('loadstart'\)[\s\S]*?if \(hasEnteredSuapAuthentication && isGovBrAuthenticationUrl\(url\)\)[\s\S]*?return;/);
@@ -55,9 +58,10 @@ test('Gov.br redirect opens the secure browser directly and only shows recovery 
     assert.match(source, /this\.govBrRedirectHandoff\.capture\(url\)/);
     assert.match(source, /consumeGovBrRedirectUrl\(\): string \| null/);
     assert.match(marketplace, /error\.message === GOVBR_MOBILE_UNAVAILABLE_MESSAGE/);
-    assert.match(template, /govBrBrowserReturned \? 'Você voltou ao Moodle IFRN'/);
-    assert.match(template, /não criou uma sessão no aplicativo/);
-    assert.match(template, /govBrUnavailable && \(govBrBrowserReturned \|\| govBrBrowserError\)/);
+    assert.match(template, /@if \(govBrUnavailable\)/);
+    assert.match(template, /welcome__govbr-card--screen/);
+    assert.match(template, /Você voltou ao Moodle IFRN/);
+    assert.match(template, /não cria uma sessão no Painel AVA/);
     assert.doesNotMatch(template, /Abrir Gov\.br no navegador/);
     assert.doesNotMatch(template, /Tentar abrir Gov\.br novamente/);
     assert.match(template, /Voltar ao login SUAP no app/);

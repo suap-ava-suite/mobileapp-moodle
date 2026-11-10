@@ -212,6 +212,21 @@
         padding: 18px;
     }
 
+    .welcome--govbr .welcome__hero {
+        display: none;
+    }
+
+    .welcome__govbr-card--screen {
+        margin-top: 0;
+        width: 100%;
+    }
+
+    .welcome__govbr-card--screen ion-spinner {
+        color: var(--ifrn-accent);
+        height: 24px;
+        width: 24px;
+    }
+
     .welcome__govbr-heading {
         align-items: center;
         display: flex;
