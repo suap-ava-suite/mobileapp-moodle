@@ -36,7 +36,7 @@ test('Gov.br URL detection accepts official HTTPS hosts and rejects lookalike or
     assert.equal(isGovBrAuthenticationUrl('not a url'), false);
 });
 
-test('Gov.br redirect is stopped before WebView navigation and shown inside the Angular wrapper', () => {
+test('Gov.br redirect is stopped before WebView navigation and opens directly without an Angular interstitial', () => {
     const source = fs.readFileSync(path.join(root, 'services_mobile', 'painel-ava.service.ts'), 'utf8');
     const marketplace = fs.readFileSync(path.join(root, 'marketplace-ifrn', 'marketplace-ifrn.ts'), 'utf8');
     const template = fs.readFileSync(path.join(root, 'marketplace-ifrn', 'marketplace-ifrn.html'), 'utf8');
@@ -58,13 +58,12 @@ test('Gov.br redirect is stopped before WebView navigation and shown inside the 
     assert.match(source, /this\.govBrRedirectHandoff\.capture\(url\)/);
     assert.match(source, /consumeGovBrRedirectUrl\(\): string \| null/);
     assert.match(marketplace, /error\.message === GOVBR_MOBILE_UNAVAILABLE_MESSAGE/);
-    assert.match(template, /@if \(govBrUnavailable\)/);
-    assert.match(template, /welcome__govbr-card--screen/);
+    assert.doesNotMatch(template, /@if \(govBrUnavailable\)|welcome__govbr-card|Acessando o Gov\.br|Continue no navegador seguro/);
+    assert.match(template, /<main class="welcome">/);
+    assert.match(template, /<span class="ava-label">Painel AVA<\/span>/);
     assert.doesNotMatch(template, /govBrBrowserReturned|Você voltou ao Moodle IFRN|não cria uma sessão no Painel AVA/);
     assert.match(marketplace, /this\.govBrUnavailable = false;/);
-    assert.doesNotMatch(template, /Abrir Gov\.br no navegador/);
-    assert.doesNotMatch(template, /Tentar abrir Gov\.br novamente/);
-    assert.match(template, /Voltar ao login SUAP no app/);
+    assert.doesNotMatch(template, /Abrir Gov\.br no navegador|Tentar abrir Gov\.br novamente|Voltar ao login SUAP no app/);
 });
 
 test('a delayed authenticated API profile wins over a stale AVA header alias', async () => {

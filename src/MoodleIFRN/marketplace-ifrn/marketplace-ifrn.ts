@@ -52,7 +52,6 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     private readonly govBrUnavailableState = signal(false);
     private readonly govBrBrowserOpenedState = signal(false);
     private readonly govBrBrowserOpeningState = signal(false);
-    private readonly govBrBrowserErrorState = signal('');
     private readonly statusMessageState = signal('');
 
     // Os getters mantêm os templates/handlers existentes e registram as
@@ -69,8 +68,6 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     set govBrBrowserOpened(value: boolean) { this.govBrBrowserOpenedState.set(value); }
     get govBrBrowserOpening(): boolean { return this.govBrBrowserOpeningState(); }
     set govBrBrowserOpening(value: boolean) { this.govBrBrowserOpeningState.set(value); }
-    get govBrBrowserError(): string { return this.govBrBrowserErrorState(); }
-    set govBrBrowserError(value: string) { this.govBrBrowserErrorState.set(value); }
     get statusMessage(): string { return this.statusMessageState(); }
     set statusMessage(value: string) { this.statusMessageState.set(value); }
     private nativeReturnQueued = false;
@@ -269,7 +266,6 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         this.govBrUnavailable = false;
         this.govBrBrowserOpened = false;
         this.govBrBrowserOpening = false;
-        this.govBrBrowserError = '';
         this.loading = true;
         this.waitingBrowser = false;
         this.nativeReturnQueued = false;
@@ -294,7 +290,6 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
             this.govBrUnavailable = error instanceof Error && error.message === GOVBR_MOBILE_UNAVAILABLE_MESSAGE;
             openGovBrImmediately = this.govBrUnavailable;
             this.govBrBrowserOpened = false;
-            this.govBrBrowserError = '';
             this.formError = this.govBrUnavailable ? ''
                 : error instanceof Error ? error.message : 'Não foi possível entrar. Tente novamente.';
         } finally {
@@ -338,12 +333,13 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
 
         const redirectUrl = this.painelAvaService.consumeGovBrRedirectUrl();
         if (!redirectUrl) {
-            this.govBrBrowserError = 'O link oficial expirou. Volte ao login SUAP e inicie novamente.';
+            this.govBrUnavailable = false;
+            this.formError = 'O link oficial expirou. Volte ao login SUAP e inicie novamente.';
             return;
         }
 
         this.govBrBrowserOpening = true;
-        this.govBrBrowserError = '';
+        this.formError = '';
         try {
             await this.govBrBrowser.open(redirectUrl, () => {
                 this.zone.run(() => {
@@ -352,27 +348,13 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
                     this.govBrUnavailable = false;
                 });
             });
-            this.govBrBrowserError = '';
             this.govBrBrowserOpening = false;
             this.govBrBrowserOpened = true;
         } catch {
             this.govBrBrowserOpening = false;
-            this.govBrBrowserError = 'Não foi possível abrir o navegador seguro. Tente novamente pelo login SUAP.';
+            this.govBrUnavailable = false;
+            this.formError = 'Não foi possível abrir o navegador seguro. Tente novamente pelo login SUAP.';
         }
-    }
-
-    /** Retorna ao fluxo SUAP tradicional embutido no app. */
-    retrySuapInApp(): void {
-        if (!this.govBrUnavailable || this.showTransition || this.govBrBrowserOpened || this.govBrBrowserOpening) {
-            return;
-        }
-
-        this.govBrUnavailable = false;
-        this.govBrBrowserOpened = false;
-        this.govBrBrowserError = '';
-        this.painelAvaService.clearGovBrRedirectUrl();
-        this.formError = '';
-        void this.enterAva();
     }
 
     /**

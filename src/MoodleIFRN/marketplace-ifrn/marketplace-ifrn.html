@@ -65,7 +65,7 @@
             </section>
         </main>
     } @else {
-    <main class="welcome" [class.welcome--govbr]="govBrUnavailable">
+    <main class="welcome">
         <header class="welcome__header">
             <div class="brand" aria-label="Instituto Federal do Rio Grande do Norte">
                 <span class="ifrn-mark" aria-hidden="true">
@@ -85,7 +85,7 @@
                     <small>Rio Grande do Norte</small>
                 </span>
             </div>
-            <span class="ava-label">{{ govBrUnavailable ? 'Acesso seguro' : 'Painel AVA' }}</span>
+            <span class="ava-label">Painel AVA</span>
         </header>
 
         <div class="welcome__hero">
@@ -95,43 +95,7 @@
                 fetchpriority="high" />
         </div>
 
-        <section class="welcome__content" [attr.aria-labelledby]="govBrUnavailable ? 'govbr-title' : 'welcome-title'">
-            @if (govBrUnavailable) {
-                <section class="welcome__govbr-card welcome__govbr-card--screen" aria-labelledby="govbr-title">
-                    <div class="welcome__govbr-heading">
-                        <span class="welcome__govbr-icon" aria-hidden="true">
-                            <ion-icon name="shield-checkmark-outline"></ion-icon>
-                        </span>
-                        <div>
-                            <p class="welcome__govbr-eyebrow">Autenticação oficial</p>
-                            <h1 id="govbr-title">
-                                {{ govBrBrowserError ? 'Não foi possível abrir o navegador' :
-                                    (govBrBrowserOpened ? 'Continue no navegador seguro' : 'Acessando o Gov.br') }}
-                            </h1>
-                        </div>
-                    </div>
-                    @if (govBrBrowserOpening) {
-                        <p class="welcome__govbr-copy" role="status" aria-live="polite">
-                            Preparando o navegador oficial do Android…
-                        </p>
-                        <ion-spinner name="crescent" aria-label="Abrindo navegador seguro"></ion-spinner>
-                    }
-                    @if (govBrBrowserOpened) {
-                        <p class="welcome__govbr-copy" role="status" aria-live="polite">
-                            A autenticação está sendo feita no site oficial do Gov.br. O app não acessa suas credenciais.
-                        </p>
-                    }
-                    @if (govBrBrowserError) {
-                        <p class="welcome__error" role="alert">{{ govBrBrowserError }}</p>
-                    }
-                    <div class="welcome__govbr-actions" role="group" aria-label="Opções de autenticação">
-                        <ion-button expand="block" fill="outline" class="btn-continue" (click)="retrySuapInApp()"
-                            [disabled]="govBrBrowserOpened || govBrBrowserOpening">
-                            Voltar ao login SUAP no app
-                        </ion-button>
-                    </div>
-                </section>
-            } @else {
+        <section class="welcome__content" aria-labelledby="welcome-title">
             <p class="welcome__eyebrow">Ambiente Virtual de Aprendizagem</p>
             <h1 id="welcome-title">Seu aprendizado<br />continua aqui.</h1>
             <p class="welcome__description">
@@ -163,7 +127,6 @@
 
 
             </div>
-            }
         </section>
 
         <footer class="welcome__footer">© {{ currentYear }} IFRN</footer>
