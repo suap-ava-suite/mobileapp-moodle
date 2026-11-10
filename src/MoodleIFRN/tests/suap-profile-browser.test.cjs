@@ -126,6 +126,9 @@ test('Perfil usa InAppBrowser interno, mantém cookies e mostra a página soment
     assert.equal(nativeCalls[0].url, profileUrl);
     assert.equal(nativeCalls[0].options.hidden, 'yes');
     assert.equal(nativeCalls[0].options.location, 'yes');
+    assert.equal(nativeCalls[0].options.footer, 'no');
+    assert.equal(nativeCalls[0].options.hardwareback, 'yes');
+    assert.equal('closebuttoncaption' in nativeCalls[0].options, false);
     assert.equal(nativeCalls[0].options.clearcache, 'no');
     assert.equal(nativeCalls[0].options.clearsessioncache, 'no');
     assert.equal(nativeCalls[0].options.cleardata, 'no');
