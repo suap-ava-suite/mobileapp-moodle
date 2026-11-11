@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { CoreCourseHelper } from '@features/course/services/course-helper';
+import type { CoreEnrolledCourseData } from '@features/courses/services/courses';
 import { MAIN_MENU_HOME_PAGE_NAME } from '@features/mainmenu/constants';
 import { CoreNavigator } from '@services/navigator';
 
@@ -21,18 +22,29 @@ import { CoreNavigator } from '@services/navigator';
  *
  * @param courseId ID do curso.
  * @param siteId ID do site Moodle autenticado.
+ * @param enrolledCourse Curso já confirmado na lista atual de matrículas, quando disponível.
  */
-export async function openNativeCourse(courseId: number, siteId: string): Promise<void> {
+export async function openNativeCourse(
+    courseId: number,
+    siteId: string,
+    enrolledCourse?: CoreEnrolledCourseData,
+): Promise<void> {
     // O painel IFRN vive fora de /main e cada retorno a ele pode deixar uma
     // página de curso antiga na pilha Ionic da aba. Sempre abrir a rota nativa
     // como raiz evita que Voltar reabra o curso anterior.
     let course: { id: number } | Awaited<ReturnType<typeof CoreCourseHelper.getCourse>>['course'];
-    try {
-        ({ course } = await CoreCourseHelper.getCourse(courseId, siteId));
-    } catch {
-        // Igual ao helper getAndOpenCourse: um erro ao buscar detalhes não
-        // impede a página nativa de tentar carregar o curso pelo ID.
-        course = { id: courseId };
+    if (enrolledCourse?.id === courseId) {
+        // O serviço IFRN já validou a matrícula e carregou este registro. Reutilizá-lo
+        // evita que getCourse faça uma segunda consulta de cursos antes da navegação.
+        course = enrolledCourse;
+    } else {
+        try {
+            ({ course } = await CoreCourseHelper.getCourse(courseId, siteId));
+        } catch {
+            // Igual ao helper getAndOpenCourse: um erro ao buscar detalhes não
+            // impede a página nativa de tentar carregar o curso pelo ID.
+            course = { id: courseId };
+        }
     }
 
     const navigated = await CoreNavigator.navigate(`/main/${MAIN_MENU_HOME_PAGE_NAME}/course/${courseId}`, {

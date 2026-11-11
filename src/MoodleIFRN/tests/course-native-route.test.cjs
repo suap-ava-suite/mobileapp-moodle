@@ -35,6 +35,19 @@ test('from the IFRN panel or OAuth bridge, enters the course without opening the
     assert.equal(s.navigation[0][1].params.course, s.course);
     assert.equal(s.helper.length, 0);
 });
+test('reuses the already validated enrolled course without fetching it again', async () => {
+    const s = setup();
+    const enrolledCourse = { id: 4022, fullname: 'Synthetic enrolled course', format: 'topics' };
+    await s.open(4022, 'academic-site', enrolledCourse);
+    assert.equal(s.fetched.length, 0);
+    assert.equal(s.navigation[0][1].params.course, enrolledCourse);
+});
+test('does not reuse an enrolled course object for a different course id', async () => {
+    const s = setup();
+    await s.open(4022, 'academic-site', { id: 2836, fullname: 'Different synthetic course' });
+    assert.deepEqual(s.fetched[0], [4022, 'academic-site']);
+    assert.equal(s.navigation[0][1].params.course, s.course);
+});
 test('opening another course from an existing native tab replaces the old course stack', async () => {
     const s = setup('home');
     await s.open(2836, 'presencial-site');

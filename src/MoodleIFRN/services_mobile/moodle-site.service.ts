@@ -1869,12 +1869,15 @@ export class MoodleSiteService {
             siteIdPresent: !!CoreSites.getCurrentSiteId(),
         }));
 
+        let enrolledCourses: CoreEnrolledCourseData[];
         let courses: MoodleCourseSummary[];
 
         try {
             const currentSiteId = CoreSites.getCurrentSiteId();
-            const enrolled = await attempt.stage('enrolments-cache-or-network', () => CoreCourses.getUserCourses(true, currentSiteId));
-            courses = enrolled.map((course) => this.toCourseSummary(course));
+            // Usa uma única resposta atualizada para validar a matrícula e entregar o
+            // objeto completo à rota; openNativeCourse não precisará buscar a lista outra vez.
+            enrolledCourses = await attempt.stage('enrolments-fresh', () => CoreCourses.getUserCourses(false, currentSiteId));
+            courses = enrolledCourses.map((course) => this.toCourseSummary(course));
         } catch (error) {
             logSiteError('course-enrolments', error, {
                 siteIdPresent: !!CoreSites.getCurrentSiteId(),
@@ -1889,6 +1892,7 @@ export class MoodleSiteService {
         console.log(COURSE_LOG, 'quantidade de cursos Moodle =', courses.length);
 
         const found = courses.some((course) => course.id === courseId);
+        const enrolledCourse = enrolledCourses.find((course) => course.id === courseId);
 
         // eslint-disable-next-line no-console
         console.log(COURSE_LOG, 'courseId encontrado =', found);
@@ -1936,7 +1940,7 @@ export class MoodleSiteService {
             // O handler nativo não aguarda navigateToSitePath. A Promise do helper
             // pode resolver em /main: também aguardamos NavigationEnd do curso.
             await attempt.stage('native-helper-and-navigation', () => Promise.race([openingDeadline, Promise.all([
-                openNativeCourse(courseId, siteId).then(() => {
+                openNativeCourse(courseId, siteId, enrolledCourse).then(() => {
                     // eslint-disable-next-line no-console
                     console.log(COURSE_LOG, 'getAndOpenCourse retornou (rota ainda deve ser confirmada)', safeLogPayload({
                         courseId,
