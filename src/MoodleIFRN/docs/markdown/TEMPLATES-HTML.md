@@ -44,5 +44,5 @@ Isso evita misturar markup grande dentro do JavaScript e facilita ajustar o layo
 
 ## Relacionados
 
-- Tema / header: [`TEMA-VISUAL.md`](./TEMA-VISUAL.md)
-- Lógica de render: [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../mobilemoodle/core_mobile/SCRIPTS-TS.md)
+- Tema / header: [`TEMA-VISUAL.md`](TEMA-VISUAL.md)
+- Lógica de render: [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../../mobilemoodle/core_mobile/SCRIPTS-TS.md)

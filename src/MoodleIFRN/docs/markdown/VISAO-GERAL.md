@@ -1,5 +1,5 @@
 # MoodleIFRN — visão geral
-> **Registro histórico:** esta página descreve um fluxo antigo de login IFRN-id/JWT e um backend FastAPI de teste. Não use esses trechos como descrição do comportamento atual. Para preparar o ambiente, consulte o [manual](./index.html); para o acervo, consulte o [inventário](./INVENTARIO-DOCUMENTACAO.md).
+> **Registro histórico:** esta página descreve um fluxo antigo de login IFRN-id/JWT e um backend FastAPI de teste. Não use esses trechos como descrição do comportamento atual. Para preparar o ambiente, consulte o [manual](../index.html); para o acervo, consulte o [inventário](INVENTARIO-DOCUMENTACAO.md).
 
 
 Documentação da customização **AVA IFRN** dentro do app Moodle Mobile.
@@ -54,7 +54,7 @@ UI:      app-utils → app-status → app-views → app-router
          app-accessibility → app-sidebar → app-keyboard → app
 ```
 
-Detalhes: [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../mobilemoodle/core_mobile/SCRIPTS-TS.md).
+Detalhes: [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../../mobilemoodle/core_mobile/SCRIPTS-TS.md).
 
 ---
 
@@ -62,18 +62,18 @@ Detalhes: [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../mobilemoodle/core_mob
 
 | Tema | Documento |
 |------|-----------|
-| Índice da pasta docs | [`README.md`](./README.md) |
-| Visão geral (este arquivo) | [`VISAO-GERAL.md`](./VISAO-GERAL.md) |
-| Ponte Painel AVA → Moodle Mobile | [`PONTE-PAINEL-MOODLE.md`](./PONTE-PAINEL-MOODLE.md) |
-| Login IFRN | [`./LOGIN-IFRN.md`](./LOGIN-IFRN.md) |
-| Auth + biometria | [`SERVICOS-AUTH-BIOMETRIA.md`](./SERVICOS-AUTH-BIOMETRIA.md) |
-| Painel de cursos | [`PAINEL-CURSOS.md`](./PAINEL-CURSOS.md) |
-| Scripts TS do painel | [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../mobilemoodle/core_mobile/SCRIPTS-TS.md) |
-| Templates HTML | [`TEMPLATES-HTML.md`](./TEMPLATES-HTML.md) |
-| Tema visual / header / safe-area | [`TEMA-VISUAL.md`](./TEMA-VISUAL.md) |
-| Segurança | [`SEGURANCA.md`](./SEGURANCA.md) |
-| Contrato da API | [`CONTRATO-API.md`](./CONTRATO-API.md) |
-| Patch após atualizar o Moodle | [`PATCH-AO-ATUALIZAR.md`](./PATCH-AO-ATUALIZAR.md) |
+| Índice da pasta docs | [`README.md`](README.md) |
+| Visão geral (este arquivo) | [`VISAO-GERAL.md`](VISAO-GERAL.md) |
+| Ponte Painel AVA → Moodle Mobile | [`PONTE-PAINEL-MOODLE.md`](PONTE-PAINEL-MOODLE.md) |
+| Login IFRN | [`./LOGIN-IFRN.md`](LOGIN-IFRN.md) |
+| Auth + biometria | [`SERVICOS-AUTH-BIOMETRIA.md`](SERVICOS-AUTH-BIOMETRIA.md) |
+| Painel de cursos | [`PAINEL-CURSOS.md`](PAINEL-CURSOS.md) |
+| Scripts TS do painel | [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../../mobilemoodle/core_mobile/SCRIPTS-TS.md) |
+| Templates HTML | [`TEMPLATES-HTML.md`](TEMPLATES-HTML.md) |
+| Tema visual / header / safe-area | [`TEMA-VISUAL.md`](TEMA-VISUAL.md) |
+| Segurança | [`SEGURANCA.md`](SEGURANCA.md) |
+| Contrato da API | [`CONTRATO-API.md`](CONTRATO-API.md) |
+| Patch após atualizar o Moodle | [`PATCH-AO-ATUALIZAR.md`](PATCH-AO-ATUALIZAR.md) |
 
 ---
 
@@ -84,7 +84,7 @@ Detalhes: [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../mobilemoodle/core_mob
 | Rota de login | `src/core/features/login/login.module.ts` → `/login/marketplace-ifrn` e `/login/ifrn-login` |
 | Assets do painel | `angular.json` copia `src/MoodleIFRN/mobilemoodle` → `mobilemoodle/` no build |
 | Compilação TS do painel | gulp `mobilemoodle-ts` / `npm run build:mobilemoodle` |
-| Script de apoio | `npm run patch:ifrn` (ver [`PATCH-AO-ATUALIZAR.md`](./PATCH-AO-ATUALIZAR.md)) |
+| Script de apoio | `npm run patch:ifrn` (ver [`PATCH-AO-ATUALIZAR.md`](PATCH-AO-ATUALIZAR.md)) |
 
 ---
 

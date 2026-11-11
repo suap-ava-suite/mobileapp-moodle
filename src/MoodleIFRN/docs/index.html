@@ -42,14 +42,14 @@
         <details class="nav-group">
           <summary>Documentação técnica</summary>
           <div class="nav-sub">
-            <a href="README.html">Índice de documentos</a>
-            <a href="PONTE-PAINEL-MOODLE.html">Ponte Painel AVA → Moodle</a>
-            <a href="LOGIN-IFRN.html">Login IFRN</a>
-            <a href="PAINEL-CURSOS.html">Painel de cursos</a>
-            <a href="SEGURANCA.html">Segurança</a>
-            <a href="PATCH-AO-ATUALIZAR.html">Atualização e patches</a>
-            <a href="INVENTARIO-DOCUMENTACAO.html">Inventário</a>
-            <a href="PLAY-STORE-BETA.html">Publicação beta na Google Play</a>
+            <a href="html/README.html">Índice de documentos</a>
+            <a href="html/PONTE-PAINEL-MOODLE.html">Ponte Painel AVA → Moodle</a>
+            <a href="html/LOGIN-IFRN.html">Login IFRN</a>
+            <a href="html/PAINEL-CURSOS.html">Painel de cursos</a>
+            <a href="html/SEGURANCA.html">Segurança</a>
+            <a href="html/PATCH-AO-ATUALIZAR.html">Atualização e patches</a>
+            <a href="html/INVENTARIO-DOCUMENTACAO.html">Inventário</a>
+            <a href="html/PLAY-STORE-BETA.html">Publicação beta na Google Play</a>
           </div>
         </details>
       </nav>
@@ -120,7 +120,7 @@ node_modules/.bin/cordova build android</code></pre><button class="copy-button" 
           <tr><td><code>src/MoodleIFRN/scripts/build-android-web.cjs</code></td><td>Construtor auxiliar de web Android com verificações Cordova.</td><td>Não é script npm registrado; confira seus logs/caminhos antes de executar.</td></tr>
           <tr><td><code>config.xml</code> hooks</td><td><code>after_prepare</code> aplica scripts IFRN de integração e layout InAppBrowser.</td><td>Roda durante prepare/build Cordova; examine alterações em plataformas geradas.</td></tr>
         </tbody></table></div>
-        <div class="callout warning"><strong>Patch de atualização:</strong> a documentação <a href="PATCH-AO-ATUALIZAR.html">Atualização e patches</a> descreve o escopo do patch e como revisá-lo. Não rode <code>patch:ifrn</code> apenas por rotina sem primeiro conferir o estado do Git.</div>
+        <div class="callout warning"><strong>Patch de atualização:</strong> a documentação <a href="html/PATCH-AO-ATUALIZAR.html">Atualização e patches</a> descreve o escopo do patch e como revisá-lo. Não rode <code>patch:ifrn</code> apenas por rotina sem primeiro conferir o estado do Git.</div>
       </section>
 
       <section id="android" class="doc-section searchable">
@@ -212,7 +212,7 @@ adb logcat -d</code></pre><button class="copy-button" type="button">Copiar coman
         <details><summary><code>cordova.js</code> ausente</summary><p>Confirme que foi executado o builder Cordova e <code>cordova prepare</code>. Um build web Angular isolado não garante a preparação do arquivo Cordova.</p></details>
         <details><summary>ADB não encontra aparelho</summary><p>Execute <code>adb devices -l</code>, aceite a autorização USB no aparelho e confira cabo/modo de depuração. Não limpe dados como medida de diagnóstico.</p></details>
         <details><summary>Erro de espaço em disco (ENOSPC)</summary><p>Verifique o espaço disponível e o caminho do cache antes de nova build. Preserve caches de Gradle/npm e arquivos do usuário; não use scripts de limpeza indiscriminados.</p></details>
-        <details><summary>Patch IFRN diverge depois de atualizar Moodle</summary><p>Revise o script e <code>git diff</code> em todos os destinos. Não execute patch repetidamente sem avaliar arquivos alterados; veja <a href="PATCH-AO-ATUALIZAR.html">Atualização e patches</a>.</p></details>
+        <details><summary>Patch IFRN diverge depois de atualizar Moodle</summary><p>Revise o script e <code>git diff</code> em todos os destinos. Não execute patch repetidamente sem avaliar arquivos alterados; veja <a href="html/PATCH-AO-ATUALIZAR.html">Atualização e patches</a>.</p></details>
       </section>
 
       <section id="git" class="doc-section searchable">
@@ -229,18 +229,18 @@ git push -u origin docs/minha-tarefa</code></pre><button class="copy-button" typ
 
       <section id="documentacao" class="doc-section searchable">
         <p class="eyebrow">12 · DOCUMENTAÇÃO</p><h2>Documentos do repositório</h2>
-        <p>O portal fica em <code>src/MoodleIFRN/docs/</code>. Consulte o <a href="INVENTARIO-DOCUMENTACAO.html">inventário da documentação</a> para ver as páginas convertidas, os Markdown preservados e os registros históricos.</p>
+        <p>O portal fica em <code>src/MoodleIFRN/docs/</code>. Consulte o <a href="html/INVENTARIO-DOCUMENTACAO.html">inventário da documentação</a> para ver as páginas convertidas, os Markdown preservados e os registros históricos.</p>
         <ul>
-          <li><a href="README.html">Índice de documentos</a></li>
-          <li><a href="PONTE-PAINEL-MOODLE.html">Ponte Painel AVA → Moodle</a></li>
-          <li><a href="LOGIN-IFRN.html">Login IFRN</a></li>
-          <li><a href="PAINEL-CURSOS.html">Painel de cursos</a></li>
-          <li><a href="SEGURANCA.html">Segurança</a></li>
-          <li><a href="PATCH-AO-ATUALIZAR.html">Atualização e reaplicação de patches</a></li>
-          <li><a href="INVENTARIO-DOCUMENTACAO.html">Inventário da documentação</a></li>
+          <li><a href="html/README.html">Índice de documentos</a></li>
+          <li><a href="html/PONTE-PAINEL-MOODLE.html">Ponte Painel AVA → Moodle</a></li>
+          <li><a href="html/LOGIN-IFRN.html">Login IFRN</a></li>
+          <li><a href="html/PAINEL-CURSOS.html">Painel de cursos</a></li>
+          <li><a href="html/SEGURANCA.html">Segurança</a></li>
+          <li><a href="html/PATCH-AO-ATUALIZAR.html">Atualização e reaplicação de patches</a></li>
+          <li><a href="html/INVENTARIO-DOCUMENTACAO.html">Inventário da documentação</a></li>
         </ul>
         <p>Os scripts auxiliares e instruções de execução estão em <a href="../diagnosticos/README.md">MoodleIFRN/diagnosticos</a>.</p>
-        <p>Outros guias técnicos: <a href="ENTRADA-DIRETA-SUAP.html">entrada SUAP</a>, <a href="SERVICOS-AUTH-BIOMETRIA.html">autenticação e biometria</a>, <a href="CONTRATO-API.html">contrato de API</a>, <a href="apis-e-endpoints.html">inventário de endpoints</a>, <a href="TEMA-VISUAL.html">tema visual</a>, <a href="TEMPLATES-HTML.html">templates</a>, <a href="TROCAR-IMAGEM-ABERTURA-ANDROID.html">assets Android</a> e <a href="LOGO-MOODLE-IFRN.html">identidade visual</a> e <a href="PLAY-STORE-BETA.html">publicação beta na Google Play</a>.</p>
+        <p>Outros guias técnicos: <a href="html/ENTRADA-DIRETA-SUAP.html">entrada SUAP</a>, <a href="html/SERVICOS-AUTH-BIOMETRIA.html">autenticação e biometria</a>, <a href="html/CONTRATO-API.html">contrato de API</a>, <a href="html/apis-e-endpoints.html">inventário de endpoints</a>, <a href="html/TEMA-VISUAL.html">tema visual</a>, <a href="html/TEMPLATES-HTML.html">templates</a>, <a href="html/TROCAR-IMAGEM-ABERTURA-ANDROID.html">assets Android</a> e <a href="html/LOGO-MOODLE-IFRN.html">identidade visual</a> e <a href="html/PLAY-STORE-BETA.html">publicação beta na Google Play</a>.</p>
         <div class="callout info"><strong>iOS:</strong> a configuração iOS do repositório está documentada nesta página, mas não foi validada em Mac/Xcode neste ambiente. Registre a primeira execução real em <code>RELATORIO-IOS.md</code> somente após testar.</div>
       </section>
 

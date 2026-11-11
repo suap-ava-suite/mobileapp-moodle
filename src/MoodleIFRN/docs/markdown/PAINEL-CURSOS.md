@@ -38,7 +38,7 @@ mobilemoodle/
 | Região | Descrição |
 |--------|-----------|
 | `ion-menu.ava-menu` | Sidebar estilo AVA (perfil, a11y, ajuda, filtros) |
-| `ion-header.ava-header` | Menu + título/subtítulo + avatar (ver [TEMA-VISUAL.md](./TEMA-VISUAL.md)) |
+| `ion-header.ava-header` | Menu + título/subtítulo + avatar (ver [TEMA-VISUAL.md](TEMA-VISUAL.md)) |
 | `#page-content` | Conteúdo da rota (painel, curso, erro, loading) |
 | `#page-templates` | Host onde `pages/*.html` é injetado |
 | `#sidebar-modal` | Modal lateral (perfil / ajuda / a11y / filtros) |
@@ -86,7 +86,7 @@ Há **pull-to-refresh** no painel (componente Ionic `ion-refresher`).
 | `app-keyboard.ts` | Safe-area (status bar) + teclado virtual |
 | `api*.ts` | JWT, HTTP, cache |
 
-Documentação dos scripts: [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../mobilemoodle/core_mobile/SCRIPTS-TS.md)
+Documentação dos scripts: [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../../mobilemoodle/core_mobile/SCRIPTS-TS.md)
 
 ---
 
@@ -96,7 +96,7 @@ O visual segue a identidade do AVA IFRN (header, cores, cards, progresso, menu).
 
 - Variáveis e partials: `static/theme/ifrn/scss/`
 - Estilos compilados do SCSS e incluídos em `mobilemoodle.js`, sem gerar pasta `css` do tema.
-- Detalhes de header / safe-area / mobile: [`TEMA-VISUAL.md`](./TEMA-VISUAL.md)
+- Detalhes de header / safe-area / mobile: [`TEMA-VISUAL.md`](TEMA-VISUAL.md)
 
 ---
 
@@ -122,7 +122,7 @@ Base: `https://suap.ifrn.edu.br` (mesmo JWT do login).
 
 O adaptador `api-suap.ts` converte essas respostas para o formato interno do painel (`DashboardData` / `CourseData`).
 
-Detalhes do contrato: [`./CONTRATO-API.md`](./CONTRATO-API.md)
+Detalhes do contrato: [`./CONTRATO-API.md`](CONTRATO-API.md)
 
 ---
 

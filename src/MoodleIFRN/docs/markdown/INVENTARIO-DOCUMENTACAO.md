@@ -7,7 +7,7 @@ A classificação registra o estado deste checkout e distingue guias ativos de m
 
 ## Resumo
 
-- src/MoodleIFRN/docs/: 45 arquivos em `docs/`: 26 Markdown, 17 HTML (inclui o manual principal), `assets/manual.css` e `assets/manual.js`. Os 15 utilitários CJS foram movidos para `src/MoodleIFRN/diagnosticos/` (fora de `docs/` e sem pasta chamada `test`). Os 11 `course-*.js`, a sonda `probe-painel-integration.js` e os 7 snapshots da auditoria datada foram removidos.
+- `src/MoodleIFRN/docs/` mantém `index.html` como entrada do portal, os recursos comuns em `assets/`, as páginas convertidas em `html/` e as fontes Markdown em `markdown/`. São 26 arquivos Markdown, 16 páginas HTML convertidas e o `index.html` principal. Os 15 utilitários CJS ficam em `src/MoodleIFRN/diagnosticos/` (fora de `docs/` e sem pasta chamada `test`). Os 11 `course-*.js`, a sonda `probe-painel-integration.js` e os 7 snapshots da auditoria datada foram removidos.
 - Não havia arquivos ignorados adicionais na pasta `auditoria-fluxo-2026-10-19/` quando ela foi removida.
 - .analise/: 319 arquivos locais no momento da contagem. Há relatórios, evidências, capturas, APKs e logs; esse diretório não é a documentação pública do projeto e não deve ser adicionado em massa ao Git.
 - Não foram encontrados documentos Markdown idênticos byte a byte pelo hash SHA-256. Há sobreposição de índice entre readme_ifrn.md e docs/README.md, mas cada um atende a um nível diferente.
@@ -75,11 +75,11 @@ Os snapshots versionados em `auditoria-fluxo-2026-10-19/` foram removidos: eram 
 
 ## Links corrigidos nesta organização
 
-O arquivo de login atualmente está em src/MoodleIFRN/docs/LOGIN-IFRN.md. Links antigos para src/MoodleIFRN/ifrn-login/LOGIN-IFRN.md foram apontados para a localização existente. O app e os fluxos de autenticação não foram alterados. O helper de build Android passou a gravar logs em `os.tmpdir()` para não recriar snapshots dentro de `docs/`.
+O arquivo de login atualmente está em `src/MoodleIFRN/docs/markdown/LOGIN-IFRN.md`. Links antigos para src/MoodleIFRN/ifrn-login/LOGIN-IFRN.md foram apontados para a localização existente. O app e os fluxos de autenticação não foram alterados. O helper de build Android passou a gravar logs em `os.tmpdir()` para não recriar snapshots dentro de `docs/`.
 
 ## Ferramentas auxiliares
 
-Os scripts CJS foram organizados em [`../diagnosticos/README.md`](../diagnosticos/README.md); a pasta chama-se `diagnosticos`, não `test`.
+Os scripts CJS foram organizados em [`../diagnosticos/README.md`](../../diagnosticos/README.md); a pasta chama-se `diagnosticos`, não `test`.
 
 ## Conversão para HTML offline
 
@@ -87,21 +87,21 @@ Os arquivos Markdown originais foram mantidos. As páginas convertidas usam o la
 
 | Markdown original | Página HTML | Situação |
 |---|---|---|
-| `INVENTARIO-DOCUMENTACAO.md` | [`INVENTARIO-DOCUMENTACAO.html`](./INVENTARIO-DOCUMENTACAO.html) | Convertido; fonte preservada |
-| `PONTE-PAINEL-MOODLE.md` | [`PONTE-PAINEL-MOODLE.html`](./PONTE-PAINEL-MOODLE.html) | Convertido; fonte preservada |
-| `LOGIN-IFRN.md` | [`LOGIN-IFRN.html`](./LOGIN-IFRN.html) | Convertido; fonte preservada |
-| `PAINEL-CURSOS.md` | [`PAINEL-CURSOS.html`](./PAINEL-CURSOS.html) | Convertido; fonte preservada |
-| `SEGURANCA.md` | [`SEGURANCA.html`](./SEGURANCA.html) | Convertido; fonte preservada |
-| `PATCH-AO-ATUALIZAR.md` | [`PATCH-AO-ATUALIZAR.html`](./PATCH-AO-ATUALIZAR.html) | Convertido; fonte preservada |
-| `README.md` | [`README.html`](./README.html) | Convertido; fonte preservada |
-| `ENTRADA-DIRETA-SUAP.md` | [`ENTRADA-DIRETA-SUAP.html`](./ENTRADA-DIRETA-SUAP.html) | Convertido; fonte preservada |
-| `SERVICOS-AUTH-BIOMETRIA.md` | [`SERVICOS-AUTH-BIOMETRIA.html`](./SERVICOS-AUTH-BIOMETRIA.html) | Convertido; fonte preservada |
-| `TEMA-VISUAL.md` | [`TEMA-VISUAL.html`](./TEMA-VISUAL.html) | Convertido; fonte preservada |
-| `TEMPLATES-HTML.md` | [`TEMPLATES-HTML.html`](./TEMPLATES-HTML.html) | Convertido; fonte preservada |
-| `TROCAR-IMAGEM-ABERTURA-ANDROID.md` | [`TROCAR-IMAGEM-ABERTURA-ANDROID.html`](./TROCAR-IMAGEM-ABERTURA-ANDROID.html) | Convertido; fonte preservada |
-| `LOGO-MOODLE-IFRN.md` | [`LOGO-MOODLE-IFRN.html`](./LOGO-MOODLE-IFRN.html) | Convertido; fonte preservada |
-| `CONTRATO-API.md` | [`CONTRATO-API.html`](./CONTRATO-API.html) | Convertido; fonte preservada |
-| `PLAY-STORE-BETA.md` | [`PLAY-STORE-BETA.html`](./PLAY-STORE-BETA.html) | Convertido; guia de referência, requisitos devem ser revalidados |
-| `apis-e-endpoints.md` | [`apis-e-endpoints.html`](./apis-e-endpoints.html) | Convertido; fonte preservada |
+| `INVENTARIO-DOCUMENTACAO.md` | [`INVENTARIO-DOCUMENTACAO.html`](../html/INVENTARIO-DOCUMENTACAO.html) | Convertido; fonte preservada |
+| `PONTE-PAINEL-MOODLE.md` | [`PONTE-PAINEL-MOODLE.html`](../html/PONTE-PAINEL-MOODLE.html) | Convertido; fonte preservada |
+| `LOGIN-IFRN.md` | [`LOGIN-IFRN.html`](../html/LOGIN-IFRN.html) | Convertido; fonte preservada |
+| `PAINEL-CURSOS.md` | [`PAINEL-CURSOS.html`](../html/PAINEL-CURSOS.html) | Convertido; fonte preservada |
+| `SEGURANCA.md` | [`SEGURANCA.html`](../html/SEGURANCA.html) | Convertido; fonte preservada |
+| `PATCH-AO-ATUALIZAR.md` | [`PATCH-AO-ATUALIZAR.html`](../html/PATCH-AO-ATUALIZAR.html) | Convertido; fonte preservada |
+| `README.md` | [`README.html`](../html/README.html) | Convertido; fonte preservada |
+| `ENTRADA-DIRETA-SUAP.md` | [`ENTRADA-DIRETA-SUAP.html`](../html/ENTRADA-DIRETA-SUAP.html) | Convertido; fonte preservada |
+| `SERVICOS-AUTH-BIOMETRIA.md` | [`SERVICOS-AUTH-BIOMETRIA.html`](../html/SERVICOS-AUTH-BIOMETRIA.html) | Convertido; fonte preservada |
+| `TEMA-VISUAL.md` | [`TEMA-VISUAL.html`](../html/TEMA-VISUAL.html) | Convertido; fonte preservada |
+| `TEMPLATES-HTML.md` | [`TEMPLATES-HTML.html`](../html/TEMPLATES-HTML.html) | Convertido; fonte preservada |
+| `TROCAR-IMAGEM-ABERTURA-ANDROID.md` | [`TROCAR-IMAGEM-ABERTURA-ANDROID.html`](../html/TROCAR-IMAGEM-ABERTURA-ANDROID.html) | Convertido; fonte preservada |
+| `LOGO-MOODLE-IFRN.md` | [`LOGO-MOODLE-IFRN.html`](../html/LOGO-MOODLE-IFRN.html) | Convertido; fonte preservada |
+| `CONTRATO-API.md` | [`CONTRATO-API.html`](../html/CONTRATO-API.html) | Convertido; fonte preservada |
+| `PLAY-STORE-BETA.md` | [`PLAY-STORE-BETA.html`](../html/PLAY-STORE-BETA.html) | Convertido; guia de referência, requisitos devem ser revalidados |
+| `apis-e-endpoints.md` | [`apis-e-endpoints.html`](../html/apis-e-endpoints.html) | Convertido; fonte preservada |
 
 `index.html` continua sendo a página inicial. Os relatórios históricos específicos por data permanecem em Markdown e não foram excluídos. O conteúdo legado identificado em páginas de visão geral, contrato, painel e segurança recebeu aviso na apresentação HTML; a conversão não certifica as afirmações técnicas.

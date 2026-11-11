@@ -6,7 +6,7 @@ O app usa **três bases**:
 2. **Painel AVA (preferido)** — `https://painel.ead.ifrn.edu.br` (`/api/v1/authenticate/`, `/api/v1/diarios/`)
 3. **Fallback diários** — API SUAP ensino (`/api/ensino/…`) se o Painel estiver indisponível
 
-Detalhes da ponte: [`PONTE-PAINEL-MOODLE.md`](./PONTE-PAINEL-MOODLE.md).
+Detalhes da ponte: [`PONTE-PAINEL-MOODLE.md`](PONTE-PAINEL-MOODLE.md).
 
 Este documento descreve o que o **cliente espera**.
 

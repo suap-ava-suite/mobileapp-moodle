@@ -91,7 +91,7 @@ Preferências ficam em `localStorage` (`ifrn_a11y_prefs`) e são reaplicadas ao 
 | Atividades | Lista com ícone por `modname` e status de conclusão |
 | Load view | Logo AVA + spinner (`_splash.scss`) |
 
-Ícone/splash nativos (Cordova): ver [`README.md`](./README.md) (seção recursos) e `config.xml`.
+Ícone/splash nativos (Cordova): ver [`README.md`](README.md) (seção recursos) e `config.xml`.
 
 ## SCSS
 
