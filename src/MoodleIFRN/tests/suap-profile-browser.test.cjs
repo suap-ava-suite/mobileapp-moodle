@@ -167,6 +167,7 @@ test('Perfil usa InAppBrowser interno, mantém cookies e mostra a página soment
     assert.equal(nativeCalls.length, 1);
     assert.equal(nativeCalls[0].url, profileUrl);
     assert.equal(nativeCalls[0].options.hidden, 'yes');
+    assert.equal(nativeCalls[0].options.ifrnlayoutfullscreen, 'yes');
     assert.equal(nativeCalls[0].options.location, 'yes');
     assert.equal(nativeCalls[0].options.footer, 'no');
     assert.equal(nativeCalls[0].options.hardwareback, 'yes');
@@ -185,6 +186,13 @@ test('Perfil usa InAppBrowser interno, mantém cookies e mostra a página soment
 
     browser.emit('exit', { url: profileUrl });
     assert.deepEqual(states, ['ready', 'exit']);
+});
+
+test('a tela Angular de espera usa a superfície neutra do tema IFRN', () => {
+    const styles = fs.readFileSync(path.join(root, 'painel', 'painel.scss'), 'utf8');
+
+    assert.match(styles, /ion-modal\.ifrn-suap-profile-modal[\s\S]*?--background:\s*var\(--ifrn-canvas/);
+    assert.match(styles, /\.suap-profile-screen__content\s*\{\s*--background:\s*var\(--ifrn-canvas/);
 });
 
 test('navegação fora do SUAP é bloqueada e apresentada como erro recuperável', () => {

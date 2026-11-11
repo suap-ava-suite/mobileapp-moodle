@@ -146,6 +146,8 @@ export class SuapProfileBrowserService {
                 clearsessioncache: 'no',
                 cleardata: 'no',
                 hidden: 'yes',
+                // Usa o layout Android IFRN de insets já aplicado ao login SUAP.
+                ifrnlayoutfullscreen: 'yes',
                 location: 'yes',
                 footer: 'no',
                 toolbarcolor: '#1351b4',
