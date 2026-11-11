@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Injectable, inject } from '@angular/core';
+import { ApplicationRef, EnvironmentInjector, Injectable, inject } from '@angular/core';
 import type { BackButtonEvent } from '@ionic/core';
 import { BackButtonPriority } from '@/core/constants';
 import { NavigationEnd, NavigationError, Router } from '@angular/router';
 import { CoreSiteIdentityProvider } from '@classes/sites/unauthenticated-site';
-import { NO_SITE_ID } from '@features/login/constants';
+import { LOGIN_SSO_LAUNCH_DATA, NO_SITE_ID } from '@features/login/constants';
 import { MAIN_MENU_HOME_PAGE_NAME } from '@features/mainmenu/constants';
 import { CoreCourses, CoreEnrolledCourseData } from '@features/courses/services/courses';
 import { CoreLoginHelper } from '@features/login/services/login-helper';
-import { LOGIN_SSO_LAUNCH_DATA } from '@features/login/constants';
 import { AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
 import {
@@ -49,9 +48,7 @@ import { InAppBrowser } from '@singletons';
 import { startCourseSsoBrowser } from './course-sso-browser';
 import { COURSE_SESSION_EPOCH_KEY } from '../mobilemoodle/core_mobile/course-session-flags';
 
-
 export const IFRN_MOODLE_PRESENCIAL_URL = 'https://presencial.ava.ifrn.edu.br';
-
 
 const OAUTH_PENDING_KEY = 'ifrn_moodle_oauth_pending';
 const RESUME_OAUTH_KEY = 'ifrn_moodle_resume_oauth';
@@ -562,6 +559,9 @@ export interface MoodleSessionSummary {
 })
 export class MoodleSiteService {
 
+    private readonly applicationRef = inject(ApplicationRef);
+    private readonly environmentInjector = inject(EnvironmentInjector);
+
     private readonly logger = CoreLogger.getInstance('MoodleSiteService');
 
     /** Prepara o idioma IFRN durante a tela do Painel, fora do caminho do clique no curso. */
@@ -688,7 +688,20 @@ export class MoodleSiteService {
     /** Cobre a transição visual até o curso nativo estar pronto para aparecer. */
     showNativeCourseHandoff(): void {
         document.documentElement.classList.add('ifrn-course-opening');
-        showHandoffLoading();
+        showHandoffLoading(this.applicationRef, this.environmentInjector, {
+            courseName: this.getPendingOpenCourse()?.courseName,
+            onCancel: () => this.cancelNativeCourseHandoff(),
+        });
+    }
+
+    /** Cancela somente a abertura/SOO em curso e preserva a sessão já autenticada. */
+    private cancelNativeCourseHandoff(): void {
+        if (this.cancelCourseOpeningForPanelExit()) {
+            return;
+        }
+
+        this.dismissCourseRecovery();
+        this.redirectToPainelAva();
     }
 
     hideNativeCourseHandoff(): void {

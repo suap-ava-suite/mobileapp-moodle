@@ -19,20 +19,31 @@ function setup(open = async () => 'opened') {
     const routerToken = {};
     const router = { navigate: async (...args) => navigation.push(args) };
     const win = { location: { origin: 'http://localhost' }, addEventListener() {}, removeEventListener() {} };
+    const documentListeners = new Map();
+    const document = {
+        documentElement: { classList: { remove() {} } },
+        querySelector: () => null,
+        addEventListener: (event, callback) => {
+            const listeners = documentListeners.get(event) || new Set();
+            listeners.add(callback);
+            documentListeners.set(event, listeners);
+        },
+        removeEventListener: (event, callback) => documentListeners.get(event)?.delete(callback),
+    };
     const service = { ensureSessionAndOpenCourse: async (...args) => {
         calls.push(args);
         return open(...args);
     } };
     const { PainelPage } = load('src/MoodleIFRN/painel/painel.ts', {
         '@angular/core': { Component: () => c => c, ViewChild: () => () => {},
-            inject: id => id === token ? service : id === routerToken ? router : { stopProfileRefresh() {} } },
+            inject: id => id === token ? service : id === routerToken ? router : { stopProfileRefresh() {}, close() {} } },
         '@angular/router': { Router: routerToken },
         '@/MoodleIFRN/services_mobile/moodle-site.service': { MoodleSiteService: token },
         '../mobilemoodle/core_mobile/course-target': load('src/MoodleIFRN/mobilemoodle/core_mobile/course-target.ts', {}),
         '@services/navigator': { CoreNavigator: { navigate: async (...args) => navigation.push(args) } },
         '@services/overlays/alerts': { CoreAlerts: { showError: async error => errors.push(error) } },
-    }, { window: win, document: { documentElement: { classList: { remove() {} } } } });
-    return { page: new PainelPage(), Page: PainelPage, win, service, calls, navigation, errors };
+    }, { window: win, document });
+    return { page: new PainelPage(), Page: PainelPage, win, service, calls, navigation, errors, document, documentListeners };
 }
 const academic = 'https://academico.ava.ifrn.edu.br';
 const presencial = 'https://presencial.ava.ifrn.edu.br';
@@ -82,13 +93,18 @@ test('unconfirmed environment never selects a default Moodle', async () => {
 test('destroying an old Ionic panel does not unregister the active panel bridge', () => {
     const s = setup();
     s.page.registerBridge();
+    s.document.addEventListener('resume', s.page.onAppResume);
     const current = new s.Page();
     current.ionViewDidEnter();
+    s.document.addEventListener('resume', current.onAppResume);
     const active = s.win.MoodleIfrnBridge;
+    assert.equal(s.documentListeners.get('resume').size, 2);
     s.page.ngOnDestroy();
     assert.equal(s.win.MoodleIfrnBridge, active);
+    assert.equal(s.documentListeners.get('resume').size, 1);
     current.ngOnDestroy();
     assert.equal(s.win.MoodleIfrnBridge, undefined);
+    assert.equal(s.documentListeners.get('resume').size, 0);
 });
 
 test('only the panel iframe on the app origin can post course commands', async () => {

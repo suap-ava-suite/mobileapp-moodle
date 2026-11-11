@@ -7,87 +7,203 @@ const ts = require('typescript');
 
 function loadHandoffModule() {
     const filename = path.join(__dirname, '..', 'navigation', 'handoff-loading.ts');
+    const componentFilename = path.join(__dirname, '..', 'moodle-course', 'ifrn-course-loading.component.ts');
     const source = fs.readFileSync(filename, 'utf8');
     const javascript = ts.transpileModule(source, {
-        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     }).outputText;
     const elements = new Map();
+    const stats = { created: 0, attached: 0, detached: 0, destroyed: 0, detected: 0, removedStorage: 0, failCreation: false, mountWarnings: 0 };
 
     function createElement(tagName) {
-        const element = {
+        return {
             tagName,
             id: '',
-            style: {},
-            attributes: {},
             children: [],
             classList: { add() {}, remove() {} },
-            setAttribute(name, value) { this.attributes[name] = value; },
             appendChild(child) {
                 this.children.push(child);
-                if (child.id) elements.set(child.id, child);
+                elements.set(child.id, child);
+                child.remove = () => {
+                    this.children = this.children.filter(item => item !== child);
+                    elements.delete(child.id);
+                };
                 return child;
             },
-            append(...children) { children.forEach(child => this.appendChild(child)); },
-            remove() { if (this.id) elements.delete(this.id); },
         };
-        return element;
     }
 
     const document = {
-        baseURI: 'file:///android_asset/www/',
-        documentElement: createElement('html'),
-        head: createElement('head'),
+        documentElement: {
+            classList: {
+                values: new Set(),
+                add(value) { this.values.add(value); },
+                remove(value) { this.values.delete(value); },
+            },
+        },
         body: createElement('body'),
         createElement,
         getElementById: id => elements.get(id) || null,
     };
+
+    class TestComponent {}
+    const applicationRef = {
+        attachView() { stats.attached++; },
+        detachView() { stats.detached++; },
+    };
+    const environmentInjector = {};
     const module = { exports: {} };
+    const requireMock = id => {
+        if (id === '@angular/core') {
+            return {
+                createComponent: (componentClass, options) => {
+                    assert.equal(componentClass, TestComponent);
+                    assert.equal(options.environmentInjector, environmentInjector);
+                    assert.equal(options.hostElement.id, 'ifrn-handoff-loading');
+                    stats.created++;
+                    if (stats.failCreation) {
+                        throw new Error('synthetic creation failure');
+                    }
+                    const instance = {};
+                    return {
+                        hostView: {},
+                        instance,
+                        setInput(name, value) { instance[name] = value; },
+                        changeDetectorRef: { detectChanges() { stats.detected++; } },
+                        destroy() {
+                            stats.destroyed++;
+                            options.hostElement.remove?.();
+                        },
+                    };
+                },
+            };
+        }
+        if (id === '../moodle-course/ifrn-course-loading.component') {
+            return { IfrnCourseLoadingComponent: TestComponent };
+        }
+
+        throw new Error(`Unexpected import: ${id}`);
+    };
+
     vm.runInNewContext(javascript, {
         module,
         exports: module.exports,
+        require: requireMock,
         document,
-        window: { setTimeout },
-        sessionStorage: { removeItem() {} },
-        URL,
+        performance: { now: () => 12 },
+        sessionStorage: { removeItem() { stats.removedStorage++; } },
+        console: { warn() { stats.mountWarnings++; } },
     });
 
-    return { api: module.exports, document, elements };
+    return { api: module.exports, applicationRef, environmentInjector, document, elements, stats, componentFilename };
 }
 
-test('course handoff renders one accessible IFRN cover for repeated show calls', () => {
-    const { api, document, elements } = loadHandoffModule();
+test('course handoff mounts one Angular component and reuses it for duplicate show calls', () => {
+    const { api, applicationRef, environmentInjector, elements, stats } = loadHandoffModule();
+    const firstCancel = () => {};
+    const secondCancel = () => {};
 
-    api.showHandoffLoading();
-    api.showHandoffLoading();
+    api.showHandoffLoading(applicationRef, environmentInjector, { courseName: 'Curso sintético', onCancel: firstCancel });
+    api.showHandoffLoading(applicationRef, environmentInjector, { courseName: 'Curso atualizado', onCancel: secondCancel });
 
-    const cover = elements.get('ifrn-handoff-loading');
-    assert.ok(cover);
-    assert.equal(cover.attributes.role, 'status');
-    assert.equal(cover.attributes['aria-live'], 'polite');
-    assert.equal(cover.children.length, 1);
-    assert.equal(document.head.children[0].id, 'ifrn-handoff-style');
+    assert.equal(elements.get('ifrn-handoff-loading').tagName, 'ifrn-course-loading');
+    assert.equal(stats.created, 1);
+    assert.equal(stats.attached, 1);
+    assert.equal(stats.detected, 2);
 });
 
-test('course handoff uses the packaged IFRN logo and branded loading message', () => {
-    const { api, elements } = loadHandoffModule();
+test('course handoff destroys the Angular view and clears only its transient flag', () => {
+    const { api, applicationRef, environmentInjector, document, elements, stats } = loadHandoffModule();
 
-    api.showHandoffLoading();
+    api.showHandoffLoading(applicationRef, environmentInjector, { courseName: '', onCancel() {} });
+    api.hideHandoffLoading();
 
-    const [content] = elements.get('ifrn-handoff-loading').children;
-    const [brand, message] = content.children;
-    const [logo, spinner] = brand.children;
-    assert.match(logo.src, /mobilemoodle\/static\/theme\/ifrn\/img\/splash-logo\.png$/);
-    assert.equal(logo.alt, 'Moodle IFRN');
-    assert.equal(brand.style.width, 'min(132px, 34vw)');
-    assert.equal(logo.style.borderRadius, '50%');
-    assert.equal(logo.style.objectFit, 'cover');
-    assert.equal(spinner.style.position, 'absolute');
-    assert.equal(spinner.style.width, '100%');
-    assert.equal(spinner.attributes['aria-hidden'], 'true');
-    assert.equal(message.textContent, 'Abrindo sua disciplina...');
+    assert.equal(elements.has('ifrn-handoff-loading'), false);
+    assert.equal(stats.detached, 1);
+    assert.equal(stats.destroyed, 1);
+    assert.equal(stats.removedStorage, 1);
+    assert.equal(document.documentElement.classList.values.has('ifrn-native-handoff'), false);
 });
 
-test('course navigation does not release the cover before first-paint readiness', () => {
+test('course handoff failure does not block navigation or leave an overlay behind', () => {
+    const { api, applicationRef, environmentInjector, document, elements, stats } = loadHandoffModule();
+    stats.failCreation = true;
+
+    assert.doesNotThrow(() => api.showHandoffLoading(applicationRef, environmentInjector, { courseName: '', onCancel() {} }));
+    assert.equal(elements.has('ifrn-handoff-loading'), false);
+    assert.equal(document.documentElement.classList.values.has('ifrn-native-handoff'), false);
+    assert.equal(stats.mountWarnings, 1);
+});
+
+test('Angular course skeleton has IFRN header, staged sections, cancellation and reduced-motion support', () => {
+    const { componentFilename } = loadHandoffModule();
+    const template = fs.readFileSync(path.join(path.dirname(componentFilename), 'ifrn-course-loading.component.html'), 'utf8');
+    const styles = fs.readFileSync(path.join(path.dirname(componentFilename), 'ifrn-course-loading.component.scss'), 'utf8');
+    const component = fs.readFileSync(componentFilename, 'utf8');
+
+    assert.match(template, /Moodle IFRN/);
+    assert.match(template, /Abrindo disciplina/);
+    assert.match(template, /\(click\)="requestCancel\(\)"/);
+    assert.equal((template.match(/course-loading__section course-loading__reveal/g) || []).length, 2);
+    assert.match(template, /@if \(courseName\)/);
+    assert.match(styles, /--ifrn-canvas/);
+    assert.match(styles, /animation-delay: 55ms/);
+    assert.match(styles, /animation-delay: 110ms/);
+    assert.match(styles, /prefers-reduced-motion: reduce/);
+    assert.doesNotMatch(template, /%/);
+    assert.match(component, /ChangeDetectionStrategy\.OnPush/);
+    assert.match(component, /signal\(false\)/);
+});
+
+test('Angular course loader invokes cancellation at most once', () => {
+    const { componentFilename } = loadHandoffModule();
+    const javascript = ts.transpileModule(fs.readFileSync(componentFilename, 'utf8'), {
+        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    }).outputText;
+    const angular = {
+        ChangeDetectionStrategy: { OnPush: 1 },
+        Component: () => target => target,
+        Input: () => () => {},
+        signal: initial => {
+            let value = initial;
+            const read = () => value;
+            read.set = next => value = next;
+            return read;
+        },
+    };
+    const exports = {};
+    vm.runInNewContext(javascript, {
+        exports,
+        require: id => id === '@angular/core' ? angular : {},
+        performance: { now: () => 8 },
+        requestAnimationFrame: () => 0,
+        cancelAnimationFrame() {},
+        console,
+    });
+    const component = new exports.IfrnCourseLoadingComponent();
+    let cancellations = 0;
+    component.onCancel = () => cancellations++;
+
+    component.requestCancel();
+    component.requestCancel();
+
+    assert.equal(cancellations, 1);
+    assert.equal(component.cancellationStarted(), true);
+});
+
+test('course handoff cancellation is guarded and returns to the IFRN panel', () => {
+    const filename = path.join(__dirname, '..', 'services_mobile', 'moodle-site.service.ts');
+    const source = fs.readFileSync(filename, 'utf8');
+    const start = source.indexOf('private cancelNativeCourseHandoff(): void {');
+    const end = source.indexOf('\n    }', start);
+    assert.ok(start >= 0 && end > start, 'expected the handoff cancellation handler');
+    const handler = source.slice(start, end);
+    assert.match(handler, /cancelCourseOpeningForPanelExit\(\)/);
+    assert.match(handler, /dismissCourseRecovery\(\)/);
+    assert.match(handler, /redirectToPainelAva\(\)/);
+});
+
+test('course navigation keeps the Angular cover until the themed native route has painted', () => {
     const filename = path.join(__dirname, '..', 'services_mobile', 'moodle-site.service.ts');
     const source = fs.readFileSync(filename, 'utf8');
     const navigationMarker = source.indexOf('A rota pode chegar antes dos dados');
@@ -101,20 +217,7 @@ test('course navigation does not release the cover before first-paint readiness'
     const readiness = source.indexOf("attempt.stage('course-first-paint'");
     const performPromise = source.indexOf('this.performOpenCourseById(courseId, attempt)', openStart);
     const finalRelease = source.indexOf('this.hideNativeCourseHandoff();', performPromise);
-    assert.ok(readiness >= 0, 'course opening must wait for the native themed first paint');
+    assert.ok(readiness >= 0, 'course opening must wait for route, visible component and IFRN theme tokens');
     assert.ok(performPromise > openStart && finalRelease > performPromise,
-        'the cover must be released only when the async course opening operation settles');
-
-    const courseNavStart = source.indexOf('private handleCourseNavEnd(url: string): void {');
-    const courseNavEnd = source.indexOf('\n    /** Mesmo destino do goBack()', courseNavStart);
-    assert.ok(courseNavStart >= 0 && courseNavEnd > courseNavStart, 'expected the course navigation observer');
-    const courseNavigation = source.slice(courseNavStart, courseNavEnd);
-    const courseIndexStart = courseNavigation.indexOf('if (isCourseIndexPath(path, courseId))');
-    const courseIndexEnd = courseNavigation.indexOf('// Ainda não vimos o course index', courseIndexStart);
-    assert.ok(courseIndexStart >= 0 && courseIndexEnd > courseIndexStart, 'expected the course index branch');
-    assert.doesNotMatch(
-        courseNavigation.slice(courseIndexStart, courseIndexEnd),
-        /hideNativeCourseHandoff/,
-        'NavigationEnd must not expose the Moodle back button before the themed first paint is ready',
-    );
+        'the cover must be released after the asynchronous course-ready check');
 });
