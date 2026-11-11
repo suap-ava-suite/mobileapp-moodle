@@ -273,9 +273,12 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         this.statusMessage = 'Acessando o SUAP…';
         let openGovBrImmediately = false;
         try {
-            // Um novo retorno deve mudar a query, mesmo na tela Ionic em cache.
-            await this.router.navigate([], { relativeTo: this.route, replaceUrl: true,
-                queryParams: { nativeSuapReturn: null }, queryParamsHandling: 'merge' });
+            // Só navega quando há uma query de retorno anterior para remover.
+            // No primeiro login, essa navegação para a mesma rota era trabalho extra.
+            if (this.route.snapshot?.queryParamMap.has('nativeSuapReturn')) {
+                await this.router.navigate([], { relativeTo: this.route, replaceUrl: true,
+                    queryParams: { nativeSuapReturn: null }, queryParamsHandling: 'merge' });
+            }
             await this.waitForTransitionPaint();
             reportSuapDuration('marketplace-preflight', performance.now() - entryStartedAt);
             await this.suapEntry.loginWithSuap(this.expectedIdentity, message => this.statusMessage = message);

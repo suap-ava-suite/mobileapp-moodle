@@ -62,6 +62,8 @@ function loadMarketplace() {
         exports: {},
         require: id => mocks[id] || {},
         console,
+        performance: require('node:perf_hooks').performance,
+        window: { requestAnimationFrame: callback => callback() },
     };
     const source = fs.readFileSync('src/MoodleIFRN/marketplace-ifrn/marketplace-ifrn.ts', 'utf8');
     const javascript = ts.transpileModule(source, {
@@ -69,7 +71,12 @@ function loadMarketplace() {
     }).outputText;
     vm.runInNewContext(javascript, context);
 
-    return { MarketplaceIfrnPage: context.exports.MarketplaceIfrnPage, metadata };
+    return {
+        MarketplaceIfrnPage: context.exports.MarketplaceIfrnPage,
+        metadata,
+        dependencies,
+        tokens,
+    };
 }
 
 test('Marketplace usa OnPush e signals Angular para estado reativo de transição', () => {
@@ -96,4 +103,63 @@ test('Marketplace usa OnPush e signals Angular para estado reativo de transiçã
     page.statusMessage = 'Validando acesso';
     assert.equal(page.showTransition, false);
     assert.equal(page.transitionCaption, 'Validando acesso');
+});
+
+test('primeiro login sem sessão não navega para a mesma rota e ignora clique duplicado', async () => {
+    const { MarketplaceIfrnPage, dependencies, tokens } = loadMarketplace();
+    const page = new MarketplaceIfrnPage();
+    const route = dependencies.get(tokens.ActivatedRoute);
+    const router = dependencies.get(tokens.Router);
+    const auth = dependencies.get(tokens.AuthService);
+    const painel = dependencies.get(tokens.PainelAvaService);
+    const suap = dependencies.get(tokens.SuapEntryService);
+    let loginCalls = 0;
+    let signalLoginStarted;
+    let finishLogin;
+    const loginStarted = new Promise(resolve => signalLoginStarted = resolve);
+    const loginPending = new Promise(resolve => finishLogin = resolve);
+
+    route.snapshot = undefined;
+    router.navigate = async () => assert.fail('não deve navegar sem query de retorno');
+    auth.isAuthenticated = () => false;
+    painel.hasDashboard = () => false;
+    suap.loginWithSuap = () => {
+        loginCalls++;
+        signalLoginStarted();
+        return loginPending;
+    };
+
+    const firstAttempt = page.enterAva();
+    await loginStarted;
+    await page.enterAva();
+
+    assert.equal(loginCalls, 1);
+    assert.equal(page.loading, true);
+
+    finishLogin();
+    await firstAttempt;
+    assert.equal(page.loading, false);
+});
+
+test('entrada após callback limpa a query nativeSuapReturn antes do novo login', async () => {
+    const { MarketplaceIfrnPage, dependencies, tokens } = loadMarketplace();
+    const page = new MarketplaceIfrnPage();
+    const route = dependencies.get(tokens.ActivatedRoute);
+    const router = dependencies.get(tokens.Router);
+    const auth = dependencies.get(tokens.AuthService);
+    const painel = dependencies.get(tokens.PainelAvaService);
+    const suap = dependencies.get(tokens.SuapEntryService);
+    const navigationCalls = [];
+
+    route.snapshot = { queryParamMap: { has: key => key === 'nativeSuapReturn' } };
+    router.navigate = async (...args) => navigationCalls.push(args);
+    auth.isAuthenticated = () => false;
+    painel.hasDashboard = () => false;
+    suap.loginWithSuap = async () => {};
+
+    await page.enterAva();
+
+    assert.equal(navigationCalls.length, 1);
+    assert.equal(navigationCalls[0][1].queryParams.nativeSuapReturn, null);
+    assert.equal(navigationCalls[0][1].queryParamsHandling, 'merge');
 });
