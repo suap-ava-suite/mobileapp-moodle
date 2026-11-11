@@ -7,7 +7,7 @@ Este inventário não remove nem move arquivos. A classificação é um ponto de
 
 ## Resumo
 
-- src/MoodleIFRN/docs/: 59 arquivos rastreados: 25 Markdown, 15 scripts .cjs, 12 scripts .js, 3 JSON e 4 TXT.
+- src/MoodleIFRN/docs/: 63 arquivos rastreados: 26 Markdown, 15 scripts .cjs, 13 arquivos .js, 3 JSON, 4 TXT, 1 HTML e 1 CSS.
 - Também havia dois logs ignorados sob docs/auditoria-fluxo-2026-10-19/. Eles não são parte da documentação versionada.
 - .analise/: 319 arquivos locais no momento da contagem. Há relatórios, evidências, capturas, APKs e logs; esse diretório não é a documentação pública do projeto e não deve ser adicionado em massa ao Git.
 - Não foram encontrados documentos Markdown idênticos byte a byte pelo hash SHA-256. Há sobreposição de índice entre readme_ifrn.md e docs/README.md, mas cada um atende a um nível diferente.
@@ -55,7 +55,7 @@ Esses registros não devem ser tratados automaticamente como estado atual. Em es
 
 ## Scripts, snapshots e arquivos auxiliares
 
-Os outros 34 arquivos rastreados na pasta são scripts de diagnóstico/teste, JSON e TXT. São artefatos especializados, não páginas do manual geral. Os scripts com nomes course-*, test-*, audit-* e probe-* não são scripts npm registrados só por estarem nessa pasta. Consulte o conteúdo e seus argumentos antes de executar; alguns podem depender de aparelho conectado, credenciais de teste, serviços remotos ou gerar logs.
+Além dos 26 documentos Markdown, há 37 arquivos auxiliares: os 34 scripts/snapshots preexistentes de diagnóstico e teste e os três recursos locais do manual (HTML, CSS e JavaScript). Os arquivos course-*, test-*, audit-* e probe-* não são scripts npm registrados só por estarem nessa pasta. Consulte o conteúdo e seus argumentos antes de executar; alguns podem depender de aparelho conectado, credenciais de teste, serviços remotos ou gerar logs.
 
 auditoria-fluxo-2026-10-19/ contém snapshots de endpoints, aparelho e cópias de fontes. Não os copie para documentação pública nem os compartilhe sem revisão de dados pessoais, URLs e informações operacionais. Os dois logs ignorados citados acima são locais e não estão versionados.
 
