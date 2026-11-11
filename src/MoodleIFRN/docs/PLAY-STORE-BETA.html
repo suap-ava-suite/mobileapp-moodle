@@ -1,0 +1,103 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="description" content="Documentação técnica local Moodle IFRN Mobile: Publicação beta na Google Play."><title>Publicação beta na Google Play | Moodle IFRN Mobile</title><link rel="stylesheet" href="assets/manual.css"><script src="assets/manual.js" defer></script></head><body data-document="PLAY-STORE-BETA.html"><a class="skip-link" href="#conteudo">Pular para o conteúdo</a><header class="topbar"><button class="icon-button menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false">☰</button><a class="brand" href="index.html" aria-label="Moodle IFRN Mobile, página inicial"><span class="brand-mark" aria-hidden="true">IF</span><span><strong>Moodle IFRN Mobile</strong><small>Manual de desenvolvimento</small></span></a><div class="top-actions"><label class="search-wrap"><span class="visually-hidden">Pesquisar nesta página</span><input id="manual-search" type="search" placeholder="Pesquisar nesta página" autocomplete="off"></label><button id="theme-toggle" class="icon-button" type="button" aria-label="Alternar tema">◐</button></div></header><div class="layout"><aside id="sidebar" class="sidebar" aria-label="Navegação do manual"><nav><a href="index.html#inicio">Visão geral</a><a href="index.html#requisitos">Requisitos</a><a href="index.html#clone">Obter o código</a><a href="index.html#instalacao">Instalar dependências</a><a href="index.html#desenvolvimento">Desenvolver e executar</a><a href="index.html#scripts">Scripts IFRN</a><a href="index.html#android">Android e APK</a><a href="index.html#ios">iOS pelo MacBook</a><a href="index.html#testes">Testes e diagnóstico</a><a href="index.html#arquitetura">Arquitetura</a><a href="index.html#problemas">Problemas comuns</a><a href="index.html#git">Fluxo Git</a><a href="index.html#documentacao">Documentação existente</a><details class="nav-group" open><summary>Documentação técnica</summary><div class="nav-sub"><a href="README.html">Índice de documentos</a><a href="PONTE-PAINEL-MOODLE.html">Ponte Painel AVA → Moodle</a><a href="LOGIN-IFRN.html">Login IFRN</a><a href="PAINEL-CURSOS.html">Painel de cursos</a><a href="SEGURANCA.html">Segurança</a><a href="PATCH-AO-ATUALIZAR.html">Atualização e patches</a><a href="INVENTARIO-DOCUMENTACAO.html">Inventário</a><a href="ENTRADA-DIRETA-SUAP.html">Entrada SUAP e Painel</a><a href="SERVICOS-AUTH-BIOMETRIA.html">Autenticação e biometria</a><a href="CONTRATO-API.html">Contrato de API</a><a href="apis-e-endpoints.html">APIs e endpoints</a><a href="TEMA-VISUAL.html">Tema visual</a><a href="TEMPLATES-HTML.html">Templates HTML</a><a href="TROCAR-IMAGEM-ABERTURA-ANDROID.html">Assets Android</a><a href="LOGO-MOODLE-IFRN.html">Identidade visual</a><a href="PLAY-STORE-BETA.html">Publicação beta na Google Play</a></div></details></nav><div class="sidebar-note">Manual offline · páginas HTML locais</div></aside><main id="conteudo" class="content"><section class="hero searchable"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h1>Publicação beta na Google Play</h1><p>Conteúdo convertido do arquivo <code>PLAY-STORE-BETA.md</code>. O Markdown original foi preservado; use o sumário e a pesquisa para navegar.</p><div class="hero-actions"><a class="button primary" href="index.html">Página inicial</a><a class="button secondary" href="README.html">Índice técnico</a></div></section><nav class="page-toc" aria-label="Sumário desta página"><h2>Nesta página</h2><ol><li class="level-2"><a href="#estado-atual-deste-repositorio">Estado atual deste repositório</a></li><li class="level-2"><a href="#1-criar-a-ficha-no-play-console">1. Criar a ficha no Play Console</a></li><li class="level-2"><a href="#2-preparar-metadados-e-declaracoes">2. Preparar metadados e declarações</a></li><li class="level-2"><a href="#3-preparar-assinatura-e-versao">3. Preparar assinatura e versão</a></li><li class="level-2"><a href="#4-gerar-e-verificar-o-aab">4. Gerar e verificar o AAB</a></li><li class="level-2"><a href="#5-criar-o-primeiro-teste-interno">5. Criar o primeiro teste interno</a></li><li class="level-2"><a href="#6-checklist-do-ava-ifrn-antes-de-convidar-testadores">6. Checklist do AVA IFRN antes de convidar testadores</a></li><li class="level-2"><a href="#referencias-oficiais">Referências oficiais</a></li></ol></nav><article class="document-body"><div class="callout warning"><strong>Guia de referência:</strong> telas e regras da Google Play mudam. Preserve este procedimento como referência histórica e confirme os requisitos atuais no Play Console antes de publicar.</div>
+<p>Este guia cobre a criação do app <strong>Moodle IFRN</strong> no Play Console e a publicação inicial em teste. O beta é distribuído pela Play Store a um grupo autorizado; ele não publica automaticamente o app para todos.</p>
+<section class="doc-section searchable" id="estado-atual-deste-repositorio"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Estado atual deste repositório</h2>
+<p>Antes de criar a ficha ou enviar um pacote, resolva estes itens:</p>
+<ul>
+<li>[ ] O nome informado para a ficha é <strong>Moodle IFRN</strong>. O nome nativo ainda aparece como <strong>Moodle</strong> em <code>config.xml</code>.</li>
+<li>[ ] Escolha e aprove com o responsável institucional um identificador Android exclusivo, por exemplo no formato <code>br.edu.ifrn.&lt;nome-do-app&gt;</code>. O identificador atual em <code>config.xml</code> é <code>com.moodle.moodlemobile</code>, pertencente ao namespace do app Moodle. Não envie o pacote com esse identificador para uma nova ficha IFRN.</li>
+<li>[ ] O identificador do pacote fica fixo depois do primeiro envio de AAB à ficha do Play Console. Confirme-o antes do upload.</li>
+<li>[ ] O <code>versionCode</code> configurado hoje é <code>52100</code> e a versão é <code>5.2.1</code>. Confirme o histórico da ficha nova e defina um <code>versionCode</code> inteiro maior em cada atualização futura.</li>
+<li>[ ] O <code>config.xml</code> pede <code>android-targetSdkVersion=36</code>, que atende ao requisito do Google Play a partir de 31/08/2026. Porém, o projeto declara <code>cordova-android</code> 14.0.1; a tabela oficial da plataforma lista suporte até API 35 para a linha 14 e API 36 para a linha 15. Atualize para Cordova Android 15.x e valide plugins e compilação antes de submeter.</li>
+<li>[ ] Não há configuração de assinatura de release nem keystore no repositório. Configure uma chave de upload em local seguro e fora do Git; nunca coloque keystore, senha ou arquivo de configuração com segredos em um commit.</li>
+<li>[ ] <code>src/MoodleIFRN/build-native.mjs</code> gera ativos web Cordova usando a configuração <code>development</code>; ele sozinho não produz nem assina o AAB de produção.</li>
+<li>[ ] A ficha de privacidade e Segurança dos dados ainda precisa ser preenchida com base nos dados efetivamente usados no login SUAP/Painel e no Moodle. Não marque respostas presumidas.</li>
+</ul>
+</section>
+<section class="doc-section searchable" id="1-criar-a-ficha-no-play-console"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>1. Criar a ficha no Play Console</h2>
+<ol>
+<li>Entre em <a href="https://play.google.com/console/">Google Play Console</a> usando a conta institucional responsável pela publicação. Se ainda não houver conta de desenvolvedor, conclua o cadastro e as verificações exigidas pelo Google.</li>
+<li>Selecione <strong>Criar app</strong>.</li>
+<li>Informe o nome <strong>Moodle IFRN</strong>, idioma padrão, tipo <strong>App</strong>, gratuito ou pago conforme decisão institucional e aceite as declarações apresentadas.</li>
+<li>Na ficha do app, selecione a disponibilidade inicial desejada. Para validar com poucas pessoas, comece com <strong>Teste interno</strong>; depois use <strong>Teste fechado</strong> para um grupo controlado maior.</li>
+<li>Antes do primeiro AAB, altere <code>id</code> do elemento <code>&lt;widget&gt;</code> em <code>config.xml</code> para o identificador IFRN aprovado. Ajuste também o nome nativo para <code>Moodle IFRN</code>. Confira se o <code>applicationId</code> gerado em <code>platforms/android/app/build.gradle</code> acompanha o widget. Não edite só a cópia gerada em <code>platforms/android</code>, pois Cordova pode recriá-la.</li>
+<li>Escolha o Play App Signing para a nova ficha. O Google guarda a chave usada para assinar a distribuição; a equipe mantém uma chave de upload separada para assinar cada AAB enviado.</li>
+</ol>
+</section>
+<section class="doc-section searchable" id="2-preparar-metadados-e-declaracoes"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>2. Preparar metadados e declarações</h2>
+<p>No Play Console, complete a ficha principal e a página <strong>Política &gt; Conteúdo do app</strong>:</p>
+<ul>
+<li>Nome: <strong>Moodle IFRN</strong> (limite atual de 30 caracteres).</li>
+<li>Descrição curta e completa, ícone de loja PNG de 512 × 512 e capturas reais do app. Não use capturas de telas que não existam no produto.</li>
+<li>E-mail de suporte e URL ativa da política de privacidade institucional, aplicável ao app e também acessível dentro dele.</li>
+<li>Declaração de anúncios, público-alvo e classificação indicativa, com respostas corretas para o uso educacional do app.</li>
+<li><strong>Segurança dos dados</strong>: inventarie identificadores, perfil, fotos, dados de autenticação, atividade e eventuais dados compartilhados com SUAP, Painel AVA, Moodle e provedores de push/analytics. Registre finalidade, retenção e compartilhamento de acordo com a implementação real e a política institucional.</li>
+<li><strong>Acesso ao app</strong>: descreva ao revisor como chegar às áreas protegidas. Se o fluxo exige autenticação institucional, forneça instruções e uma conta de demonstração autorizada, se houver. Não use credenciais reais de estudante.</li>
+</ul>
+</section>
+<section class="doc-section searchable" id="3-preparar-assinatura-e-versao"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>3. Preparar assinatura e versão</h2>
+<ol>
+<li>Gere ou receba da instituição a chave de upload. Guarde keystore e senhas em armazenamento de segredos, fora do repositório e com acesso restrito. Faça backup seguro.</li>
+<li>Crie a configuração local do Cordova para assinatura (<code>build.json</code>) fora do projeto. O arquivo contém caminhos e senhas; não o adicione ao Git nem o compartilhe em chamados ou mensagens.</li>
+<li>Atualize <code>config.xml</code> com o identificador aprovado e com <code>version</code>/<code>android-versionCode</code> adequados. O código de versão precisa ser maior do que qualquer versão já enviada para essa ficha.</li>
+<li>Use Node conforme <code>.nvmrc</code> (Node 22), JDK 17, Android SDK e a versão do Cordova Android compatível com API 36. Confirme com <code>cordova platform ls</code> e <code>java -version</code>.</li>
+</ol>
+<p>Exemplo de configuração local de assinatura (substitua pelos caminhos e dados da chave institucional; mantenha esse arquivo fora do Git):</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>json</span></div><pre><code>{
+  "android": {
+    "release": {
+      "keystore": "/caminho/seguro/ifrn-upload-key.jks",
+      "storePassword": "DEFINIR_LOCALMENTE",
+      "alias": "ifrn-upload",
+      "password": "DEFINIR_LOCALMENTE",
+      "packageType": "bundle"
+    }
+  }
+}</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+</section>
+<section class="doc-section searchable" id="4-gerar-e-verificar-o-aab"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>4. Gerar e verificar o AAB</h2>
+<p>No Linux ou Git Bash, após acertar identificador, versão, versão do Cordova Android e assinatura:</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>bash</span></div><pre><code>npm ci
+npx ionic cordova build android --prod --release \
+  --buildConfig=/caminho/seguro/play-build.json -- -- --packageType=bundle</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p>No Windows PowerShell, use um caminho absoluto para a configuração fora do repositório e execute o mesmo comando em uma única linha:</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>powershell</span></div><pre><code>npm ci
+npx ionic cordova build android --prod --release --buildConfig="C:\segredos\play-build.json" -- -- --packageType=bundle</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p>O caminho esperado do artefato é:</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>text</span></div><pre><code>platforms/android/app/build/outputs/bundle/release/app-release.aab</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p>Confirme que o arquivo existe, que o pacote e o <code>versionCode</code> correspondem ao aprovado, que o AAB está assinado pela chave de upload e que a assinatura aparece no Play Console. Instale e teste o mesmo código em aparelhos reais antes de ampliar o grupo. Não use o AAB de desenvolvimento nem um APK debug como release.</p>
+</section>
+<section class="doc-section searchable" id="5-criar-o-primeiro-teste-interno"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>5. Criar o primeiro teste interno</h2>
+<ol>
+<li>No Play Console, abra <strong>Testar e lançar &gt; Teste &gt; Teste interno</strong> e crie uma versão.</li>
+<li>Faça upload de <code>app-release.aab</code>, revise os avisos e dê um nome à versão (por exemplo, <code>beta-1</code>).</li>
+<li>Adicione uma lista pequena de e-mails Google autorizados como testadores e informe um canal para feedback.</li>
+<li>Revise o resumo e inicie a publicação do teste interno.</li>
+<li>Compartilhe o link de adesão com os testadores. Eles precisam aceitar o convite usando a conta Google incluída na lista e instalar pelo link da Play Store.</li>
+<li>Colete defeitos, corrija, aumente o <code>versionCode</code> e envie cada atualização como nova versão de teste.</li>
+</ol>
+<p>Para um grupo maior, crie um <strong>Teste fechado</strong> e selecione a lista de testadores. Contas pessoais de desenvolvedor criadas após 13/11/2023 têm requisito adicional antes de solicitar acesso à produção: teste fechado com pelo menos 12 testadores inscritos continuamente por 14 dias. Essa regra não impede começar pelo teste interno, mas pode afetar a passagem posterior para produção.</p>
+</section>
+<section class="doc-section searchable" id="6-checklist-do-ava-ifrn-antes-de-convidar-testadores"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>6. Checklist do AVA IFRN antes de convidar testadores</h2>
+<ul>
+<li>[ ] Instalação limpa e atualização por cima da versão anterior.</li>
+<li>[ ] Login institucional SUAP, retorno ao Painel AVA, logout e novo login.</li>
+<li>[ ] Nome, foto, identificação e categorias de curso sem dados inventados.</li>
+<li>[ ] Abrir cursos reais autorizados em cada ambiente, voltar ao painel e reabrir após expiração da sessão.</li>
+<li>[ ] Links externos, notificações e permissões em Android real.</li>
+<li>[ ] Nenhuma tela, URL, chave de teste ou credencial de desenvolvimento exposta no build.</li>
+<li>[ ] Logs sem senha, matrícula, token ou cookie.</li>
+<li>[ ] Política de privacidade, Segurança dos dados e instruções ao revisor revisadas pelo responsável institucional.</li>
+</ul>
+</section>
+<section class="doc-section searchable" id="referencias-oficiais"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Referências oficiais</h2>
+<ul>
+<li><a href="https://support.google.com/googleplay/android-developer/answer/9859152">Criar e configurar um app</a></li>
+<li><a href="https://support.google.com/googleplay/android-developer/answer/9845334">Configurar teste interno, fechado ou aberto</a></li>
+<li><a href="https://developer.android.com/studio/publish/app-signing">Assinar seu app e configurar Play App Signing</a></li>
+<li><a href="https://support.google.com/googleplay/android-developer/answer/9859455">Preparar o app para revisão</a></li>
+<li><a href="https://support.google.com/googleplay/android-developer/answer/11926878">Requisitos de nível de API para apps Google Play</a></li>
+<li><a href="https://support.google.com/googleplay/android-developer/answer/14151465">Requisitos de teste para contas pessoais novas</a></li>
+<li><a href="https://ionicframework.com/docs/cli/commands/cordova-build">Comando Ionic Cordova Build</a></li>
+<li><a href="https://cordova.apache.org/docs/en/latest/guide/platforms/android/">Guia Apache Cordova para Android</a></li>
+</ul>
+</section></article><div class="no-results" id="no-results" hidden>Nenhum tópico corresponde à pesquisa.</div><p><a class="back-top" href="#conteudo">Voltar ao topo ↑</a></p><footer class="footer">Moodle IFRN Mobile · Manual local e offline · fonte: PLAY-STORE-BETA.md</footer></main></div><div id="live-status" class="visually-hidden" aria-live="polite"></div></body></html>

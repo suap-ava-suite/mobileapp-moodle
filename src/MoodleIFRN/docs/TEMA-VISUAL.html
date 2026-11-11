@@ -1,0 +1,69 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="description" content="Documentação técnica local Moodle IFRN Mobile: Tema visual."><title>Tema visual | Moodle IFRN Mobile</title><link rel="stylesheet" href="assets/manual.css"><script src="assets/manual.js" defer></script></head><body data-document="TEMA-VISUAL.html"><a class="skip-link" href="#conteudo">Pular para o conteúdo</a><header class="topbar"><button class="icon-button menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false">☰</button><a class="brand" href="index.html" aria-label="Moodle IFRN Mobile, página inicial"><span class="brand-mark" aria-hidden="true">IF</span><span><strong>Moodle IFRN Mobile</strong><small>Manual de desenvolvimento</small></span></a><div class="top-actions"><label class="search-wrap"><span class="visually-hidden">Pesquisar nesta página</span><input id="manual-search" type="search" placeholder="Pesquisar nesta página" autocomplete="off"></label><button id="theme-toggle" class="icon-button" type="button" aria-label="Alternar tema">◐</button></div></header><div class="layout"><aside id="sidebar" class="sidebar" aria-label="Navegação do manual"><nav><a href="index.html#inicio">Visão geral</a><a href="index.html#requisitos">Requisitos</a><a href="index.html#clone">Obter o código</a><a href="index.html#instalacao">Instalar dependências</a><a href="index.html#desenvolvimento">Desenvolver e executar</a><a href="index.html#scripts">Scripts IFRN</a><a href="index.html#android">Android e APK</a><a href="index.html#ios">iOS pelo MacBook</a><a href="index.html#testes">Testes e diagnóstico</a><a href="index.html#arquitetura">Arquitetura</a><a href="index.html#problemas">Problemas comuns</a><a href="index.html#git">Fluxo Git</a><a href="index.html#documentacao">Documentação existente</a><details class="nav-group" open><summary>Documentação técnica</summary><div class="nav-sub"><a href="README.html">Índice de documentos</a><a href="PONTE-PAINEL-MOODLE.html">Ponte Painel AVA → Moodle</a><a href="LOGIN-IFRN.html">Login IFRN</a><a href="PAINEL-CURSOS.html">Painel de cursos</a><a href="SEGURANCA.html">Segurança</a><a href="PATCH-AO-ATUALIZAR.html">Atualização e patches</a><a href="INVENTARIO-DOCUMENTACAO.html">Inventário</a><a href="ENTRADA-DIRETA-SUAP.html">Entrada SUAP e Painel</a><a href="SERVICOS-AUTH-BIOMETRIA.html">Autenticação e biometria</a><a href="CONTRATO-API.html">Contrato de API</a><a href="apis-e-endpoints.html">APIs e endpoints</a><a href="TEMA-VISUAL.html">Tema visual</a><a href="TEMPLATES-HTML.html">Templates HTML</a><a href="TROCAR-IMAGEM-ABERTURA-ANDROID.html">Assets Android</a><a href="LOGO-MOODLE-IFRN.html">Identidade visual</a><a href="PLAY-STORE-BETA.html">Publicação beta na Google Play</a></div></details></nav><div class="sidebar-note">Manual offline · páginas HTML locais</div></aside><main id="conteudo" class="content"><section class="hero searchable"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h1>Tema visual</h1><p>Conteúdo convertido do arquivo <code>TEMA-VISUAL.md</code>. O Markdown original foi preservado; use o sumário e a pesquisa para navegar.</p><div class="hero-actions"><a class="button primary" href="index.html">Página inicial</a><a class="button secondary" href="README.html">Índice técnico</a></div></section><nav class="page-toc" aria-label="Sumário desta página"><h2>Nesta página</h2><ol><li class="level-2"><a href="#header-estilo-ava">Header (estilo AVA)</a></li><li class="level-3"><a href="#responsividade-do-header">Responsividade do header</a></li><li class="level-2"><a href="#safe-area-status-bar-notch">Safe-area (status bar / notch)</a></li><li class="level-2"><a href="#sidebar-espelho-do-ava">Sidebar (espelho do AVA)</a></li><li class="level-2"><a href="#acessibilidade-espelho-do-ava">Acessibilidade (espelho do AVA)</a></li><li class="level-2"><a href="#pos-login-painel-curso-secoes-atividades">Pós-login (painel, curso, seções, atividades)</a></li><li class="level-2"><a href="#scss">SCSS</a></li></ol></nav><article class="document-body"><p>Tema visual inspirado no AVA IFRN (<code>theme_ifrn25</code> / DS-GOV).</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>text</span></div><pre><code>ifrn/
+├── favicon/            ← ícones do Painel AVA (PWA / aba)
+├── scss/
+│   ├── painel.scss     ← estilos consolidados em SCSS, convertidos do CSS servido
+│   ├── _variables.scss
+│   ├── _global.scss    ← base + header AVA (.ava-header)
+│   ├── _sidebar.scss   ← menu lateral (Painel AVA, perfil, filtros…)
+│   ├── _accessibility.scss ← painel de acessibilidade (igual ao AVA)
+│   ├── _splash.scss    ← load view (logo + spinner)
+│   ├── _cards.scss
+│   ├── _curso.scss     ← curso, seções e atividades
+│   ├── _mobile.scss    ← responsividade celular (≤768px) + safe-area
+│   ├── _dsgov-*.scss   ← tokens / componentes DS-GOV
+│   └── dsgov/          ← partials herdados do tema web
+└── img/                ← ícones e imagens do tema (splash-logo, app-icon…)</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<section class="doc-section searchable" id="header-estilo-ava"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Header (estilo AVA)</h2>
+<p>No <code>index.html</code>, o cabeçalho espelha o <code>br-header</code> do AVA, adaptado ao mobile:</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>text</span></div><pre><code>[ ☰ menu ]  Painel AVA / IFRN     [ avatar ]
+            (título + subtítulo)</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<div class="table-wrap"><table><thead><tr><th>Classe</th><th>Papel</th></tr></thead><tbody><tr><td><code>.ava-header</code></td><td><code>ion-header</code> com sombra DS-GOV</td></tr><tr><td><code>.ava-toolbar</code></td><td>Toolbar compacta (~48px) + <code>--padding-top</code> = safe-area</td></tr><tr><td><code>.ava-toolbar-inner</code></td><td>Flex: menu + marca + avatar</td></tr><tr><td><code>.ava-header-title</code> (<code>#page-title</code>)</td><td>Título da tela (Painel AVA / nome do curso)</td></tr><tr><td><code>.ava-header-subtitle</code> (<code>#page-subtitle</code>)</td><td>Subtítulo (IFRN / Painel AVA)</td></tr><tr><td><code>.toolbar-avatar</code></td><td>Iniciais do usuário; abre modal de perfil</td></tr></tbody></table></div>
+</section>
+<section class="doc-section searchable" id="responsividade-do-header"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h3>Responsividade do header</h3>
+<ul>
+<li>Tipografia com <code>clamp()</code> (acompanha a largura da tela)</li>
+<li>Em telas ≤360px e em landscape: subtítulo some para ganhar espaço</li>
+<li>Altura da barra: ~48px (44px em telas bem estreitas)</li>
+</ul>
+</section>
+<section class="doc-section searchable" id="safe-area-status-bar-notch"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Safe-area (status bar / notch)</h2>
+<p>O painel é uma página HTML separada (<code>mobilemoodle/index.html</code>). No Android o Moodle ativa <strong>edge-to-edge</strong> (<code>StatusBar.overlaysWebView(true)</code>), então o conteúdo precisa respeitar o inset superior.</p>
+<div class="table-wrap"><table><thead><tr><th>Ambiente</th><th>Comportamento</th></tr></thead><tbody><tr><td><strong>App nativo (Cordova)</strong></td><td>Preferência: <code>cordova-plugin-insets</code> (<code>window.totalpave.Inset</code>), igual ao core Moodle. Preenche <code>--ion-safe-area-*</code>. Se o plugin falhar no Android, fallback curto (~24px).</td></tr><tr><td><strong>Browser / DevTools</strong></td><td><strong>Não</strong> força padding no topo (não há status bar sobrepondo). Evita o “espaço branco” artificial no console mobile.</td></tr></tbody></table></div>
+<p>Implementação: <code>core_mobile/app-keyboard.ts</code> CSS: <code>.ava-toolbar { --padding-top: var(--ion-safe-area-top, 0px); }</code> em <code>_global.scss</code> / <code>_mobile.scss</code>.</p>
+</section>
+<section class="doc-section searchable" id="sidebar-espelho-do-ava"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Sidebar (espelho do AVA)</h2>
+<p>No <code>index.html</code>, o menu lateral segue o layout do site:</p>
+<ul>
+<li><strong>Painel AVA</strong> + toggle</li>
+<li>Imagem/iniciais de perfil + nome</li>
+<li>Acessibilidade / Ajuda</li>
+<li>Adicionar filtros + <strong>FILTRADO POR:</strong> (chip do perfil, padrão <code>Todos os diários (lento)</code>)</li>
+</ul>
+</section>
+<section class="doc-section searchable" id="acessibilidade-espelho-do-ava"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Acessibilidade (espelho do AVA)</h2>
+<p>Opções iguais ao modal do Painel AVA / <code>theme_suap</code>:</p>
+<ul>
+<li>Fonte amigável a disléxicos (OpenDyslexic)</li>
+<li>Alinhar texto à esquerda</li>
+<li>Destacar links</li>
+<li>Parar animações</li>
+<li>Ocultar imagens ilustrativas</li>
+<li>Habilitar VLibras</li>
+<li>Linhas mais distantes</li>
+<li>Zoom ciclável: 100% → 120% → 130% → 150% → 160%</li>
+<li>Modo de cor: Padrão → Alto contraste → Contraste reduzido → Amigável a daltônicos → Escala de cinza</li>
+</ul>
+<p>Preferências ficam em <code>localStorage</code> (<code>ifrn_a11y_prefs</code>) e são reaplicadas ao abrir o painel (<code>app-accessibility.ts</code>).</p>
+</section>
+<section class="doc-section searchable" id="pos-login-painel-curso-secoes-atividades"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Pós-login (painel, curso, seções, atividades)</h2>
+<div class="table-wrap"><table><thead><tr><th>Tela</th><th>Referência visual</th></tr></thead><tbody><tr><td>Lista de cursos</td><td>Abas <strong>Diários</strong> / <strong>Autoinscrição</strong> (pills do topbar AVA) + cards</td></tr><tr><td>Detalhe do curso</td><td>Cabeçalho estilo <code>enrol-header</code> + visão geral</td></tr><tr><td>Seções</td><td>Tópicos expansíveis com índice numerado</td></tr><tr><td>Atividades</td><td>Lista com ícone por <code>modname</code> e status de conclusão</td></tr><tr><td>Load view</td><td>Logo AVA + spinner (<code>_splash.scss</code>)</td></tr></tbody></table></div>
+<p>Ícone/splash nativos (Cordova): ver <a href="README.html"><code>README.md</code></a> (seção recursos) e <code>config.xml</code>.</p>
+</section>
+<section class="doc-section searchable" id="scss"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>SCSS</h2>
+<div class="table-wrap"><table><thead><tr><th>Partial</th><th>Uso</th></tr></thead><tbody><tr><td><code>_variables.scss</code></td><td>Cores e tokens do tema IFRN</td></tr><tr><td><code>_global.scss</code></td><td>Base tipográfica, layout geral, <strong>header AVA</strong></td></tr><tr><td><code>_sidebar.scss</code></td><td>Menu lateral + modais (perfil/ajuda/filtros)</td></tr><tr><td><code>_accessibility.scss</code></td><td>Controles e efeitos de acessibilidade</td></tr><tr><td><code>_splash.scss</code></td><td>Splash / loading overlay</td></tr><tr><td><code>_cards.scss</code></td><td>Cards de curso no painel</td></tr><tr><td><code>_curso.scss</code></td><td>Curso, seções e atividades</td></tr><tr><td><code>_mobile.scss</code></td><td>Layout mobile / safe-areas / landscape</td></tr><tr><td><code>painel.scss</code></td><td>Folha consolidada do painel, com sintaxe CSS válida em SCSS</td></tr></tbody></table></div>
+<p>O build compila <code>scss/painel.scss</code> e inclui os estilos no bundle <code>mobilemoodle.js</code>. Não existe saída <code>css/painel.css</code> nem pasta <code>css</code> do tema nos fontes. As URLs das fontes são resolvidas a partir do bundle.</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>bash</span></div><pre><code>npm run build:mobilemoodle</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p>Depois de mudar TypeScript do painel:</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>bash</span></div><pre><code>npm run build:mobilemoodle</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+</section></article><div class="no-results" id="no-results" hidden>Nenhum tópico corresponde à pesquisa.</div><p><a class="back-top" href="#conteudo">Voltar ao topo ↑</a></p><footer class="footer">Moodle IFRN Mobile · Manual local e offline · fonte: TEMA-VISUAL.md</footer></main></div><div id="live-status" class="visually-hidden" aria-live="polite"></div></body></html>

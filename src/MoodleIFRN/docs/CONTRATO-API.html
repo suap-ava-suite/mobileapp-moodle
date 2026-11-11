@@ -1,0 +1,135 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="description" content="Documentação técnica local Moodle IFRN Mobile: Contrato de API."><title>Contrato de API | Moodle IFRN Mobile</title><link rel="stylesheet" href="assets/manual.css"><script src="assets/manual.js" defer></script></head><body data-document="CONTRATO-API.html"><a class="skip-link" href="#conteudo">Pular para o conteúdo</a><header class="topbar"><button class="icon-button menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false">☰</button><a class="brand" href="index.html" aria-label="Moodle IFRN Mobile, página inicial"><span class="brand-mark" aria-hidden="true">IF</span><span><strong>Moodle IFRN Mobile</strong><small>Manual de desenvolvimento</small></span></a><div class="top-actions"><label class="search-wrap"><span class="visually-hidden">Pesquisar nesta página</span><input id="manual-search" type="search" placeholder="Pesquisar nesta página" autocomplete="off"></label><button id="theme-toggle" class="icon-button" type="button" aria-label="Alternar tema">◐</button></div></header><div class="layout"><aside id="sidebar" class="sidebar" aria-label="Navegação do manual"><nav><a href="index.html#inicio">Visão geral</a><a href="index.html#requisitos">Requisitos</a><a href="index.html#clone">Obter o código</a><a href="index.html#instalacao">Instalar dependências</a><a href="index.html#desenvolvimento">Desenvolver e executar</a><a href="index.html#scripts">Scripts IFRN</a><a href="index.html#android">Android e APK</a><a href="index.html#ios">iOS pelo MacBook</a><a href="index.html#testes">Testes e diagnóstico</a><a href="index.html#arquitetura">Arquitetura</a><a href="index.html#problemas">Problemas comuns</a><a href="index.html#git">Fluxo Git</a><a href="index.html#documentacao">Documentação existente</a><details class="nav-group" open><summary>Documentação técnica</summary><div class="nav-sub"><a href="README.html">Índice de documentos</a><a href="PONTE-PAINEL-MOODLE.html">Ponte Painel AVA → Moodle</a><a href="LOGIN-IFRN.html">Login IFRN</a><a href="PAINEL-CURSOS.html">Painel de cursos</a><a href="SEGURANCA.html">Segurança</a><a href="PATCH-AO-ATUALIZAR.html">Atualização e patches</a><a href="INVENTARIO-DOCUMENTACAO.html">Inventário</a><a href="ENTRADA-DIRETA-SUAP.html">Entrada SUAP e Painel</a><a href="SERVICOS-AUTH-BIOMETRIA.html">Autenticação e biometria</a><a href="CONTRATO-API.html">Contrato de API</a><a href="apis-e-endpoints.html">APIs e endpoints</a><a href="TEMA-VISUAL.html">Tema visual</a><a href="TEMPLATES-HTML.html">Templates HTML</a><a href="TROCAR-IMAGEM-ABERTURA-ANDROID.html">Assets Android</a><a href="LOGO-MOODLE-IFRN.html">Identidade visual</a><a href="PLAY-STORE-BETA.html">Publicação beta na Google Play</a></div></details></nav><div class="sidebar-note">Manual offline · páginas HTML locais</div></aside><main id="conteudo" class="content"><section class="hero searchable"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h1>Contrato de API</h1><p>Conteúdo convertido do arquivo <code>CONTRATO-API.md</code>. O Markdown original foi preservado; use o sumário e a pesquisa para navegar.</p><div class="hero-actions"><a class="button primary" href="index.html">Página inicial</a><a class="button secondary" href="README.html">Índice técnico</a></div></section><nav class="page-toc" aria-label="Sumário desta página"><h2>Nesta página</h2><ol><li class="level-2"><a href="#base-url">Base URL</a></li><li class="level-2"><a href="#autenticacao-suap">Autenticação (SUAP)</a></li><li class="level-3"><a href="#post-api-token-pair">POST /api/token/pair</a></li><li class="level-3"><a href="#post-api-token-refresh">POST /api/token/refresh</a></li><li class="level-3"><a href="#post-api-token-verify">POST /api/token/verify</a></li><li class="level-2"><a href="#painel-bearer-obrigatorio">Painel (Bearer obrigatório)</a></li><li class="level-3"><a href="#detalhe-legado-fastapi-de-teste">Detalhe legado (FastAPI de teste)</a></li><li class="level-3"><a href="#get-courses-id-legado">GET /courses/{id} (legado)</a></li><li class="level-2"><a href="#status-http-que-o-painel-trata">Status HTTP que o painel trata</a></li><li class="level-2"><a href="#tokens">Tokens</a></li><li class="level-2"><a href="#observacao">Observação</a></li></ol></nav><article class="document-body"><div class="callout warning"><strong>Exemplos fictícios:</strong> identificadores, senhas e tokens mostrados como placeholders são ilustrativos. Nunca copie credenciais reais para esta documentação.</div><div class="callout warning"><strong>Referência com trechos legados:</strong> este documento mistura contratos atuais e referências de protótipo. Confirme cada rota no código e no serviço implantado antes de integrá-la; não use exemplos com tokens reais.</div>
+<p>O app usa <strong>três bases</strong>:</p>
+<ol>
+<li><strong>Autenticação SUAP</strong> — <code>https://suap.ifrn.edu.br</code> (<code>/api/token/pair</code>)</li>
+<li><strong>Painel AVA (preferido)</strong> — <code>https://painel.ead.ifrn.edu.br</code> (<code>/api/v1/authenticate/</code>, <code>/api/v1/diarios/</code>)</li>
+<li><strong>Fallback diários</strong> — API SUAP ensino (<code>/api/ensino/…</code>) se o Painel estiver indisponível</li>
+</ol>
+<p>Detalhes da ponte: <a href="PONTE-PAINEL-MOODLE.html"><code>PONTE-PAINEL-MOODLE.md</code></a>.</p>
+<p>Este documento descreve o que o <strong>cliente espera</strong>.</p>
+<hr>
+<section class="doc-section searchable" id="base-url"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Base URL</h2>
+<div class="table-wrap"><table><thead><tr><th>Ambiente</th><th>Autenticação</th><th>Diários (preferido)</th><th>Fallback</th></tr></thead><tbody><tr><td>Produção / app</td><td><code>https://suap.ifrn.edu.br</code></td><td><code>https://painel.ead.ifrn.edu.br</code></td><td>SUAP ensino</td></tr></tbody></table></div>
+<p>Docs SUAP: https://suap.ifrn.edu.br/api/docs/ OpenAPI: https://suap.ifrn.edu.br/api/openapi.json Painel AVA: https://github.com/suap-ava-suite/djangoapp-painel_ava</p>
+<hr>
+</section>
+<section class="doc-section searchable" id="autenticacao-suap"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Autenticação (SUAP)</h2>
+</section>
+<section class="doc-section searchable" id="post-api-token-pair"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h3><code>POST /api/token/pair</code></h3>
+<p><strong>Body</strong></p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>json</span></div><pre><code>{
+  "username": "matricula-ou-cpf",
+  "password": "senha"
+}</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p><strong>Resposta 200</strong> (SimpleJWT)</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>json</span></div><pre><code>{
+  "username": "matricula-ou-cpf",
+  "refresh": "[REFRESH_TOKEN_EXAMPLE]",
+  "access": "[ACCESS_TOKEN_EXAMPLE]"
+}</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p>O <code>AuthService</code> converte para o formato interno <code>access_token</code> / <code>refresh_token</code> / <code>token_type</code>.</p>
+<p><strong>Erros esperados pelo cliente</strong></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Tratamento na UI</th></tr></thead><tbody><tr><td>400 / 401</td><td>IFRN-id ou senha inválidos</td></tr><tr><td>429</td><td>Muitas tentativas</td></tr><tr><td>5xx</td><td>SUAP indisponível</td></tr><tr><td>timeout / offline</td><td>Mensagens específicas</td></tr></tbody></table></div>
+<hr>
+</section>
+<section class="doc-section searchable" id="post-api-token-refresh"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h3><code>POST /api/token/refresh</code></h3>
+<p><strong>Body</strong></p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>json</span></div><pre><code>{
+  "refresh": "[REFRESH_TOKEN_EXAMPLE]"
+}</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p><strong>Resposta 200</strong></p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>json</span></div><pre><code>{
+  "refresh": "[REFRESH_TOKEN_EXAMPLE]",
+  "access": "[ACCESS_TOKEN_EXAMPLE]"
+}</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p>Usado após biometria. Se retornar <strong>401</strong>, o app desativa a biometria local e pede login com senha.</p>
+<hr>
+</section>
+<section class="doc-section searchable" id="post-api-token-verify"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h3><code>POST /api/token/verify</code></h3>
+<p><strong>Body</strong></p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>json</span></div><pre><code>{
+  "token": "[ACCESS_TOKEN_EXAMPLE]"
+}</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p>Confere se o access token ainda é aceito pelo SUAP.</p>
+<hr>
+</section>
+<section class="doc-section searchable" id="painel-bearer-obrigatorio"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Painel (Bearer obrigatório)</h2>
+<p>Header em todas as rotas abaixo:</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>http</span></div><pre><code>Authorization: Bearer &lt;access_token&gt;
+Accept: application/json</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p>O painel <strong>não</strong> usa mais <code>/dashboard/</code> da FastAPI. Após o login SUAP, os dados vêm destes endpoints (adaptados em <code>api-suap.ts</code>):</p>
+<div class="table-wrap"><table><thead><tr><th>Uso interno</th><th>Endpoint SUAP</th></tr></thead><tbody><tr><td>Nome / foto / papel</td><td><code>GET /api/rh/eu/</code></td></tr><tr><td>Lista de diários</td><td><code>GET /api/ensino/meus-periodos-letivos/</code> + <code>GET /api/ensino/diarios/{ano}.{periodo}/</code> (fallback: <code>GET /api/ensino/meus-diarios/</code>)</td></tr><tr><td>Detalhe do diário</td><td><code>GET /api/ensino/minha-turma-virtual/{id}/</code> (fallback: aulas/materiais/tópicos do diário)</td></tr></tbody></table></div>
+<p>Formato interno esperado pela UI (<code>DashboardData</code>):</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>json</span></div><pre><code>{
+  "nome": "Nome do estudante",
+  "username": "matricula",
+  "papel": "estudante",
+  "total_courses": 3,
+  "courses": [
+    {
+      "id": 1,
+      "name": "Nome da disciplina",
+      "shortname": "SIGLA",
+      "progress": 40,
+      "moodle": "SUAP"
+    }
+  ],
+  "diarios": [],
+  "autoinscricoes": []
+}</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p>A aba <strong>Diários</strong> usa <code>diarios</code> se existir; senão cai em <code>courses</code>. A aba <strong>Autoinscrição</strong> usa <code>autoinscricoes</code> (hoje vazia no adaptador SUAP).</p>
+</section>
+<section class="doc-section searchable" id="detalhe-legado-fastapi-de-teste"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h3>Detalhe legado (FastAPI de teste)</h3>
+<p>Os paths abaixo ficam documentados só como referência do protótipo antigo; o cliente atual não os chama:</p>
+</section>
+<section class="doc-section searchable" id="get-courses-id-legado"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h3><code>GET /courses/{id}</code> (legado)</h3>
+<p><code>id</code> numérico.</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>json</span></div><pre><code>{
+  "id": 1,
+  "name": "Nome do curso",
+  "teacher": "Professor(a)",
+  "workload": "60h",
+  "progress": 40,
+  "moodle": "AVA Acadêmico",
+  "summary": "Texto opcional de visão geral",
+  "sections": [
+    {
+      "name": "Tópico 1",
+      "activities": [
+        {
+          "name": "Fórum de avisos",
+          "modname": "forum",
+          "completion": true
+        },
+        {
+          "name": "Material da aula",
+          "modname": "resource",
+          "completion": false
+        }
+      ]
+    }
+  ]
+}</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p>Campos de atividade aceitos: <code>modname</code> (ou <code>module</code> / <code>type</code>), <code>name</code> (ou <code>title</code>), <code>completion</code> (boolean opcional). Seções aceitam <code>activities</code>, <code>modules</code> ou <code>cms</code>. ---</p>
+</section>
+<section class="doc-section searchable" id="status-http-que-o-painel-trata"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Status HTTP que o painel trata</h2>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Comportamento</th></tr></thead><tbody><tr><td>401 / 403</td><td>Limpa token e pede novo login</td></tr><tr><td>404</td><td>Tela “não encontrada”</td></tr><tr><td>408</td><td>Timeout (cliente)</td></tr><tr><td>429</td><td>Muitas tentativas</td></tr><tr><td>500 / 502 / 503 / 504</td><td>Telas de erro com retry quando aplicável</td></tr><tr><td>0</td><td>Falha de rede / servidor offline</td></tr></tbody></table></div>
+<p>Resposta de sucesso deve ser <code>Content-Type: application/json</code>.</p>
+<hr>
+</section>
+<section class="doc-section searchable" id="tokens"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Tokens</h2>
+<ul>
+<li>Preferência: JWT com claim <code>exp</code></li>
+<li>O cliente valida formato e expiração de forma <strong>local</strong> (não valida assinatura)</li>
+<li>Em produção, o backend <strong>deve</strong> validar assinatura e permissões</li>
+</ul>
+<hr>
+</section>
+<section class="doc-section searchable" id="observacao"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Observação</h2>
+<p>A autenticação já aponta para o <strong>SUAP oficial</strong>. O painel ainda pode usar FastAPI de <strong>teste</strong> para cursos/diários. Quando a API de produção do AVA chegar:</p>
+<ol>
+<li>Manter os paths do painel (ou adaptar só os serviços)</li>
+<li>Trocar a base URL do painel</li>
+<li>Garantir CORS + HTTPS + JWT aceito pelo backend AVA</li>
+</ol>
+</section></article><div class="no-results" id="no-results" hidden>Nenhum tópico corresponde à pesquisa.</div><p><a class="back-top" href="#conteudo">Voltar ao topo ↑</a></p><footer class="footer">Moodle IFRN Mobile · Manual local e offline · fonte: CONTRATO-API.md</footer></main></div><div id="live-status" class="visually-hidden" aria-live="polite"></div></body></html>

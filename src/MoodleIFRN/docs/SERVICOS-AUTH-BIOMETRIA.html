@@ -1,0 +1,78 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="description" content="Documentação técnica local Moodle IFRN Mobile: Serviços de autenticação e biometria."><title>Serviços de autenticação e biometria | Moodle IFRN Mobile</title><link rel="stylesheet" href="assets/manual.css"><script src="assets/manual.js" defer></script></head><body data-document="SERVICOS-AUTH-BIOMETRIA.html"><a class="skip-link" href="#conteudo">Pular para o conteúdo</a><header class="topbar"><button class="icon-button menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false">☰</button><a class="brand" href="index.html" aria-label="Moodle IFRN Mobile, página inicial"><span class="brand-mark" aria-hidden="true">IF</span><span><strong>Moodle IFRN Mobile</strong><small>Manual de desenvolvimento</small></span></a><div class="top-actions"><label class="search-wrap"><span class="visually-hidden">Pesquisar nesta página</span><input id="manual-search" type="search" placeholder="Pesquisar nesta página" autocomplete="off"></label><button id="theme-toggle" class="icon-button" type="button" aria-label="Alternar tema">◐</button></div></header><div class="layout"><aside id="sidebar" class="sidebar" aria-label="Navegação do manual"><nav><a href="index.html#inicio">Visão geral</a><a href="index.html#requisitos">Requisitos</a><a href="index.html#clone">Obter o código</a><a href="index.html#instalacao">Instalar dependências</a><a href="index.html#desenvolvimento">Desenvolver e executar</a><a href="index.html#scripts">Scripts IFRN</a><a href="index.html#android">Android e APK</a><a href="index.html#ios">iOS pelo MacBook</a><a href="index.html#testes">Testes e diagnóstico</a><a href="index.html#arquitetura">Arquitetura</a><a href="index.html#problemas">Problemas comuns</a><a href="index.html#git">Fluxo Git</a><a href="index.html#documentacao">Documentação existente</a><details class="nav-group" open><summary>Documentação técnica</summary><div class="nav-sub"><a href="README.html">Índice de documentos</a><a href="PONTE-PAINEL-MOODLE.html">Ponte Painel AVA → Moodle</a><a href="LOGIN-IFRN.html">Login IFRN</a><a href="PAINEL-CURSOS.html">Painel de cursos</a><a href="SEGURANCA.html">Segurança</a><a href="PATCH-AO-ATUALIZAR.html">Atualização e patches</a><a href="INVENTARIO-DOCUMENTACAO.html">Inventário</a><a href="ENTRADA-DIRETA-SUAP.html">Entrada SUAP e Painel</a><a href="SERVICOS-AUTH-BIOMETRIA.html">Autenticação e biometria</a><a href="CONTRATO-API.html">Contrato de API</a><a href="apis-e-endpoints.html">APIs e endpoints</a><a href="TEMA-VISUAL.html">Tema visual</a><a href="TEMPLATES-HTML.html">Templates HTML</a><a href="TROCAR-IMAGEM-ABERTURA-ANDROID.html">Assets Android</a><a href="LOGO-MOODLE-IFRN.html">Identidade visual</a><a href="PLAY-STORE-BETA.html">Publicação beta na Google Play</a></div></details></nav><div class="sidebar-note">Manual offline · páginas HTML locais</div></aside><main id="conteudo" class="content"><section class="hero searchable"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h1>Serviços de autenticação e biometria</h1><p>Conteúdo convertido do arquivo <code>SERVICOS-AUTH-BIOMETRIA.md</code>. O Markdown original foi preservado; use o sumário e a pesquisa para navegar.</p><div class="hero-actions"><a class="button primary" href="index.html">Página inicial</a><a class="button secondary" href="README.html">Índice técnico</a></div></section><nav class="page-toc" aria-label="Sumário desta página"><h2>Nesta página</h2><ol><li class="level-2"><a href="#arquivos">Arquivos</a></li><li class="level-2"><a href="#authservice">AuthService</a></li><li class="level-3"><a href="#endpoints-do-suap-producao">Endpoints do SUAP (produção)</a></li><li class="level-3"><a href="#body-resposta-de-login">Body / resposta de login</a></li><li class="level-3"><a href="#metodos-principais">Métodos principais</a></li><li class="level-3"><a href="#armazenamento-do-token">Armazenamento do token</a></li><li class="level-3"><a href="#abertura-do-painel">Abertura do painel</a></li><li class="level-2"><a href="#biometricservice">BiometricService</a></li><li class="level-3"><a href="#seguranca-da-biometria">Segurança da biometria</a></li><li class="level-2"><a href="#relacao-com-o-painel">Relação com o painel</a></li><li class="level-2"><a href="#ver-tambem">Ver também</a></li></ol></nav><article class="document-body"><div class="callout warning"><strong>Exemplos fictícios:</strong> identificadores, senhas e tokens mostrados como placeholders são ilustrativos. Nunca copie credenciais reais para esta documentação.</div><p>Serviços Angular usados pelo login IFRN.</p>
+<p>Código-fonte: <code>src/MoodleIFRN/services_mobile/</code> Este documento fica em <code>docs/</code> para o índice da documentação.</p>
+<hr>
+<section class="doc-section searchable" id="arquivos"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Arquivos</h2>
+<div class="table-wrap"><table><thead><tr><th>Arquivo</th><th>Responsabilidade</th></tr></thead><tbody><tr><td><code>../services_mobile/auth.service.ts</code></td><td>Login/refresh/verify no SUAP, guardar/ler/limpar JWT, abrir o painel</td></tr><tr><td><code>../services_mobile/biometric.service.ts</code></td><td>Ativar / autenticar / desativar login biométrico</td></tr></tbody></table></div>
+<hr>
+</section>
+<section class="doc-section searchable" id="authservice"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>AuthService</h2>
+</section>
+<section class="doc-section searchable" id="endpoints-do-suap-producao"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h3>Endpoints do SUAP (produção)</h3>
+<p>Base: <code>https://suap.ifrn.edu.br</code> Docs: https://suap.ifrn.edu.br/api/docs/ OpenAPI: https://suap.ifrn.edu.br/api/openapi.json</p>
+<div class="table-wrap"><table><thead><tr><th>Método</th><th>Caminho</th><th>Uso</th></tr></thead><tbody><tr><td><code>POST</code></td><td><code>/api/token/pair</code></td><td>Login com IFRN-id (<code>username</code>) e senha (<code>password</code>)</td></tr><tr><td><code>POST</code></td><td><code>/api/token/refresh</code></td><td>Renovar sessão com <code>{ "refresh": "…" }</code></td></tr><tr><td><code>POST</code></td><td><code>/api/token/verify</code></td><td>Conferir se o access token ainda é válido</td></tr></tbody></table></div>
+</section>
+<section class="doc-section searchable" id="body-resposta-de-login"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h3>Body / resposta de login</h3>
+<p><strong>Request</strong></p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>json</span></div><pre><code>{ "username": "matricula-ou-cpf", "password": "senha" }</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p><strong>Response 200</strong> (SimpleJWT do SUAP)</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>json</span></div><pre><code>{
+  "username": "matricula-ou-cpf",
+  "refresh": "[REFRESH_TOKEN_EXAMPLE]",
+  "access": "[ACCESS_TOKEN_EXAMPLE]"
+}</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p>O <code>AuthService</code> normaliza para o formato interno:</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>json</span></div><pre><code>{
+  "access_token": "[ACCESS_TOKEN_EXAMPLE]",
+  "refresh_token": "[REFRESH_TOKEN_EXAMPLE]",
+  "token_type": "bearer",
+  "username": "matricula-ou-cpf"
+}</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+</section>
+<section class="doc-section searchable" id="metodos-principais"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h3>Métodos principais</h3>
+<div class="table-wrap"><table><thead><tr><th>Método</th><th>O que faz</th></tr></thead><tbody><tr><td><code>login(credentials)</code></td><td>Autentica no SUAP e retorna tokens</td></tr><tr><td><code>refresh(refreshToken)</code></td><td>Troca refresh por novos tokens</td></tr><tr><td><code>verify(accessToken)</code></td><td>Confere o token no SUAP</td></tr><tr><td><code>saveToken(token)</code></td><td>Valida e grava o access token</td></tr><tr><td><code>saveUsername(username)</code></td><td>Guarda matrícula/CPF no sessionStorage</td></tr><tr><td><code>getToken()</code></td><td>Lê o token (memória → sessionStorage)</td></tr><tr><td><code>isAuthenticated()</code></td><td><code>true</code> se existe token válido</td></tr><tr><td><code>getAuthHeaders()</code></td><td>Headers com <code>Authorization: Bearer …</code></td></tr><tr><td><code>logout()</code></td><td>Remove token e username</td></tr><tr><td><code>openMobileMoodle(hash)</code></td><td>Navega para <code>mobilemoodle/index.html</code></td></tr></tbody></table></div>
+</section>
+<section class="doc-section searchable" id="armazenamento-do-token"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h3>Armazenamento do token</h3>
+<ul>
+<li>Chave: <code>ifrn_access_token</code></li>
+<li>Username: <code>ifrn_username</code></li>
+<li>Local: <code>sessionStorage</code> (+ cópia em memória na sessão Angular)</li>
+<li>Validação no cliente:</li>
+<li>formato JWT (3 partes)</li>
+<li>tamanho máximo (&amp;lt; 4096)</li>
+<li>se existir <code>exp</code>, rejeita token vencido</li>
+</ul>
+</section>
+<section class="doc-section searchable" id="abertura-do-painel"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h3>Abertura do painel</h3>
+<p>Após o login, o app <strong>não coloca o token na URL</strong>. O token já está no <code>sessionStorage</code> (mesma origem) e o painel lê de lá.</p>
+<hr>
+</section>
+<section class="doc-section searchable" id="biometricservice"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>BiometricService</h2>
+<p>Usa o plugin Cordova <code>FingerprintAIO</code>.</p>
+<div class="table-wrap"><table><thead><tr><th>Método</th><th>O que faz</th></tr></thead><tbody><tr><td><code>isAvailable()</code></td><td>Verifica se o aparelho tem biometria forte</td></tr><tr><td><code>isEnabled()</code></td><td>Flag em <code>localStorage</code> (<code>ifrn_biometric_login_enabled</code>)</td></tr><tr><td><code>enable(refreshToken)</code></td><td>Guarda o refresh token no cofre biométrico</td></tr><tr><td><code>authenticate()</code></td><td>Libera o refresh token após biometria</td></tr><tr><td><code>disable()</code></td><td>Remove a flag de biometria ativada</td></tr></tbody></table></div>
+</section>
+<section class="doc-section searchable" id="seguranca-da-biometria"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h3>Segurança da biometria</h3>
+<ul>
+<li>Exige biometria forte (<code>requireStrongBiometrics</code>)</li>
+<li>Sem backup de PIN/padrão (<code>disableBackup</code> / <code>allowBackup: false</code>)</li>
+<li>Invalida o segredo se novas digitais forem cadastradas (<code>invalidateOnEnrollment</code>)</li>
+<li>Só aceita segredo no formato JWT e com tamanho limitado</li>
+</ul>
+<hr>
+</section>
+<section class="doc-section searchable" id="relacao-com-o-painel"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Relação com o painel</h2>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>text</span></div><pre><code>AuthService.saveToken()
+        │
+        ▼
+sessionStorage["ifrn_access_token"]
+        │
+        ▼
+mobilemoodle/core_mobile/api-auth.ts  →  Authorization: Bearer …</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+</section>
+<section class="doc-section searchable" id="ver-tambem"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Ver também</h2>
+<ul>
+<li><a href="LOGIN-IFRN.html">Login IFRN</a></li>
+<li><a href="PAINEL-CURSOS.html">Painel de cursos</a></li>
+<li><a href="CONTRATO-API.html">Contrato da API</a></li>
+<li><a href="README.html">Índice</a></li>
+</ul>
+</section></article><div class="no-results" id="no-results" hidden>Nenhum tópico corresponde à pesquisa.</div><p><a class="back-top" href="#conteudo">Voltar ao topo ↑</a></p><footer class="footer">Moodle IFRN Mobile · Manual local e offline · fonte: SERVICOS-AUTH-BIOMETRIA.md</footer></main></div><div id="live-status" class="visually-hidden" aria-live="polite"></div></body></html>

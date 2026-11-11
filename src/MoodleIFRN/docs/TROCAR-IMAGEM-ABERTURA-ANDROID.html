@@ -1,0 +1,74 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="description" content="Documentação técnica local Moodle IFRN Mobile: Ícone e imagem de abertura Android."><title>Ícone e imagem de abertura Android | Moodle IFRN Mobile</title><link rel="stylesheet" href="assets/manual.css"><script src="assets/manual.js" defer></script></head><body data-document="TROCAR-IMAGEM-ABERTURA-ANDROID.html"><a class="skip-link" href="#conteudo">Pular para o conteúdo</a><header class="topbar"><button class="icon-button menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false">☰</button><a class="brand" href="index.html" aria-label="Moodle IFRN Mobile, página inicial"><span class="brand-mark" aria-hidden="true">IF</span><span><strong>Moodle IFRN Mobile</strong><small>Manual de desenvolvimento</small></span></a><div class="top-actions"><label class="search-wrap"><span class="visually-hidden">Pesquisar nesta página</span><input id="manual-search" type="search" placeholder="Pesquisar nesta página" autocomplete="off"></label><button id="theme-toggle" class="icon-button" type="button" aria-label="Alternar tema">◐</button></div></header><div class="layout"><aside id="sidebar" class="sidebar" aria-label="Navegação do manual"><nav><a href="index.html#inicio">Visão geral</a><a href="index.html#requisitos">Requisitos</a><a href="index.html#clone">Obter o código</a><a href="index.html#instalacao">Instalar dependências</a><a href="index.html#desenvolvimento">Desenvolver e executar</a><a href="index.html#scripts">Scripts IFRN</a><a href="index.html#android">Android e APK</a><a href="index.html#ios">iOS pelo MacBook</a><a href="index.html#testes">Testes e diagnóstico</a><a href="index.html#arquitetura">Arquitetura</a><a href="index.html#problemas">Problemas comuns</a><a href="index.html#git">Fluxo Git</a><a href="index.html#documentacao">Documentação existente</a><details class="nav-group" open><summary>Documentação técnica</summary><div class="nav-sub"><a href="README.html">Índice de documentos</a><a href="PONTE-PAINEL-MOODLE.html">Ponte Painel AVA → Moodle</a><a href="LOGIN-IFRN.html">Login IFRN</a><a href="PAINEL-CURSOS.html">Painel de cursos</a><a href="SEGURANCA.html">Segurança</a><a href="PATCH-AO-ATUALIZAR.html">Atualização e patches</a><a href="INVENTARIO-DOCUMENTACAO.html">Inventário</a><a href="ENTRADA-DIRETA-SUAP.html">Entrada SUAP e Painel</a><a href="SERVICOS-AUTH-BIOMETRIA.html">Autenticação e biometria</a><a href="CONTRATO-API.html">Contrato de API</a><a href="apis-e-endpoints.html">APIs e endpoints</a><a href="TEMA-VISUAL.html">Tema visual</a><a href="TEMPLATES-HTML.html">Templates HTML</a><a href="TROCAR-IMAGEM-ABERTURA-ANDROID.html">Assets Android</a><a href="LOGO-MOODLE-IFRN.html">Identidade visual</a><a href="PLAY-STORE-BETA.html">Publicação beta na Google Play</a></div></details></nav><div class="sidebar-note">Manual offline · páginas HTML locais</div></aside><main id="conteudo" class="content"><section class="hero searchable"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h1>Ícone e imagem de abertura Android</h1><p>Conteúdo convertido do arquivo <code>TROCAR-IMAGEM-ABERTURA-ANDROID.md</code>. O Markdown original foi preservado; use o sumário e a pesquisa para navegar.</p><div class="hero-actions"><a class="button primary" href="index.html">Página inicial</a><a class="button secondary" href="README.html">Índice técnico</a></div></section><nav class="page-toc" aria-label="Sumário desta página"><h2>Nesta página</h2><ol><li class="level-2"><a href="#o-que-foi-alterado">O que foi alterado</a></li><li class="level-2"><a href="#onde-configurar">Onde configurar</a></li><li class="level-2"><a href="#para-trocar-novamente">Para trocar novamente</a></li><li class="level-2"><a href="#compilar-e-instalar-no-windows">Compilar e instalar no Windows</a></li><li class="level-2"><a href="#como-conferir">Como conferir</a></li><li class="level-2"><a href="#voltar-ao-splash-anterior">Voltar ao splash anterior</a></li><li class="level-2"><a href="#validacao-desta-alteracao">Validação desta alteração</a></li></ol></nav><article class="document-body"><p>Atualizado em 25/10/2026.</p>
+<section class="doc-section searchable" id="o-que-foi-alterado"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>O que foi alterado</h2>
+<p>O splash nativo que aparece ao iniciar o aplicativo usava o “M” laranja do Moodle, definido em <code>resources/android/android-splash.xml</code>.</p>
+<p>Agora usa a logo principal do Moodle IFRN, escolhida a partir da proposta v6:</p>
+<p><code>src/MoodleIFRN/resources/logo-moodle-ifrn.png</code></p>
+<p>A imagem tem fundo transparente, “m” vermelho/verde e capelo azul-escuro com pendão laranja. O fundo do splash e o fundo ao redor do ícone usam branco (<code>#FFFFFF</code>). A escolha e a origem estão em <code>LOGO-MOODLE-IFRN.md</code>.</p>
+</section>
+<section class="doc-section searchable" id="onde-configurar"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Onde configurar</h2>
+<p>Na raiz do projeto, edite <code>config.xml</code>, dentro de <code>&lt;platform name="android"&gt;</code>:</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>xml</span></div><pre><code>&lt;preference name="AndroidWindowSplashScreenAnimatedIcon" value="src/MoodleIFRN/resources/android-splash.xml" /&gt;
+&lt;resource-file src="src/MoodleIFRN/resources/logo-moodle-ifrn.png" target="app/src/main/res/drawable-nodpi/ifrn_splash_logo.png" /&gt;
+&lt;preference name="AndroidWindowSplashScreenBackground" value="#FFFFFF" /&gt;
+&lt;preference name="AndroidWindowSplashScreenIconBackgroundColor" value="#FFFFFF" /&gt;</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p>Apesar do nome <code>AnimatedIcon</code>, essa configuração aceita um PNG estático. O código de preparação do Cordova Android instalado trata PNG e XML separadamente. O sistema controla a apresentação do splash; essa configuração fornece o ícone central e a cor de fundo, não uma fotografia esticada para ocupar toda a tela.</p>
+</section>
+<section class="doc-section searchable" id="para-trocar-novamente"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Para trocar novamente</h2>
+<ol>
+<li>Coloque o novo PNG no repositório, preferencialmente em <code>src/MoodleIFRN/resources/</code></li>
+</ol>
+<p>se ele for exclusivo da abertura. Use uma imagem quadrada com espaço ao redor do símbolo e confira no aparelho se há recortes.</p>
+<ol>
+<li>Substitua a logo principal ou altere o <code>src</code> do <code>resource-file</code> acima para o</li>
+</ol>
+<p>novo PNG. O drawable <code>android-splash.xml</code> reserva margem interna de <code>32dp</code> nos quatro lados para acomodar a máscara do splash. A logo atual não contém mais o quadrado e o círculo laterais, permitindo exibição maior. Para usar diretamente um PNG, referencie-o em <code>AndroidWindowSplashScreenAnimatedIcon</code>.</p>
+<ol>
+<li>Ajuste as duas cores de fundo conforme a arte.</li>
+<li>Prepare, compile e instale usando os comandos abaixo.</li>
+</ol>
+<p>Também é possível substituir o PNG principal mantendo o caminho. O favicon Android/Chrome do painel web fica em outro arquivo e não é alterado por essa troca.</p>
+<p>Não edite os arquivos gerados dentro de <code>platforms/android/</code>: o Cordova os recria a partir do <code>config.xml</code> e da imagem original.</p>
+</section>
+<section class="doc-section searchable" id="compilar-e-instalar-no-windows"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Compilar e instalar no Windows</h2>
+<p>Para alterar apenas a imagem e as cores, execute na raiz:</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>powershell</span></div><pre><code>node node_modules/cordova/bin/cordova prepare android
+Push-Location platforms/android
+.\gradlew.bat assembleDebug
+Pop-Location
+adb install -r platforms/android/app/build/outputs/apk/debug/app-debug.apk
+adb shell am force-stop com.moodle.moodlemobile
+adb shell am start -n com.moodle.moodlemobile/.MainActivity</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p>Esses comandos pressupõem o payload web já compilado, SDK/JDK configurados e aparelho conectado. Se houver alterações no código web, compile-o antes do <code>cordova prepare android</code>:</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>powershell</span></div><pre><code>node src/MoodleIFRN/mobilemoodle/build.mjs
+node src/MoodleIFRN/scripts/build-android-web.cjs</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p><code>adb install -r</code> atualiza o app preservando os dados, desde que a assinatura seja compatível. Não é necessário desinstalar ou limpar os dados para trocar o splash. O <code>force-stop</code> permite testar uma abertura completa, sem apagar as sessões.</p>
+</section>
+<section class="doc-section searchable" id="como-conferir"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Como conferir</h2>
+<p>Após <code>cordova prepare android</code>, confira:</p>
+<ul>
+<li><code>platforms/android/app/src/main/res/values/themes.xml</code>: referência a</li>
+</ul>
+<p><code>@drawable/ic_cdv_splashscreen</code> no tema de abertura;</p>
+<ul>
+<li><code>platforms/android/app/src/main/res/drawable/ic_cdv_splashscreen.xml</code>: drawable</li>
+</ul>
+<p>de ampliação copiado pelo Cordova;</p>
+<ul>
+<li><code>platforms/android/app/src/main/res/drawable-nodpi/ifrn_splash_logo.png</code>: logo</li>
+</ul>
+<p>copiada pelo <code>resource-file</code>;</p>
+<ul>
+<li><code>platforms/android/app/src/main/res/values/colors.xml</code>: cores do splash.</li>
+</ul>
+<p>Reabra o app completamente para conferir o resultado. Essa alteração configura a tela de abertura Android; o ícone do lançador e a configuração do iOS são recursos separados.</p>
+</section>
+<section class="doc-section searchable" id="voltar-ao-splash-anterior"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Voltar ao splash anterior</h2>
+<p>O arquivo original foi mantido. Para voltar, configure:</p>
+<div class="command-card doc-code"><div class="command-heading"><strong>Exemplo de código</strong><span>xml</span></div><pre><code>&lt;preference name="AndroidWindowSplashScreenAnimatedIcon" value="resources/android/android-splash.xml" /&gt;
+&lt;preference name="AndroidWindowSplashScreenBackground" value="#FFFFFF" /&gt;
+&lt;preference name="AndroidWindowSplashScreenIconBackgroundColor" value="#FFFFFF" /&gt;</code></pre><button class="copy-button" type="button">Copiar código</button></div>
+<p>Depois repita a preparação, compilação e instalação.</p>
+</section>
+<section class="doc-section searchable" id="validacao-desta-alteracao"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Validação desta alteração</h2>
+<p>Em 25/10/2026, <code>cordova prepare android</code> e Gradle <code>assembleDebug</code> concluíram. O PNG gerado em <code>drawable-nodpi</code> tem o mesmo SHA-256 da imagem original, e as cores foram inicialmente verificadas como <code>#098E95</code>. Após avaliação visual do usuário, as duas preferências foram ajustadas para branco (<code>#FFFFFF</code>), mantendo a mesma imagem central. O APK foi instalado no Android conectado com <code>adb install -r</code>, com sucesso, preservando os dados do app. A captura pontual de tela não registrou o splash; portanto, não foi usada como comprovação visual de tamanho ou recorte do símbolo.</p>
+</section></article><div class="no-results" id="no-results" hidden>Nenhum tópico corresponde à pesquisa.</div><p><a class="back-top" href="#conteudo">Voltar ao topo ↑</a></p><footer class="footer">Moodle IFRN Mobile · Manual local e offline · fonte: TROCAR-IMAGEM-ABERTURA-ANDROID.md</footer></main></div><div id="live-status" class="visually-hidden" aria-live="polite"></div></body></html>
