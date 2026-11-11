@@ -1,4 +1,6 @@
 # MoodleIFRN — visão geral
+> **Registro histórico:** esta página descreve um fluxo antigo de login IFRN-id/JWT e um backend FastAPI de teste. Não use esses trechos como descrição do comportamento atual. Para preparar o ambiente, consulte o [manual](./index.html); para o acervo, consulte o [inventário](./INVENTARIO-DOCUMENTACAO.md).
+
 
 Documentação da customização **AVA IFRN** dentro do app Moodle Mobile.
 
@@ -63,7 +65,7 @@ Detalhes: [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../mobilemoodle/core_mob
 | Índice da pasta docs | [`README.md`](./README.md) |
 | Visão geral (este arquivo) | [`VISAO-GERAL.md`](./VISAO-GERAL.md) |
 | Ponte Painel AVA → Moodle Mobile | [`PONTE-PAINEL-MOODLE.md`](./PONTE-PAINEL-MOODLE.md) |
-| Login IFRN | [`../ifrn-login/LOGIN-IFRN.md`](../ifrn-login/LOGIN-IFRN.md) |
+| Login IFRN | [`./LOGIN-IFRN.md`](./LOGIN-IFRN.md) |
 | Auth + biometria | [`SERVICOS-AUTH-BIOMETRIA.md`](./SERVICOS-AUTH-BIOMETRIA.md) |
 | Painel de cursos | [`PAINEL-CURSOS.md`](./PAINEL-CURSOS.md) |
 | Scripts TS do painel | [`../mobilemoodle/core_mobile/SCRIPTS-TS.md`](../mobilemoodle/core_mobile/SCRIPTS-TS.md) |

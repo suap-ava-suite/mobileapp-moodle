@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Manual local de desenvolvimento do Moodle IFRN Mobile.">
+  <title>Manual de desenvolvimento | Moodle IFRN Mobile</title>
+  <link rel="stylesheet" href="assets/manual.css">
+  <script src="assets/manual.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topbar">
+    <button class="icon-button menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false">☰</button>
+    <a class="brand" href="#inicio" aria-label="Moodle IFRN Mobile, início">
+      <span class="brand-mark" aria-hidden="true">IF</span>
+      <span><strong>Moodle IFRN Mobile</strong><small>Manual de desenvolvimento</small></span>
+    </a>
+    <div class="top-actions">
+      <label class="search-wrap"><span class="visually-hidden">Pesquisar no manual</span><input id="manual-search" type="search" placeholder="Pesquisar tópicos" autocomplete="off"></label>
+      <button id="theme-toggle" class="icon-button" type="button" aria-label="Alternar tema">◐</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Navegação do manual">
+      <nav>
+        <a href="#inicio">Visão geral</a>
+        <a href="#requisitos">Requisitos</a>
+        <a href="#clone">Obter o código</a>
+        <a href="#instalacao">Instalar dependências</a>
+        <a href="#desenvolvimento">Desenvolver e executar</a>
+        <a href="#scripts">Scripts IFRN</a>
+        <a href="#android">Android e APK</a>
+        <a href="#ios">iOS pelo MacBook</a>
+        <a href="#testes">Testes e diagnóstico</a>
+        <a href="#arquitetura">Arquitetura</a>
+        <a href="#problemas">Problemas comuns</a>
+        <a href="#git">Fluxo Git</a>
+        <a href="#documentacao">Documentação existente</a>
+      </nav>
+      <div class="sidebar-note">Manual offline · revisão técnica em 11/11/2026</div>
+    </aside>
+
+    <main id="conteudo" class="content">
+      <section id="inicio" class="hero searchable">
+        <p class="eyebrow">GUIA PARA DESENVOLVEDORES</p>
+        <h1>Conheça, execute e mantenha o Moodle IFRN Mobile</h1>
+        <p>Este guia descreve o repositório real, os scripts existentes e os caminhos de build para Android e iOS. Abra este arquivo diretamente no navegador; não precisa de servidor nem conexão à internet.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#instalacao">Preparar ambiente</a>
+          <a class="button secondary" href="#ios">Executar no MacBook</a>
+        </div>
+        <div class="callout warning"><strong>Estado do projeto:</strong> o repositório contém personalizações IFRN e alterações no Moodle Mobile. Confira <code>git status</code> antes de compilar ou executar scripts de patch. Este manual não declara builds iOS validadas.</div>
+      </section>
+
+      <section id="requisitos" class="doc-section searchable">
+        <p class="eyebrow">01 · AMBIENTE</p><h2>Requisitos verificados no repositório</h2>
+        <div class="table-wrap"><table><thead><tr><th>Ferramenta</th><th>Versão / configuração</th><th>Observação</th></tr></thead><tbody>
+          <tr><td>Node.js</td><td><code>22.17.0</code> compatível; engine <code>&gt;=22.17 &lt;23</code></td><td><code>.nvmrc</code> informa <code>lts/jod</code>; em Windows NVM, selecionar a versão numérica explícita.</td></tr>
+          <tr><td>npm</td><td><code>10.9.2</code> observado no ambiente de referência</td><td>Não há campo <code>packageManager</code> fixando a versão.</td></tr>
+          <tr><td>Angular</td><td>Core <code>20.3.18</code>; CLI/build <code>20.3.22</code></td><td>Leia os valores do <code>package.json</code> antes de atualizar.</td></tr>
+          <tr><td>Ionic</td><td>Ionic Angular <code>8.8.1</code>; CLI <code>7.2.1</code></td><td>Integração com Cordova.</td></tr>
+          <tr><td>TypeScript</td><td><code>5.9.3</code></td><td>Dependência de desenvolvimento.</td></tr>
+          <tr><td>Cordova</td><td>CLI <code>13.0.0</code>; Android <code>14.0.1</code>; iOS <code>7.1.1</code></td><td>Plataformas declaradas no repositório.</td></tr>
+          <tr><td>Android</td><td>min SDK 24, target SDK 36; Gradle wrapper 8.13</td><td>Confira os valores gerados no projeto nativo antes de publicar.</td></tr>
+          <tr><td>iOS</td><td>Deployment target <code>16.0</code>; WKWebView</td><td>Build nativa exige macOS e Xcode. Não validada neste ambiente Windows.</td></tr>
+        </tbody></table></div>
+        <div class="callout info">As versões acima vêm de <code>package.json</code>, <code>.nvmrc</code>, <code>config.xml</code> e arquivos de build consultados em 11/11/2026. Apple e Google atualizam requisitos: confirme as regras vigentes antes da publicação.</div>
+      </section>
+
+      <section id="clone" class="doc-section searchable">
+        <p class="eyebrow">02 · CÓDIGO-FONTE</p><h2>Obter o repositório</h2>
+        <p>Use o remoto oficial do projeto. Para trabalhar numa tarefa, crie uma branch baseada na branch autorizada pelo responsável.</p>
+        <div class="command-card"><div class="command-heading"><strong>Clonar</strong><span>PowerShell, Git Bash ou Terminal</span></div><pre><code>git clone https://github.com/suap-ava-suite/mobileapp-moodle.git
+cd mobileapp-moodle
+git status --short --branch</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Resultado: repositório clonado e estado da branch visível.</p></div>
+        <div class="command-card"><div class="command-heading"><strong>Escolher Node no Windows com NVM</strong><span>PowerShell</span></div><pre><code>nvm install 22.17.0
+nvm use 22.17.0
+node --version
+npm.cmd --version</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Use o Node 22.17.0 (ou outra versão dentro do engine do projeto). Em PowerShell, <code>npm.cmd</code> evita bloqueios do shim <code>npm.ps1</code>.</p></div>
+      </section>
+
+      <section id="instalacao" class="doc-section searchable">
+        <p class="eyebrow">03 · DEPENDÊNCIAS</p><h2>Instalação inicial</h2>
+        <p>O script <code>postinstall</code> aplica <code>patch-package</code> e executa <code>npm install</code> dentro de <code>cordova-plugin-moodleapp</code>. Portanto, a instalação pode alterar arquivos gerados pelo patch-package e instalar dependências do plugin local.</p>
+        <div class="command-card"><div class="command-heading"><strong>Instalar conforme o lockfile</strong><span>Raiz do repositório</span></div><pre><code>npm ci</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Resultado: dependências da raiz instaladas a partir do lockfile e execução dos hooks <code>postinstall</code>.</p><p class="caution">Não apague <code>node_modules</code>, plataformas Cordova ou locks como primeira medida de diagnóstico.</p></div>
+      </section>
+
+      <section id="desenvolvimento" class="doc-section searchable">
+        <p class="eyebrow">04 · DESENVOLVIMENTO</p><h2>Build web e customizações IFRN</h2>
+        <p>O painel leve em <code>src/MoodleIFRN/mobilemoodle/</code> tem build própria. A build nativa Angular/Cordova é outra etapa. Não confunda a geração de <code>mobilemoodle.js</code> com uma APK.</p>
+        <div class="command-card"><div class="command-heading"><strong>Compilar o painel mobilemoodle (TypeScript + SCSS)</strong><span>Raiz do projeto</span></div><pre><code>npm run build:mobilemoodle</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Gera/atualiza bundle e CSS do painel e sincroniza Ionic/Ionicons locais; não compila o binário Android ou iOS.</p></div>
+        <div class="command-card"><div class="command-heading"><strong>Build web Cordova IFRN</strong><span>macOS / Linux / Windows com Node</span></div><pre><code>node src/MoodleIFRN/build-native.mjs --platform=android
+node_modules/.bin/cordova prepare android
+node_modules/.bin/cordova build android</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">O primeiro comando compila a aplicação web Cordova e gera o idioma pt-br. Os comandos seguintes preparam e compilam a plataforma.</p><p class="caution">No Windows PowerShell, execute os binários locais com <code>.\node_modules\.bin\cordova.cmd</code>. Para iOS, use <code>--platform=ios</code> e os comandos iOS descritos abaixo em um Mac.</p></div>
+        <div class="command-card"><div class="command-heading"><strong>Servir Ionic para desenvolvimento</strong><span>Script existente</span></div><pre><code>npm start</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Executa <code>ionic serve</code> com HTTPS e valor de <code>MOODLE_APP_BROWSER</code>. O hook do Ionic também executa Gulp.</p><p class="caution">O script do repositório chama <code>scripts/serve.sh</code> em outro hook, então o fluxo de desenvolvimento completo pressupõe shell Unix (macOS/Linux ou Git Bash/WSL no Windows). Se falhar no Windows, use Git Bash/WSL; não altere scripts sem revisar os hooks.</p></div>
+      </section>
+
+      <section id="scripts" class="doc-section searchable">
+        <p class="eyebrow">05 · AUTOMAÇÃO IFRN</p><h2>Scripts importantes</h2>
+        <div class="table-wrap"><table><thead><tr><th>Comando / arquivo</th><th>Função</th><th>Cuidado</th></tr></thead><tbody>
+          <tr><td><code>npm run build:mobilemoodle</code></td><td>Compila <code>mobilemoodle.ts</code>, <code>core_mobile/</code> e SCSS do painel; sincroniza assets locais.</td><td>Escreve arquivos gerados na pasta mobilemoodle.</td></tr>
+          <tr><td><code>node src/MoodleIFRN/build-native.mjs --platform=android|ios</code></td><td>Valida idioma e compila o alvo web Cordova; opção <code>--check</code> apenas valida.</td><td>Não prepara plataforma nativa nem assina o binário.</td></tr>
+          <tr><td><code>npm run patch:ifrn</code></td><td>Executa <code>src/MoodleIFRN/patch-moodle-ifrn.js</code> para aplicar/validar integrações IFRN.</td><td>Pode modificar arquivos fora de <code>src/MoodleIFRN/</code>, incluindo core/configuração. Revise <code>git diff</code>; não é etapa inofensiva de build.</td></tr>
+          <tr><td><code>src/MoodleIFRN/scripts/build-android-web.cjs</code></td><td>Construtor auxiliar de web Android com verificações Cordova.</td><td>Não é script npm registrado; confira seus logs/caminhos antes de executar.</td></tr>
+          <tr><td><code>config.xml</code> hooks</td><td><code>after_prepare</code> aplica scripts IFRN de integração e layout InAppBrowser.</td><td>Roda durante prepare/build Cordova; examine alterações em plataformas geradas.</td></tr>
+        </tbody></table></div>
+        <div class="callout warning"><strong>Patch de atualização:</strong> a documentação <a href="PATCH-AO-ATUALIZAR.md">PATCH-AO-ATUALIZAR.md</a> descreve o escopo do patch e como revisá-lo. Não rode <code>patch:ifrn</code> apenas por rotina sem primeiro conferir o estado do Git.</div>
+      </section>
+
+      <section id="android" class="doc-section searchable">
+        <p class="eyebrow">06 · ANDROID</p><h2>Compilar e localizar APK</h2>
+        <p>Compile os assets IFRN, gere o app web Cordova e então prepare/compile a plataforma. O comando Gradle pode ser executado diretamente somente para depurar uma plataforma já preparada.</p>
+        <div class="command-card"><div class="command-heading"><strong>Build debug completa</strong><span>Raiz do projeto</span></div><pre><code>npm run build:mobilemoodle
+node src/MoodleIFRN/build-native.mjs --platform=android
+npx cordova prepare android
+npx cordova build android --debug</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">A APK debug fica normalmente em <code>platforms/android/app/build/outputs/apk/debug/app-debug.apk</code>. Confirme a saída da build, package ID e assinatura antes de instalar.</p></div>
+        <div class="command-card"><div class="command-heading"><strong>Windows PowerShell</strong><span>Use executáveis .cmd</span></div><pre><code>npm.cmd run build:mobilemoodle
+node src/MoodleIFRN/build-native.mjs --platform=android
+.\node_modules\.bin\cordova.cmd prepare android
+.\node_modules\.bin\cordova.cmd build android --debug</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Requer Android SDK e Java compatíveis com a configuração Gradle do projeto.</p></div>
+        <div class="command-card"><div class="command-heading"><strong>Verificar APK e hash</strong><span>macOS/Linux</span></div><pre><code>shasum -a 256 platforms/android/app/build/outputs/apk/debug/app-debug.apk
+aapt dump badging platforms/android/app/build/outputs/apk/debug/app-debug.apk</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Exibe SHA-256 e metadados Android, incluindo o package name.</p></div>
+        <div class="callout info"><strong>Debug, release e AAB:</strong> APK debug é para desenvolvimento e não publicação. APK release é um pacote instalável assinado conforme a chave definida. AAB é o formato de envio à Play Store; assinatura institucional e credenciais precisam ser fornecidas e protegidas pelo responsável. O repositório atual identifica o app como <code>com.moodle.moodlemobile</code> e nome nativo Moodle; isso não comprova titularidade ou aprovação institucional.</div>
+        <p>Verifique Cordova no pacote web preparado: deve existir <code>www/cordova.js</code> e a página inicial deve carregá-lo conforme o builder. Não copie APKs, keystores ou senhas para o Git.</p>
+      </section>
+
+      <section id="ios" class="doc-section searchable">
+        <p class="eyebrow">07 · iOS NO MACBOOK</p><h2>Executar e compilar no MacBook</h2>
+        <p>O repositório declara <code>cordova-ios 7.1.1</code>, deployment target iOS 16.0 e WKWebView. A compilação nativa de iOS exige macOS e Xcode; Windows pode preparar código web, mas não compila ou assina o app iOS.</p>
+        <div class="callout info">O config.xml referencia GoogleService-Info.plist para iOS. Confirme que o arquivo de configuração Firebase correto está disponível no checkout e corresponde ao app institucional autorizado antes de compilar. Não substitua a configuração nem publique chaves de assinatura ou arquivos de credencial sem aprovação.</div>
+        <h3>1. Preparar o Mac</h3>
+        <div class="command-card"><div class="command-heading"><strong>Conferir ferramentas Apple</strong><span>Terminal do macOS</span></div><pre><code>xcode-select -p
+xcodebuild -version
+xcrun simctl list devices available
+node --version
+npm --version
+pod --version</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Xcode deve estar instalado e selecionado; aceite a licença e instale os componentes indicados pelo Xcode se solicitado.</p></div>
+        <p>O guia oficial Cordova 7.x lista CocoaPods e Xcode entre os requisitos. Se CocoaPods ou ios-deploy não estiverem instalados, Homebrew pode instalá-los:</p>
+        <div class="command-card"><div class="command-heading"><strong>Instalar ferramentas ausentes</strong><span>Terminal do macOS · Homebrew</span></div><pre><code>brew install cocoapods ios-deploy</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Fornece CocoaPods para dependências iOS e ios-deploy para instalação por linha de comando em dispositivo físico.</p></div>
+        <h3>2. Clonar e instalar dependências</h3>
+        <div class="command-card"><div class="command-heading"><strong>Preparar o projeto</strong><span>Terminal do macOS</span></div><pre><code>git clone https://github.com/suap-ava-suite/mobileapp-moodle.git
+cd mobileapp-moodle
+nvm install 22.17.0
+nvm use 22.17.0
+npm ci</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Instala as dependências fixadas pelo lockfile; o postinstall aplica patches e instala dependências do plugin Moodle local.</p></div>
+        <h3>3. Preparar e compilar iOS</h3>
+        <div class="command-card"><div class="command-heading"><strong>Build de desenvolvimento para iOS</strong><span>macOS com Xcode e CocoaPods</span></div><pre><code>npm run build:mobilemoodle
+node src/MoodleIFRN/build-native.mjs --platform=ios
+npx cordova platform ls
+npx cordova prepare ios
+npx cordova build ios --debug</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Gera o bundle do painel, compila os assets web para iOS, prepara plugins e dependências CocoaPods e cria a build nativa debug.</p><p class="caution">Se a plataforma iOS não estiver instalada localmente, o comando de prepare/build pode informar isso. Confirme que <code>cordova-ios@7.1.1</code> consta no lockfile antes de adicioná-la; não altere a versão da plataforma silenciosamente.</p></div>
+        <p>Se <code>cordova platform ls</code> confirmar que a plataforma iOS não está instalada, o projeto declara a versão 7.1.1. Adicione-a explicitamente e revise qualquer alteração no lockfile:</p>
+        <div class="command-card"><div class="command-heading"><strong>Adicionar a plataforma declarada</strong><span>Somente quando ausente</span></div><pre><code>npx cordova platform add ios@7.1.1
+npx cordova prepare ios</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Baixa a versão específica declarada pelo projeto e prepara a pasta nativa gerada.</p><p class="caution">Plataformas Cordova são arquivos gerados. Edite o código-fonte em src/MoodleIFRN ou nos plugins versionados, não diretamente em platforms/ios.</p></div>
+        <h3>4. Abrir no Xcode ou executar no simulador</h3>
+        <div class="command-card"><div class="command-heading"><strong>Abrir workspace Cordova</strong><span>Terminal do macOS</span></div><pre><code>open platforms/ios/*.xcworkspace</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Abre o workspace gerado. No Xcode, escolha o scheme Moodle e um simulador; selecione uma equipe de assinatura apenas se for executar em aparelho ou arquivar.</p></div>
+        <div class="command-card"><div class="command-heading"><strong>Executar em simulador</strong><span>macOS</span></div><pre><code>npx cordova run ios --emulator</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Compila, instala e executa no simulador iOS escolhido pelo Cordova/Xcode.</p></div>
+        <p>O script existente <code>npm run dev:ios</code> também executa <code>ionic cordova run ios</code>. O script de produção <code>npm run prod:ios</code> prepara a build web de produção e inicia o app; não cria, por si só, um archive assinado para a loja.</p>
+        <p>Para testar em iPhone, conecte e confie no aparelho, configure assinatura e provisioning no Xcode e use <code>npx cordova run ios --device</code>. Isso instala no dispositivo escolhido; confirme o destino antes de executar.</p>
+        <h3>5. Assinar e distribuir</h3>
+        <p>Para criar archive/TestFlight/App Store, é necessário Bundle Identifier aprovado, Apple Developer Team, certificado/provisioning ou assinatura automática configurada no Xcode, além dos dados institucionais do App Store Connect. Não versionar certificados, profiles, API keys ou senhas. O projeto atualmente usa um identificador herdado; a instituição deve aprovar qualquer mudança antes de distribuição.</p>
+        <div class="callout warning"><strong>Requisitos Apple em 11/11/2026:</strong> desde 28/04/2026, uploads ao App Store Connect exigem Xcode 26 ou posterior com SDK iOS 26 ou posterior. A Apple informou em 30/10/2026 que builds com Xcode 27.2/SDK 27.2 também podem ser enviadas. Confirme as versões estáveis aceitas e os requisitos de macOS no momento do archive; não use beta para release sem aprovação. Este projeto não foi compilado ou validado em Xcode nesta máquina Windows.</div>
+        <p class="source-links">Fontes oficiais: <a href="https://cordova.apache.org/docs/en/latest/guide/platforms/ios/">Guia iOS do Cordova</a> · <a href="https://developer.apple.com/news/upcoming-requirements/?id=04282026a">Requisito mínimo do SDK Apple</a> · <a href="https://developer.apple.com/help/app-store-connect/release-notes/">Notas do App Store Connect</a> · <a href="https://developer.apple.com/xcode/system-requirements/">Compatibilidade Xcode/macOS</a>.</p>
+      </section>
+
+      <section id="testes" class="doc-section searchable">
+        <p class="eyebrow">08 · QUALIDADE</p><h2>Testes e diagnóstico</h2>
+        <div class="command-card"><div class="command-heading"><strong>Jest</strong><span>Raiz do repositório</span></div><pre><code>npm test
+npm run test:ci</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected"><code>test:ci</code> executa Gulp de teste e Jest serialmente. Registre falhas preexistentes e não reduza expectativas para mascará-las.</p></div>
+        <p>Os scripts de teste usam atribuição de variável de ambiente em sintaxe Unix. No Windows, use Git Bash/WSL para esses comandos, ou configure NODE_ENV na sessão PowerShell antes de chamar as ferramentas locais. Não altere package.json apenas para contornar a shell da máquina.</p>
+        <div class="command-card"><div class="command-heading"><strong>Lint</strong><span>Raiz do repositório</span></div><pre><code>npm run lint</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Executa ESLint. O script usa sintaxe de ambiente Unix; no Windows, prefira Git Bash/WSL ou invoque ESLint local diretamente.</p></div>
+        <div class="command-card"><div class="command-heading"><strong>ADB: dispositivos e logs Android</strong><span>PowerShell / Terminal</span></div><pre><code>adb devices -l
+adb logcat -d</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Mostra dispositivos conectados e lê o buffer de logs. Revise e sanitize a saída antes de compartilhar; nunca publique tokens, cookies, identificadores ou dados acadêmicos.</p></div>
+        <p>Teste SUAP/Gov.br e APIs autenticadas manualmente com autorização. Não automatize digitação de credenciais e não use contas de terceiros.</p>
+      </section>
+
+      <section id="arquitetura" class="doc-section searchable">
+        <p class="eyebrow">09 · ARQUITETURA</p><h2>Como as partes se relacionam</h2>
+        <div class="flow" aria-label="Fluxo principal do aplicativo"><span>Marketplace IFRN</span><b>→</b><span>SUAP</span><b>→</b><span>Painel AVA</span><b>→</b><span>Curso Moodle nativo</span><b>→</b><span>Voltar ao Painel</span></div>
+        <ul class="architecture-list">
+          <li><strong><code>src/MoodleIFRN/</code>:</strong> customizações IFRN, Marketplace Angular, serviços, painel mobilemoodle, estilos, recursos, testes e scripts.</li>
+          <li><strong><code>mobilemoodle/</code>:</strong> painel web local com TypeScript/esbuild e SCSS; a sessão e as APIs do Painel não substituem a sessão Moodle nativa.</li>
+          <li><strong><code>src/core/</code>:</strong> núcleo Moodle Mobile; algumas integrações são reaplicadas por scripts de patch. Revisar diffs após atualizar o upstream.</li>
+          <li><strong>Cordova:</strong> empacota WebView e plugins nativos; <code>cordova.js</code> é injetado/preparado no build, não é um asset web estático para remover.</li>
+          <li><strong>SUAP/Gov.br:</strong> autenticação ocorre nos serviços oficiais. O retorno Gov.br ao Painel depende de handoff autorizado no servidor; o navegador externo não equivale a sessão autenticada no app.</li>
+          <li><strong>P0.4:</strong> há histórico de teste crítico de concorrência entre sessões; consultar estado atual dos testes e patches antes de release pública.</li>
+        </ul>
+        <p>O código experimental de AVA Aberto e outras branches não deve ser incorporado automaticamente. Confirme branch e diff antes de integrar.</p>
+      </section>
+
+      <section id="problemas" class="doc-section searchable">
+        <p class="eyebrow">10 · SUPORTE</p><h2>Problemas comuns</h2>
+        <details><summary>Windows bloqueia <code>npm.ps1</code></summary><p>Use <code>npm.cmd</code> no PowerShell ou abra Git Bash. Não é necessário alterar a política de execução do sistema para esta tarefa.</p></details>
+        <details><summary>NVM no Windows não entende <code>lts/jod</code></summary><p>Instale e selecione a versão numérica compatível com <code>engines.node</code>, por exemplo <code>nvm install 22.17.0</code> e <code>nvm use 22.17.0</code>.</p></details>
+        <details><summary>Gradle não baixa dependências</summary><p>Confirme conexão a Google Maven/Maven Central, DNS, proxy, modo offline do Gradle e configuração de repositórios. Não desative TLS nem adicione repositórios desconhecidos.</p></details>
+        <details><summary><code>cordova.js</code> ausente</summary><p>Confirme que foi executado o builder Cordova e <code>cordova prepare</code>. Um build web Angular isolado não garante a preparação do arquivo Cordova.</p></details>
+        <details><summary>ADB não encontra aparelho</summary><p>Execute <code>adb devices -l</code>, aceite a autorização USB no aparelho e confira cabo/modo de depuração. Não limpe dados como medida de diagnóstico.</p></details>
+        <details><summary>Erro de espaço em disco (ENOSPC)</summary><p>Verifique o espaço disponível e o caminho do cache antes de nova build. Preserve caches de Gradle/npm e arquivos do usuário; não use scripts de limpeza indiscriminados.</p></details>
+        <details><summary>Patch IFRN diverge depois de atualizar Moodle</summary><p>Revise o script e <code>git diff</code> em todos os destinos. Não execute patch repetidamente sem avaliar arquivos alterados; veja <a href="PATCH-AO-ATUALIZAR.md">PATCH-AO-ATUALIZAR.md</a>.</p></details>
+      </section>
+
+      <section id="git" class="doc-section searchable">
+        <p class="eyebrow">11 · COLABORAÇÃO</p><h2>Fluxo Git seguro</h2>
+        <div class="command-card"><div class="command-heading"><strong>Conferir e criar branch</strong><span>Git</span></div><pre><code>git status --short --branch
+git branch -vv
+git switch -c docs/minha-tarefa</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Crie a branch a partir da base aprovada e preserve alterações preexistentes. Não use reset hard, clean ou git add . para preparar commits.</p></div>
+        <div class="command-card"><div class="command-heading"><strong>Revisar e enviar commit</strong><span>Git</span></div><pre><code>git diff --check
+git diff -- src/MoodleIFRN/docs
+git add src/MoodleIFRN/docs
+git commit -m "docs(ifrn): atualizar manual de desenvolvimento"
+git push -u origin docs/minha-tarefa</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Estagie somente os arquivos da tarefa. Push/merge devem seguir a autorização do responsável do repositório.</p></div>
+      </section>
+
+      <section id="documentacao" class="doc-section searchable">
+        <p class="eyebrow">12 · DOCUMENTAÇÃO</p><h2>Documentos do repositório</h2>
+        <p>O manual fica em <code>src/MoodleIFRN/docs/</code>, que é a pasta de documentação da customização IFRN. A lista e a classificação dos documentos existentes estão em <a href="INVENTARIO-DOCUMENTACAO.md">INVENTARIO-DOCUMENTACAO.md</a>.</p>
+        <ul>
+          <li><a href="README.md">Índice de documentos</a></li>
+          <li><a href="PONTE-PAINEL-MOODLE.md">Ponte Painel AVA → Moodle</a></li>
+          <li><a href="LOGIN-IFRN.md">Login IFRN</a></li>
+          <li><a href="PAINEL-CURSOS.md">Painel de cursos</a></li>
+          <li><a href="SEGURANCA.md">Segurança</a></li>
+          <li><a href="PATCH-AO-ATUALIZAR.md">Atualização e reaplicação de patches</a></li>
+        </ul>
+        <div class="callout info"><strong>iOS:</strong> a configuração iOS do repositório está documentada nesta página, mas não foi validada em Mac/Xcode neste ambiente. Registre a primeira execução real em <code>RELATORIO-IOS.md</code> somente após testar.</div>
+      </section>
+
+      <footer class="footer">Moodle IFRN Mobile · Manual local e offline · 11/11/2026</footer>
+    </main>
+  </div>
+  <div id="live-status" class="visually-hidden" aria-live="polite"></div>
+</body>
+</html>

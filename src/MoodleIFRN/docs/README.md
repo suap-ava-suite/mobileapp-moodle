@@ -2,9 +2,14 @@
 
 Índice da customização **AVA IFRN** no app Moodle Mobile.
 
+**Manual prático de desenvolvimento:** [abrir o guia HTML offline](./index.html).
+**Classificação do acervo:** [inventário da documentação](./INVENTARIO-DOCUMENTACAO.md).
+
 Tudo que é específico do IFRN vive em `src/MoodleIFRN/` (login, serviços, painel e tema), com o mínimo de alteração no núcleo do Moodle.
 
 ## Comece por aqui
+
+Para passos de instalação e compilação, use o [manual HTML offline](./index.html). O script de reaplicação IFRN modifica pontos de integração do núcleo; consulte o escopo e revise o diff em [PATCH-AO-ATUALIZAR.md](./PATCH-AO-ATUALIZAR.md) antes de executá-lo.
 
 | Documento | Conteúdo |
 |-----------|----------|
@@ -18,7 +23,7 @@ Tudo que é específico do IFRN vive em `src/MoodleIFRN/` (login, serviços, pai
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [../ifrn-login/LOGIN-IFRN.md](../ifrn-login/LOGIN-IFRN.md) | Tela de login IFRN-id |
+| [LOGIN-IFRN.md](./LOGIN-IFRN.md) | Tela de login IFRN |
 | [SERVICOS-AUTH-BIOMETRIA.md](./SERVICOS-AUTH-BIOMETRIA.md) | `AuthService` + biometria |
 | [CONTRATO-API.md](./CONTRATO-API.md) | Endpoints e payloads esperados |
 | [SEGURANCA.md](./SEGURANCA.md) | Medidas de segurança no cliente |

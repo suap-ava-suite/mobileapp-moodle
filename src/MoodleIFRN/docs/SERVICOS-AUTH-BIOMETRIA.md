@@ -126,7 +126,7 @@ mobilemoodle/core_mobile/api-auth.ts  →  Authorization: Bearer …
 
 ## Ver também
 
-- [Login IFRN](../ifrn-login/LOGIN-IFRN.md)
+- [Login IFRN](./LOGIN-IFRN.md)
 - [Painel de cursos](./PAINEL-CURSOS.md)
 - [Contrato da API](./CONTRATO-API.md)
 - [Índice](./README.md)

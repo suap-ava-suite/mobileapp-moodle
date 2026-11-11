@@ -1,5 +1,8 @@
 # Criação da rota de login IFRN
 
+**Manual completo para desenvolvimento, build Android e execução iOS no MacBook:**
+[Abrir manual HTML offline](src/MoodleIFRN/docs/index.html) · [Inventário e classificação dos documentos](src/MoodleIFRN/docs/INVENTARIO-DOCUMENTACAO.md)
+
 Para registrar / reparar as rotas IFRN no Moodle Mobile após uma atualização:
 
 ```bash
@@ -18,7 +21,7 @@ A documentação completa da customização está em:
 
 - [Índice da documentação](src/MoodleIFRN/docs/README.md)
 - [Visão geral](src/MoodleIFRN/docs/VISAO-GERAL.md)
-- [Login IFRN](src/MoodleIFRN/ifrn-login/LOGIN-IFRN.md)
+- [Login IFRN](src/MoodleIFRN/docs/LOGIN-IFRN.md)
 - [Serviços (auth + biometria)](src/MoodleIFRN/docs/SERVICOS-AUTH-BIOMETRIA.md)
 - [Painel de cursos](src/MoodleIFRN/docs/PAINEL-CURSOS.md)
 - [Scripts TypeScript do painel](src/MoodleIFRN/mobilemoodle/core_mobile/SCRIPTS-TS.md)
