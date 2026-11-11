@@ -54,6 +54,7 @@ async function evaluate(page, expression) {
         return {origin:location.origin, results};
     })()`);
     const target = path.join(__dirname,'auditoria-fluxo-2026-10-19','aparelho-leitura.json');
+    fs.mkdirSync(path.dirname(target), {recursive: true});
     fs.writeFileSync(target, JSON.stringify(summary,null,2));
     console.log(JSON.stringify(summary));
 })().catch(e=>{console.error(e.message);process.exitCode=1;});

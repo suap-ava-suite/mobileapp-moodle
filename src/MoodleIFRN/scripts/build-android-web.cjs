@@ -2,11 +2,11 @@
 // Run from the repository root. Then run cordova prepare android and Gradle assembleDebug.
 const fs = require('node:fs');
 const path = require('node:path');
+const os = require('node:os');
 const {spawnSync} = require('node:child_process');
 const ts = require('typescript');
 const root = path.resolve(__dirname, '../../..');
-const logPath = path.join(root, 'src/MoodleIFRN/docs/auditoria-fluxo-2026-10-19/course-opening-cordova-build.log');
-fs.mkdirSync(path.dirname(logPath), {recursive:true});
+const logPath = path.join(os.tmpdir(), 'moodle-ifrn-course-opening-cordova-build.log');
 const log = fs.openSync(logPath, 'w');
 // Keep the targeted Android InAppBrowser inset fix versioned in MoodleIFRN;
 // Cordova prepare copies this patched source into the platform project.

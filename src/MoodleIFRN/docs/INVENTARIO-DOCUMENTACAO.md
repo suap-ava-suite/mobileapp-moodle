@@ -3,12 +3,12 @@
 **Revisado em:** 11/11/2026
 **Escopo:** src/MoodleIFRN/docs/, referências em readme_ifrn.md e material local em .analise/.
 
-Este inventário não remove nem move arquivos. A classificação é um ponto de partida para revisão por quem mantém o projeto; conteúdo histórico pode registrar decisões úteis mesmo quando não descreve mais o comportamento atual.
+A classificação registra o estado deste checkout e distingue guias ativos de material histórico. Conteúdo histórico pode documentar decisões úteis sem descrever o comportamento atual.
 
 ## Resumo
 
-- src/MoodleIFRN/docs/: 79 arquivos presentes no checkout após a conversão: 26 Markdown, 17 HTML (inclui o manual principal), 15 scripts .cjs, 13 arquivos .js, 3 JSON, 4 TXT e 1 CSS. O JavaScript compartilhado está incluído nos 13 arquivos .js.
-- Também havia dois logs ignorados sob docs/auditoria-fluxo-2026-10-19/. Eles não são parte da documentação versionada.
+- src/MoodleIFRN/docs/: 61 arquivos presentes após a limpeza: 26 Markdown, 17 HTML (inclui o manual principal), 15 scripts .cjs, 2 arquivos .js, 1 CSS. Os 11 `course-*.js` de inspeção manual e os 7 snapshots da auditoria datada foram removidos.
+- Não havia arquivos ignorados adicionais na pasta `auditoria-fluxo-2026-10-19/` quando ela foi removida.
 - .analise/: 319 arquivos locais no momento da contagem. Há relatórios, evidências, capturas, APKs e logs; esse diretório não é a documentação pública do projeto e não deve ser adicionado em massa ao Git.
 - Não foram encontrados documentos Markdown idênticos byte a byte pelo hash SHA-256. Há sobreposição de índice entre readme_ifrn.md e docs/README.md, mas cada um atende a um nível diferente.
 
@@ -55,9 +55,9 @@ Esses registros não devem ser tratados automaticamente como estado atual. Em es
 
 ## Scripts, snapshots e arquivos auxiliares
 
-Além dos 26 documentos Markdown, há páginas HTML estáticas e arquivos auxiliares de diagnóstico/teste. As páginas técnicas compartilham `assets/manual.css` e `assets/manual.js`; os scripts e snapshots continuam sendo ferramentas distintas da documentação. Os arquivos course-*, test-*, audit-* e probe-* não são scripts npm registrados só por estarem nessa pasta. Consulte o conteúdo e seus argumentos antes de executar; alguns podem depender de aparelho conectado, credenciais de teste, serviços remotos ou gerar logs.
+Além dos 26 documentos Markdown, há páginas HTML estáticas e ferramentas de diagnóstico/teste. As páginas técnicas compartilham `assets/manual.css` e `assets/manual.js`. Os onze `course-*.js` eram expressões de inspeção manual; não eram carregados pelo portal, build, testes ou app e foram removidos. Os scripts `test-*`, `audit-*` e `probe-*` permanecem como ferramentas separadas; revise argumentos antes de executá-los, pois alguns dependem de aparelho, rede ou serviços remotos.
 
-auditoria-fluxo-2026-10-19/ contém snapshots de endpoints, aparelho e cópias de fontes. Não os copie para documentação pública nem os compartilhe sem revisão de dados pessoais, URLs e informações operacionais. Os dois logs ignorados citados acima são locais e não estão versionados.
+Os snapshots versionados em `auditoria-fluxo-2026-10-19/` foram removidos: eram levantamentos datados de endpoints/fontes e uma leitura resumida de aparelho, sem referências em testes ou no app. `audit-device.cjs` e `audit-endpoints.cjs` recriam essa pasta somente quando executados; o script de build Android grava o log em `os.tmpdir()`.
 
 .analise/ contém evidências de tarefas e builds. Mantenha-a fora de commits de documentação. APKs, capturas e logs podem conter dados pessoais ou de sessão.
 
@@ -68,16 +68,14 @@ auditoria-fluxo-2026-10-19/ contém snapshots de endpoints, aparelho e cópias d
 - CONTRATO-API.md e apis-e-endpoints.md podem se sobrepor. Compare endpoint por endpoint e preserve diferenças antes de propor união.
 - COURSE-OPENING-2026-10-19.md, DESEMPENHO-PAINEL-2026-10-26.md, SSO-CURSOS-LOGIN-UNICO-2026-10-26.md e os relatórios de correção são históricos por execução; não consolidar em um guia prescritivo sem identificar quais conclusões ainda valem.
 
-## Candidatos a revisão futura — não excluídos
+## Candidatos a revisão futura
 
-1. Scripts de diagnóstico de execução única sob docs/: decidir se devem permanecer como ferramentas versionadas, ser movidos para tests/scripts com instruções ou ser arquivados. Antes de qualquer remoção, pesquisar chamadas em CI, package scripts e documentação.
-2. TXT/JSON da pasta auditoria-fluxo-2026-10-19/: revisar sensibilidade e necessidade de histórico; não publicar cópias de backend ou evidências de dispositivo sem aprovação.
-3. Logs ignorados: podem ser removidos pelo responsável local depois de confirmar que não são necessários. Eles não foram alterados por esta tarefa.
-4. Documentos históricos da lista acima: manter enquanto houver valor de decisão; arquivar ou remover somente após revisão de referências e aprovação do mantenedor.
+1. Os scripts CJS de diagnóstico ainda versionados em `docs/`: revisar individualmente se continuam úteis, pois alguns fazem leituras de rede/aparelho e produzem artefatos.
+2. Documentos históricos da lista acima: manter enquanto houver valor de decisão; arquivar ou remover somente após revisão de referências e aprovação do mantenedor.
 
 ## Links corrigidos nesta organização
 
-O arquivo de login atualmente está em src/MoodleIFRN/docs/LOGIN-IFRN.md. Links antigos para src/MoodleIFRN/ifrn-login/LOGIN-IFRN.md foram apontados para a localização existente. O código da aplicação não foi alterado.
+O arquivo de login atualmente está em src/MoodleIFRN/docs/LOGIN-IFRN.md. Links antigos para src/MoodleIFRN/ifrn-login/LOGIN-IFRN.md foram apontados para a localização existente. O app e os fluxos de autenticação não foram alterados. O helper de build Android passou a gravar logs em `os.tmpdir()` para não recriar snapshots dentro de `docs/`.
 
 ## Conversão para HTML offline
 
