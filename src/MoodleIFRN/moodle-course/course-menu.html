@@ -112,11 +112,6 @@
                             </label>
                         }
                     </div>
-                    @if (a11y.vlibrasLoadError()) {
-                        <p class="ifrn-ava-a11y__status" role="status" aria-live="polite">
-                            Não foi possível carregar o VLibras. Verifique a conexão e desative/ative a opção para tentar novamente.
-                        </p>
-                    }
 
                     <div class="ifrn-ava-cycles">
                         <div class="ifrn-ava-cycle" [class.is-on]="a11y.zoomLevel > 100">

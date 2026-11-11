@@ -977,6 +977,11 @@ body.dyslexia_friendly ion-app {
     font-family: "opendyslexic", sans-serif !important; /* sobrescreve inline style do Ionic */
 }
 
+body.big_cursor,
+body.big_cursor * {
+    cursor: url("https://cdn.userway.org/widgetapp/images/arrow_w.svg"), auto !important; /* sobrescreve cursor de widgets de terceiros */
+}
+
 body.highlight_links a[href] {
     background-color: #333333 !important; /* contraste forçado: cor original do link pode ter qualquer valor */
     border: 2px solid #f90 !important;
@@ -1059,13 +1064,13 @@ div[vw].ifrn-vlibras-compact.enabled {
     max-width: min(220px, 58vw) !important;
     max-height: min(280px, 42vh) !important;
     z-index: 9000 !important;
-    transform: none !important;
+    transform: scale(0.48);
+    transform-origin: left bottom;
     pointer-events: auto !important;
 }
 
 body.vlibras_active div[vw].enabled {
     display: block !important;
-    pointer-events: none;
 }
 
 body.vlibras_active div[vw] [vw-access-button],
@@ -1075,51 +1080,27 @@ body.vlibras_active div[vw] [vw-access-button].active {
     min-width: 48px !important;
     min-height: 48px !important;
     transform: none !important;
-    pointer-events: auto;
 }
 
-body.vlibras_active div[vw] [vw-plugin-wrapper] {
-    pointer-events: none;
-}
-
-body.vlibras_active div[vw] [vw-plugin-wrapper].active,
-body.vlibras_active div[vw] [vw-plugin-wrapper][aria-hidden="false"] {
-    pointer-events: auto;
-}
-
-body.vlibras_active div[vw] [vw-plugin-wrapper].active iframe,
-body.vlibras_active div[vw] [vw-plugin-wrapper][aria-hidden="false"] iframe {
-    pointer-events: auto;
-}
-
-/* Limita a janela expandida em celular para manter visíveis os controles superiores. */
+/* Painel do avatar: janela pequena, nunca fullscreen sobre o app */
 body.vlibras_active div[vw] [vw-plugin-wrapper],
 body.vlibras_active div[vw] .vw-plugin-wrapper,
 body.vlibras_active div[vw] .vpw-settings-btn,
 body.vlibras_active div[vw] .vpw-box,
 body.vlibras_active div[vw] iframe {
-    max-width: min(90vw, 380px) !important;
-    max-height: min(76vh, 560px) !important;
+    max-width: min(240px, 64vw) !important;
+    max-height: min(320px, 48vh) !important;
 }
 
 body.vlibras_active div[vw] [vw-plugin-wrapper],
 body.vlibras_active div[vw] .vw-plugin-wrapper {
-    position: fixed !important;
-    inset: auto max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) auto !important;
-    width: min(90vw, 380px) !important;
-    height: min(76vh, 560px) !important;
-    max-width: calc(100vw - 24px) !important;
-    max-height: calc(100vh - max(24px, env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))) !important;
+    position: relative !important;
+    inset: auto !important;
+    width: min(240px, 64vw) !important;
+    height: min(320px, 48vh) !important;
     overflow: hidden !important;
     border-radius: 12px !important;
     box-shadow: 0 6px 18px rgb(0 0 0 / 25%) !important;
-}
-
-body.vlibras_active div[vw] iframe {
-    width: 100% !important;
-    height: 100% !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
 }
 
 /* Botão de emergência acima de qualquer overlay do VLibras.

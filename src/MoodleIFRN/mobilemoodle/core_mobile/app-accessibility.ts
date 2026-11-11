@@ -8,7 +8,6 @@
  * VLibras é carregado sob demanda quando vlibras_active = true.
  */
 import { MM, App } from './namespace';
-import { loadVlibrasWidget } from './vlibras-widget';
 
 
     const STORAGE_KEY = 'ifrn_a11y_prefs';
@@ -19,6 +18,7 @@ import { loadVlibrasWidget } from './vlibras-widget';
         'highlight_links',
         'stop_animations',
         'hidden_illustrative_image',
+        'big_cursor',
         'vlibras_active',
         'high_line_height',
     ];
@@ -40,6 +40,7 @@ import { loadVlibrasWidget } from './vlibras-widget';
         highlight_links: false,
         stop_animations: false,
         hidden_illustrative_image: false,
+        big_cursor: false,
         vlibras_active: false,
         high_line_height: false,
         zoom_level: 100,
@@ -47,8 +48,6 @@ import { loadVlibrasWidget } from './vlibras-widget';
     };
 
     let vlibrasReady = false;
-    let vlibrasLoading = false;
-    let vlibrasFailed = false;
 
     function getEl(id: string): HTMLElement | null {
         return document.getElementById(id);
@@ -90,42 +89,51 @@ import { loadVlibrasWidget } from './vlibras-widget';
         }
     }
 
-    function setVlibrasStatus(message: string): void {
-        const status = document.getElementById('vlibras-status');
-        if (!status) {
-            return;
-        }
-
-        status.textContent = message;
-        status.hidden = !message;
-    }
-
-    /** Carrega o widget oficial sob demanda, com deduplicação entre Painel e curso. */
+    /** Injeta o widget VLibras.gov.br uma única vez. */
     function ensureVlibras(): void {
-        if (!state.vlibras_active || vlibrasFailed) {
+        if (vlibrasReady || !state.vlibras_active) {
             return;
         }
 
-        // Também restaura o widget se o serviço de curso o tiver ocultado.
-        const load = loadVlibrasWidget();
-        setVlibrasStatus('');
-        if (vlibrasReady || vlibrasLoading) {
-            return;
+        if (!document.querySelector('div[vw]')) {
+            const root = document.createElement('div');
+
+            root.setAttribute('vw', '');
+            root.className = 'enabled';
+            root.innerHTML =
+                '<div vw-access-button class="active"></div>' +
+                '<div vw-plugin-wrapper><div class="vw-plugin-top-wrapper"></div></div>';
+            document.body.appendChild(root);
         }
 
-        vlibrasLoading = true;
-        void load.then(() => {
-            vlibrasReady = true;
-            vlibrasLoading = false;
-            return true;
-        }).catch(() => {
-            vlibrasLoading = false;
-            vlibrasFailed = true;
-            if (state.vlibras_active) {
-                setVlibrasStatus('Não foi possível carregar o VLibras. Verifique sua conexão e tente novamente.');
+        if (window.VLibras?.Widget) {
+            try {
+                new window.VLibras.Widget('https://vlibras.gov.br/app');
+                vlibrasReady = true;
+            } catch {
+                vlibrasReady = true;
             }
-            return false;
-        });
+
+            return;
+        }
+
+        if (document.getElementById('vlibras-script')) {
+            return;
+        }
+
+        const script = document.createElement('script');
+
+        script.id = 'vlibras-script';
+        script.src = 'https://vlibras.gov.br/app/vlibras-plugin.js';
+        script.onload = () => {
+            try {
+                new window.VLibras!.Widget('https://vlibras.gov.br/app');
+                vlibrasReady = true;
+            } catch {
+                vlibrasReady = true;
+            }
+        };
+        document.body.appendChild(script);
     }
 
     /** Reflete o state atual em classes/atributos do document.body. */
@@ -165,13 +173,6 @@ import { loadVlibrasWidget } from './vlibras-widget';
         }
 
         state[key] = !!value;
-        if (key === 'vlibras_active') {
-            if (value) {
-                vlibrasFailed = false;
-            } else {
-                setVlibrasStatus('');
-            }
-        }
         saveState();
         applyToBody();
     }
