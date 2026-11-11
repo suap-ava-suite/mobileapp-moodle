@@ -7,7 +7,7 @@ Este inventário não remove nem move arquivos. A classificação é um ponto de
 
 ## Resumo
 
-- src/MoodleIFRN/docs/: 63 arquivos rastreados: 26 Markdown, 15 scripts .cjs, 13 arquivos .js, 3 JSON, 4 TXT, 1 HTML e 1 CSS.
+- src/MoodleIFRN/docs/: 79 arquivos presentes no checkout após a conversão: 26 Markdown, 17 HTML (inclui o manual principal), 15 scripts .cjs, 13 arquivos .js, 3 JSON, 4 TXT e 1 CSS. O JavaScript compartilhado está incluído nos 13 arquivos .js.
 - Também havia dois logs ignorados sob docs/auditoria-fluxo-2026-10-19/. Eles não são parte da documentação versionada.
 - .analise/: 319 arquivos locais no momento da contagem. Há relatórios, evidências, capturas, APKs e logs; esse diretório não é a documentação pública do projeto e não deve ser adicionado em massa ao Git.
 - Não foram encontrados documentos Markdown idênticos byte a byte pelo hash SHA-256. Há sobreposição de índice entre readme_ifrn.md e docs/README.md, mas cada um atende a um nível diferente.
@@ -55,7 +55,7 @@ Esses registros não devem ser tratados automaticamente como estado atual. Em es
 
 ## Scripts, snapshots e arquivos auxiliares
 
-Além dos 26 documentos Markdown, há 37 arquivos auxiliares: os 34 scripts/snapshots preexistentes de diagnóstico e teste e os três recursos locais do manual (HTML, CSS e JavaScript). Os arquivos course-*, test-*, audit-* e probe-* não são scripts npm registrados só por estarem nessa pasta. Consulte o conteúdo e seus argumentos antes de executar; alguns podem depender de aparelho conectado, credenciais de teste, serviços remotos ou gerar logs.
+Além dos 26 documentos Markdown, há páginas HTML estáticas e arquivos auxiliares de diagnóstico/teste. As páginas técnicas compartilham `assets/manual.css` e `assets/manual.js`; os scripts e snapshots continuam sendo ferramentas distintas da documentação. Os arquivos course-*, test-*, audit-* e probe-* não são scripts npm registrados só por estarem nessa pasta. Consulte o conteúdo e seus argumentos antes de executar; alguns podem depender de aparelho conectado, credenciais de teste, serviços remotos ou gerar logs.
 
 auditoria-fluxo-2026-10-19/ contém snapshots de endpoints, aparelho e cópias de fontes. Não os copie para documentação pública nem os compartilhe sem revisão de dados pessoais, URLs e informações operacionais. Os dois logs ignorados citados acima são locais e não estão versionados.
 
@@ -78,3 +78,28 @@ auditoria-fluxo-2026-10-19/ contém snapshots de endpoints, aparelho e cópias d
 ## Links corrigidos nesta organização
 
 O arquivo de login atualmente está em src/MoodleIFRN/docs/LOGIN-IFRN.md. Links antigos para src/MoodleIFRN/ifrn-login/LOGIN-IFRN.md foram apontados para a localização existente. O código da aplicação não foi alterado.
+
+## Conversão para HTML offline
+
+Os arquivos Markdown originais foram mantidos. As páginas convertidas usam o layout compartilhado do `index.html`, arquivos locais (sem CDN e sem `fetch`) e navegação que funciona por caminhos relativos em `file://`.
+
+| Markdown original | Página HTML | Situação |
+|---|---|---|
+| `INVENTARIO-DOCUMENTACAO.md` | [`INVENTARIO-DOCUMENTACAO.html`](./INVENTARIO-DOCUMENTACAO.html) | Convertido; fonte preservada |
+| `PONTE-PAINEL-MOODLE.md` | [`PONTE-PAINEL-MOODLE.html`](./PONTE-PAINEL-MOODLE.html) | Convertido; fonte preservada |
+| `LOGIN-IFRN.md` | [`LOGIN-IFRN.html`](./LOGIN-IFRN.html) | Convertido; fonte preservada |
+| `PAINEL-CURSOS.md` | [`PAINEL-CURSOS.html`](./PAINEL-CURSOS.html) | Convertido; fonte preservada |
+| `SEGURANCA.md` | [`SEGURANCA.html`](./SEGURANCA.html) | Convertido; fonte preservada |
+| `PATCH-AO-ATUALIZAR.md` | [`PATCH-AO-ATUALIZAR.html`](./PATCH-AO-ATUALIZAR.html) | Convertido; fonte preservada |
+| `README.md` | [`README.html`](./README.html) | Convertido; fonte preservada |
+| `ENTRADA-DIRETA-SUAP.md` | [`ENTRADA-DIRETA-SUAP.html`](./ENTRADA-DIRETA-SUAP.html) | Convertido; fonte preservada |
+| `SERVICOS-AUTH-BIOMETRIA.md` | [`SERVICOS-AUTH-BIOMETRIA.html`](./SERVICOS-AUTH-BIOMETRIA.html) | Convertido; fonte preservada |
+| `TEMA-VISUAL.md` | [`TEMA-VISUAL.html`](./TEMA-VISUAL.html) | Convertido; fonte preservada |
+| `TEMPLATES-HTML.md` | [`TEMPLATES-HTML.html`](./TEMPLATES-HTML.html) | Convertido; fonte preservada |
+| `TROCAR-IMAGEM-ABERTURA-ANDROID.md` | [`TROCAR-IMAGEM-ABERTURA-ANDROID.html`](./TROCAR-IMAGEM-ABERTURA-ANDROID.html) | Convertido; fonte preservada |
+| `LOGO-MOODLE-IFRN.md` | [`LOGO-MOODLE-IFRN.html`](./LOGO-MOODLE-IFRN.html) | Convertido; fonte preservada |
+| `CONTRATO-API.md` | [`CONTRATO-API.html`](./CONTRATO-API.html) | Convertido; fonte preservada |
+| `PLAY-STORE-BETA.md` | [`PLAY-STORE-BETA.html`](./PLAY-STORE-BETA.html) | Convertido; guia de referência, requisitos devem ser revalidados |
+| `apis-e-endpoints.md` | [`apis-e-endpoints.html`](./apis-e-endpoints.html) | Convertido; fonte preservada |
+
+`index.html` continua sendo a página inicial. Os relatórios históricos específicos por data permanecem em Markdown e não foram excluídos. O conteúdo legado identificado em páginas de visão geral, contrato, painel e segurança recebeu aviso na apresentação HTML; a conversão não certifica as afirmações técnicas.
