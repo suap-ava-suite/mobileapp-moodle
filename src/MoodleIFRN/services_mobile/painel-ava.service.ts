@@ -418,6 +418,7 @@ export class PainelAvaService {
 
     private profileRefresh?: Promise<boolean>;
     private cancelProfileRefresh?: () => void;
+    private courseSsoBrowserLeaseCount = 0;
     private readonly govBrRedirectHandoff = new GovBrRedirectHandoff();
 
     /** Consome uma vez o redirect HTTPS recebido do SUAP, sem persistir parâmetros OAuth. */
@@ -434,8 +435,34 @@ export class PainelAvaService {
         this.cancelProfileRefresh?.();
     }
 
+    /**
+     * Reserva o InAppBrowser para o SSO Moodle. O plugin Android mantém uma janela
+     * ativa; abrir outra pode encerrar a anterior e o callback antigo fechar a nova.
+     *
+     * @returns Função idempotente que libera a reserva.
+     */
+    async acquireCourseSsoBrowserLease(): Promise<() => void> {
+        this.courseSsoBrowserLeaseCount++;
+        this.cancelProfileRefresh?.();
+        await this.profileRefresh?.catch(() => false);
+
+        let released = false;
+
+        return () => {
+            if (released) {
+                return;
+            }
+            released = true;
+            this.courseSsoBrowserLeaseCount = Math.max(0, this.courseSsoBrowserLeaseCount - 1);
+        };
+    }
+
     /** Revalida apenas o perfil com cookies existentes, sem iniciar login ou consultar cursos. */
     refreshSavedProfile(): Promise<boolean> {
+        if (this.courseSsoBrowserLeaseCount > 0) {
+            return Promise.resolve(false);
+        }
+
         const savedProfile = readOAuthProfile();
         if (!savedProfile) {
             clearFreshPanelProfile();
@@ -462,7 +489,11 @@ export class PainelAvaService {
                 finished = true;
                 clearTimeout(timer);
                 subscriptions.forEach(subscription => subscription.unsubscribe());
-                browser.close();
+                try {
+                    browser.close();
+                } catch {
+                    // Outra janela Cordova pode ter encerrado este InAppBrowser.
+                }
                 resolve(updated);
             };
             const timer = setTimeout(() => finish(false), REQUEST_TIMEOUT_MS);

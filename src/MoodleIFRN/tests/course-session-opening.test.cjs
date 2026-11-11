@@ -28,6 +28,9 @@ function loadService(overrides = {}) {
     let browserScriptResult = false;
     let externalFallbackCalls = 0;
     let lastTriggeredEvent;
+    const panelAva = overrides.panelAva || {
+        acquireCourseSsoBrowserLease: async () => () => {},
+    };
     const session = new Map([
         ['ifrn_moodle_oauth_pending', '1'],
         ['ifrn_username', 'synthetic-owner'],
@@ -111,11 +114,13 @@ function loadService(overrides = {}) {
         key: 'perfil.matricula',
         value: session.get('ifrn_painel_owner') || session.get('ifrn_username') || '',
     }];
+    context.exports.MoodleSiteService.prototype.painelAva = panelAva;
 
     return {
         MoodleSiteService: context.exports.MoodleSiteService,
         state: () => ({ subscriptions, browserOptions, browserUrl, browserClosed, browserShown, browserHidden,
             callbackUrl, session, externalFallbackCalls, lastTriggeredEvent,
+            panelAva,
             setBrowserScriptResult: value => browserScriptResult = value,
             markExternalFallbackCall: () => externalFallbackCalls++ }),
     };
@@ -175,6 +180,49 @@ test('cancel during launch preparation prevents opening the browser or accepting
     service.cancelCourseOAuthBrowser();preparation.resolve();
     assert.match(await outcome,/cancelada/);
     assert.equal(state().browserUrl,undefined);assert.equal(state().callbackUrl,undefined);
+});
+
+test('course SSO waits for the profile InAppBrowser lease and releases it after callback', async () => {
+    const refresh = deferred();
+    let released = 0;
+    const panelAva = {
+        acquireCourseSsoBrowserLease: async () => {
+            await refresh.promise;
+            return () => released++;
+        },
+    };
+    const { MoodleSiteService, state } = loadService({ panelAva });
+    const service = Object.create(MoodleSiteService.prototype);
+    service.courseOAuthBrowserSubscriptions = [];
+    const pending = service.openCourseOAuthInApp({ siteUrl: 'https://academico.ava.ifrn.edu.br', config: {} });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(state().browserUrl, undefined, 'course OAuth must not replace an active profile browser');
+
+    refresh.resolve();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.match(state().browserUrl, /auth\/suap\/login\.php/);
+    state().subscriptions.get('customscheme')({ url: 'moodlemobile://token=synthetic-course' });
+    await pending;
+
+    assert.equal(released, 1, 'the profile browser lease must be released exactly once');
+});
+
+test('course SSO releases the profile browser lease when Moodle rejects the callback', async () => {
+    let released = 0;
+    const panelAva = { acquireCourseSsoBrowserLease: async () => () => released++ };
+    const { MoodleSiteService, state } = loadService({
+        panelAva,
+        coreHandler: async () => { throw new Error('synthetic Moodle callback failure'); },
+    });
+    const service = Object.create(MoodleSiteService.prototype);
+    service.courseOAuthBrowserSubscriptions = [];
+    const pending = service.openCourseOAuthInApp({ siteUrl: 'https://academico.ava.ifrn.edu.br', config: {} });
+    const result = pending.then(() => null, error => error.message);
+    await new Promise(resolve => setImmediate(resolve));
+    state().subscriptions.get('customscheme')({ url: 'moodlemobile://token=synthetic-course' });
+
+    assert.match(await result, /validar/);
+    assert.equal(released, 1, 'an error must not leave profile refresh permanently blocked');
 });
 
 test('account change or logout epoch rejects a late validation result', async () => {

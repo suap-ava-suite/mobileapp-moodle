@@ -2301,14 +2301,34 @@ export class MoodleSiteService {
         if (!attemptOwner || !identityCandidates.length) {
             throw new Error('Não foi possível confirmar a identidade SUAP para iniciar a sessão Moodle.');
         }
-        const coreAttempt = await CoreSites.beginSessionAttempt(
-            attemptOwner,
-            ownerEpoch,
-            isCurrent,
-            username => matchMoodleAgainstCandidates(username, identityCandidates).matches,
-        );
+        // PainelAvaService usa o mesmo plugin InAppBrowser para revalidar o perfil.
+        // No Android, uma segunda janela fecha a primeira; espere a revalidação
+        // terminar e impeça outra de começar enquanto o SSO Moodle estiver ativo.
+        const releaseProfileBrowser = await this.painelAva.acquireCourseSsoBrowserLease();
+        let profileBrowserLeaseReleased = false;
+        const releaseProfileBrowserLease = (): void => {
+            if (profileBrowserLeaseReleased) {
+                return;
+            }
+            profileBrowserLeaseReleased = true;
+            releaseProfileBrowser();
+        };
+
+        let coreAttempt: CoreSitesSessionAttempt;
+        try {
+            coreAttempt = await CoreSites.beginSessionAttempt(
+                attemptOwner,
+                ownerEpoch,
+                isCurrent,
+                username => matchMoodleAgainstCandidates(username, identityCandidates).matches,
+            );
+        } catch (error) {
+            releaseProfileBrowserLease();
+            throw error;
+        }
         if (!isCurrent()) {
             CoreSites.cancelSessionAttempt(coreAttempt);
+            releaseProfileBrowserLease();
             throw new Error('A tentativa de conexão foi cancelada.');
         }
         this.courseCoreSessionAttempt = coreAttempt;
@@ -2345,6 +2365,7 @@ export class MoodleSiteService {
             if (this.courseCoreSessionAttempt === coreAttempt) {
                 this.courseCoreSessionAttempt = undefined;
             }
+            releaseProfileBrowserLease();
             throw error;
         }
         this.courseOAuthBrowser = flow.browser;
@@ -2362,6 +2383,7 @@ export class MoodleSiteService {
             }
             throw error;
         } finally {
+            releaseProfileBrowserLease();
             if (this.courseCoreSessionAttempt === coreAttempt) {
                 this.courseCoreSessionAttempt = undefined;
             }
