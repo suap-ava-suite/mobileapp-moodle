@@ -135,10 +135,30 @@ test('the mobile accessibility menus no longer expose the desktop mouse cursor o
     }
 });
 
-test('VLibras CSP includes the official widget font redirect host', () => {
+test('VLibras CSP includes the official widget script and font redirect host', () => {
     const index = fs.readFileSync(path.join(__dirname, '..', 'mobilemoodle', 'index.html'), 'utf8');
     const csp = index.match(/http-equiv="Content-Security-Policy"\s+content="([^"]+)"/u)?.[1];
-    const fontPolicy = csp?.split(';').find((directive) => directive.trim().startsWith('font-src'));
+    const directives = csp?.split(';') ?? [];
+    const scriptPolicy = directives.find((directive) => directive.trim().startsWith('script-src'));
+    const fontPolicy = directives.find((directive) => directive.trim().startsWith('font-src'));
+    assert.ok(scriptPolicy?.includes('https://vlibras.gov.br'));
+    assert.ok(scriptPolicy?.includes('https://cdn.jsdelivr.net'));
     assert.ok(fontPolicy?.includes('https://vlibras.gov.br'));
     assert.ok(fontPolicy?.includes('https://cdn.jsdelivr.net'));
+});
+
+test('the expanded VLibras window stays inside the phone viewport with its top controls visible', () => {
+    const sources = [
+        path.join(__dirname, '..', 'mobilemoodle', 'static', 'theme', 'ifrn', 'scss', 'painel.scss'),
+        path.join(__dirname, '..', 'moodle-course', 'moodle-course.scss'),
+    ];
+
+    for (const source of sources) {
+        const scss = fs.readFileSync(source, 'utf8');
+        assert.match(scss, /width:\s*min\(90vw,\s*380px\)/u, source);
+        assert.match(scss, /height:\s*min\(76vh,\s*560px\)/u, source);
+        assert.match(scss, /safe-area-inset-right/u, source);
+        assert.match(scss, /safe-area-inset-bottom/u, source);
+        assert.match(scss, /div\[vw\]\s+iframe\s*\{[^}]*width:\s*100%\s*!important/su, source);
+    }
 });

@@ -1059,8 +1059,7 @@ div[vw].ifrn-vlibras-compact.enabled {
     max-width: min(220px, 58vw) !important;
     max-height: min(280px, 42vh) !important;
     z-index: 9000 !important;
-    transform: scale(0.48);
-    transform-origin: left bottom;
+    transform: none !important;
     pointer-events: auto !important;
 }
 
@@ -1077,25 +1076,34 @@ body.vlibras_active div[vw] [vw-access-button].active {
     transform: none !important;
 }
 
-/* Painel do avatar: janela pequena, nunca fullscreen sobre o app */
+/* Limita a janela expandida em celular para manter visíveis os controles superiores. */
 body.vlibras_active div[vw] [vw-plugin-wrapper],
 body.vlibras_active div[vw] .vw-plugin-wrapper,
 body.vlibras_active div[vw] .vpw-settings-btn,
 body.vlibras_active div[vw] .vpw-box,
 body.vlibras_active div[vw] iframe {
-    max-width: min(240px, 64vw) !important;
-    max-height: min(320px, 48vh) !important;
+    max-width: min(90vw, 380px) !important;
+    max-height: min(76vh, 560px) !important;
 }
 
 body.vlibras_active div[vw] [vw-plugin-wrapper],
 body.vlibras_active div[vw] .vw-plugin-wrapper {
-    position: relative !important;
-    inset: auto !important;
-    width: min(240px, 64vw) !important;
-    height: min(320px, 48vh) !important;
+    position: fixed !important;
+    inset: auto max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) auto !important;
+    width: min(90vw, 380px) !important;
+    height: min(76vh, 560px) !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100vh - max(24px, env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))) !important;
     overflow: hidden !important;
     border-radius: 12px !important;
     box-shadow: 0 6px 18px rgb(0 0 0 / 25%) !important;
+}
+
+body.vlibras_active div[vw] iframe {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
 }
 
 /* Botão de emergência acima de qualquer overlay do VLibras.
