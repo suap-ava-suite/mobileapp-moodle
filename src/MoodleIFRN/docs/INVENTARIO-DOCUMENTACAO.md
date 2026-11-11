@@ -57,7 +57,7 @@ Esses registros não devem ser tratados automaticamente como estado atual. Em es
 
 Além dos 26 documentos Markdown, há páginas HTML estáticas e ferramentas de diagnóstico/teste. As páginas técnicas compartilham `assets/manual.css` e `assets/manual.js`. Os onze `course-*.js` eram expressões de inspeção manual; não eram carregados pelo portal, build, testes ou app e foram removidos. Os scripts `test-*`, `audit-*` e `probe-*` permanecem como ferramentas separadas; revise argumentos antes de executá-los, pois alguns dependem de aparelho, rede ou serviços remotos.
 
-Os snapshots versionados em `auditoria-fluxo-2026-10-19/` foram removidos: eram levantamentos datados de endpoints/fontes e uma leitura resumida de aparelho, sem referências em testes ou no app. `audit-device.cjs` e `audit-endpoints.cjs` recriam essa pasta somente quando executados; o script de build Android grava o log em `os.tmpdir()`.
+Os snapshots versionados em `auditoria-fluxo-2026-10-19/` foram removidos: eram levantamentos datados de endpoints/fontes e uma leitura resumida de aparelho, sem referências em testes ou no app. `audit-device.cjs`, `audit-endpoints.cjs` e o script de build Android gravam saídas em `os.tmpdir()`, sem recriar essa pasta no repositório.
 
 .analise/ contém evidências de tarefas e builds. Mantenha-a fora de commits de documentação. APKs, capturas e logs podem conter dados pessoais ou de sessão.
 

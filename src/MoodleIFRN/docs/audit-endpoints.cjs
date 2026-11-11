@@ -1,7 +1,8 @@
 // Consultas públicas, sem cookies/tokens, sem executar operações que alteram estado.
 const fs = require('node:fs');
 const path = require('node:path');
-const output = path.join(__dirname, 'auditoria-fluxo-2026-10-19');
+const os = require('node:os');
+const output = path.join(os.tmpdir(), 'moodle-ifrn-auditoria-fluxo-2026-10-19');
 const panel = 'https://ava.ifrn.edu.br';
 const suap = 'https://suap.ifrn.edu.br';
 const cases = [];

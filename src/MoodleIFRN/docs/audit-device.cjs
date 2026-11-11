@@ -1,6 +1,7 @@
 // Somente leitura via CDP. Não exporta cookies, tokens, perfil nem nomes.
 const fs = require('node:fs');
 const path = require('node:path');
+const os = require('node:os');
 async function evaluate(page, expression) {
     const socket = new WebSocket(page.webSocketDebuggerUrl);
     return new Promise((resolve, reject) => {
@@ -53,8 +54,9 @@ async function evaluate(page, expression) {
         }
         return {origin:location.origin, results};
     })()`);
-    const target = path.join(__dirname,'auditoria-fluxo-2026-10-19','aparelho-leitura.json');
-    fs.mkdirSync(path.dirname(target), {recursive: true});
+    const output = path.join(os.tmpdir(), 'moodle-ifrn-auditoria-fluxo-2026-10-19');
+    const target = path.join(output, 'aparelho-leitura.json');
+    fs.mkdirSync(output, {recursive: true});
     fs.writeFileSync(target, JSON.stringify(summary,null,2));
     console.log(JSON.stringify(summary));
 })().catch(e=>{console.error(e.message);process.exitCode=1;});
