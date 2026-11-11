@@ -7,6 +7,21 @@
   var search = document.getElementById("manual-search");
   var sidebar = document.getElementById("sidebar");
   var menuToggle = document.querySelector(".menu-toggle");
+  var noResults = document.getElementById("no-results");
+
+  if (document.body.dataset.document) {
+    var currentDocument = document.body.dataset.document;
+    sidebar.querySelectorAll("a").forEach(function (link) {
+      var target = link.getAttribute("href").split("#")[0];
+      if (target === currentDocument) {
+        link.setAttribute("aria-current", "page");
+        var group = link.closest("details");
+        if (group) {
+          group.open = true;
+        }
+      }
+    });
+  }
 
   try {
     var savedTheme = localStorage.getItem("ifrn-docs-theme");
@@ -56,6 +71,10 @@
         visibleCount += 1;
       }
     });
+
+    if (noResults) {
+      noResults.hidden = !query || visibleCount > 0;
+    }
 
     status.textContent = query ? visibleCount + " seção(ões) encontrada(s)." : "Pesquisa limpa.";
   });
