@@ -1,4 +1,4 @@
-// Execute na raiz do projeto: node src/MoodleIFRN/docs/test-oauth.cjs
+// Execute na raiz do projeto: node src/MoodleIFRN/diagnosticos/test-oauth.cjs
 // Testes isolados de estado/rollback e contrato do navegador, sem acessar contas reais.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');

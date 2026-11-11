@@ -66,6 +66,8 @@ Os relatórios de execução e documentos históricos permanecem apenas em Markd
 
 ## Scripts úteis
 
+Ferramentas CJS de diagnóstico e verificações simuladas: [`../diagnosticos/README.md`](../diagnosticos/README.md).
+
 ```bash
 # Registrar / reparar rotas IFRN no Moodle Mobile
 npm run patch:ifrn

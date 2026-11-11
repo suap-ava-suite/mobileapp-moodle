@@ -103,7 +103,7 @@ Suporte declarado em plugin.xml significa que há fontes iOS, não que compilem 
 | Teclado nativo não observado corretamente no iframe iOS | `mobilemoodle/core_mobile/app-keyboard.ts`: observa layout do host; iOS usa altura para estado/foco, deixa altura local em zero pois host já encolhe; restaura inset inferior ao fechar | Ramo condicionado ao runtime Cordova iOS; cálculo Android por visualViewport preservado |
 | Descrições de permissões em inglês/localização só en | `config.xml`, bloco iOS: câmera/fotos/microfone em português e pt-BR incluído, mantendo en | Nenhuma permissão Android alterada |
 | Bundle precisa refletir fontes | `mobilemoodle/mobilemoodle.js` regenerado por npm run build:mobilemoodle após alterações das fontes | Artefato compartilhado gerado pela mesma rotina |
-| Mock antigo impedia teste de entrada | `docs/test-marketplace-entry.cjs`: mock de loginWithSuap e da classe SuapEntryAccountError; correção mantida conforme orientação do usuário | Apenas teste; nenhum fluxo de produção alterado |
+| Mock antigo impedia teste de entrada | `src/MoodleIFRN/diagnosticos/test-marketplace-entry.cjs`: mock de loginWithSuap e da classe SuapEntryAccountError; correção mantida conforme orientação do usuário | Apenas teste; nenhum fluxo de produção alterado |
 | Necessidade de verificar limites da mudança | Novos testes painel-ios-layout e painel-favourites-isolation em tests/ | Incluem regressão simulada do teclado Android e isolamento por conta/ambiente |
 
 Nenhum arquivo foi excluído. Não foram editados platforms/, plugins/ ou node_modules/. Package.json e lock não precisaram mudar: nenhuma dependência foi adicionada ou atualizada. As alterações de configuração compartilhada se restringem ao necessário para iOS. O número de build deve ser conciliado com o histórico institucional antes da publicação. [Formato CFBundleVersion](https://developer.apple.com/documentation/bundleresources/information-property-list/cfbundleversion).
@@ -174,10 +174,10 @@ O gulp prepara assets/idiomas e chama o gerador mobilemoodle. O postinstall apli
 | Argumentos inválidos do build-native | Quatro casos rejeitados: plataforma desconhecida, valor com sufixo, plataforma duplicada e argumento desconhecido |
 | painel-ios-layout.test.mjs | 6 casos passaram: quatro margens/rotação, teclado iOS sem redução dupla, browser independente, fallback Android, cálculo do iframe Android e origem inacessível |
 | painel-favourites-isolation.test.mjs | 2 casos passaram: recriação do painel, sites com mesmo courseid, alternância e isolamento de contas |
-| docs/test-marketplace-entry.cjs | Passou após correção dos mocks; teste simulado de entrada/cancelamento/recuperação |
-| docs/test-oauth.cjs | Passou: snapshot de perfil/foto, expiração local e compatibilidade de sessão simulados |
-| docs/test-course-environments.cjs | Passou: resolução de ambientes/idioma sem abrir cursos reais |
-| docs/test-suap-entry-profile.cjs | Passou: mapeamento/enriquecimento de perfil e proteção de foto/conta |
+| src/MoodleIFRN/diagnosticos/test-marketplace-entry.cjs | Passou após correção dos mocks; teste simulado de entrada/cancelamento/recuperação |
+| src/MoodleIFRN/diagnosticos/test-oauth.cjs | Passou: snapshot de perfil/foto, expiração local e compatibilidade de sessão simulados |
+| src/MoodleIFRN/diagnosticos/test-course-environments.cjs | Passou: resolução de ambientes/idioma sem abrir cursos reais |
+| src/MoodleIFRN/diagnosticos/test-suap-entry-profile.cjs | Passou: mapeamento/enriquecimento de perfil e proteção de foto/conta |
 | painel-courses.test.mjs | 5 casos passaram; o módulo painel-courses.ts preexistente não é importado pelo fluxo atual, portanto seus testes não comprovam a paginação da produção |
 | painel-course-mapping.test.mjs | 1 passou e 2 falharam: matrícula aninhada v2 e autoinscrição sem confirmação retornam true em vez de false. Falhas preexistentes, produção não alterada |
 | ESLint do novo painel-host-layout.ts | Passou |

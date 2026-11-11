@@ -27,5 +27,5 @@ npm run build:mobilemoodle
 npm run prod:android
 ```
 
-Validação local: `test-suap-entry-profile.cjs`, `test-marketplace-entry.cjs`,
-`test-oauth.cjs`. O fluxo real no Android ainda precisa ser confirmado no aparelho.
+Validação local: `node src/MoodleIFRN/diagnosticos/test-suap-entry-profile.cjs`, `node src/MoodleIFRN/diagnosticos/test-marketplace-entry.cjs`,
+`node src/MoodleIFRN/diagnosticos/test-oauth.cjs`. O fluxo real no Android ainda precisa ser confirmado no aparelho.

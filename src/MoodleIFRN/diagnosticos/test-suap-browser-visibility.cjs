@@ -1,4 +1,4 @@
-// node src/MoodleIFRN/docs/test-suap-browser-visibility.cjs
+// node src/MoodleIFRN/diagnosticos/test-suap-browser-visibility.cjs
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');

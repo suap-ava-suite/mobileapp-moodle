@@ -7,7 +7,7 @@ A classificação registra o estado deste checkout e distingue guias ativos de m
 
 ## Resumo
 
-- src/MoodleIFRN/docs/: 60 arquivos presentes após a limpeza: 26 Markdown, 17 HTML (inclui o manual principal), 15 scripts .cjs, 1 arquivo `.js` compartilhado, 1 CSS. Os 11 `course-*.js`, a sonda `probe-painel-integration.js` e os 7 snapshots da auditoria datada foram removidos.
+- src/MoodleIFRN/docs/: 45 arquivos em `docs/`: 26 Markdown, 17 HTML (inclui o manual principal), `assets/manual.css` e `assets/manual.js`. Os 15 utilitários CJS foram movidos para `src/MoodleIFRN/diagnosticos/` (fora de `docs/` e sem pasta chamada `test`). Os 11 `course-*.js`, a sonda `probe-painel-integration.js` e os 7 snapshots da auditoria datada foram removidos.
 - Não havia arquivos ignorados adicionais na pasta `auditoria-fluxo-2026-10-19/` quando ela foi removida.
 - .analise/: 319 arquivos locais no momento da contagem. Há relatórios, evidências, capturas, APKs e logs; esse diretório não é a documentação pública do projeto e não deve ser adicionado em massa ao Git.
 - Não foram encontrados documentos Markdown idênticos byte a byte pelo hash SHA-256. Há sobreposição de índice entre readme_ifrn.md e docs/README.md, mas cada um atende a um nível diferente.
@@ -55,7 +55,7 @@ Esses registros não devem ser tratados automaticamente como estado atual. Em es
 
 ## Scripts, snapshots e arquivos auxiliares
 
-Além dos 26 documentos Markdown, há páginas HTML estáticas e ferramentas de diagnóstico/teste. As páginas técnicas compartilham `assets/manual.css` e `assets/manual.js`. Os onze `course-*.js` eram expressões de inspeção manual; não eram carregados pelo portal, build, testes ou app e foram removidos. Os scripts `test-*` e `audit-*` permanecem como ferramentas separadas; revise argumentos antes de executá-los, pois alguns dependem de aparelho ou rede. A sonda antiga `probe-painel-integration.js` foi removida por depender da sessão existente no Painel.
+O portal HTML usa `assets/manual.css` e `assets/manual.js`. Os antigos onze `course-*.js` eram expressões de inspeção manual e foram removidos. Os auxiliares CJS, incluindo verificações simuladas e ferramentas que dependem de ADB/CDP/rede, estão em `../diagnosticos/`; consulte o README dessa pasta antes de executá-los. A sonda antiga `probe-painel-integration.js` também foi removida por depender da sessão existente no Painel.
 
 Os snapshots versionados em `auditoria-fluxo-2026-10-19/` foram removidos: eram levantamentos datados de endpoints/fontes e uma leitura resumida de aparelho, sem referências em testes ou no app. `audit-device.cjs`, `audit-endpoints.cjs` e o script de build Android gravam saídas em `os.tmpdir()`, sem recriar essa pasta no repositório.
 
@@ -76,6 +76,10 @@ Os snapshots versionados em `auditoria-fluxo-2026-10-19/` foram removidos: eram 
 ## Links corrigidos nesta organização
 
 O arquivo de login atualmente está em src/MoodleIFRN/docs/LOGIN-IFRN.md. Links antigos para src/MoodleIFRN/ifrn-login/LOGIN-IFRN.md foram apontados para a localização existente. O app e os fluxos de autenticação não foram alterados. O helper de build Android passou a gravar logs em `os.tmpdir()` para não recriar snapshots dentro de `docs/`.
+
+## Ferramentas auxiliares
+
+Os scripts CJS foram organizados em [`../diagnosticos/README.md`](../diagnosticos/README.md); a pasta chama-se `diagnosticos`, não `test`.
 
 ## Conversão para HTML offline
 

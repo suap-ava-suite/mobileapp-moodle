@@ -1,4 +1,4 @@
-// Execute na raiz: node src/MoodleIFRN/docs/test-suap-entry-profile.cjs
+// Execute na raiz: node src/MoodleIFRN/diagnosticos/test-suap-entry-profile.cjs
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');

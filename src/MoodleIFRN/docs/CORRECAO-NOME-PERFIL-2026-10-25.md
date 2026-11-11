@@ -93,7 +93,7 @@ de perfil não consulta nem modifica as listas de cursos.
 - **42 testes passaram**, abrangendo prioridade/fallback do nome, atualização
   dos snapshots, preservação de foto/listas/prazo, isolamento por identidade e
   domínio, expiração e regressões de cursos/favoritos.
-- `node src/MoodleIFRN/docs/test-suap-entry-profile.cjs`: passou.
+- `node src/MoodleIFRN/diagnosticos/test-suap-entry-profile.cjs`: passou.
 - `tsc -p tsconfig.app.json --noEmit`: passou. A execução genérica de `tsc`
   encontrou erros em cópias geradas/plugins fora do escopo; ela não foi considerada
   uma verificação aprovada.

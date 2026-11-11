@@ -47,7 +47,7 @@ O ambiente 4 retornado pelo Painel se chama **Projetos**; não foi presumido com
 
 `CoreLoginHelper.openBrowserForOAuthLogin`, validações de identidade, foto/perfil e separação de sites por URL+conta foram preservados. Não houve alteração em `src/core` ou `src/addons`. Fontes de `mobilemoodle` não foram alteradas nesta intervenção; alterações locais anteriores foram mantidas.
 
-Os antigos `docs/course-device-*.js` eram expressões de inspeção manual e foram removidos após a revisão de referências. Permanecem alguns scripts CJS de diagnóstico, como `docs/course-*.cjs` e `docs/trace-course-device.cjs`; são ferramentas locais, não integram o bundle do app e podem depender de ADB, CDP ou rede.
+Os antigos scripts `course-device-*.js` eram expressões de inspeção manual e foram removidos após a revisão de referências. Permanecem alguns scripts CJS de diagnóstico, como `src/MoodleIFRN/diagnosticos/course-*.cjs` e `src/MoodleIFRN/diagnosticos/trace-course-device.cjs`; são ferramentas locais, não integram o bundle do app e podem depender de ADB, CDP ou rede.
 
 ## Validação e limites
 
