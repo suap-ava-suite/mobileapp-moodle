@@ -75,6 +75,11 @@ function loadService(overrides = {}) {
         '@angular/core': { Injectable: injectable, inject: () => ({}) },
         '@angular/router': { NavigationEnd: class {}, NavigationError: class {}, Router: class {} },
         '../navigation/course-opening-attempt': { CourseOpeningAttempt: FakeCourseOpeningAttempt },
+        '@/MoodleIFRN/navigation/handoff-loading': {
+            hideHandoffLoading() {},
+            showHandoffLoading() {},
+            shouldShowCourseHandoffOnBoot: () => false,
+        },
         '@features/login/services/login-helper': { CoreLoginHelper: {
             prepareForSSOLogin: async (...args) => {
                 assert.equal(args[0], 'https://academico.ava.ifrn.edu.br');
@@ -107,7 +112,12 @@ function loadService(overrides = {}) {
         '@static/events': { CoreEvents: { trigger: (event, data) => lastTriggeredEvent = { event, data } } },
     };
     const context = { exports: {}, require: id => mocks[id] || {}, console, URL, setTimeout, clearTimeout,
-        sessionStorage: { getItem: key => session.get(key) || null, removeItem: key => session.delete(key) },
+        document: { documentElement: { classList: { add() {}, remove() {} } } },
+        sessionStorage: {
+            getItem: key => session.get(key) || null,
+            setItem: (key, value) => session.set(key, value),
+            removeItem: key => session.delete(key),
+        },
         window: { handleOpenURL: url => callbackUrl = url } };
     vm.runInNewContext(output, context);
     context.exports.MoodleSiteService.prototype.getExpectedIdentityCandidates = () => [{

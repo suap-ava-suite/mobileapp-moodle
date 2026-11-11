@@ -203,7 +203,7 @@ test('course handoff cancellation is guarded and returns to the IFRN panel', () 
     assert.match(handler, /redirectToPainelAva\(\)/);
 });
 
-test('course navigation keeps the Angular cover until the themed native route has painted', () => {
+test('course navigation keeps the Angular cover until the requested Moodle course content is ready', () => {
     const filename = path.join(__dirname, '..', 'services_mobile', 'moodle-site.service.ts');
     const source = fs.readFileSync(filename, 'utf8');
     const navigationMarker = source.indexOf('A rota pode chegar antes dos dados');
@@ -214,10 +214,11 @@ test('course navigation keeps the Angular cover until the themed native route ha
     assert.doesNotMatch(source.slice(navigationBranchStart, navigationBranchEnd), /hideNativeCourseHandoff/);
 
     const openStart = source.indexOf('openCourseById(courseId, attempt =');
-    const readiness = source.indexOf("attempt.stage('course-first-paint'");
+    const readiness = source.indexOf("'course-content-ready'");
     const performPromise = source.indexOf('this.performOpenCourseById(courseId, attempt)', openStart);
     const finalRelease = source.indexOf('this.hideNativeCourseHandoff();', performPromise);
-    assert.ok(readiness >= 0, 'course opening must wait for route, visible component and IFRN theme tokens');
+    assert.ok(readiness >= 0, 'course opening must wait for sections and the native course-format renderer');
+    assert.match(source, /isNativeCourseContentReady\(document, courseId\)/);
     assert.ok(performPromise > openStart && finalRelease > performPromise,
         'the cover must be released after the asynchronous course-ready check');
 });

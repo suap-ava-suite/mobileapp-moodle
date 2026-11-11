@@ -36,7 +36,11 @@ function createService() {
         '@angular/core': { Injectable: () => target => target, inject: () => ({}) },
         '@static/logger': { CoreLogger: { getInstance: () => ({ debug() {} }) } },
         '../navigation/course-opening-attempt': { CourseOpeningAttempt: FakeCourseOpeningAttempt },
-        '../navigation/handoff-loading': { hideHandoffLoading() {}, showHandoffLoading() {}, shouldShowCourseHandoffOnBoot: () => false },
+        '@/MoodleIFRN/navigation/handoff-loading': {
+            hideHandoffLoading() {},
+            showHandoffLoading() {},
+            shouldShowCourseHandoffOnBoot: () => false,
+        },
     };
     const context = {
         exports: {},
@@ -91,4 +95,29 @@ test('course back during native opening cancels the attempt and returns to the I
     assert.equal(hidden, 1);
     assert.equal(storage.has('ifrn_moodle_pending_open_course'), false);
     assert.equal(storage.has('ifrn_course_origin'), false);
+});
+
+test('course back can cancel session preflight before the origin marker is written', async () => {
+    const { service, storage } = createService();
+    storage.delete('ifrn_course_origin');
+    let rejectOpening;
+    let redirected = 0;
+    let shown = 0;
+    service.hideNativeCourseHandoff = () => {};
+    service.showNativeCourseHandoff = () => shown++;
+    service.redirectToPainelAva = () => redirected++;
+    service.performEnsureSessionAndOpenCourse = () => {
+        assert.equal(shown, 1, 'the IFRN cover must be shown before session validation begins');
+        return new Promise((_resolve, reject) => rejectOpening = reject);
+    };
+
+    const opening = service.ensureSessionAndOpenCourse(4022, 'https://academico.ava.ifrn.edu.br');
+    assert.equal(shown, 1, 'the IFRN cover must be shown before session validation begins');
+    assert.equal(service.cancelCourseOpeningForPanelExit(), true);
+    rejectOpening(new Error('synthetic cancellation'));
+
+    assert.equal(await opening, 'cancelled');
+    assert.equal(service.openingAttempt.cancelled, true);
+    assert.equal(redirected, 1);
+    assert.equal(storage.has('ifrn_moodle_pending_open_course'), false);
 });
