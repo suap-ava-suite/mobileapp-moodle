@@ -1,0 +1,394 @@
+/* disciplina-loading.component.scss
+   A barra de status e a barra de navegação NÃO são desenhadas aqui:
+   elas devem permanecer sob responsabilidade do Android/Capacitor.
+*/
+
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+  color: #343a40;
+  font-family: Roboto, "Segoe UI", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.discipline-screen {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: #fff;
+}
+
+.course-header {
+  flex: 0 0 auto;
+  background: #fff;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-height: 68px;
+  padding: 0 20px;
+  background: #fff;
+}
+
+.toolbar-button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #123c78;
+  font-size: 30px;
+  cursor: pointer;
+}
+
+.course-name-toolbar {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: #30343a;
+  font-size: 18px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.info-button {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #292929;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 25px;
+  text-align: center;
+}
+
+.blue-rule {
+  height: 4px;
+  background: #2056a3;
+}
+
+.course-summary {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 165px;
+  padding: 22px 30px 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.course-thumb {
+  position: relative;
+  flex: 0 0 88px;
+  width: 88px;
+  height: 88px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #6550d6, #7c69e8);
+}
+
+.course-thumb::before,
+.course-thumb::after {
+  position: absolute;
+  inset: -15px;
+  background: linear-gradient(
+    145deg,
+    transparent 35%,
+    rgb(255 255 255 / 12%) 35% 55%,
+    transparent 55%
+  );
+  content: "";
+  transform: rotate(30deg);
+}
+
+.course-thumb::after {
+  opacity: 0.7;
+  transform: rotate(-30deg);
+}
+
+.summary-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.summary-main h1 {
+  margin: 0 0 14px;
+  color: #30343a;
+  font-size: clamp(18px, 4.6vw, 23px);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.course-progress {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 14px;
+  border: 1px solid #d0d0d0;
+  border-radius: 17px;
+  box-shadow: 0 3px 9px rgb(0 0 0 / 5%);
+}
+
+.progress-track {
+  flex: 1;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #c9d9f1;
+}
+
+.progress-value {
+  height: 100%;
+  border-radius: inherit;
+  background: #2056a3;
+  transition: width 250ms ease;
+}
+
+.progress-number {
+  color: #123c78;
+  font-size: 17px;
+  font-weight: 750;
+}
+
+.course-tabs {
+  display: flex;
+  flex: 0 0 67px;
+  align-items: stretch;
+  border-bottom: 1px solid #d4d4d4;
+  background: #fff;
+}
+
+.course-tab {
+  position: relative;
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  place-items: center;
+  padding: 0 5px;
+  border: 0;
+  background: transparent;
+  color: #5c5c5c;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.course-tab.active {
+  color: #123c78;
+}
+
+.course-tab.active::after {
+  position: absolute;
+  right: 14%;
+  bottom: 0;
+  left: 14%;
+  height: 4px;
+  background: #2056a3;
+  content: "";
+}
+
+.tab-next {
+  flex: 0 0 34px;
+  color: #123c78;
+  font-size: 28px;
+}
+
+.content-area {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  background: #f5f5f5;
+  isolation: isolate;
+}
+
+.skeleton-layer,
+.moodle-layer {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  transition: opacity 260ms ease, visibility 260ms ease;
+}
+
+.skeleton-layer {
+  z-index: 2;
+  padding: 27px 28px 40px;
+  opacity: 1;
+  visibility: visible;
+}
+
+.moodle-layer {
+  z-index: 1;
+  background: #fff;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.moodle-layer ::ng-deep [moodle-content] {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+.content-area.is-ready .skeleton-layer {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.content-area.is-ready .moodle-layer {
+  z-index: 3;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.skeleton-card {
+  margin-bottom: 25px;
+  overflow: hidden;
+  padding: 23px 22px;
+  border: 1px solid #d7d7d7;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.skeleton-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.skeleton-circle,
+.skeleton-line,
+.skeleton-block,
+.skeleton-icon {
+  background: linear-gradient(
+    100deg,
+    #e7e7e7 25%,
+    #f5f5f5 42%,
+    #e7e7e7 62%
+  );
+  background-size: 250% 100%;
+  animation: skeleton-shimmer 1.45s ease-in-out infinite;
+}
+
+.skeleton-circle {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.skeleton-line {
+  height: 17px;
+  border-radius: 5px;
+}
+
+.heading-line {
+  width: 52%;
+  height: 23px;
+}
+
+.long-line { width: 82%; }
+.medium-line { width: 58%; }
+.short-line { width: 35%; }
+
+.progress-skeleton {
+  height: 9px;
+  margin: 0 20px 27px;
+  border-radius: 20px;
+}
+
+.section-label {
+  width: 44%;
+  height: 24px;
+  margin: 0 0 22px;
+}
+
+.skeleton-resource {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-height: 83px;
+  margin: 0 -22px;
+  padding: 18px 22px;
+  border-top: 1px solid #e2e2e2;
+}
+
+.skeleton-icon {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 42px;
+  border-radius: 5px;
+}
+
+.banner-skeleton {
+  height: 148px;
+  margin: 5px 0 3px;
+  border-radius: 7px;
+}
+
+.loading-error {
+  margin: 12px 0;
+  color: #a32626;
+  font-size: 14px;
+  text-align: center;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -150% 0; }
+}
+
+@media (max-width: 520px) {
+  .course-summary {
+    gap: 15px;
+    padding: 21px 24px 20px;
+  }
+
+  .course-thumb {
+    flex-basis: 76px;
+    width: 76px;
+    height: 76px;
+  }
+
+  .skeleton-layer {
+    padding: 26px 28px 35px;
+  }
+
+  .skeleton-card {
+    padding: 22px 21px;
+  }
+
+  .skeleton-resource {
+    margin-right: -21px;
+    margin-left: -21px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
