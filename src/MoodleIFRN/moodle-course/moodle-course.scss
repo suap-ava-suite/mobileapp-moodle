@@ -977,11 +977,6 @@ body.dyslexia_friendly ion-app {
     font-family: "opendyslexic", sans-serif !important; /* sobrescreve inline style do Ionic */
 }
 
-body.big_cursor,
-body.big_cursor * {
-    cursor: url("https://cdn.userway.org/widgetapp/images/arrow_w.svg"), auto !important; /* sobrescreve cursor de widgets de terceiros */
-}
-
 body.highlight_links a[href] {
     background-color: #333333 !important; /* contraste forçado: cor original do link pode ter qualquer valor */
     border: 2px solid #f90 !important;

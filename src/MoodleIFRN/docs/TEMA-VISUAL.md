@@ -74,7 +74,6 @@ Opções iguais ao modal do Painel AVA / `theme_suap`:
 - Destacar links
 - Parar animações
 - Ocultar imagens ilustrativas
-- Cursor do mouse grande
 - Habilitar VLibras
 - Linhas mais distantes
 - Zoom ciclável: 100% → 120% → 130% → 150% → 160%

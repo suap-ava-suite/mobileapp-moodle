@@ -166,11 +166,6 @@ body.dyslexia_friendly {
     --font-family: "opendyslexic", sans-serif !important;
 }
 
-body.big_cursor,
-body.big_cursor * {
-    cursor: url("https://cdn.userway.org/widgetapp/images/arrow_w.svg"), auto !important;
-}
-
 body.highlight_links a[href] {
     background-color: var(--dark) !important;
     border: 2px solid #f90 !important;
@@ -211,6 +206,17 @@ body.vlibras_active div[vw].enabled {
 body.vlibras_active div[vw] [vw-access-button] {
     transform: scale(0.85);
     transform-origin: left bottom;
+}
+
+.vlibras-status {
+    margin: 0.25rem 0;
+    color: var(--ifrn-error, #d93514);
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.vlibras-status[hidden] {
+    display: none;
 }
 
 body.stop_animations *,

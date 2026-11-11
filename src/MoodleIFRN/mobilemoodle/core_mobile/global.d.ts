@@ -120,7 +120,6 @@ type A11yBoolKey =
     | 'highlight_links'
     | 'stop_animations'
     | 'hidden_illustrative_image'
-    | 'big_cursor'
     | 'vlibras_active'
     | 'high_line_height';
 
@@ -132,7 +131,6 @@ interface A11yState {
     highlight_links: boolean;
     stop_animations: boolean;
     hidden_illustrative_image: boolean;
-    big_cursor: boolean;
     vlibras_active: boolean;
     high_line_height: boolean;
     zoom_level: number;

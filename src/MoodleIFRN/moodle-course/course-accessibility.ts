@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
+import { loadVlibrasWidget } from '../mobilemoodle/core_mobile/vlibras-widget';
 
 /** Mesma chave do Painel AVA / theme_ifrn25 — prefs compartilhadas. */
 const STORAGE_KEY = 'ifrn_a11y_prefs';
@@ -9,7 +10,6 @@ export type IfrnA11yBoolKey =
     | 'highlight_links'
     | 'stop_animations'
     | 'hidden_illustrative_image'
-    | 'big_cursor'
     | 'vlibras_active'
     | 'high_line_height';
 
@@ -20,7 +20,6 @@ export interface IfrnA11yState {
     highlight_links: boolean;
     stop_animations: boolean;
     hidden_illustrative_image: boolean;
-    big_cursor: boolean;
     vlibras_active: boolean;
     high_line_height: boolean;
     zoom_level: number;
@@ -32,7 +31,6 @@ const BOOL_KEYS: IfrnA11yBoolKey[] = [
     'highlight_links',
     'stop_animations',
     'hidden_illustrative_image',
-    'big_cursor',
     'vlibras_active',
     'high_line_height',
 ];
@@ -50,12 +48,6 @@ export const IFRN_COLOR_MODE_LABELS: Record<IfrnColorMode, string> = {
     grayscale: 'Escala de cinza',
 };
 
-declare global {
-    interface Window {
-        VLibras?: { Widget: new (url: string) => unknown };
-    }
-}
-
 /**
  * Acessibilidade do curso nativo (espelho do Painel AVA).
  * VLibras fica compacto e com botão de saída para não travar o app.
@@ -68,7 +60,6 @@ export class IfrnCourseAccessibilityService {
         highlight_links: false,
         stop_animations: false,
         hidden_illustrative_image: false,
-        big_cursor: false,
         vlibras_active: false,
         high_line_height: false,
         zoom_level: 100,
@@ -77,7 +68,11 @@ export class IfrnCourseAccessibilityService {
 
     private ready = false;
     private vlibrasReady = false;
+    private vlibrasLoading = false;
+    private vlibrasFailed = false;
     private escapeBound = false;
+
+    readonly vlibrasLoadError = signal(false);
 
     /** Lê localStorage e aplica no body (idempotente). */
     init(): void {
@@ -113,6 +108,12 @@ export class IfrnCourseAccessibilityService {
             return;
         }
         this.state[key] = !!value;
+        if (key === 'vlibras_active') {
+            this.vlibrasLoadError.set(false);
+            if (value) {
+                this.vlibrasFailed = false;
+            }
+        }
         this.saveState();
         this.applyToBody();
     }
@@ -205,6 +206,8 @@ export class IfrnCourseAccessibilityService {
         BOOL_KEYS.forEach((key) => {
             body.classList.toggle(key, !!this.state[key]);
         });
+        // Remove a legacy class left by an older mobile accessibility preference.
+        body.classList.remove('big_cursor');
 
         COLOR_MODE_OPTIONS.forEach((mode) => {
             body.classList.remove('color_mode_' + mode);
@@ -231,50 +234,29 @@ export class IfrnCourseAccessibilityService {
     }
 
     private ensureVlibras(): void {
-        if (!document.querySelector('div[vw]')) {
-            const root = document.createElement('div');
-            root.setAttribute('vw', '');
-            root.className = 'enabled ifrn-vlibras-compact';
-            root.innerHTML =
-                '<div vw-access-button class="active"></div>' +
-                '<div vw-plugin-wrapper><div class="vw-plugin-top-wrapper"></div></div>';
-            document.body.appendChild(root);
-        } else {
-            document.querySelector('div[vw]')?.classList.add('ifrn-vlibras-compact');
-        }
-
-        const widget = document.querySelector('div[vw]') as HTMLElement | null;
-        widget?.classList.add('enabled', 'ifrn-vlibras-compact');
-
-        if (this.vlibrasReady || window.VLibras?.Widget) {
-            if (!this.vlibrasReady && window.VLibras?.Widget) {
-                try {
-                    new window.VLibras.Widget('https://vlibras.gov.br/app');
-                } catch {
-                    // já inicializado
-                }
-                this.vlibrasReady = true;
-            }
-
+        if (this.vlibrasFailed) {
             return;
         }
 
-        if (document.getElementById('vlibras-script')) {
+        // The shared loader also restores the wrapper's inline display after re-enabling.
+        const load = loadVlibrasWidget();
+        if (this.vlibrasReady || this.vlibrasLoading) {
             return;
         }
 
-        const script = document.createElement('script');
-        script.id = 'vlibras-script';
-        script.src = 'https://vlibras.gov.br/app/vlibras-plugin.js';
-        script.onload = () => {
-            try {
-                new window.VLibras!.Widget('https://vlibras.gov.br/app');
-            } catch {
-                // já inicializado
-            }
+        this.vlibrasLoading = true;
+        void load.then(() => {
             this.vlibrasReady = true;
-        };
-        document.body.appendChild(script);
+            this.vlibrasLoading = false;
+            this.vlibrasLoadError.set(false);
+        }).catch(() => {
+            this.vlibrasReady = false;
+            this.vlibrasLoading = false;
+            if (this.state.vlibras_active) {
+                this.vlibrasFailed = true;
+                this.vlibrasLoadError.set(true);
+            }
+        });
     }
 
     private hideVlibras(): void {
