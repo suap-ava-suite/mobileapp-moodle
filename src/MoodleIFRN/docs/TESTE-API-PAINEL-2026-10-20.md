@@ -36,4 +36,4 @@ Após os testes, Acadêmico e Presencial continuam com token no armazenamento se
 
 O teste confirma acesso à API com sessão existente por navegador oculto; não representa criação de uma nova sessão Moodle sem navegador. Nenhuma nova ponte de emissão mobile foi implementada ou publicada. O próximo requisito é examinar o plugin `tool_painelava` e implementar/autorizar uma troca de uso único entre Painel e Moodle antes de conectá-la ao app.
 
-Diagnóstico reproduzível: `node src/MoodleIFRN/docs/trace-course-device.cjs src/MoodleIFRN/docs/probe-painel-integration.js`, com CDP local encaminhado na porta 9223. O script só retorna status, nomes de rotas, contagens e comparações booleanas.
+Registro histórico. A expressão `probe-painel-integration.js` usada naquela coleta foi removida por ser um diagnóstico manual específico da sessão e dos cursos daquela investigação; o comando antigo não é mais reproduzível. `trace-course-device.cjs` avalia JavaScript fornecido pelo operador na WebView ativa e não deve ser executado com expressões não revisadas.
