@@ -1,45 +1,24 @@
 <div class="course-loading" role="status" aria-live="polite" aria-busy="true" aria-label="Abrindo sua disciplina">
-    <header class="course-loading__header">
-        <button
-            type="button"
-            class="course-loading__back"
-            aria-label="Voltar ao Painel AVA"
-            [disabled]="cancellationStarted()"
-            (click)="requestCancel()">
-            <span aria-hidden="true">&#8592;</span>
-            <span>Painel</span>
-        </button>
-
-        <div class="course-loading__title">
-            <span class="course-loading__brand">Moodle IFRN</span>
-            <h1>Abrindo disciplina</h1>
-        </div>
-
-        <span class="course-loading__activity" aria-hidden="true"></span>
-    </header>
+    <button
+        type="button"
+        class="course-loading__back"
+        aria-label="Voltar ao Painel AVA"
+        [disabled]="cancellationStarted()"
+        (click)="requestCancel()">
+        <span aria-hidden="true">&#8592;</span>
+        <span>Painel</span>
+    </button>
 
     <main class="course-loading__content">
-        <section class="course-loading__summary course-loading__reveal" aria-hidden="true">
-            <span class="course-loading__eyebrow">Preparando seu acesso</span>
-            @if (courseName) {
-                <h2 class="course-loading__course-name">{{ courseName }}</h2>
-            } @else {
-                <span class="course-loading__skeleton course-loading__skeleton--title"></span>
+        <div class="course-loading__brand" aria-hidden="true">
+            @if (logoUrl) {
+                <img class="course-loading__logo" [src]="logoUrl" alt="" />
             }
-            <span class="course-loading__skeleton course-loading__skeleton--description"></span>
-            <span class="course-loading__skeleton course-loading__skeleton--short"></span>
-        </section>
-
-        <section class="course-loading__section course-loading__reveal" aria-hidden="true">
-            <span class="course-loading__skeleton course-loading__skeleton--section-title"></span>
-            <span class="course-loading__skeleton course-loading__skeleton--row"></span>
-            <span class="course-loading__skeleton course-loading__skeleton--row course-loading__skeleton--row-short"></span>
-        </section>
-
-        <section class="course-loading__section course-loading__reveal" aria-hidden="true">
-            <span class="course-loading__skeleton course-loading__skeleton--section-title"></span>
-            <span class="course-loading__skeleton course-loading__skeleton--row"></span>
-            <span class="course-loading__skeleton course-loading__skeleton--row course-loading__skeleton--row-short"></span>
-        </section>
+            <span class="course-loading__spinner"></span>
+        </div>
+        <p class="course-loading__message">Abrindo sua disciplina...</p>
+        @if (courseName) {
+            <p class="course-loading__course-name">{{ courseName }}</p>
+        }
     </main>
 </div>

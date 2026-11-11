@@ -34,6 +34,7 @@ function loadHandoffModule() {
     }
 
     const document = {
+        baseURI: 'file:///data/data/com.moodle.moodlemobile/files/www/index.html',
         documentElement: {
             classList: {
                 values: new Set(),
@@ -135,24 +136,27 @@ test('course handoff failure does not block navigation or leave an overlay behin
     assert.equal(stats.mountWarnings, 1);
 });
 
-test('Angular course skeleton has IFRN header, staged sections, cancellation and reduced-motion support', () => {
+test('Angular course handoff restores the previous compact IFRN loader without skeleton cards', () => {
     const { componentFilename } = loadHandoffModule();
     const template = fs.readFileSync(path.join(path.dirname(componentFilename), 'ifrn-course-loading.component.html'), 'utf8');
     const styles = fs.readFileSync(path.join(path.dirname(componentFilename), 'ifrn-course-loading.component.scss'), 'utf8');
     const component = fs.readFileSync(componentFilename, 'utf8');
 
-    assert.match(template, /Moodle IFRN/);
-    assert.match(template, /Abrindo disciplina/);
+    assert.match(template, /logoUrl/);
+    assert.match(template, /course-loading__spinner/);
+    assert.match(template, /Abrindo sua disciplina\.\.\./);
     assert.match(template, /\(click\)="requestCancel\(\)"/);
-    assert.equal((template.match(/course-loading__section course-loading__reveal/g) || []).length, 2);
     assert.match(template, /@if \(courseName\)/);
+    assert.doesNotMatch(template, /course-loading__skeleton|course-loading__section|PREPARANDO SEU ACESSO/);
     assert.match(styles, /--ifrn-canvas/);
-    assert.match(styles, /animation-delay: 55ms/);
-    assert.match(styles, /animation-delay: 110ms/);
+    assert.match(styles, /course-loading__logo/);
+    assert.match(styles, /course-loading__spinner/);
+    assert.doesNotMatch(styles, /animation-delay|skeleton/);
     assert.match(styles, /prefers-reduced-motion: reduce/);
     assert.doesNotMatch(template, /%/);
     assert.match(component, /ChangeDetectionStrategy\.OnPush/);
     assert.match(component, /signal\(false\)/);
+    assert.match(component, /course-loader-first-frame/);
 });
 
 test('Angular course loader invokes cancellation at most once', () => {
@@ -203,7 +207,7 @@ test('course handoff cancellation is guarded and returns to the IFRN panel', () 
     assert.match(handler, /redirectToPainelAva\(\)/);
 });
 
-test('course navigation keeps the Angular cover until the requested Moodle course content is ready', () => {
+test('course navigation restores the compact cover at the themed shell and tracks content readiness separately', () => {
     const filename = path.join(__dirname, '..', 'services_mobile', 'moodle-site.service.ts');
     const source = fs.readFileSync(filename, 'utf8');
     const navigationMarker = source.indexOf('A rota pode chegar antes dos dados');
@@ -214,11 +218,27 @@ test('course navigation keeps the Angular cover until the requested Moodle cours
     assert.doesNotMatch(source.slice(navigationBranchStart, navigationBranchEnd), /hideNativeCourseHandoff/);
 
     const openStart = source.indexOf('openCourseById(courseId, attempt =');
+    const shellReady = source.indexOf("'course-shell-ready'");
     const readiness = source.indexOf("'course-content-ready'");
     const performPromise = source.indexOf('this.performOpenCourseById(courseId, attempt)', openStart);
     const finalRelease = source.indexOf('this.hideNativeCourseHandoff();', performPromise);
-    assert.ok(readiness >= 0, 'course opening must wait for sections and the native course-format renderer');
-    assert.match(source, /isNativeCourseContentReady\(document, courseId\)/);
+    const revealCover = source.indexOf('hideHandoffLoading();', shellReady);
+    assert.ok(shellReady >= 0 && revealCover > shellReady && readiness > revealCover,
+        'the simple cover must yield after the themed header, while content readiness remains tracked');
+    assert.match(source, /waitForNativeCourseContent\(courseId, attempt\)/);
+    assert.match(source, /waitForNativeCourseReadiness\(courseId, attempt, isNativeCourseContentReady\)/);
     assert.ok(performPromise > openStart && finalRelease > performPromise,
-        'the cover must be released after the asynchronous course-ready check');
+        'the handoff must always be cleaned up after the asynchronous opening attempt');
+    assert.match(source, /observeNativeCourseProgression/);
+});
+
+test('course SCSS animates only real revealed sections and keeps a compact native loading indicator', () => {
+    const styles = fs.readFileSync(path.join(__dirname, '..', 'moodle-course', 'moodle-course.scss'), 'utf8');
+
+    assert.match(styles, /core-course-section\.ifrn-course-progressive-pending/);
+    assert.match(styles, /core-course-module\.ifrn-course-progressive-pending/);
+    assert.match(styles, /core-course-section\.ifrn-course-progressive-ready/);
+    assert.match(styles, /prefers-reduced-motion: reduce/);
+    assert.match(styles, /Carregando conteúdo da disciplina/);
+    assert.match(styles, /\.placeholder \{\s*display: none;/);
 });

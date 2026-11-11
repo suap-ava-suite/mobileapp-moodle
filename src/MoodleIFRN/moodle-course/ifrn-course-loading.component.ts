@@ -25,6 +25,7 @@ import { ChangeDetectionStrategy, Component, Input, signal, type AfterViewInit, 
 export class IfrnCourseLoadingComponent implements AfterViewInit, OnDestroy {
 
     @Input() courseName = '';
+    @Input() logoUrl = '';
     @Input() onCancel?: () => void;
     @Input() timingStartedAt = 0;
 
@@ -38,7 +39,7 @@ export class IfrnCourseLoadingComponent implements AfterViewInit, OnDestroy {
                 this.paintFrame = 0;
                 // eslint-disable-next-line no-console
                 console.info('[IFRN-TIMING]', JSON.stringify({
-                    stage: 'course-skeleton-first-frame',
+                    stage: 'course-loader-first-frame',
                     ms: Math.round(performance.now() - startedAt),
                     outcome: 'ok',
                 }));

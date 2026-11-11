@@ -7,6 +7,7 @@ import { IfrnCourseLoadingComponent } from '../moodle-course/ifrn-course-loading
 
 const HANDOFF_PENDING_KEY = 'ifrn_course_handoff_pending';
 const HANDOFF_ID = 'ifrn-handoff-loading';
+const HANDOFF_LOGO_PATH = 'mobilemoodle/static/theme/ifrn/img/splash-logo.png';
 
 interface HandoffOptions {
     courseName?: string;
@@ -41,6 +42,7 @@ export function showHandoffLoading(
 
     if (handoffComponent) {
         handoffComponent.setInput('courseName', options.courseName || '');
+        handoffComponent.setInput('logoUrl', getHandoffLogoUrl());
         handoffComponent.setInput('onCancel', options.onCancel);
         handoffComponent.changeDetectorRef.detectChanges();
 
@@ -57,6 +59,7 @@ export function showHandoffLoading(
             hostElement: host,
         });
         component.setInput('courseName', options.courseName || '');
+        component.setInput('logoUrl', getHandoffLogoUrl());
         component.setInput('onCancel', options.onCancel);
         component.setInput('timingStartedAt', performance.now());
         applicationRef.attachView(component.hostView);
@@ -82,6 +85,19 @@ export function showHandoffLoading(
         // Keep this visual enhancement fail-open: it must never block the course itself.
         // eslint-disable-next-line no-console
         console.warn('[IFRN-COURSE-LOADING] Angular cover unavailable; continuing course navigation.');
+    }
+}
+
+/**
+ * Resolve the existing IFRN splash mark relative to the active Cordova document.
+ *
+ * @returns Resolved logo URL, or its relative path if the base URI is unavailable.
+ */
+function getHandoffLogoUrl(): string {
+    try {
+        return new URL(HANDOFF_LOGO_PATH, document.baseURI).toString();
+    } catch {
+        return HANDOFF_LOGO_PATH;
     }
 }
 

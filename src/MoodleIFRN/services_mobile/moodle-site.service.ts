@@ -41,7 +41,11 @@ import { CoreEvents } from '@static/events';
 import { CoreLogger } from '@static/logger';
 import { useIfrnBrazilianPortuguese } from './ifrn-language';
 import { CourseOpeningAttempt } from '../navigation/course-opening-attempt';
-import { isNativeCourseContentReady } from '../navigation/course-content-readiness';
+import {
+    isNativeCourseContentReady,
+    isNativeCourseShellReady,
+    observeNativeCourseProgression,
+} from '../navigation/course-content-readiness';
 import { openNativeCourse } from '../navigation/open-native-course';
 import { selectSuapProvider } from './suap-provider';
 import type { InAppBrowserObject } from '@awesome-cordova-plugins/in-app-browser/ngx';
@@ -687,6 +691,7 @@ export class MoodleSiteService {
     private courseOAuthBrowserSubscriptions: Array<{ unsubscribe: () => void }> = [];
     private cancelledCourseId?: number;
     private cancelledOpeningForPanelCourseId?: number;
+    private disposeCourseProgression?: () => void;
 
     private navigationShellInitialized = false;
     private oauthReturnNavigating = false;
@@ -1206,10 +1211,27 @@ export class MoodleSiteService {
 
     /** Remove flags de origem Painel↔curso (após redirect ou falha ao abrir). */
     private clearCourseOriginFlags(): void {
+        this.stopNativeCourseProgression();
         sessionStorage.removeItem(COURSE_ORIGIN_KEY);
         sessionStorage.removeItem(COURSE_ORIGIN_ID_KEY);
         this.courseOpenedFromPainel = false;
         document.documentElement.classList.remove('ifrn-course-context');
+    }
+
+    /**
+     * Observe rendered course sections/modules and release the observer with the route.
+     *
+     * @param courseId Exact Moodle course selected in the panel.
+     */
+    private startNativeCourseProgression(courseId: number): void {
+        this.stopNativeCourseProgression();
+        this.disposeCourseProgression = observeNativeCourseProgression(document, courseId);
+    }
+
+    /** Disconnect the reveal observers and make any pending offscreen nodes visible. */
+    private stopNativeCourseProgression(): void {
+        this.disposeCourseProgression?.();
+        this.disposeCourseProgression = undefined;
     }
 
     /**
@@ -2014,6 +2036,7 @@ export class MoodleSiteService {
         // Origem Painel: Voltar na página principal do curso → Painel AVA
         // (não o Dashboard Moodle). Sem flag = comportamento nativo intacto.
         this.markCourseOriginFromPainel(courseId);
+        this.startNativeCourseProgression(courseId);
 
         const navigation = this.waitForCourseNavigation(courseId, attempt);
         const previousLoadings = new Set(Array.from(document.querySelectorAll('ion-loading')));
@@ -2040,8 +2063,19 @@ export class MoodleSiteService {
             }
             assertSessionStillCurrent();
 
-            // The index header renders before CoreCourseContentsPage finishes loading sections.
-            // Keep the IFRN cover until Moodle's own course-format loader releases real content.
+            // Release the handoff at the first painted, themed native course shell.
+            await attempt.stage(
+                'course-shell-ready',
+                () => this.waitForNativeCourseShell(courseId, attempt),
+                30000,
+                true,
+                'O cabeçalho da disciplina não ficou pronto a tempo. Verifique sua conexão e tente novamente.',
+            );
+            assertSessionStillCurrent();
+            hideHandoffLoading();
+
+            // Keep the logical open serialized until Moodle releases real content. The native
+            // course remains visible and its own compact loader stays inside the content region.
             await attempt.stage(
                 'course-content-ready',
                 () => this.waitForNativeCourseContent(courseId, attempt),
@@ -2089,13 +2123,40 @@ export class MoodleSiteService {
     }
 
     /**
-     * Observes the rendered course without polling or editing Moodle's DOM.
+     * Wait for the matching course header and IFRN theme before removing the simple handoff.
+     *
+     * @param courseId Exact Moodle course selected by the user.
+     * @param attempt Active opening attempt.
+     * @returns Promise resolved after the themed header is painted.
+     */
+    private waitForNativeCourseShell(courseId: number, attempt: CourseOpeningAttempt): Promise<void> {
+        return this.waitForNativeCourseReadiness(courseId, attempt, isNativeCourseShellReady);
+    }
+
+    /**
+     * Wait for the requested Moodle content without polling or editing its DOM.
      *
      * @param courseId Exact course selected by the user.
      * @param attempt Active opening attempt, used to stop observation on explicit cancellation.
-     * @returns Promise resolved after the course content is visible and painted.
+     * @returns Promise resolved after real course content is visible and painted.
      */
     private waitForNativeCourseContent(courseId: number, attempt: CourseOpeningAttempt): Promise<void> {
+        return this.waitForNativeCourseReadiness(courseId, attempt, isNativeCourseContentReady);
+    }
+
+    /**
+     * Observe a readiness predicate without polling the main thread.
+     *
+     * @param courseId Exact Moodle course selected by the user.
+     * @param attempt Active opening attempt.
+     * @param isReady Read-only readiness predicate for this course.
+     * @returns Promise resolved after a matching state is painted.
+     */
+    private waitForNativeCourseReadiness(
+        courseId: number,
+        attempt: CourseOpeningAttempt,
+        isReady: (documentRef: Document, courseId: number) => boolean,
+    ): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             let settled = false;
             let frame = 0;
@@ -2140,7 +2201,7 @@ export class MoodleSiteService {
 
                     return;
                 }
-                if (!isNativeCourseContentReady(document, courseId)) {
+                if (!isReady(document, courseId)) {
                     return;
                 }
 
@@ -2154,7 +2215,7 @@ export class MoodleSiteService {
 
                         return;
                     }
-                    if (isNativeCourseContentReady(document, courseId)) {
+                    if (isReady(document, courseId)) {
                         finish();
                     } else {
                         scheduleCheck();
