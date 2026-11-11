@@ -858,11 +858,27 @@ div[vw].enabled {
 
 body.vlibras_active div[vw].enabled {
   display: block !important;
+  pointer-events: none;
 }
 
 body.vlibras_active div[vw] [vw-access-button] {
   transform: scale(0.85);
   transform-origin: left bottom;
+  pointer-events: auto;
+}
+
+body.vlibras_active div[vw] [vw-plugin-wrapper] {
+  pointer-events: none;
+}
+
+body.vlibras_active div[vw] [vw-plugin-wrapper].active,
+body.vlibras_active div[vw] [vw-plugin-wrapper][aria-hidden="false"] {
+  pointer-events: auto;
+}
+
+body.vlibras_active div[vw] [vw-plugin-wrapper].active iframe,
+body.vlibras_active div[vw] [vw-plugin-wrapper][aria-hidden="false"] iframe {
+  pointer-events: auto;
 }
 
 /* Mantém a janela expandida do VLibras dentro da área visível do celular,

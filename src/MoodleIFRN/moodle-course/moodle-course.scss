@@ -1065,6 +1065,7 @@ div[vw].ifrn-vlibras-compact.enabled {
 
 body.vlibras_active div[vw].enabled {
     display: block !important;
+    pointer-events: none;
 }
 
 body.vlibras_active div[vw] [vw-access-button],
@@ -1074,6 +1075,21 @@ body.vlibras_active div[vw] [vw-access-button].active {
     min-width: 48px !important;
     min-height: 48px !important;
     transform: none !important;
+    pointer-events: auto;
+}
+
+body.vlibras_active div[vw] [vw-plugin-wrapper] {
+    pointer-events: none;
+}
+
+body.vlibras_active div[vw] [vw-plugin-wrapper].active,
+body.vlibras_active div[vw] [vw-plugin-wrapper][aria-hidden="false"] {
+    pointer-events: auto;
+}
+
+body.vlibras_active div[vw] [vw-plugin-wrapper].active iframe,
+body.vlibras_active div[vw] [vw-plugin-wrapper][aria-hidden="false"] iframe {
+    pointer-events: auto;
 }
 
 /* Limita a janela expandida em celular para manter visíveis os controles superiores. */

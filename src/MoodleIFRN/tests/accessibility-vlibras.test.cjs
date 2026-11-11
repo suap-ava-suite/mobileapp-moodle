@@ -126,7 +126,7 @@ test('the mobile accessibility menus no longer expose the desktop mouse cursor o
         'mobilemoodle/core_mobile/global.d.ts',
         'mobilemoodle/static/theme/ifrn/scss/_accessibility.scss',
         'mobilemoodle/static/theme/ifrn/scss/painel.scss',
-        'docs/TEMA-VISUAL.md',
+        'docs/markdown/TEMA-VISUAL.md',
         'moodle-course/course-menu.ts',
         'moodle-course/moodle-course.scss',
     ];
@@ -160,5 +160,21 @@ test('the expanded VLibras window stays inside the phone viewport with its top c
         assert.match(scss, /safe-area-inset-right/u, source);
         assert.match(scss, /safe-area-inset-bottom/u, source);
         assert.match(scss, /div\[vw\]\s+iframe\s*\{[^}]*width:\s*100%\s*!important/su, source);
+    }
+});
+
+test('the collapsed VLibras wrapper does not intercept panel touches, while its controls remain interactive', () => {
+    const root = path.join(__dirname, '..');
+    const sources = [
+        path.join(root, 'mobilemoodle', 'static', 'theme', 'ifrn', 'scss', 'painel.scss'),
+        path.join(root, 'mobilemoodle', 'mobilemoodle.css'),
+        path.join(root, 'moodle-course', 'moodle-course.scss'),
+    ];
+
+    for (const source of sources) {
+        const styles = fs.readFileSync(source, 'utf8');
+        assert.match(styles, /body\.vlibras_active\s+div\[vw\]\.enabled\s*\{[^}]*pointer-events:\s*none\b/su, source);
+        assert.match(styles, /body\.vlibras_active\s+div\[vw\]\s+\[vw-access-button\][^{]*\{[^}]*pointer-events:\s*auto\b/su, source);
+        assert.match(styles, /body\.vlibras_active\s+div\[vw\]\s+\[vw-plugin-wrapper\]\.active,[^{]*\{[^}]*pointer-events:\s*auto\b/su, source);
     }
 });
