@@ -130,11 +130,29 @@ function loadService(overrides = {}) {
         MoodleSiteService: context.exports.MoodleSiteService,
         state: () => ({ subscriptions, browserOptions, browserUrl, browserClosed, browserShown, browserHidden,
             callbackUrl, session, externalFallbackCalls, lastTriggeredEvent,
+            coreAttempt: activeCoreAttempt,
             panelAva,
             setBrowserScriptResult: value => browserScriptResult = value,
             markExternalFallbackCall: () => externalFallbackCalls++ }),
     };
 }
+
+test('course SSO validates the Moodle identity without using display-name data', async () => {
+    const { MoodleSiteService, state } = loadService();
+    const service = Object.create(MoodleSiteService.prototype);
+    service.courseOAuthBrowserSubscriptions = [];
+
+    const pending = service.openCourseOAuthInApp({ siteUrl: 'https://academico.ava.ifrn.edu.br', config: {} });
+    await new Promise(resolve => setImmediate(resolve));
+
+    const attempt = state().coreAttempt;
+    assert.ok(attempt);
+    assert.equal(attempt.validateIdentity('synthetic-owner'), true);
+    assert.equal(attempt.validateIdentity('synthetic-other'), false);
+
+    service.cancelCourseOAuthBrowser();
+    await pending.catch(() => undefined);
+});
 
 test('course callback retains cancellation while native validation is pending', async () => {
     const validation=deferred();
@@ -537,7 +555,8 @@ function realNativeHandler(gateForToken, options = {}) {
     };
     const source = `class CoreSitesProvider { static VALID_VERSION = 1;
         ${extract('src/core/services/sites.ts', ['beginSessionAttempt', 'cancelSessionAttempt', 'isSessionAttemptCurrent',
-            'assertSessionAttemptCurrent', 'isSessionAttemptIdCurrent', 'newSite', 'newSiteWithSessionAttempt', 'login',
+            'hasPendingSessionAttempt', 'assertSessionAttemptCurrent', 'isSessionAttemptIdCurrent', 'newSite',
+            'newSiteWithSessionAttempt', 'login',
             'rollbackUnactivatedSessionAttempt', 'migrateCurrentSiteLegacyTable', 'getStoredCurrentSiteId',
             'getPersistedSessionOwner', 'removeStoredCurrentSite'])}
     }
@@ -748,6 +767,10 @@ test('native contract fixture accepts a valid synthetic token and creates one se
     service.getExpectedIdentityCandidates=()=>[{key:'perfil.matricula',value:state().session.get('ifrn_painel_owner')}];
     const pending=service.openCourseOAuthInApp({siteUrl:'https://academico.ava.ifrn.edu.br',config:{}});
     await new Promise(r=>setImmediate(r));
+    const attempt=native.sites.activeSessionAttempt;
+    await native.accept('moodlemobile://token=synthetic-a');
+    assert.equal(attempt.state,'pending','the unscoped global callback must not consume a course-owned token');
+    assert.equal(native.state.persisted,0,'the global callback must not publish a Moodle session');
     state().subscriptions.get('beforeload')({url:'moodlemobile://token=synthetic-a'});
     await new Promise(r=>setImmediate(r));
     gate.resolve({siteurl:'https://academico.ava.ifrn.edu.br',username:'synthetic-owner'});

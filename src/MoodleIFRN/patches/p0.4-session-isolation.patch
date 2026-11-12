@@ -417,7 +417,7 @@ index 6278f493c..2d7cadf0c 100644
              CoreLang.loadCustomStringsFromSite();
          });
  
-@@ -454,6 +478,128 @@ export class CoreSitesProvider {
+@@ -454,6 +478,136 @@ export class CoreSitesProvider {
          await sitesTable.initialize();
  
          this.sitesTable.setInstance(sitesTable);
@@ -531,6 +531,14 @@ index 6278f493c..2d7cadf0c 100644
 +            && attempt.isOwnerCurrent();
 +    }
 +
++    /** Check whether an owner-bound session attempt is still processing a callback. */
++    hasPendingSessionAttempt(): boolean {
++        const attempt = this.activeSessionAttempt;
++
++        return !!attempt && (attempt.state === 'pending' || attempt.state === 'prepared')
++            && this.isSessionAttemptCurrent(attempt);
++    }
++
 +    /** Throw before shared effects when an attempt was cancelled, superseded or expired. */
 +    assertSessionAttemptCurrent(attempt: CoreSitesSessionAttempt): void {
 +        if (!this.isSessionAttemptCurrent(attempt)) {
@@ -546,7 +554,7 @@ index 6278f493c..2d7cadf0c 100644
      }
  
      /**
-@@ -823,7 +969,12 @@ export class CoreSitesProvider {
+@@ -823,7 +977,12 @@ export class CoreSitesProvider {
          privateToken = '',
          login = true,
          oauthId?: number,
@@ -559,7 +567,7 @@ index 6278f493c..2d7cadf0c 100644
          if (typeof login !== 'boolean') {
              login = true;
          }
-@@ -920,6 +1071,255 @@ export class CoreSitesProvider {
+@@ -920,6 +1079,255 @@ export class CoreSitesProvider {
          }
      }
  
@@ -815,7 +823,7 @@ index 6278f493c..2d7cadf0c 100644
      /**
       * Having the result of isValidMoodleVersion, it treats the error message to be shown.
       *
-@@ -1369,6 +1769,7 @@ export class CoreSitesProvider {
+@@ -1369,6 +1777,7 @@ export class CoreSitesProvider {
          }
  
          const site = await this.getSite(siteId);
@@ -823,7 +831,7 @@ index 6278f493c..2d7cadf0c 100644
  
          await site.deleteDB();
  
-@@ -1381,7 +1782,12 @@ export class CoreSitesProvider {
+@@ -1381,7 +1790,12 @@ export class CoreSitesProvider {
          // Site deleted from sites list, now delete the folder.
          await site.deleteFolder();
  
@@ -837,7 +845,7 @@ index 6278f493c..2d7cadf0c 100644
  
          CoreEvents.trigger(CoreEvents.SITE_DELETED, site, siteId);
      }
-@@ -1705,8 +2111,45 @@ export class CoreSitesProvider {
+@@ -1705,8 +2119,45 @@ export class CoreSitesProvider {
       *
       * @param siteId ID of the site the user is accessing.
       */
@@ -884,7 +892,7 @@ index 6278f493c..2d7cadf0c 100644
  
          CoreEvents.trigger(CoreEvents.LOGIN, { siteId }, siteId);
      }
-@@ -1738,7 +2181,18 @@ export class CoreSitesProvider {
+@@ -1738,7 +2189,18 @@ export class CoreSitesProvider {
       * @param options Logout options.
       */
      async internalLogout(options: InternalLogoutOptions = {}): Promise<void> {
@@ -903,7 +911,7 @@ index 6278f493c..2d7cadf0c 100644
              return;
          }
  
-@@ -1891,6 +2345,7 @@ export class CoreSitesProvider {
+@@ -1891,6 +2353,7 @@ export class CoreSitesProvider {
              token: '',
              privateToken: '',
              loggedOut: 0,
@@ -911,7 +919,7 @@ index 6278f493c..2d7cadf0c 100644
          };
  
          promises.push(this.sitesTable.update(newData, { id: siteId }));
-@@ -1954,7 +2409,12 @@ export class CoreSitesProvider {
+@@ -1954,7 +2417,12 @@ export class CoreSitesProvider {
                      loadedSite.privateToken = '';
                  }
  
@@ -925,7 +933,7 @@ index 6278f493c..2d7cadf0c 100644
              })),
              ...this.deleteTokensListeners.map(listener => Promise.resolve(listener())),
          ]);
-@@ -2112,13 +2572,78 @@ export class CoreSitesProvider {
+@@ -2112,13 +2580,78 @@ export class CoreSitesProvider {
      async getStoredCurrentSiteId(): Promise<string> {
          await this.migrateCurrentSiteLegacyTable();
  
@@ -1004,7 +1012,7 @@ index 6278f493c..2d7cadf0c 100644
          await CoreConfig.delete(CORE_SITE_CURRENT_SITE_ID_CONFIG);
      }
  
-@@ -2366,8 +2891,11 @@ export class CoreSitesProvider {
+@@ -2366,8 +2899,11 @@ export class CoreSitesProvider {
       * @param siteId Site ID.
       * @returns Stored tokens.
       */
@@ -1018,7 +1026,7 @@ index 6278f493c..2d7cadf0c 100644
  
          return {
              token: result?.token ?? '',
-@@ -2404,7 +2932,7 @@ export class CoreSitesProvider {
+@@ -2404,7 +2940,7 @@ export class CoreSitesProvider {
              return site;
          }
  
@@ -1099,10 +1107,14 @@ index 2191b9df9..eea519b4e 100644
          // BEGIN MoodleIFRN mobile SUAP callback
          try {
              const callback = new URL(url);
-@@ -119,6 +136,12 @@ export class CoreCustomURLSchemesProvider {
+@@ -119,6 +136,16 @@ export class CoreCustomURLSchemesProvider {
              // The regular Moodle URL-scheme validation handles malformed URLs.
          }
          // END MoodleIFRN mobile SUAP callback
++        if (!sessionAttempt && this.isCustomURLToken(url) && CoreSites.hasPendingSessionAttempt()) {
++            // The course browser owns this callback and will process it with its session attempt.
++            return;
++        }
 +        const assertAttempt = (): void => {
 +            if (sessionAttempt) {
 +                CoreSites.assertSessionAttemptCurrent(sessionAttempt);
@@ -1112,7 +1124,7 @@ index 2191b9df9..eea519b4e 100644
          if (!this.isCustomURL(url)) {
              throw this.createInvalidSchemeError(url);
          }
-@@ -141,12 +164,19 @@ export class CoreCustomURLSchemesProvider {
+@@ -141,12 +168,19 @@ export class CoreCustomURLSchemesProvider {
  
          // Wait for app to be ready.
          await ApplicationInit.donePromise;
@@ -1132,7 +1144,7 @@ index 2191b9df9..eea519b4e 100644
          let data: CoreCustomURLSchemesParams;
  
          // Get the data from the URL.
-@@ -164,6 +194,7 @@ export class CoreCustomURLSchemesProvider {
+@@ -164,6 +198,7 @@ export class CoreCustomURLSchemesProvider {
  
                  data = await this.getCustomURLData(url);
              }
@@ -1140,7 +1152,7 @@ index 2191b9df9..eea519b4e 100644
          } catch (error) {
              await modal.dismiss();
  
-@@ -172,6 +203,7 @@ export class CoreCustomURLSchemesProvider {
+@@ -172,6 +207,7 @@ export class CoreCustomURLSchemesProvider {
  
          try {
              const isValid = await CoreLoginHelper.isSiteUrlAllowed(data.siteUrl);
@@ -1148,7 +1160,7 @@ index 2191b9df9..eea519b4e 100644
  
              if (!isValid) {
                  throw Translate.instant('core.errorurlschemeinvalidsite');
-@@ -190,10 +222,12 @@ export class CoreCustomURLSchemesProvider {
+@@ -190,10 +226,12 @@ export class CoreCustomURLSchemesProvider {
              // Check if the site needs to be created and ask the user to confirm if needed.
              let siteIds: string[];
              if (data.token) {
@@ -1162,7 +1174,7 @@ index 2191b9df9..eea519b4e 100644
                      void CoreNavigator.navigateToSiteHome({
                          params: <CoreRedirectPayload> {
                              redirectPath: data.redirectPath,
-@@ -212,10 +246,12 @@ export class CoreCustomURLSchemesProvider {
+@@ -212,10 +250,12 @@ export class CoreCustomURLSchemesProvider {
                      username: data.username,
                      userId: data.userId,
                  });
@@ -1175,7 +1187,7 @@ index 2191b9df9..eea519b4e 100644
                  }
              }
  
-@@ -226,6 +262,7 @@ export class CoreCustomURLSchemesProvider {
+@@ -226,6 +266,7 @@ export class CoreCustomURLSchemesProvider {
                  // Only one site, handle the link.
                  // No need to confirm site change here: handleLink and handleRootURL will do it if needed.
                  const site = await CoreSites.getSite(siteIds[0]);
@@ -1183,7 +1195,7 @@ index 2191b9df9..eea519b4e 100644
  
                  if (!data.redirect) {
                      // No redirect, go to the root URL if needed.
-@@ -233,9 +270,11 @@ export class CoreCustomURLSchemesProvider {
+@@ -233,9 +274,11 @@ export class CoreCustomURLSchemesProvider {
                          checkToken: true,
                          confirmSiteChange: false,
                      });
@@ -1195,7 +1207,7 @@ index 2191b9df9..eea519b4e 100644
  
                      /* Always use the username from the site in this case. If the link has a username and a token,
                         this will make sure that the link is opened with the user the token belongs to. */
-@@ -245,6 +284,7 @@ export class CoreCustomURLSchemesProvider {
+@@ -245,6 +288,7 @@ export class CoreCustomURLSchemesProvider {
                          username,
                          confirmSiteChange: false,
                      });
@@ -1203,7 +1215,7 @@ index 2191b9df9..eea519b4e 100644
  
                      if (!treated) {
                          CoreAlerts.showError(Translate.instant('core.contentlinks.errornoactions'));
-@@ -254,8 +294,10 @@ export class CoreCustomURLSchemesProvider {
+@@ -254,8 +298,10 @@ export class CoreCustomURLSchemesProvider {
              } else {
                  // Site not stored. Try to add the site.
                  const result = await CoreSites.checkSite(data.siteUrl, undefined, `URL scheme redirect: ${url}`);
@@ -1214,7 +1226,7 @@ index 2191b9df9..eea519b4e 100644
              }
  
          } catch (error) {
-@@ -272,7 +314,7 @@ export class CoreCustomURLSchemesProvider {
+@@ -272,7 +318,7 @@ export class CoreCustomURLSchemesProvider {
          } finally {
              await modal.dismiss();
  

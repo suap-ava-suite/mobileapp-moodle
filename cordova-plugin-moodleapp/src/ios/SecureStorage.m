@@ -102,6 +102,12 @@
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
+// Keychain operations are synchronous and return an OSStatus for every item.
+// Keep the existing encryption/storage path and expose it through the durable API.
+- (void)storeDurable:(CDVInvokedUrlCommand*)command {
+    [self store:command];
+}
+
 - (OSStatus)addName:(NSString*)name withValue:(NSString*)value inCollection:(NSString*)collection {
     NSData* newValue = [value dataUsingEncoding:NSUTF8StringEncoding];
     NSMutableDictionary* query = [NSMutableDictionary new];

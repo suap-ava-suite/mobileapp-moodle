@@ -25,7 +25,7 @@ import { CorePath } from '@static/path';
 import { CoreConstants } from '../constants';
 import { CoreSSO } from '@static/sso';
 import { CoreNavigator, CoreRedirectPayload } from './navigator';
-import { CoreSiteCheckResponse, CoreSites } from './sites';
+import { CoreSiteCheckResponse, CoreSites, CoreSitesSessionAttempt } from './sites';
 import { CoreErrorHelper, CoreErrorObject } from './error-helper';
 import { CoreUrl } from '@static/url';
 import { CoreLoadings } from './overlays/loadings';
@@ -69,23 +69,39 @@ export class CoreCustomURLSchemesProvider {
      * @param data URL data.
      * @returns Site ID if created or already exists.
      */
-    protected async createSiteIfNeeded(token: string, data: CoreCustomURLSchemesParams): Promise<string> {
+    protected async createSiteIfNeeded(
+        token: string,
+        data: CoreCustomURLSchemesParams,
+        sessionAttempt?: CoreSitesSessionAttempt,
+    ): Promise<string> {
+        if (sessionAttempt) {
+            CoreSites.assertSessionAttemptCurrent(sessionAttempt);
+        }
         const currentSite = CoreSites.getCurrentSite();
 
-        if (!currentSite || currentSite.getToken() !== token || currentSite.isLoggedOut()) {
+        if (sessionAttempt || !currentSite || currentSite.getToken() !== token || currentSite.isLoggedOut()) {
             // Token belongs to a different site or site is logged out, create it. It doesn't matter if it already exists.
             if (!data.siteUrl.match(/^https?:\/\//)) {
                 // URL doesn't have a protocol and it's required to be able to create the site. Check which one to use.
                 const result = await CoreSites.checkSite(data.siteUrl, undefined, 'URL scheme create site');
+                if (sessionAttempt) {
+                    CoreSites.assertSessionAttemptCurrent(sessionAttempt);
+                }
 
                 data.siteUrl = result.siteUrl;
 
                 await CoreSites.checkApplication(result.config);
+                if (sessionAttempt) {
+                    CoreSites.assertSessionAttemptCurrent(sessionAttempt);
+                }
             }
 
             if (!data.isSSOToken) {
                 // Confirm before creating the site.
                 await CoreContentLinksHelper.confirmLinkToSite({ url: data.siteUrl });
+                if (sessionAttempt) {
+                    CoreSites.assertSessionAttemptCurrent(sessionAttempt);
+                }
             }
 
             return CoreSites.newSite(
@@ -94,6 +110,7 @@ export class CoreCustomURLSchemesProvider {
                 data.privateToken,
                 !!data.isSSOToken,
                 CoreLoginHelper.getOAuthIdFromParams(data.ssoUrlParams),
+                sessionAttempt,
             );
         } else {
             // Token belongs to current site, no need to create it.
@@ -107,7 +124,7 @@ export class CoreCustomURLSchemesProvider {
      * @param url URL to treat.
      * @returns Promise resolved when done. If rejected, the parameter is of type CoreCustomURLSchemesHandleError.
      */
-    async handleCustomURL(url: string): Promise<void> {
+    async handleCustomURL(url: string, sessionAttempt?: CoreSitesSessionAttempt): Promise<void> {
         // BEGIN MoodleIFRN mobile SUAP callback
         try {
             const callback = new URL(url);
@@ -119,6 +136,16 @@ export class CoreCustomURLSchemesProvider {
             // The regular Moodle URL-scheme validation handles malformed URLs.
         }
         // END MoodleIFRN mobile SUAP callback
+        if (!sessionAttempt && this.isCustomURLToken(url) && CoreSites.hasPendingSessionAttempt()) {
+            // The course browser owns this callback and will process it with its session attempt.
+            return;
+        }
+        const assertAttempt = (): void => {
+            if (sessionAttempt) {
+                CoreSites.assertSessionAttemptCurrent(sessionAttempt);
+            }
+        };
+        assertAttempt();
         if (!this.isCustomURL(url)) {
             throw this.createInvalidSchemeError(url);
         }
@@ -141,12 +168,19 @@ export class CoreCustomURLSchemesProvider {
 
         // Wait for app to be ready.
         await ApplicationInit.donePromise;
+        assertAttempt();
 
         // Some platforms like Windows add a slash at the end. Remove it.
         // Some sites add a # at the end of the URL. If it's there, remove it.
         url = url.replace(/\/?(#.*)?\/?$/, '');
 
         const modal = await CoreLoadings.show();
+        try {
+            assertAttempt();
+        } catch (error) {
+            await modal.dismiss();
+            throw error;
+        }
         let data: CoreCustomURLSchemesParams;
 
         // Get the data from the URL.
@@ -164,6 +198,7 @@ export class CoreCustomURLSchemesProvider {
 
                 data = await this.getCustomURLData(url);
             }
+            assertAttempt();
         } catch (error) {
             await modal.dismiss();
 
@@ -172,6 +207,7 @@ export class CoreCustomURLSchemesProvider {
 
         try {
             const isValid = await CoreLoginHelper.isSiteUrlAllowed(data.siteUrl);
+            assertAttempt();
 
             if (!isValid) {
                 throw Translate.instant('core.errorurlschemeinvalidsite');
@@ -190,10 +226,12 @@ export class CoreCustomURLSchemesProvider {
             // Check if the site needs to be created and ask the user to confirm if needed.
             let siteIds: string[];
             if (data.token) {
-                const siteId = await this.createSiteIfNeeded(data.token, data);
+                const siteId = await this.createSiteIfNeeded(data.token, data, sessionAttempt);
+                assertAttempt();
 
                 if (data.isSSOToken || (data.isAuthenticationURL && siteId && CoreSites.getCurrentSiteId() === siteId)) {
                     // Site created and authenticated, open the page to go.
+                    assertAttempt();
                     void CoreNavigator.navigateToSiteHome({
                         params: <CoreRedirectPayload> {
                             redirectPath: data.redirectPath,
@@ -212,10 +250,12 @@ export class CoreCustomURLSchemesProvider {
                     username: data.username,
                     userId: data.userId,
                 });
+                assertAttempt();
 
                 if (siteIds.length !== 1 || siteIds[0] !== CoreSites.getCurrentSiteId()) {
                     // Not current site or more than one site, confirm before changing site.
                     await CoreContentLinksHelper.confirmLinkToSite({ url: data.siteUrl });
+                    assertAttempt();
                 }
             }
 
@@ -226,6 +266,7 @@ export class CoreCustomURLSchemesProvider {
                 // Only one site, handle the link.
                 // No need to confirm site change here: handleLink and handleRootURL will do it if needed.
                 const site = await CoreSites.getSite(siteIds[0]);
+                assertAttempt();
 
                 if (!data.redirect) {
                     // No redirect, go to the root URL if needed.
@@ -233,9 +274,11 @@ export class CoreCustomURLSchemesProvider {
                         checkToken: true,
                         confirmSiteChange: false,
                     });
+                    assertAttempt();
                 } else {
                     // Handle the redirect link.
                     await modal.dismiss(); // Dismiss modal so it doesn't collide with confirms.
+                    assertAttempt();
 
                     /* Always use the username from the site in this case. If the link has a username and a token,
                        this will make sure that the link is opened with the user the token belongs to. */
@@ -245,6 +288,7 @@ export class CoreCustomURLSchemesProvider {
                         username,
                         confirmSiteChange: false,
                     });
+                    assertAttempt();
 
                     if (!treated) {
                         CoreAlerts.showError(Translate.instant('core.contentlinks.errornoactions'));
@@ -254,8 +298,10 @@ export class CoreCustomURLSchemesProvider {
             } else {
                 // Site not stored. Try to add the site.
                 const result = await CoreSites.checkSite(data.siteUrl, undefined, `URL scheme redirect: ${url}`);
+                assertAttempt();
 
                 await this.goToAddSite(data, result);
+                assertAttempt();
             }
 
         } catch (error) {
@@ -272,7 +318,7 @@ export class CoreCustomURLSchemesProvider {
         } finally {
             await modal.dismiss();
 
-            if (data.isSSOToken) {
+            if (data?.isSSOToken && (!sessionAttempt || CoreSites.isSessionAttemptCurrent(sessionAttempt))) {
                 CoreSSO.finishSSOAuthentication();
             }
         }

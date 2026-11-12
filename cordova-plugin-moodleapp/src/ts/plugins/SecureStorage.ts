@@ -55,6 +55,22 @@ export class SecureStorage {
         });
     }
 
+    /** Store values and resolve only after the native secure store confirms the write. */
+    async storeDurable(data: Record<string, string>, collection: string): Promise<void> {
+        for (const name in data) {
+            const value = data[name];
+            if (value === undefined || value === null) {
+                delete data[name];
+            } else if (typeof value !== 'string') {
+                throw new Error(`SecureStorage: Invalid value for ${name}. Expected string, received ${typeof value}`);
+            }
+        }
+
+        await new Promise((resolve, reject) => {
+            cordova.exec(resolve, reject, 'SecureStorage', 'storeDurable', [data, collection]);
+        });
+    }
+
     /**
      * Delete one or more values.
      *

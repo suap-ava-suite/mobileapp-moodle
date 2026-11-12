@@ -26,14 +26,16 @@ import org.json.JSONObject;
 import org.json.JSONException;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CallbackContext;
-import org.apache.cordova.PluginResult;
 
 import com.adobe.phonegap.push.EncryptionHandler;
+import com.adobe.phonegap.push.PushConstants;
 
 public class SecureStorage extends CordovaPlugin {
 
     private static final String TAG = "SecureStorage";
     private static final String SHARED_PREFS_NAME = "moodlemobile_shared_prefs";
+    private static final String PUSH_PUBLIC_KEY_PREF = "SODIUM_KEY_PUBLIC";
+    private static final String PUSH_PRIVATE_KEY_PREF = "SODIUM_KEY_PRIVATE";
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
@@ -44,10 +46,28 @@ public class SecureStorage extends CordovaPlugin {
 
                     return true;
                 case "store":
-                    this.store(args.getJSONObject(0), args.getString(1));
+                    this.store(args.getJSONObject(0), args.getString(1), false);
                     callbackContext.success();
 
                     return true;
+                case "storeDurable": {
+                    final JSONObject data = args.getJSONObject(0);
+                    final String collection = args.getString(1);
+                    this.cordova.getThreadPool().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                SecureStorage.this.store(data, collection, true);
+                                callbackContext.success();
+                            } catch (Throwable e) {
+                                Log.e(TAG, "Failed executing durable secure storage write", e);
+                                callbackContext.error(e.getMessage());
+                            }
+                        }
+                    });
+
+                    return true;
+                }
                 case "delete":
                     this.delete(args.getJSONArray(0), args.getString(1));
                     callbackContext.success();
@@ -62,7 +82,6 @@ public class SecureStorage extends CordovaPlugin {
         } catch (Throwable e) {
             Log.e(TAG, "Failed executing action: " + action, e);
             callbackContext.error(e.getMessage());
-            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR));
         }
 
         return false;
@@ -106,11 +125,32 @@ public class SecureStorage extends CordovaPlugin {
      * @param data Data to store, using a name -> value format.
      * @param collection The collection where to store the values.
      */
-    private void store(JSONObject data, String collection) throws GeneralSecurityException, IOException, JSONException {
+    private void store(JSONObject data, String collection, boolean durable)
+            throws GeneralSecurityException, IOException, JSONException {
         Context context = this.cordova.getActivity().getApplicationContext();
         SharedPreferences sharedPreferences = getSharedPreferences(collection);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         JSONArray names = data.names();
+
+        SharedPreferences encryptionPreferences = null;
+        String publicKey = null;
+        String privateKey = null;
+        if (durable && EncryptionHandler.Companion.encryptionSupported()) {
+            publicKey = EncryptionHandler.Companion.getPublicKey(context);
+            encryptionPreferences = context.getSharedPreferences(
+                PushConstants.COM_ADOBE_PHONEGAP_PUSH,
+                Context.MODE_PRIVATE
+            );
+            privateKey = encryptionPreferences.getString(PUSH_PRIVATE_KEY_PREF, null);
+
+            // EncryptionHandler currently creates these keys with apply(). Flush its existing encrypted
+            // key material before publishing credentials that depend on it.
+            if (publicKey == null || privateKey == null || !encryptionPreferences.edit().commit()
+                    || !publicKey.equals(encryptionPreferences.getString(PUSH_PUBLIC_KEY_PREF, null))
+                    || !privateKey.equals(encryptionPreferences.getString(PUSH_PRIVATE_KEY_PREF, null))) {
+                throw new IOException("Secure storage encryption key could not be confirmed.");
+            }
+        }
 
         Log.d(TAG, "Store values with names " + names.toString());
 
@@ -118,11 +158,28 @@ public class SecureStorage extends CordovaPlugin {
             String name = names.optString(i);
 
             if (name != null && !name.isEmpty()) {
-                editor.putString(name, EncryptionHandler.Companion.encrypt(context, data.getString(name)));
+                String value = data.getString(name);
+                String encryptedValue = EncryptionHandler.Companion.encrypt(context, value);
+                if (durable && EncryptionHandler.Companion.encryptionSupported()
+                        && !value.equals(EncryptionHandler.Companion.decrypt(context, encryptedValue))) {
+                    throw new IOException("Secure storage encryption key changed during credential preparation.");
+                }
+                editor.putString(name, encryptedValue);
             }
         }
 
-        editor.apply();
+        if (durable) {
+            if (encryptionPreferences != null && (!encryptionPreferences.edit().commit()
+                    || !publicKey.equals(encryptionPreferences.getString(PUSH_PUBLIC_KEY_PREF, null))
+                    || !privateKey.equals(encryptionPreferences.getString(PUSH_PRIVATE_KEY_PREF, null)))) {
+                throw new IOException("Secure storage encryption key changed before credential publication.");
+            }
+            if (!editor.commit()) {
+                throw new IOException("Secure storage could not confirm the credential write.");
+            }
+        } else {
+            editor.apply();
+        }
     }
 
     /**

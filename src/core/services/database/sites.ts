@@ -21,6 +21,7 @@ import { SQLiteDB, SQLiteDBTableSchema } from '@classes/sqlitedb';
  */
 export const SITES_TABLE_NAME = 'sites_2';
 export const SCHEMA_VERSIONS_TABLE_NAME = 'schema_versions';
+export const IFRN_SESSION_ATTEMPTS_TABLE_NAME = 'ifrn_session_attempts';
 
 /**
  * Database variables for CoreSite class.
@@ -33,7 +34,7 @@ export const LAST_VIEWED_PRIMARY_KEYS = ['component', 'id'] as const;
 // Schema to register in App DB.
 export const APP_SCHEMA: CoreAppSchema = {
     name: 'CoreSitesProvider',
-    version: 2,
+    version: 3,
     tables: [
         {
             name: SITES_TABLE_NAME,
@@ -72,12 +73,35 @@ export const APP_SCHEMA: CoreAppSchema = {
                     name: 'oauthId',
                     type: 'INTEGER',
                 },
+                {
+                    name: 'credentialKey',
+                    type: 'TEXT',
+                },
+            ],
+        },
+        {
+            name: IFRN_SESSION_ATTEMPTS_TABLE_NAME,
+            columns: [
+                { name: 'id', type: 'TEXT', primaryKey: true },
+                { name: 'attemptId', type: 'TEXT' },
+                { name: 'generation', type: 'INTEGER' },
+                { name: 'state', type: 'TEXT' },
+                { name: 'previousSiteId', type: 'TEXT' },
+                { name: 'owner', type: 'TEXT' },
+                { name: 'epoch', type: 'TEXT' },
+                { name: 'siteId', type: 'TEXT' },
+                { name: 'credentialKey', type: 'TEXT' },
             ],
         },
     ],
     async migrate(db: SQLiteDB, oldVersion: number): Promise<void> {
         if (oldVersion < 2) {
             await db.migrateTable('sites', SITES_TABLE_NAME);
+        }
+
+        // Existing v2 installations need the new pointer column. Fresh installs already create it above.
+        if (oldVersion === 2) {
+            await db.addColumn(SITES_TABLE_NAME, 'credentialKey', 'TEXT');
         }
     },
 };
@@ -187,6 +211,19 @@ export type SiteDBEntry = {
     config?: string | null;
     loggedOut: number;
     oauthId?: number | null;
+    credentialKey?: string | null;
+};
+
+export type SessionAttemptDBEntry = {
+    id: string;
+    attemptId: string;
+    generation: number;
+    state: 'pending' | 'prepared' | 'committed' | 'cancelled' | 'unknown' | 'logged-out';
+    previousSiteId?: string | null;
+    owner?: string | null;
+    epoch?: string | null;
+    siteId?: string | null;
+    credentialKey?: string | null;
 };
 
 export type SchemaVersionsDBEntry = {

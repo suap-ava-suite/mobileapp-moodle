@@ -161,6 +161,13 @@ export class CoreEagerDatabaseTable<
         return rowId;
     }
 
+    /** @inheritdoc */
+    syncCacheRecord(record: SubPartial<DBRecord, RowIdColumn>): void {
+        const completeRecord = record as DBRecord;
+        const primaryKey = this.serializePrimaryKey(this.getPrimaryKeyFromRecord(completeRecord));
+        this.records[primaryKey] = completeRecord;
+    }
+
     /**
      * @inheritdoc
      */

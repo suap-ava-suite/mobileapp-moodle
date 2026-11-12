@@ -278,6 +278,13 @@ export class CoreDatabaseTable<
         this.insert(record);
     }
 
+    /** Update only an in-memory cache after the record has already been committed externally. */
+    syncCacheRecord(_record: SubPartial<DBRecord, RowIdColumn>): void {
+        void _record;
+
+        // Tables without an in-memory cache do not need to do anything.
+    }
+
     /**
      * Update records matching the given conditions.
      *

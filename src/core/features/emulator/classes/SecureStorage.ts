@@ -95,6 +95,11 @@ export class SecureStorageMock implements SecureStorage {
         }
     }
 
+    /** Test-only implementation; localStorage does not provide native durability guarantees. */
+    async storeDurable(data: Record<string, string>, collection: string): Promise<void> {
+        await this.store(data, collection);
+    }
+
     /**
      * Delete one or more values.
      *

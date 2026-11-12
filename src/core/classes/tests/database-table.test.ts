@@ -74,6 +74,7 @@ function prepareStubs(config: Partial<CoreDatabaseConfiguration> = {}): [User[],
             return usersToDelete.length;
         },
         insertRecord: async (_, user: User) => records.push(user) && 1,
+        updateRecords: jest.fn(async () => 1),
     });
     const table = new CoreDatabaseTableProxy<User>(config, database, 'users');
 
@@ -229,6 +230,17 @@ describe('CoreDatabaseTable with eager caching', () => {
     });
 
     it('inserts items', () => testInsertItems(records, database, table));
+    it('refreshes the eager cache after an external transaction without issuing another write', async () => {
+        const committedUser = { id: 7, name: 'Committed', surname: 'Transaction' };
+
+        await table.initialize();
+        records.push(committedUser); // Simulate a transaction committed directly by the session publisher.
+        table.syncCacheRecord(committedUser);
+
+        await expect(table.getOneByPrimaryKey({ id: 7 })).resolves.toEqual(committedUser);
+        expect(database.insertRecord).not.toHaveBeenCalled();
+        expect(database.updateRecords).not.toHaveBeenCalled();
+    });
     it('deletes items', () => testDeleteItems(records, database, table));
     it('deletes items by primary key', () => testDeleteItemsByPrimaryKey(records, database, table));
 

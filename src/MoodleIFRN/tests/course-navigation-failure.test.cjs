@@ -15,13 +15,14 @@ const serviceSource = compile('src/MoodleIFRN/services_mobile/moodle-site.servic
 const courseId = 4022;
 const siteUrl = 'https://academico.ava.ifrn.edu.br';
 
-function setup(navigate) {
+function setup(navigate, enrolledCourses = [{ id: courseId }]) {
     const timers = new Map();
     let timerSequence = 0;
     let listener;
     let disposed = 0;
     let readinessCalls = 0;
     let clearedOrigins = 0;
+    let courseLookupCount = 0;
     class NavigationEnd {
         constructor(url) { this.url = url; this.urlAfterRedirects = url; }
     }
@@ -39,7 +40,10 @@ function setup(navigate) {
         '@services/sites': { CoreSites: { getCurrentSite: () => site,
             getCurrentSiteId: () => 'synthetic-site', isLoggedIn: () => true } },
         '@services/navigator': { CoreNavigator: { getCurrentPath: () => '/login/painel' } },
-        '@features/courses/services/courses': { CoreCourses: { getUserCourses: async () => [{ id: courseId }] } },
+        '@features/courses/services/courses': { CoreCourses: { getUserCourses: async () => {
+            courseLookupCount++;
+            return enrolledCourses;
+        } } },
         '../navigation/open-native-course': { openNativeCourse: (...args) => navigate(...args) },
         './ifrn-language': { useIfrnBrazilianPortuguese: async () => {} },
         '@/MoodleIFRN/navigation/handoff-loading': { hideHandoffLoading() {} },
@@ -71,6 +75,7 @@ function setup(navigate) {
         emitEnd: id => listener?.(new NavigationEnd(`/main/home/course/${id}`)),
         emitError: error => listener?.(new NavigationError(`/main/home/course/${courseId}`, error)),
         expireRoute: () => [...timers.values()].forEach(callback => callback()),
+        courseLookupCount: () => courseLookupCount,
         state: () => ({ timers: timers.size, disposed, readinessCalls, clearedOrigins }),
     };
 }
@@ -183,4 +188,36 @@ test('a missing route still times out as a failure, never as a user cancellation
     assert.equal(s.state().timers, 0);
     assert.equal(s.state().disposed, 1);
     assert.equal(s.state().readinessCalls, 0);
+});
+
+test('an exact enrolled course can open when the panel has no strong identity', async () => {
+    const s = setup(async () => {});
+    s.service.matchCurrentMoodleIdentity = () => ({ hasExpected: false, matches: false });
+    const opening = s.service.performOpenCourseById(courseId, new CourseOpeningAttempt())
+        .then(value => ({ value }), error => ({ error }));
+
+    await tick();
+    assert.equal(s.courseLookupCount(), 1, 'the exact enrolled-course list must be checked');
+    s.emitEnd(courseId);
+    const result = await opening;
+
+    assert.equal(result.value, courseId);
+    assert.equal(result.error, undefined);
+    assert.equal(s.state().readinessCalls, 2);
+    assert.equal(s.state().disposed, 1);
+});
+
+test('a course outside the current account enrollment list stays blocked without a panel identity', async () => {
+    let navigationCalls = 0;
+    const s = setup(async () => { navigationCalls++; }, []);
+    s.service.matchCurrentMoodleIdentity = () => ({ hasExpected: false, matches: false });
+    s.service.reportCourseAccessIssue = () => 'selected course is not enrolled';
+
+    await assert.rejects(
+        s.service.performOpenCourseById(courseId, new CourseOpeningAttempt()),
+        /selected course is not enrolled/,
+    );
+
+    assert.equal(s.courseLookupCount(), 1);
+    assert.equal(navigationCalls, 0);
 });

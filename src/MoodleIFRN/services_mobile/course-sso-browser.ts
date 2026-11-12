@@ -11,6 +11,7 @@ export interface CourseSsoBrowserOptions {
     open: (url: string) => InAppBrowserObject;
     isToken: (url: string) => boolean;
     acceptToken: (url: string, attempt: CourseSsoAttempt) => Promise<void>;
+    onTokenValidationError?: (error: unknown) => void;
     isCurrent?: () => boolean;
     timeoutMs?: number;
 }
@@ -91,7 +92,17 @@ export function startCourseSsoBrowser(options: CourseSsoBrowserOptions): {
                 settled = true;
                 dispose();
                 resolve();
-            }).catch(() => fail('Não foi possível validar a conexão automática deste curso.'));
+            }).catch(error => {
+                if (settled) {
+                    return;
+                }
+                try {
+                    options.onTokenValidationError?.(error);
+                } catch {
+                    // Diagnóstico não pode impedir o fechamento seguro do fluxo.
+                }
+                fail('Não foi possível validar a conexão automática deste curso.');
+            });
             return true;
         };
         const allowed = (url: string): boolean => {

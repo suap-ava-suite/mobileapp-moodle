@@ -234,11 +234,12 @@ function safeLogPayload(payload: Record<string, unknown>): string {
         'cpfWouldMatchButIgnoredIfMatricula', 'hasSession', 'matches', 'hadSessionBefore', 'resumeAfterSwitch',
         'sessionMatchedBefore', 'hasNativeToken', 'loggedOut', 'storedMatchingLoggedOut', 'oauthFlowActive',
         'loadSiteReturned', 'hasMatchingAfterLoad', 'identityVerified', 'hasConfig', 'found', 'opened', 'identityOnly',
-        'caseA_storedWrongAccount', 'caseB_needsBrowserOAuth', 'usernameAvailable'];
+        'caseA_storedWrongAccount', 'caseB_needsBrowserOAuth', 'usernameAvailable', 'sessionAttemptCurrent'];
     const numbers = ['courseId', 'pendingCourseId', 'enrolledCount', 'candidateCount', 'preferredLength', 'moodleLength'];
     const urls = ['siteUrl', 'rawCandidate', 'targetSiteUrl', 'requested', 'resolved', 'url', 'launchurl'];
     const values: Record<string, string[]> = {
         errorName: ['Error', 'TypeError', 'HttpErrorResponse', 'CoreError', 'CoreWSError'],
+        sessionAttemptState: ['pending', 'committed', 'cancelled', 'unknown'],
         matchedVia: ['perfil.matricula', 'perfil.username', 'perfil.identificacao', 'perfil.cpf', 'suap-auth.ifrn_username'],
         identityResult: ['matched-current', 'loaded-stored', 'need-oauth', 'oauth-mismatch'],
         preferredShape: ['digits', 'mixed', 'empty'], moodleShape: ['digits', 'mixed', 'empty'],
@@ -1923,10 +1924,6 @@ export class MoodleSiteService {
             throw new Error('Não há sessão Moodle ativa.');
         }
 
-        if (!match.hasExpected) {
-            throw new Error('Não foi possível confirmar a conta do Painel antes de abrir o curso. Reabra o Painel.');
-        }
-
         if (match.hasExpected && !match.matches) {
             throw new Error(this.reportCourseAccessIssue('identity-mismatch', courseId));
         }
@@ -1958,11 +1955,12 @@ export class MoodleSiteService {
             attempt.assertActive();
             const currentSite = CoreSites.getCurrentSite();
             const currentInfo = currentSite?.getInfo();
+            const currentIdentity = this.matchCurrentMoodleIdentity();
             if (!currentSite || !CoreSites.isLoggedIn()
                 || CoreSites.getCurrentSiteId() !== siteId
                 || !this.hasPresencialSession(siteUrl)
                 || !identitiesMatch(sessionUsername, this.getCurrentMoodleIdentity())
-                || !this.matchCurrentMoodleIdentity().matches
+                || (currentIdentity.hasExpected && !currentIdentity.matches)
                 || (typeof sessionUserId === 'number' && currentInfo?.userid !== sessionUserId)) {
                 throw new Error(
                     'A conta ou o ambiente Moodle mudou durante a abertura. Volte ao Painel e selecione a disciplina novamente.',
@@ -2580,12 +2578,24 @@ export class MoodleSiteService {
         };
 
         let coreAttempt: CoreSitesSessionAttempt;
+        const validateCourseIdentity = (username: string): boolean => {
+            const match = matchMoodleAgainstCandidates(username, identityCandidates);
+            logSiteDiagnostic('course-sso-identity-check', {
+                hasExpected: match.hasExpected,
+                matches: match.matches,
+                matchedVia: match.matchedVia,
+                candidateCount: match.candidateCount,
+                moodleUsernameAvailable: !!normalizeIdentity(username),
+            });
+
+            return match.matches;
+        };
         try {
             coreAttempt = await CoreSites.beginSessionAttempt(
                 attemptOwner,
                 ownerEpoch,
                 isCurrent,
-                username => matchMoodleAgainstCandidates(username, identityCandidates).matches,
+                validateCourseIdentity,
             );
         } catch (error) {
             releaseProfileBrowserLease();
@@ -2614,6 +2624,11 @@ export class MoodleSiteService {
                     usewkwebview: 'yes',
                 }),
                 isToken: url => CoreCustomURLSchemes.isCustomURLToken(url),
+                onTokenValidationError: error => logSiteError('course-sso-token-validation', error, {
+                    siteUrl: siteCheck.siteUrl,
+                    sessionAttemptCurrent: CoreSites.isSessionAttemptCurrent(coreAttempt),
+                    sessionAttemptState: coreAttempt.state,
+                }),
                 acceptToken: async (url, attempt) => {
                     attempt.assertActive();
                     this.oauthCallbackReceived = true;

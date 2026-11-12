@@ -25,17 +25,19 @@ import {
     CoreSite,
     CoreSiteConfig,
 } from '@classes/sites/site';
-import { SQLiteDB, SQLiteDBRecordValues, SQLiteDBTableSchema } from '@classes/sqlitedb';
+import { SQLiteDB, SQLiteDBRecordValue, SQLiteDBRecordValues, SQLiteDBTableSchema } from '@classes/sqlitedb';
 import { CoreError, CoreErrorDebug } from '@classes/errors/error';
 import { CoreLoginError, CoreLoginErrorOptions } from '@classes/errors/loginerror';
 import { makeSingleton, Translate, Http } from '@singletons';
 import { CoreLogger } from '@static/logger';
 import {
     APP_SCHEMA,
+    IFRN_SESSION_ATTEMPTS_TABLE_NAME,
     SCHEMA_VERSIONS_TABLE_SCHEMA,
     SITES_TABLE_NAME,
     SCHEMA_VERSIONS_TABLE_NAME,
     SiteDBEntry,
+    SessionAttemptDBEntry,
     SchemaVersionsDBEntry,
 } from '@services/database/sites';
 import { CoreNetworkError } from '@classes/errors/network-error';
@@ -73,6 +75,18 @@ import { CoreErrorLogs } from '@static/error-logs';
 
 export const CORE_SITE_SCHEMAS = new InjectionToken<CoreSiteSchema[]>('CORE_SITE_SCHEMAS');
 export const CORE_SITE_CURRENT_SITE_ID_CONFIG = 'current_site_id';
+
+/** Owner-bound authorization for one native course authentication attempt. */
+export type CoreSitesSessionAttempt = {
+    attemptId: string;
+    generation: number;
+    owner: string;
+    epoch: string;
+    previousSiteId?: string;
+    state: SessionAttemptDBEntry['state'];
+    isOwnerCurrent: () => boolean;
+    validateIdentity: (username: string) => boolean;
+};
 
 /**
  * Sites DB Manager.
@@ -351,6 +365,9 @@ export class CoreSitesProvider {
     protected sites: { [s: string]: CoreSite } = {};
     protected logoutPromise?: CorePromisedValue<void>;
     protected deleteTokensListeners: CoreSitesDeleteTokensListener[] = [];
+    protected activeSessionAttempt?: CoreSitesSessionAttempt;
+    protected sessionAttemptGeneration = 0;
+    protected sessionAttemptsReady = false;
 
     protected sitesTable = asyncInstance<CoreDatabaseTable<SiteDBEntry>>();
     protected sitesDB: CoreSitesDB; // To handle sites DB.
@@ -394,12 +411,19 @@ export class CoreSitesProvider {
         CoreEvents.on(CoreEvents.LOGIN, async (data) => {
             if (data.siteId) {
                 const site = await CoreSites.getSite(data.siteId);
+                if (!CoreSites.isSessionAttemptIdCurrent(data.sessionAttemptId)
+                        || CoreSites.getCurrentSiteId() !== data.siteId) {
+                    return;
+                }
                 const info = site.getInfo();
                 if (info) {
                     CoreHTMLClasses.addSiteClasses(info);
                 }
             }
 
+            if (!CoreSites.isSessionAttemptIdCurrent(data.sessionAttemptId)) {
+                return;
+            }
             CoreLang.loadCustomStringsFromSite();
         });
 
@@ -454,6 +478,136 @@ export class CoreSitesProvider {
         await sitesTable.initialize();
 
         this.sitesTable.setInstance(sitesTable);
+
+        // Fail closed if the attempt authority table was not installed by the app DB migration.
+        // Seed the in-memory counter from the durable receipt before accepting any new attempt.
+        const attempts = await CoreAppDB.getDB().getAllRecords<SessionAttemptDBEntry>(IFRN_SESSION_ATTEMPTS_TABLE_NAME);
+        const activeAttempt = attempts.find(record => record.id === 'active');
+        this.sessionAttemptGeneration = Math.max(this.sessionAttemptGeneration, activeAttempt?.generation ?? 0);
+        this.sessionAttemptsReady = true;
+    }
+
+    /** Start a new owner-bound session attempt and durably supersede every older pending attempt. */
+    async beginSessionAttempt(
+        owner: string,
+        epoch: string,
+        isOwnerCurrent: () => boolean,
+        validateIdentity: (username: string) => boolean,
+    ): Promise<CoreSitesSessionAttempt> {
+        if (!this.sessionAttemptsReady || !owner || !epoch || !isOwnerCurrent() || !validateIdentity) {
+            throw new CoreError('Não foi possível preparar uma tentativa Moodle segura.');
+        }
+
+        const previousAttempt = this.activeSessionAttempt;
+        const previousAttemptWasPending = !!previousAttempt && previousAttempt.state !== 'committed';
+        const generation = ++this.sessionAttemptGeneration;
+        const attempt: CoreSitesSessionAttempt = {
+            attemptId: Md5.hashStr(`${Date.now()}-${Math.random()}-${generation}`),
+            generation,
+            owner,
+            epoch,
+            isOwnerCurrent,
+            validateIdentity,
+            state: 'pending',
+        };
+
+        // Invalidate the old authority synchronously, before any database operation can yield.
+        if (previousAttempt && previousAttempt.state !== 'committed') {
+            previousAttempt.state = 'cancelled';
+        }
+        this.activeSessionAttempt = attempt;
+
+        if (this.currentSite && validateIdentity(this.currentSite.getInfo()?.username ?? '')) {
+            attempt.previousSiteId = this.currentSite.getId();
+        } else {
+            const previousRecord = (await CoreAppDB.getDB().getAllRecords<SessionAttemptDBEntry>(
+                IFRN_SESSION_ATTEMPTS_TABLE_NAME,
+            )).find(record => record.id === 'active');
+            if (!previousAttemptWasPending && previousRecord?.state === 'committed' && previousRecord.owner === owner) {
+                attempt.previousSiteId = previousRecord.siteId ?? undefined;
+            } else if (!previousAttemptWasPending && !previousRecord) {
+                // Legacy sessions don't have an owner receipt; resolve their Moodle identity before reuse.
+                const legacySiteId = await CoreConfig.get<string>(CORE_SITE_CURRENT_SITE_ID_CONFIG);
+                if (legacySiteId) {
+                    const legacySite = await CorePromiseUtils.ignoreErrors(this.getSite(legacySiteId));
+                    if (legacySite && validateIdentity(legacySite.getInfo()?.username ?? '')) {
+                        attempt.previousSiteId = legacySiteId;
+                    }
+                }
+            }
+        }
+        this.assertSessionAttemptCurrent(attempt);
+
+        const db = CoreAppDB.getDB();
+        await db.executeBatch([[
+            `INSERT OR REPLACE INTO ${IFRN_SESSION_ATTEMPTS_TABLE_NAME}
+                (id, attemptId, generation, state, previousSiteId, owner, epoch, siteId, credentialKey)
+                SELECT ?, ?, ?, ?, ?, ?, ?, NULL, NULL WHERE NOT EXISTS (
+                    SELECT 1 FROM ${IFRN_SESSION_ATTEMPTS_TABLE_NAME} WHERE id = ? AND generation > ?
+                )`,
+            ['active', attempt.attemptId, attempt.generation, 'pending', attempt.previousSiteId ?? null,
+                attempt.owner, attempt.epoch, 'active', attempt.generation],
+        ]]);
+
+        this.assertSessionAttemptCurrent(attempt);
+        const receipt = await db.getRecord<SessionAttemptDBEntry>(IFRN_SESSION_ATTEMPTS_TABLE_NAME, { id: 'active' });
+        if (receipt.attemptId !== attempt.attemptId || receipt.generation !== attempt.generation
+                || receipt.owner !== attempt.owner || receipt.epoch !== attempt.epoch || receipt.state !== 'pending') {
+            throw new CoreError('A tentativa de sessão Moodle foi substituída por uma mais recente.');
+        }
+
+        return attempt;
+    }
+
+    /** Cancel one pending attempt without invalidating a newer attempt. */
+    cancelSessionAttempt(attempt: CoreSitesSessionAttempt): void {
+        if (attempt.state === 'committed' || attempt.state === 'cancelled' || attempt.state === 'unknown') {
+            return;
+        }
+
+        attempt.state = 'cancelled';
+        if (this.activeSessionAttempt === attempt) {
+            this.activeSessionAttempt = undefined;
+        }
+
+        // Exact attempt and pending-state predicates prevent a delayed cancellation or logout from changing
+        // a newer reservation or turning a durable logout tombstone back into a restorable session.
+        void CoreAppDB.getDB().executeBatch([[
+            `UPDATE ${IFRN_SESSION_ATTEMPTS_TABLE_NAME} SET state = ?
+                WHERE id = ? AND attemptId = ? AND generation = ? AND owner = ? AND epoch = ? AND state IN (?, ?)`,
+            ['cancelled', 'active', attempt.attemptId, attempt.generation, attempt.owner, attempt.epoch, 'pending', 'prepared'],
+        ]]).catch(() => undefined);
+    }
+
+    /** Check whether an attempt still owns the current session publication lease. */
+    isSessionAttemptCurrent(attempt: CoreSitesSessionAttempt): boolean {
+        return this.activeSessionAttempt === attempt
+            && attempt.generation === this.sessionAttemptGeneration
+            && attempt.state !== 'cancelled'
+            && attempt.state !== 'unknown'
+            && attempt.isOwnerCurrent();
+    }
+
+    /** Check whether an owner-bound session attempt is still processing a callback. */
+    hasPendingSessionAttempt(): boolean {
+        const attempt = this.activeSessionAttempt;
+
+        return !!attempt && (attempt.state === 'pending' || attempt.state === 'prepared')
+            && this.isSessionAttemptCurrent(attempt);
+    }
+
+    /** Throw before shared effects when an attempt was cancelled, superseded or expired. */
+    assertSessionAttemptCurrent(attempt: CoreSitesSessionAttempt): void {
+        if (!this.isSessionAttemptCurrent(attempt)) {
+            throw new CoreError('A tentativa de sessão Moodle foi cancelada ou substituída.');
+        }
+    }
+
+    /** Current attempt identifier used by async LOGIN observers to drop stale follow-up work. */
+    isSessionAttemptIdCurrent(attemptId?: string): boolean {
+        return !attemptId || !!this.activeSessionAttempt
+            && this.activeSessionAttempt.attemptId === attemptId
+            && this.isSessionAttemptCurrent(this.activeSessionAttempt);
     }
 
     /**
@@ -823,7 +977,12 @@ export class CoreSitesProvider {
         privateToken = '',
         login = true,
         oauthId?: number,
+        sessionAttempt?: CoreSitesSessionAttempt,
     ): Promise<string> {
+        if (sessionAttempt) {
+            return this.newSiteWithSessionAttempt(siteUrl, token, privateToken, login, oauthId, sessionAttempt);
+        }
+
         if (typeof login !== 'boolean') {
             login = true;
         }
@@ -917,6 +1076,255 @@ export class CoreSitesProvider {
             }
 
             throw error;
+        }
+    }
+
+    /**
+     * Prepare and conditionally publish a native SSO session. Credentials are written to a private versioned
+     * SecureStorage collection first; the SQLite transaction publishes that version only if its attempt lease is current.
+     */
+    protected async newSiteWithSessionAttempt(
+        siteUrl: string,
+        token: string,
+        privateToken: string,
+        login: boolean,
+        oauthId: number | undefined,
+        attempt: CoreSitesSessionAttempt,
+    ): Promise<string> {
+        this.assertSessionAttemptCurrent(attempt);
+        if (!login) {
+            this.cancelSessionAttempt(attempt);
+            throw new CoreError('Uma tentativa de sessão só pode publicar uma autenticação Moodle validada.');
+        }
+
+        const authSite = CoreSitesFactory.makeAuthenticatedSite(siteUrl, token, { privateToken });
+        const info = await authSite.fetchSiteInfo();
+        this.assertSessionAttemptCurrent(attempt);
+
+        if (!attempt.validateIdentity(info.username)) {
+            this.cancelSessionAttempt(attempt);
+            throw new CoreError('A identidade do Moodle não corresponde à conta SUAP autenticada.');
+        }
+
+        const result = this.isValidMoodleVersion(info);
+        if (result !== CoreSitesProvider.VALID_VERSION) {
+            this.cancelSessionAttempt(attempt);
+
+            return this.treatInvalidAppVersion(result);
+        }
+
+        const siteId = this.createSiteID(info.siteurl, info.username);
+        const storedSite = await CorePromiseUtils.ignoreErrors(this.getSite(siteId));
+        this.assertSessionAttemptCurrent(attempt);
+        const previousSiteRecord = storedSite
+            ? await CorePromiseUtils.ignoreErrors(this.sitesTable.getOneByPrimaryKey({ id: siteId }))
+            : undefined;
+        this.assertSessionAttemptCurrent(attempt);
+
+        // Never mutate a cached site before the candidate session is published.
+        const site = CoreSitesFactory.makeSite(siteId, siteUrl, token, { info, privateToken });
+        site.setOAuthId(oauthId);
+
+        if (!storedSite) {
+            await this.sitesDB.migrateSiteSchemas(site);
+            this.assertSessionAttemptCurrent(attempt);
+        }
+
+        let config: CoreSiteConfig | undefined;
+        try {
+            config = await this.getSiteConfig(site);
+            this.assertSessionAttemptCurrent(attempt);
+        } catch (error) {
+            if (!storedSite) {
+                throw error;
+            }
+
+            config = storedSite.getStoredConfig();
+        }
+
+        if (config !== undefined) {
+            site.setConfig(config);
+        }
+
+        const credentialKey = `ifrn-session-${attempt.attemptId}`;
+        const secureStorage = CoreNative.plugin('secureStorage');
+        if (!secureStorage?.storeDurable) {
+            throw new CoreError('O armazenamento seguro não confirmou a preparação da sessão Moodle.');
+        }
+
+        let publicationStarted = false;
+        let publicationNotCommitted = false;
+        try {
+            await secureStorage.storeDurable({ token, privateToken: privateToken ?? '' }, credentialKey);
+            attempt.state = 'prepared';
+            this.assertSessionAttemptCurrent(attempt);
+
+            const db = CoreAppDB.getDB();
+            const prepared = await db.executeBatch([[
+                `UPDATE ${IFRN_SESSION_ATTEMPTS_TABLE_NAME} SET state = ?
+                    WHERE id = ? AND attemptId = ? AND generation = ? AND owner = ? AND epoch = ? AND state = ?`,
+                ['prepared', 'active', attempt.attemptId, attempt.generation, attempt.owner, attempt.epoch, 'pending'],
+            ]]).then(async () => db.getRecord<SessionAttemptDBEntry>(IFRN_SESSION_ATTEMPTS_TABLE_NAME, { id: 'active' }))
+                .catch(async () => db.getRecord<SessionAttemptDBEntry>(IFRN_SESSION_ATTEMPTS_TABLE_NAME, { id: 'active' })
+                    .catch(() => undefined));
+
+            this.assertSessionAttemptCurrent(attempt);
+            if (prepared?.attemptId !== attempt.attemptId || prepared.generation !== attempt.generation
+                    || prepared.state !== 'prepared') {
+                throw new CoreError('A preparação da sessão foi substituída por outra tentativa.');
+            }
+
+            const siteRecord: SiteDBEntry = {
+                id: siteId,
+                siteUrl,
+                token: '',
+                info: JSON.stringify(info),
+                privateToken: '',
+                config: config ? JSON.stringify(config) : null,
+                loggedOut: 0,
+                oauthId: oauthId ?? null,
+                credentialKey,
+            };
+
+            this.assertSessionAttemptCurrent(attempt);
+            try {
+                publicationStarted = true;
+                await db.executeBatch([
+                    [
+                        `UPDATE ${IFRN_SESSION_ATTEMPTS_TABLE_NAME} SET state = ?, siteId = ?, credentialKey = ?
+                            WHERE id = ? AND attemptId = ? AND generation = ? AND owner = ? AND epoch = ? AND state = ?`,
+                        ['committed', siteId, credentialKey, 'active', attempt.attemptId, attempt.generation,
+                            attempt.owner, attempt.epoch, 'prepared'],
+                    ],
+                    [
+                        `INSERT OR REPLACE INTO ${SITES_TABLE_NAME}
+                            (id, siteUrl, token, info, privateToken, config, loggedOut, oauthId, credentialKey)
+                            SELECT ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE EXISTS (
+                                SELECT 1 FROM ${IFRN_SESSION_ATTEMPTS_TABLE_NAME}
+                                WHERE id = ? AND attemptId = ? AND generation = ? AND owner = ? AND epoch = ? AND state = ?
+                            )`,
+                        [siteRecord.id, siteRecord.siteUrl, siteRecord.token, siteRecord.info, siteRecord.privateToken,
+                            siteRecord.config, siteRecord.loggedOut, siteRecord.oauthId, siteRecord.credentialKey,
+                            'active', attempt.attemptId, attempt.generation, attempt.owner, attempt.epoch, 'committed'],
+                    ],
+                ]);
+            } catch {
+                // The transaction ACK may be lost. Reconcile only the exact attempt receipt on the same app DB.
+            }
+
+            let receipt: SessionAttemptDBEntry;
+            try {
+                receipt = await db.getRecord<SessionAttemptDBEntry>(IFRN_SESSION_ATTEMPTS_TABLE_NAME, { id: 'active' });
+            } catch {
+                if (this.isSessionAttemptCurrent(attempt)) {
+                    attempt.state = 'unknown';
+                }
+                throw new CoreError('O resultado da gravação da sessão Moodle é desconhecido; a tentativa foi mantida isolada.');
+            }
+
+            const receiptBelongsToAttempt = receipt.attemptId === attempt.attemptId
+                && receipt.generation === attempt.generation
+                && receipt.owner === attempt.owner
+                && receipt.epoch === attempt.epoch;
+            const receiptConfirmsCommit = receiptBelongsToAttempt && receipt.state === 'committed'
+                && receipt.siteId === siteId && receipt.credentialKey === credentialKey;
+            publicationNotCommitted = receiptBelongsToAttempt && receipt.state !== 'committed';
+            if (!receiptConfirmsCommit) {
+                if (publicationStarted && !this.isSessionAttemptCurrent(attempt)) {
+                    attempt.state = 'cancelled';
+                    try {
+                        await this.rollbackUnactivatedSessionAttempt(attempt, siteId, credentialKey, previousSiteRecord);
+                        publicationNotCommitted = true;
+                    } catch {
+                        attempt.state = 'unknown';
+                    }
+                } else if (receiptBelongsToAttempt && receipt.state === 'committed') {
+                    attempt.state = 'unknown';
+                }
+                throw new CoreError('A publicação da sessão Moodle não pôde ser confirmada; a tentativa foi mantida isolada.');
+            }
+
+            if (!this.isSessionAttemptCurrent(attempt)) {
+                attempt.state = 'cancelled';
+                try {
+                    await this.rollbackUnactivatedSessionAttempt(attempt, siteId, credentialKey, previousSiteRecord);
+                    publicationNotCommitted = true;
+                } catch {
+                    attempt.state = 'unknown';
+                }
+                throw new CoreError('A sessão Moodle foi substituída antes da ativação.');
+            }
+
+            attempt.state = 'committed';
+
+            // The row is already durable. Refresh only the in-memory table cache: a second DB write here
+            // could finish late and overwrite a newer credential version for the same site ID.
+            this.assertSessionAttemptCurrent(attempt);
+            this.sitesTable.syncCacheRecord(siteRecord);
+            this.sites[siteId] = site;
+            this.currentSite = site;
+            void this.login(siteId, attempt);
+            CoreEvents.trigger(CoreEvents.SITE_ADDED, info, siteId);
+
+            return siteId;
+        } catch (error) {
+            if (attempt.state !== 'committed') {
+                // Once the publication transaction starts, retain the private credential collection unless
+                // an exact SQLite receipt proves that this attempt did not commit.
+                if (!publicationStarted || publicationNotCommitted) {
+                    await CorePromiseUtils.ignoreErrors(secureStorage.deleteCollection(credentialKey));
+                }
+                if (attempt.state !== 'unknown') {
+                    this.cancelSessionAttempt(attempt);
+                }
+            }
+
+            throw error;
+        }
+    }
+
+    /** Revoke a durable candidate if it committed after its in-memory attempt lost ownership. */
+    protected async rollbackUnactivatedSessionAttempt(
+        attempt: CoreSitesSessionAttempt,
+        siteId: string,
+        credentialKey: string,
+        previousSiteRecord?: SiteDBEntry,
+    ): Promise<void> {
+        const db = CoreAppDB.getDB();
+        const statements: [string, SQLiteDBRecordValue[]][] = [[
+            `UPDATE ${IFRN_SESSION_ATTEMPTS_TABLE_NAME} SET state = ?, siteId = NULL, credentialKey = NULL
+                WHERE id = ? AND attemptId = ? AND generation = ? AND owner = ? AND epoch = ?
+                    AND state = ? AND siteId = ? AND credentialKey = ?`,
+            ['cancelled', 'active', attempt.attemptId, attempt.generation, attempt.owner, attempt.epoch,
+                'committed', siteId, credentialKey],
+        ]];
+
+        if (previousSiteRecord) {
+            statements.push([
+                `UPDATE ${SITES_TABLE_NAME} SET siteUrl = ?, token = ?, info = ?, privateToken = ?, config = ?,
+                    loggedOut = ?, oauthId = ?, credentialKey = ? WHERE id = ? AND credentialKey = ?`,
+                [previousSiteRecord.siteUrl, previousSiteRecord.token, previousSiteRecord.info ?? null,
+                    previousSiteRecord.privateToken, previousSiteRecord.config ?? null, previousSiteRecord.loggedOut,
+                    previousSiteRecord.oauthId ?? null, previousSiteRecord.credentialKey ?? null, siteId, credentialKey],
+            ]);
+        } else {
+            statements.push([
+                `DELETE FROM ${SITES_TABLE_NAME} WHERE id = ? AND credentialKey = ?`,
+                [siteId, credentialKey],
+            ]);
+        }
+
+        await db.executeBatch(statements);
+
+        const [receipt, siteRecord] = await Promise.all([
+            db.getRecord<SessionAttemptDBEntry>(IFRN_SESSION_ATTEMPTS_TABLE_NAME, { id: 'active' })
+                .catch(() => undefined),
+            db.getRecord<SiteDBEntry>(SITES_TABLE_NAME, { id: siteId }).catch(() => undefined),
+        ]);
+        if (receipt?.attemptId === attempt.attemptId && receipt.generation === attempt.generation
+                && receipt.state === 'committed' && receipt.siteId === siteId && receipt.credentialKey === credentialKey
+                || siteRecord?.credentialKey === credentialKey) {
+            throw new CoreError('Não foi possível confirmar o descarte da sessão Moodle obsoleta.');
         }
     }
 
@@ -1369,6 +1777,7 @@ export class CoreSitesProvider {
         }
 
         const site = await this.getSite(siteId);
+        const storedSite = await CorePromiseUtils.ignoreErrors(this.sitesTable.getOneByPrimaryKey({ id: siteId }));
 
         await site.deleteDB();
 
@@ -1381,7 +1790,12 @@ export class CoreSitesProvider {
         // Site deleted from sites list, now delete the folder.
         await site.deleteFolder();
 
-        await CorePromiseUtils.ignoreErrors(CoreNative.plugin('secureStorage')?.deleteCollection(siteId));
+        await CorePromiseUtils.allPromisesIgnoringErrors([
+            CoreNative.plugin('secureStorage')?.deleteCollection(siteId) ?? Promise.resolve(),
+            storedSite?.credentialKey
+                ? CoreNative.plugin('secureStorage')?.deleteCollection(storedSite.credentialKey) ?? Promise.resolve()
+                : Promise.resolve(),
+        ]);
 
         CoreEvents.trigger(CoreEvents.SITE_DELETED, site, siteId);
     }
@@ -1705,8 +2119,45 @@ export class CoreSitesProvider {
      *
      * @param siteId ID of the site the user is accessing.
      */
-    async login(siteId: string): Promise<void> {
+    async login(siteId: string, attempt?: CoreSitesSessionAttempt): Promise<void> {
+        if (attempt) {
+            this.assertSessionAttemptCurrent(attempt);
+            CoreEvents.trigger(CoreEvents.LOGIN, { siteId, sessionAttemptId: attempt.attemptId }, siteId);
+
+            return;
+        }
+
+        const generation = ++this.sessionAttemptGeneration;
+        const oldAttempt = this.activeSessionAttempt;
+        if (oldAttempt && oldAttempt.state !== 'committed') {
+            this.cancelSessionAttempt(oldAttempt);
+        } else {
+            this.activeSessionAttempt = undefined;
+        }
+
+        if (this.sessionAttemptsReady) {
+            const db = CoreAppDB.getDB();
+            const authority = await db.getAllRecords<SessionAttemptDBEntry>(IFRN_SESSION_ATTEMPTS_TABLE_NAME)
+                .then(records => records.find(record => record.id === 'active'))
+                .catch(() => undefined);
+            if (generation !== this.sessionAttemptGeneration) {
+                return;
+            }
+
+            const preserveCommittedAttempt = authority?.state === 'committed' && authority.siteId === siteId
+                && authority.owner === this.getPersistedSessionOwner();
+            if (!preserveCommittedAttempt) {
+                await db.deleteRecords(IFRN_SESSION_ATTEMPTS_TABLE_NAME, { id: 'active' }).catch(() => undefined);
+            }
+        }
+        if (generation !== this.sessionAttemptGeneration) {
+            return;
+        }
+
         await CoreConfig.set(CORE_SITE_CURRENT_SITE_ID_CONFIG, siteId);
+        if (generation !== this.sessionAttemptGeneration) {
+            return;
+        }
 
         CoreEvents.trigger(CoreEvents.LOGIN, { siteId }, siteId);
     }
@@ -1738,7 +2189,18 @@ export class CoreSitesProvider {
      * @param options Logout options.
      */
     async internalLogout(options: InternalLogoutOptions = {}): Promise<void> {
+        if (this.activeSessionAttempt && this.activeSessionAttempt.state !== 'committed') {
+            this.cancelSessionAttempt(this.activeSessionAttempt);
+        } else {
+            this.activeSessionAttempt = undefined;
+            this.sessionAttemptGeneration++;
+        }
+
         if (!this.currentSite) {
+            if (this.sessionAttemptsReady) {
+                await this.removeStoredCurrentSite().catch(() => undefined);
+            }
+
             return;
         }
 
@@ -1891,6 +2353,7 @@ export class CoreSitesProvider {
             token: '',
             privateToken: '',
             loggedOut: 0,
+            credentialKey: null,
         };
 
         promises.push(this.sitesTable.update(newData, { id: siteId }));
@@ -1954,7 +2417,12 @@ export class CoreSitesProvider {
                     loadedSite.privateToken = '';
                 }
 
-                await CoreNative.plugin('secureStorage')?.deleteCollection(site.id);
+                await CorePromiseUtils.allPromisesIgnoringErrors([
+                    CoreNative.plugin('secureStorage')?.deleteCollection(site.id) ?? Promise.resolve(),
+                    site.credentialKey
+                        ? CoreNative.plugin('secureStorage')?.deleteCollection(site.credentialKey) ?? Promise.resolve()
+                        : Promise.resolve(),
+                ]);
             })),
             ...this.deleteTokensListeners.map(listener => Promise.resolve(listener())),
         ]);
@@ -2112,13 +2580,78 @@ export class CoreSitesProvider {
     async getStoredCurrentSiteId(): Promise<string> {
         await this.migrateCurrentSiteLegacyTable();
 
+        if (this.sessionAttemptsReady) {
+            const authority = (await CoreAppDB.getDB().getAllRecords<SessionAttemptDBEntry>(
+                IFRN_SESSION_ATTEMPTS_TABLE_NAME,
+            )).find(record => record.id === 'active');
+
+            if (authority) {
+                if (authority.state === 'logged-out') {
+                    return '';
+                }
+
+                if (authority.state === 'committed') {
+                    if (!authority.owner || authority.owner !== this.getPersistedSessionOwner()
+                            || !authority.siteId || !authority.credentialKey) {
+                        return '';
+                    }
+
+                    const site = await this.sitesTable.getOneByPrimaryKey({ id: authority.siteId });
+
+                    return site?.credentialKey === authority.credentialKey ? authority.siteId : '';
+                }
+
+                // Pending, prepared, cancelled or unknown attempts must never restore their candidate session.
+                if (!authority.owner || authority.owner !== this.getPersistedSessionOwner() || !authority.previousSiteId) {
+                    return '';
+                }
+
+                const previousSite = await this.sitesTable.getOneByPrimaryKey({ id: authority.previousSiteId });
+
+                return previousSite ? authority.previousSiteId : '';
+            }
+        }
+
         return CoreConfig.get(CORE_SITE_CURRENT_SITE_ID_CONFIG);
+    }
+
+    /** Read the locally stored, non-secret identity owner used by the IFRN session. */
+    protected getPersistedSessionOwner(): string | undefined {
+        try {
+            const owner = sessionStorage.getItem('ifrn_painel_owner')
+                || localStorage.getItem('ifrn_painel_owner')
+                || sessionStorage.getItem('ifrn_username')
+                || localStorage.getItem('ifrn_username');
+
+            return owner?.trim().toLowerCase() || undefined;
+        } catch {
+            return undefined;
+        }
     }
 
     /**
      * Remove current site stored in DB.
      */
     async removeStoredCurrentSite(): Promise<void> {
+        // Invalidate every attempt that started before this logout/removal call. A later attempt receives
+        // a larger generation and cannot be overwritten by this asynchronous tombstone write.
+        const generation = ++this.sessionAttemptGeneration;
+        const previousAttempt = this.activeSessionAttempt;
+        if (previousAttempt && previousAttempt.state !== 'committed') {
+            this.cancelSessionAttempt(previousAttempt);
+        } else {
+            this.activeSessionAttempt = undefined;
+        }
+
+        if (this.sessionAttemptsReady) {
+            await CoreAppDB.getDB().executeBatch([[
+                `UPDATE ${IFRN_SESSION_ATTEMPTS_TABLE_NAME}
+                    SET state = ?, siteId = NULL, credentialKey = NULL, generation = ?
+                    WHERE id = ? AND generation < ?`,
+                ['logged-out', generation, 'active', generation],
+            ]]);
+        }
+
         await CoreConfig.delete(CORE_SITE_CURRENT_SITE_ID_CONFIG);
     }
 
@@ -2366,8 +2899,11 @@ export class CoreSitesProvider {
      * @param siteId Site ID.
      * @returns Stored tokens.
      */
-    protected async getTokensFromSecureStorage(siteId: string): Promise<{ token: string; privateToken?: string }> {
-        const result = await CoreNative.plugin('secureStorage')?.get(['token', 'privateToken'], siteId);
+    protected async getTokensFromSecureStorage(
+        siteId: string,
+        credentialKey = siteId,
+    ): Promise<{ token: string; privateToken?: string }> {
+        const result = await CoreNative.plugin('secureStorage')?.get(['token', 'privateToken'], credentialKey);
 
         return {
             token: result?.token ?? '',
@@ -2404,7 +2940,7 @@ export class CoreSitesProvider {
             return site;
         }
 
-        const tokens = await this.getTokensFromSecureStorage(site.id);
+        const tokens = await this.getTokensFromSecureStorage(site.id, site.credentialKey ?? site.id);
 
         return {
             ...site,

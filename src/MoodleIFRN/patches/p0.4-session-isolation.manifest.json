@@ -3,7 +3,7 @@
   "id": "ifrn-p0.4-session-isolation.v1",
   "baseCommit": "4942598b6",
   "patchPath": "src/MoodleIFRN/patches/p0.4-session-isolation.patch",
-  "patchSha256": "777dc0627d17bfd0ca9ec885207e481cd023d5b120ceff3f50c491abda53824b",
+  "patchSha256": "8c008398a18f903d50f2cff960ffda830f0ed8761b5fa874a3d54395ddc250ce",
   "targets": [
     {
       "path": "cordova-plugin-moodleapp/src/android/SecureStorage.java",
@@ -53,12 +53,12 @@
     {
       "path": "src/core/services/sites.ts",
       "baseSha256": "8a2d0d27df80ca48817348bce2113fa7a54b959231e598d5097692f2b53ab13d",
-      "postSha256": "acef5f83d9a2fa979aa02a05f364208b3b40a74f39b03fa8ed6bbc8d8d163973"
+      "postSha256": "630ecf6da38e40611f218c9bec75ba01b8687024593ae47b9efeec6cace0f6c1"
     },
     {
       "path": "src/core/services/urlschemes.ts",
       "baseSha256": "4fb889bbefab9366749f298e5a69b4f179cfa75800e586c64f1b0a1673a9b44c",
-      "postSha256": "5f39d8dbcbe1baa5cb3d7cc44d9a0872f8420a7acb5cd5e58970bfef6428e37d"
+      "postSha256": "ffaef068fb77229d789beae150e95798325c16368be8833774640a24f7ea7449"
     },
     {
       "path": "src/core/static/events.ts",

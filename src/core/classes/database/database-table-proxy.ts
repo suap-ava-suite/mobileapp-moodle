@@ -176,6 +176,11 @@ export class CoreDatabaseTableProxy<
         this.target.syncInsert(record);
     }
 
+    /** @inheritdoc */
+    syncCacheRecord(record: SubPartial<DBRecord, RowIdColumn>): void {
+        this.target.syncCacheRecord(record);
+    }
+
     /**
      * @inheritdoc
      */

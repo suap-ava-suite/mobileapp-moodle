@@ -116,9 +116,16 @@ test('retoma launch perdido na página inicial uma vez; nunca fica em loop', asy
     s.cancel(); await assert.rejects(s.completion,/cancelada/);
 });
 test('callback rejeitado pelo núcleo não cria conexão válida', async () => {
-    const s=setup({acceptToken:async () => {throw new Error('invalid passport');}});
+    const failure = new Error('synthetic callback failure');
+    let observedFailure;
+    const s=setup({
+        acceptToken:async () => {throw failure;},
+        onTokenValidationError:error => { observedFailure = error; },
+    });
     s.emit('customscheme','moodlemobile://token=bad');
-    await assert.rejects(s.completion,/validar/); assert.equal(s.closed,1);
+    await assert.rejects(s.completion,/validar/);
+    assert.equal(observedFailure, failure);
+    assert.equal(s.closed,1);
 });
 
 test('timeout also bounds a callback validation that never finishes', async () => {
