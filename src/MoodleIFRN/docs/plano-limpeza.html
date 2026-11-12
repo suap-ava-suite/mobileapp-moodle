@@ -1,0 +1,90 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>Plano de limpeza para revis?o | Moodle IFRN</title><link rel="stylesheet" href="assets/manual.css"><link rel="stylesheet" href="assets/inventario.css"><script src="assets/manual.js" defer></script></head><body data-document="plano-limpeza.html">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topbar">
+    <button class="icon-button menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false">☰</button>
+    <a class="brand" href="index.html" aria-label="Moodle IFRN Mobile, início">
+      <span class="brand-mark" aria-hidden="true">IF</span>
+      <span><strong>Moodle IFRN Mobile</strong><small>Manual de desenvolvimento</small></span>
+    </a>
+    <div class="top-actions">
+      <label class="search-wrap"><span class="visually-hidden">Pesquisar no manual</span><input id="manual-search" type="search" placeholder="Pesquisar tópicos" autocomplete="off"></label>
+      <button id="theme-toggle" class="icon-button" type="button" aria-label="Alternar tema">◐</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Navegação do manual">
+      <nav>
+        <a href="index.html#inicio">Visão geral</a>
+        <a href="index.html#requisitos">Requisitos</a>
+        <a href="index.html#clone">Obter o código</a>
+        <a href="index.html#instalacao">Instalar dependências</a>
+        <a href="index.html#desenvolvimento">Desenvolver e executar</a>
+        <a href="index.html#scripts">Scripts IFRN</a>
+        <a href="index.html#android">Android e APK</a>
+        <a href="index.html#ios">iOS pelo MacBook</a>
+        <a href="index.html#testes">Testes e diagnóstico</a>
+        <a href="index.html#arquitetura">Arquitetura</a>
+        <a href="estrutura-arquitetura.html">Estrutura do MoodleIFRN</a>
+        <a href="inventario-arquivos.html">Inventário de arquivos</a>
+        <a href="inventario-fixtures.html">Inventário das fixtures</a>
+        <a href="plano-limpeza.html">Proposta de limpeza</a>
+        <a href="index.html#problemas">Problemas comuns</a>
+        <a href="index.html#evolucao-cursos">Evolução e validação dos cursos</a>
+        <a href="index.html#git">Fluxo Git</a>
+        <a href="index.html#documentacao">Documentação existente</a>
+        <details class="nav-group">
+          <summary>Documentação técnica</summary>
+          <div class="nav-sub">
+            <a href="html/README.html">Índice de documentos</a>
+            <a href="html/PONTE-PAINEL-MOODLE.html">Ponte Painel AVA → Moodle</a>
+            <a href="html/LOGIN-IFRN.html">Login IFRN</a>
+            <a href="html/PAINEL-CURSOS.html">Painel de cursos</a>
+            <a href="html/SEGURANCA.html">Segurança</a>
+            <a href="html/PATCH-AO-ATUALIZAR.html">Atualização e patches</a>
+            <a href="html/INVENTARIO-DOCUMENTACAO.html">Inventário</a>
+            <a href="html/PLAY-STORE-BETA.html">Publicação beta na Google Play</a>
+          </div>
+        </details>
+      </nav>
+      <div class="sidebar-note">Manual offline · revisão técnica em 11/11/2026</div>
+    </aside>
+
+    <main id="conteudo" class="content inventory-content"><section class="hero searchable"><p class="eyebrow">PROPOSTA · FASE 2 NÃO AUTORIZADA</p><h1>Plano de limpeza para revisão</h1><p>A Fase 1 não exclui, move ou renomeia arquivos. Esta proposta separa candidatos comprováveis de dependências que precisam permanecer.</p><p><a href="estrutura-arquitetura.html">Arquitetura</a> · <a href="inventario-arquivos.html">Inventário completo</a> · <a href="inventario-fixtures.html">Cada fixture</a></p></section>
+<section class="doc-section searchable" id="candidatos"><h2>Candidatos à remoção: cinco arquivos, nenhum excluído</h2>
+<div class="table-wrap"><table><thead><tr><th>Arquivo</th><th>Evidência/motivo</th><th>Risco e dependências</th><th>Alternativa e validação necessária</th></tr></thead><tbody>
+<tr><td><code>course-loading/disciplina-loading.component.ts</code><br><code>course-loading/disciplina-loading.component.scss</code></td><td>Seletor app-disciplina-loading e classe sem consumidor encontrado. O handoff ativo importa IfrnCourseLoadingComponent, de outra pasta.</td><td>Médio: adição recente à release pode representar trabalho planejado; o SCSS é referenciado pelo próprio componente.</td><td>Confirmar intenção com o autor. Depois, remover os dois em commit próprio; TypeScript, build Angular, testes de loading/cancelamento e inspeção no aparelho.</td></tr>
+<tr><td><code>navigation/early-course-handoff.js</code></td><td>IIFE sem operação, explicitamente desativada por F08; patch principal mantém marcadores de remoção no index.</td><td>Baixo/médio: dependências históricas do patch e cópias antigas precisam ser revisadas.</td><td>Manter decisão F08 documentada e remover somente a fonte inativa se autorizado. Validar patch idempotente, bootstrap sem referência e retorno ao Painel.</td></tr>
+<tr><td><code>tests/fixtures/p10-sqlite-extension/harness/www/css/index.css</code></td><td>CSS padrão do scaffold; index.html atual usa estilo inline e não o carrega.</td><td>Baixo, restrito ao harness. O CSS referencia a logo padrão.</td><td>Remover CSS/logo juntos após autorização; busca de refs, build do harness e comparação do resultado visual.</td></tr>
+<tr><td><code>tests/fixtures/p10-sqlite-extension/harness/www/img/logo.png</code></td><td>Imagem citada apenas pelo CSS sem cadeia de carregamento comprovada no harness atual.</td><td>Baixo, restrito ao harness; não é logo institucional do Moodle.</td><td>Mesmo commit e testes do CSS. Não confundir com resources/logo-moodle-ifrn.png ou logos do iframe.</td></tr>
+</tbody></table></div></section>
+<section class="doc-section searchable" id="duplicacoes"><h2>Duplicações que exigem desenho antes de remover</h2>
+<ul>
+<li><code>ExperimentalSessionLedger.java</code> na raiz P0.10 e a cópia em cordova-plugin/src têm bytes idênticos. A cópia do fork está em plugin.xml; a raiz aparece no manifesto/histórico. Propor uma fonte canônica e sincronização verificada em teste, preservando proveniência.</li>
+<li><code>SQLiteConnectorDatabase.java</code> no fork e upstream-7.0.0 são idênticos. O snapshot é referência de versão, o outro é entrada de compilação. Manter até revisar a estratégia de snapshots e hashes. Os dispatchers/API JS de nome igual diferem: não são duplicados.</li>
+<li><code>android-chrome-512x512.png</code> e <code>splash-logo.png</code> são idênticos. Nome/URL têm consumidores distintos; só consolidar com revisão de HTML, manifest e paths do CSS.</li>
+<li>Há 1.303 grupos exatos somente nas distribuições vendor no snapshot inicial. Não apagar SVG/chunks individualmente: a cópia de vendor e o carregamento dinâmico precisam ser redesenhados/testados como um pacote.</li>
+<li><code>build-native.mjs</code> e <code>scripts/build-android-web.cjs</code> repetem extração/publicação de idioma e invocação Angular, com pré-condições/verificações diferentes. Propor helper pequeno de leitura do dicionário e um fluxo de build canônico; testar contratos antes de descontinuar a alternativa.</li>
+<li>Tokens DSGov e CSS de cursos/iframe têm sobreposição funcional, mas escopos diferentes. Medir/revisar regras e contratos de acessibilidade antes de criar uma fonte compartilhada.</li>
+</ul></section>
+<section class="doc-section searchable" id="sem-referencia"><h2>Sem referência encontrada não é exclusão aprovada</h2>
+<p>Use o filtro “Nenhuma referência encontrada” no inventário. Arquivos de declaração, configuração, fontes gráficas, documentação, hooks e assets podem ser necessários por convenção ou ferramentas não presentes neste checkout.</p>
+<p>Revisar especialmente parciais Sass não importados pela entrada atual e <code>resources/icon.png</code>/<code>splash.png</code>. A existência de fontes de identidade não exige import de runtime. Os caminhos da árvore local antiga também não devem ser considerados arquivos abandonados da release.</p>
+<p>Artefatos locais em platforms/plugins/build do harness são gerados; não se propõe apagar diretórios, caches, APKs, evidências ou keystores sem análise de reprodução e autorização específica. A junction para dependências não foi seguida. Nenhum conteúdo sensível desses artefatos foi incluído nos relatórios.</p></section>
+<section class="doc-section searchable" id="estrutura-proposta"><h2>Organização proposta, sem movimentações nesta fase</h2>
+<p>Manter a estrutura principal atual: páginas Angular em suas pastas, serviços em services_mobile, navegação em navigation, iframe em mobilemoodle, integração de curso em moodle-course, ferramentas em scripts/diagnosticos, testes em tests e portal em docs. Não criar uma árvore paralela de features para imitar outro projeto.</p>
+<ol>
+<li>Revisar o loader órfão e o scaffold do harness como mudanças isoladas; são os candidatos menores.</li>
+<li>Padronizar nomes e README dos experimentos P0.8/P0.9/P0.10/P0.11 sem perder caminhos de consumidores dinâmicos. Primeiro documentar diferenças; eventual renomeação exige atualizar glob, manifests e scripts externos.</li>
+<li>Escolher fonte única para o ledger duplicado e política de snapshots; testar a reprodução do plugin experimental.</li>
+<li>Consolidar a invocação do build e deslocar saídas antigas de diagnóstico para os destinos documentados, após atualizar seus consumidores.</li>
+<li>Tratar serviços longos por responsabilidades e funções puras, mantendo a API pública e os testes de segurança. Não dividir toda a pasta de uma só vez.</li>
+</ol></section>
+<section class="doc-section searchable" id="codigo"><h2>Clean Code, limites e riscos técnicos</h2>
+<p>A Fase 1 remove somente quatro imports sem uso, com emissão JavaScript idêntica. Funções locais que o lint marca sem consumidores, incluindo identityFingerprint e helpers antigos de erro/token do Painel, ficam propostas para uma revisão de call graph e testes próprios; validadores não são removidos por aparência de legado.</p>
+<p>O lint global da base não está aprovado: 6.176 erros e 382 avisos nos 56 TypeScript analisados, incluindo tipagem e convenções extensas. Depois dos quatro imports removidos espera-se reduzir apenas esses quatro diagnósticos, sem usar --fix global. Arquivos JS/CJS/MJS não são cobertos pela configuração ESLint atual; isso não equivale a aprovação deles.</p>
+<p>Não se conclui vazamento de subscription por busca textual, nem desempenho por tamanho do arquivo. Ciclos de vida Angular inspecionados já liberam listeners. Priorizar medições e regressões de navegação/identidade antes de signals adicionais, cache novo ou refatoração de autenticação.</p>
+<p>As fontes/cursor externos usados por estilos de acessibilidade exigem rede, mesmo com parte dos assets locais. O portal de documentação permanece offline; isso não garante que todo o aplicativo funcione offline. A cópia Angular de mobilemoodle com glob amplo também deve ser revisada separadamente antes de reduzir o conteúdo da APK.</p></section>
+<section class="doc-section searchable" id="aceite"><h2>Critério para autorizar uma etapa da Fase 2</h2>
+<p>Revisar arquivo e consumidores, aceitar o risco, definir alternativa e testes, autorizar a mudança específica e só então remover/mover. Cada etapa deve ter commit em português, comparação de TypeScript/lint, testes de sessão/P0.4 preservados e build pertinente. Login, troca de conta, primeira conexão e persistência nativa exigem validação manual apropriada; não são declarados resolvidos pelo inventário.</p></section>
+</main></div><p id="live-status" class="visually-hidden" role="status" aria-live="polite"></p></body></html>

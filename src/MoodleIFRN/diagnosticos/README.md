@@ -31,5 +31,5 @@ node --check src/MoodleIFRN/diagnosticos/arquivo.cjs
 ## Documentação
 
 - [Portal HTML](../docs/index.html)
-- [Inventário da documentação](../docs/INVENTARIO-DOCUMENTACAO.html)
-- [Guia de curso](../docs/COURSE-OPENING-2026-10-19.md)
+- [Inventário da documentação](../docs/html/INVENTARIO-DOCUMENTACAO.html)
+- [Guia de curso](../docs/markdown/COURSE-OPENING-2026-10-19.md)

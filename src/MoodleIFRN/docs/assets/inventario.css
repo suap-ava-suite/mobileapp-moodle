@@ -1,0 +1,17 @@
+/* Apenas o portal de documentação; não alcança o tema do aplicativo. */
+.inventory-content { width: 100%; }
+.inventory-content h1 { max-width: 27ch; }
+.inventory-content pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; }
+.inventory-content td { min-width: 13rem; font-size: .88rem; }
+.inventory-content td:first-child { min-width: 17rem; }
+.inventory-content td p { margin: .3rem 0 .7rem; }
+.inventory-content details { margin: .65rem 0; }
+.inventory-content summary { cursor: pointer; }
+.inventory-filters { display: flex; gap: 1rem; flex-wrap: wrap; align-items: end; }
+.inventory-filters label { display: grid; gap: .4rem; max-width: 100%; color: var(--muted); }
+.inventory-filters input[type="search"] { min-width: min(22rem, 100%); }
+.inventory-filters input, .inventory-filters select { border: 1px solid var(--line); border-radius: .4rem; background: var(--surface); color: var(--ink); padding: .5rem; max-width: 100%; }
+.inventory-filters label:has(input[type="checkbox"]) { display: flex; align-items: center; }
+.inventory-pagination { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+.inventory-pagination button { padding: .5rem 1rem; border: 1px solid var(--line); border-radius: .4rem; color: var(--ink); background: var(--surface); cursor: pointer; }
+.inventory-pagination button:disabled { cursor: default; opacity: .5; }

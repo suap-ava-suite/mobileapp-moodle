@@ -9,6 +9,27 @@
   var menuToggle = document.querySelector(".menu-toggle");
   var noResults = document.getElementById("no-results");
 
+  // Uma navegação compartilhada evita editar cada página técnica convertida.
+  // O prefixo acompanha a folha local: assets/ na raiz, ../assets/ em html/.
+  var stylesheet = document.querySelector('link[href$="assets/manual.css"]');
+  var portalPrefix = stylesheet ? stylesheet.getAttribute("href").replace(/assets\/manual\.css$/, "") : "";
+  [
+    ["estrutura-arquitetura.html", "Estrutura do MoodleIFRN"],
+    ["inventario-arquivos.html", "Inventário de arquivos"],
+    ["inventario-fixtures.html", "Inventário das fixtures"],
+    ["plano-limpeza.html", "Proposta de limpeza"]
+  ].forEach(function (entry) {
+    var href = portalPrefix + entry[0];
+    var exists = Array.prototype.some.call(sidebar.querySelectorAll("a"), function (link) {
+      return link.getAttribute("href") === href;
+    });
+    if (exists) return;
+    var link = document.createElement("a");
+    link.setAttribute("href", href);
+    link.textContent = entry[1];
+    sidebar.querySelector("nav").appendChild(link);
+  });
+
   if (document.body.dataset.document) {
     var currentDocument = document.body.dataset.document;
     sidebar.querySelectorAll("a").forEach(function (link) {
