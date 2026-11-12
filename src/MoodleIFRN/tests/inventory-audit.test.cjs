@@ -6,9 +6,11 @@ const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 const { execFileSync } = require('node:child_process');
+const vm = require('node:vm');
+const ts = require('typescript');
 const { JSDOM } = require('jsdom');
 const { escapeHtml, jsonForHtml, walk, resolveReference, documentReferences, classify } = require('../scripts/inventory-moodleifrn.cjs');
-const { fixtures } = require('../scripts/inventory-catalog.cjs');
+const { fixtures, retiredFiles } = require('../scripts/inventory-catalog.cjs');
 
 test('inventory includes hidden files but never traverses a junction outside the audited tree', t => {
     const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ifrn-inventory-'));
@@ -47,9 +49,57 @@ test('absence of import or directory-copy evidence never becomes automatic permi
     ]);
     assert.equal(copied.usage, 'Uso provável/indireto');
     assert.equal(copied.role, 'A');
+    assert.equal(copied.generated, true);
     const historical = classify({ path: 'src/MoodleIFRN/docs/old.md', localOnly: true }, []);
     assert.equal(historical.usage, 'Uso desconhecido');
     assert.match(historical.recommendation, /Preservar/);
+});
+
+test('F08 patch removes the retired bootstrap script idempotently without recreating any source file', () => {
+    const file = 'src/MoodleIFRN/patch-moodle-ifrn.js';
+    const source = fs.readFileSync(file, 'utf8');
+    const ast = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
+    const functions = ast.statements.filter(node => ts.isFunctionDeclaration(node)
+        && ['replaceBetweenMarkers', 'patchIndexEarlyHandoff'].includes(node.name?.text));
+    assert.equal(functions.length, 2);
+    const marker = ast.statements.filter(ts.isVariableStatement)
+        .flatMap(statement => [...statement.declarationList.declarations]).find(node => node.name.getText(ast) === 'MARKER');
+    assert(marker?.initializer);
+    let html;
+    const writes = [];
+    const context = {
+        FILES: { indexHtml: 'synthetic-index.html' }, console: { log() {} },
+        readFile: filename => { assert.equal(filename, 'synthetic-index.html'); return html; },
+        writeFile: (filename, content) => { assert.equal(filename, 'synthetic-index.html'); writes.push(filename); html = content; },
+    };
+    vm.runInNewContext('const MARKER = ' + marker.initializer.getText(ast) + ';\n'
+        + functions.map(node => node.getText(ast)).join('\n')
+        + '\nglobalThis.patch = patchIndexEarlyHandoff; globalThis.markers = MARKER;', context, { timeout: 1000 });
+    html = '<html>' + context.markers.earlyHandoffStart
+        + '<script src="assets/MoodleIFRN/navigation/early-course-handoff.js"></script>'
+        + context.markers.earlyHandoffEnd + '<app-root></app-root></html>';
+    context.patch();
+    const first = html;
+    assert(!html.includes('early-course-handoff.js'));
+    assert(html.includes('<app-root></app-root>'));
+    context.patch();
+    assert.equal(html, first);
+    assert(writes.every(filename => filename === 'synthetic-index.html'));
+});
+
+test('harness entry HTML, inline styles and runtime JavaScript are unchanged after scaffold removal', () => {
+    const root = 'src/MoodleIFRN/tests/fixtures/p10-sqlite-extension/harness/www/';
+    for (const file of ['index.html', 'js/index.js']) {
+        const current = fs.readFileSync(root + file, 'utf8').replace(/\r\n/g, '\n');
+        const baseline = execFileSync('git', ['show', 'e4909876e:' + root + file], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
+        assert.equal(current, baseline);
+    }
+    const document = new JSDOM(fs.readFileSync(root + 'index.html', 'utf8')).window.document;
+    assert.equal(document.querySelectorAll('link[rel="stylesheet"],img[src="img/logo.png"]').length, 0);
+    assert(document.querySelector('style')?.textContent.includes('body'));
+    assert(document.querySelector('script[src="js/index.js"]'));
+    assert.equal(fs.existsSync(root + 'css/index.css'), false);
+    assert.equal(fs.existsSync(root + 'img/logo.png'), false);
 });
 
 test('CLI examples and inline code are collected as documentation references, without claiming runtime execution', () => {
@@ -65,11 +115,11 @@ test('CLI examples and inline code are collected as documentation references, wi
     ]).usage, 'Uso provável/indireto');
 });
 
-test('all 39 tracked fixtures have an individual reviewed catalog entry, including hidden config and binary libraries', () => {
+test('all 37 active tracked fixtures have an individual reviewed catalog entry, including hidden config and binary libraries', () => {
     const root = 'src/MoodleIFRN/tests/fixtures';
     const files = execFileSync('git', ['ls-files', '-z', '--', root], { encoding: 'utf8' })
         .split('\0').filter(Boolean).map(file => file.slice(root.length + 1)).sort();
-    assert.equal(files.length, 39);
+    assert.equal(files.length, 37);
     assert.deepEqual(Object.keys(fixtures).sort(), files);
     assert(files.some(file => file.endsWith('.gitignore')));
     assert.equal(files.filter(file => file.endsWith('.jar')).length, 2);
@@ -102,9 +152,13 @@ test('file:// inventory filters all records, paginates, resets the page and rema
     const role = document.getElementById('inventory-role');
     role.value = 'G';
     role.dispatchEvent(new window.Event('change'));
-    assert.equal(document.querySelectorAll('#inventory-rows tr').length, 5);
+    assert.equal(document.querySelectorAll('#inventory-rows tr').length, 0);
     assert.equal(document.getElementById('inventory-prev').disabled, true);
     assert.equal(document.getElementById('inventory-next').disabled, true);
+    role.value = 'B';
+    role.dispatchEvent(new window.Event('change'));
+    assert(document.querySelectorAll('#inventory-rows tr').length > 0);
+    assert.equal(document.getElementById('inventory-prev').disabled, true);
     const query = document.getElementById('inventory-query');
     query.value = 'no-such-inventory-file-7265';
     query.dispatchEvent(new window.Event('input'));
@@ -113,6 +167,25 @@ test('file:// inventory filters all records, paginates, resets the page and rema
     document.getElementById('theme-toggle').click();
     assert.equal(document.documentElement.dataset.theme, 'dark');
     dom.window.close();
+});
+
+test('approved removals remain historical only in the original workspace and never return as active fixtures', () => {
+    const data = JSON.parse(new JSDOM(fs.readFileSync('src/MoodleIFRN/docs/inventario-arquivos.html', 'utf8'))
+        .window.document.getElementById('inventory-data').textContent);
+    assert.equal(Object.keys(retiredFiles).length, 5);
+    for (const relative of Object.keys(retiredFiles)) {
+        const file = 'src/MoodleIFRN/' + relative;
+        assert.equal(fs.existsSync(file), false, file);
+        assert(!data.files.some(entry => entry.path === file && !entry.localOnly), file);
+        for (const entry of data.files.filter(candidate => candidate.path === file)) {
+            assert.equal(entry.localOnly, true);
+            assert.equal(entry.retired, true);
+            assert.equal(entry.role, 'D');
+            assert.equal(entry.fixture, false);
+        }
+    }
+    assert.equal(data.files.filter(file => file.fixture).length, 37);
+    assert.equal(data.files.filter(file => file.role === 'G').length, 0);
 });
 
 test('shared documentation navigation respects root and html subdirectory without duplicated links', () => {

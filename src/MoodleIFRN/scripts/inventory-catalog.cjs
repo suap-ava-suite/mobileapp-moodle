@@ -3,7 +3,6 @@
 // Conhecimento revisado no código. As referências efetivas são coletadas pelo inventário.
 const folders = {
     '': ['Integração IFRN sobre Moodle Mobile; não substitui o núcleo.', 'A/B/C', 'Revisar rotas, build, sessões e testes antes de mudanças transversais.'],
-    'course-loading': ['Componente app-disciplina-loading adicionado à release; não é o loader usado por handoff-loading.ts.', 'G', 'Sem consumidor encontrado para o seletor/classe; revisar com o autor antes de remover.'],
     'diagnosticos': ['Ferramentas Node para mocks, ADB/CDP e consultas públicas; algumas ações podem navegar na conta.', 'B', 'Ler os argumentos e efeitos antes de executar; nunca automatizar credenciais.'],
     'docs': ['Portal HTML offline e fontes Markdown preservadas.', 'C', 'Manter file://, navegação compartilhada e fontes históricas.'],
     'docs/assets': ['CSS e JavaScript compartilhados do portal e tabela do inventário.', 'C', 'Testar pesquisa, tema, links relativos e armazenamento indisponível.'],
@@ -45,7 +44,7 @@ const folders = {
     'theme': ['Tokens DSGov usados pelo SCSS Angular.', 'A', 'Há outro conjunto no iframe com escopo e consumidores diferentes.'],
 };
 
-// Cada entrada corresponde a um arquivo real da base da auditoria (39 fixtures).
+// Catálogo das 37 fixtures ativas após a limpeza autorizada. A base tinha 39.
 const fixtures = {
     'cordova-sqlite-js-port.cjs': ['Necessária', 'Porta do JS Cordova original sobre SQLite desktop; simula a bridge, não a durabilidade Android.', 'cordova-storage-contract.test.cjs; unknown-commit-recovery.test.cjs', 'require direto; carrega o JS instalado do plugin com vm.'],
     'core-session-attempt.cjs': ['Necessária', 'Autoridade transacional e suspensão determinística de tentativas, identidades e gerações sintéticas.', 'session-attempt-contract.test.cjs; session-persistence-adapter.cjs; scripts p06/p07 em .analise', 'require direto e dependência transitiva do adaptador.'],
@@ -84,8 +83,17 @@ const fixtures = {
     'p10-sqlite-extension/harness/config.xml': ['Necessária', 'Package, documento inicial e intents do app de teste P0.11.', 'Cordova prepare/build do harness', 'Configuração declarativa, não importada por TS.'],
     'p10-sqlite-extension/harness/www/index.html': ['Necessária', 'Documento de resultados com cordova.js e js/index.js.', 'harness/config.xml: content', 'CSP e carregamento do deviceready pertencem ao teste.'],
     'p10-sqlite-extension/harness/www/js/index.js': ['Necessária', 'Cenários sintéticos da bridge, ACK perdido, geração e troca de proprietário.', 'harness/www/index.html', 'Listener deviceready; só executar no package experimental.'],
-    'p10-sqlite-extension/harness/www/css/index.css': ['Candidata à remoção', 'CSS padrão do scaffold Cordova não vinculado pelo index.html atual.', 'Nenhum consumidor encontrado no harness ou scripts', 'Não há link/@import nem referência dinâmica encontrada; propor remoção com teste de build e comparação visual.'],
-    'p10-sqlite-extension/harness/www/img/logo.png': ['Candidata à remoção', 'Logo padrão do scaffold, citado apenas pelo CSS que não é carregado.', 'harness/www/css/index.css, sem raiz de carregamento comprovada', 'A referência existe, mas a cadeia não alcança o documento; revisar os dois arquivos juntos.'],
+};
+
+// Registro da decisão; não é prova de utilização. Os originais de outro worktree
+// continuam intactos e aparecem no inventário como históricos locais.
+const cleanupBaseline = 'e4909876e';
+const retiredFiles = {
+    'course-loading/disciplina-loading.component.ts': ['Componente sem consumidor de seletor/classe, removido com autorização.', 'moodle-course/ifrn-course-loading.component.ts é o loader ativo.'],
+    'course-loading/disciplina-loading.component.scss': ['Estilos do componente sem consumidor, removidos junto com ele.', 'moodle-course/ifrn-course-loading.component.scss permanece.'],
+    'navigation/early-course-handoff.js': ['IIFE sem operação, explicitamente desativada por F08.', 'handoff-loading.ts mantém a transição Angular; o patch mantém os marcadores F08.'],
+    'tests/fixtures/p10-sqlite-extension/harness/www/css/index.css': ['CSS padrão sem link/import no documento do harness.', 'O index.html mantém seus estilos inline e não foi alterado.'],
+    'tests/fixtures/p10-sqlite-extension/harness/www/img/logo.png': ['Logo do scaffold citada somente pelo CSS que não era carregado.', 'As logos institucionais do aplicativo permanecem intactas.'],
 };
 
 const purposes = {
@@ -105,7 +113,6 @@ const purposes = {
     'services_mobile/suap-provider.ts': 'Seleciona o provedor institucional publicado por cada Moodle.',
     'services_mobile/suap-login-telemetry.ts': 'Medições por etapa e marcador de perfil recente, sem credenciais.',
     'services_mobile/ifrn-language.ts': 'Dicionário pt-br local e inicialização compartilhada de idioma.',
-    'navigation/early-course-handoff.js': 'IIFE explicitamente desativada por F08; não substitui o handoff Angular atual.',
     'build-native.mjs': 'Build web Cordova Android/iOS e publicação do dicionário pt-br; --check não gera artefatos.',
     'patch-moodle-ifrn.js': 'Reaplica rotas, templates, tema, hooks e patch P0.4 em arquivos da base Moodle.',
     'mobilemoodle/build.mjs': 'esbuild/Sass, cópia local de Ionic/Ionicons e versão do CSS no index.',
@@ -156,4 +163,4 @@ function folderFor(relative) {
     return folders[candidate];
 }
 
-module.exports = { folders, fixtures, purposes, folderFor };
+module.exports = { folders, fixtures, purposes, folderFor, cleanupBaseline, retiredFiles };
