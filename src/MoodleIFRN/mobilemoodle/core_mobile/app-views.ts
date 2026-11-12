@@ -8,7 +8,7 @@
  *
  * Também atualiza header (título/subtítulo) e dados do usuário na sidebar.
  */
-import { MM, App } from './namespace';
+import { App } from './namespace';
 import { createCourseFavourites, favouriteCourseKey } from './course-favourites';
 import { resolveCourseSite } from './course-target';
 

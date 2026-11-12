@@ -7,7 +7,7 @@
  * applyToBody() aplica classes CSS no <body> (ex.: color_mode_high_contrast).
  * VLibras é carregado sob demanda quando vlibras_active = true.
  */
-import { MM, App } from './namespace';
+import { App } from './namespace';
 
 
     const STORAGE_KEY = 'ifrn_a11y_prefs';

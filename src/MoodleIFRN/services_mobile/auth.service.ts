@@ -14,7 +14,6 @@
 
 import { HttpBackend, HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { CoreLang } from '@services/lang';
 import { CoreNavigator } from '@services/navigator';
 import { Observable, firstValueFrom, map, timeout } from 'rxjs';
 import { clearCourseSessionFlags } from '../mobilemoodle/core_mobile/course-session-flags';

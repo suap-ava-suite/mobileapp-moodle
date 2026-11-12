@@ -6,7 +6,7 @@
  * - not found (hash inválido)
  * - erro HTTP / rede (template tpl-error-page ou fallback simples)
  */
-import { MM, App } from './namespace';
+import { App } from './namespace';
 
 
     /** SVG do anel animado do splash AVA. */
