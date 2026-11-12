@@ -236,12 +236,15 @@ node --test --test-concurrency=2 @testFiles</code></pre><button class="copy-butt
           <li>Registrar separadamente primeira abertura sem sessão Moodle salva e troca de conta SUAP. Esses cenários dependem de autenticação manual e autorização para alterar a sessão; não limpar dados nem fazer logout automaticamente.</li>
           <li>Confirmar que falhas reais continuam visíveis e que erro de navegação não é apresentado como sucesso ou cancelamento espontâneo.</li>
         </ol>
+        <h3>Validação inicial da Ajuda no Android</h3>
+        <p>Na mesma atualização, o usuário abriu manualmente a Central de Ajuda. A inspeção confirmou uma WebView interna em <code>https://ajuda.ead.ifrn.edu.br</code>, documento completo e conteúdo principal visível, sem erro de rede. O host Angular registrou navegador interno aberto, sem loading ou erro; o menu Ajuda permaneceu aberto por baixo.</p>
+        <p>Os seis links do menu apresentaram <code>pointer-events: auto</code>, nenhum ancestral <code>inert</code> e hit testing no centro dentro do próprio link; no host, os pontos correspondentes atingiam o iframe do Painel. Não foi reproduzida sobreposição bloqueante nessa inspeção. Isso não comprova toque físico nem carregamento dos cinco itens restantes, ainda pendentes de teste manual, assim como o retorno da Central de Ajuda. Nenhuma alteração de CSS, URLs, listeners ou permissões de navegação foi necessária nesta etapa.</p>
         <h3>Prioridades restantes</h3>
         <table><thead><tr><th>Severidade</th><th>Impacto / próximo passo</th><th>Evidência atual</th></tr></thead><tbody>
           <tr><td>P0 · identidade e concorrência</td><td>Preservar isolamento de conta e validar persistência Android/iOS antes de encerrar P0.4.</td><td>Regressões locais aprovadas; confirmação nativa pendente.</td></tr>
           <tr><td>P1 · primeira abertura</td><td>Reproduzir conexão após login SUAP e mensagens de registro ausente/validação. Conferir a diferença entre navegador do sistema e InAppBrowser.</td><td>Hipótese de contexto de sessão ainda não confirmada no aparelho; nenhum token ou cookie será transportado entre contextos.</td></tr>
           <tr><td>P1 · navegação</td><td>Testar retornos repetidos e cancelamento durante abertura.</td><td>Espera indevida corrigida em testes locais; uma abertura e retorno confirmados manualmente na APK atualizada.</td></tr>
-          <tr><td>P2 · Ajuda</td><td>Investigar os seis botões, hit testing, sobreposições, VLibras e bridge, depois de validar cursos.</td><td>Causa do problema de toque ainda não comprovada; sem alteração nesta etapa.</td></tr>
+          <tr><td>P2 · Ajuda</td><td>Validar retorno e os cinco itens restantes; investigar somente falhas reproduzidas.</td><td>Central de Ajuda abriu internamente; os seis links passaram na inspeção de hit testing. Sem correção de código nesta etapa.</td></tr>
           <tr><td>P2 · desempenho</td><td>Medir tempos reais de sessão, matrícula, navegação e conteúdo; otimizar a etapa dominante.</td><td>Não há benchmark antes/depois do aplicativo; não se afirma melhora da abertura bem-sucedida.</td></tr>
           <tr><td>P3 · manutenção</td><td>Tratar duplicação e código morto com provas de referências e testes.</td><td>Nenhum arquivo, fixture ou script excluído; alterações locais anteriores preservadas.</td></tr>
         </tbody></table>
