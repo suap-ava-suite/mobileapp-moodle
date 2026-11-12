@@ -37,6 +37,7 @@
         <a href="#testes">Testes e diagnóstico</a>
         <a href="#arquitetura">Arquitetura</a>
         <a href="#problemas">Problemas comuns</a>
+        <a href="#evolucao-cursos">Evolução e validação dos cursos</a>
         <a href="#git">Fluxo Git</a>
         <a href="#documentacao">Documentação existente</a>
       </nav>
@@ -200,6 +201,48 @@ adb logcat -d</code></pre><button class="copy-button" type="button">Copiar coman
         <details><summary>ADB não encontra aparelho</summary><p>Execute <code>adb devices -l</code>, aceite a autorização USB no aparelho e confira cabo/modo de depuração. Não limpe dados como medida de diagnóstico.</p></details>
         <details><summary>Erro de espaço em disco (ENOSPC)</summary><p>Verifique o espaço disponível e o caminho do cache antes de nova build. Preserve caches de Gradle/npm e arquivos do usuário; não use scripts de limpeza indiscriminados.</p></details>
         <details><summary>Patch IFRN diverge depois de atualizar Moodle</summary><p>Revise o script e <code>git diff</code> em todos os destinos. Não execute patch repetidamente sem avaliar arquivos alterados; veja <a href="PATCH-AO-ATUALIZAR.md">PATCH-AO-ATUALIZAR.md</a>.</p></details>
+      </section>
+
+      <section id="evolucao-cursos" class="doc-section searchable">
+        <p class="eyebrow">EVOLUÇÃO · 12/11/2026</p><h2>Fase 2: espera de navegação dos cursos</h2>
+        <p><strong>Estado:</strong> correção validada em testes locais; validação no celular pendente. Branch <code>fix/ifrn-course-opening-phase2</code>, baseada em <code>9f5603f4c</code>. Commit da implementação: <code>74d0a4038</code> — <code>fix(ifrn): encerra espera de rota após falha ou cancelamento</code>.</p>
+        <h3>Problema, causa e correção</h3>
+        <p>Quando <code>openNativeCourse()</code> rejeitava a navegação, <code>Promise.allSettled()</code> ainda aguardava a confirmação da rota. Sem essa rota, o erro ficava retido até o timeout de 45 segundos. O observador também não reagia ao cancelamento explícito: depois de a operação nativa terminar, um Voltar podia continuar esperando um evento que não chegaria.</p>
+        <p>A abertura agora observa erros de rota imediatamente, aguarda a operação nativa terminar e propaga sua falha sem esperar uma confirmação impossível. O observador acompanha o AbortSignal da tentativa e libera timer e subscription ao concluir. A limpeza é idempotente. Uma navegação nativa ainda pendente continua mantendo o bloqueio de concorrência; cancelamento, falha e timeout continuam distintos.</p>
+        <p><strong>Arquivos:</strong> <code>services_mobile/moodle-site.service.ts</code> e <code>tests/course-navigation-failure.test.cjs</code>. O log identifica <code>openNativeCourse</code>, que é a função realmente executada. Não houve alteração de OAuth, armazenamento, validação de identidade, loaders, núcleo Moodle ou plugins nativos.</p>
+        <h3>Evidências locais</h3>
+        <ul>
+          <li>Dois cenários falharam antes de suas respectivas correções: navegação recusada e cancelamento sem evento de rota. Depois, os seis casos novos passaram.</li>
+          <li>Os casos também cobrem erro de rota antes de a navegação terminar, curso diferente do solicitado, conclusão tardia após cancelamento e timeout sem cancelamento pelo usuário.</li>
+          <li>Regressões IFRN: 360 testes aprovados em 50 arquivos, zero falhas e zero testes ignorados. O arquivo <code>native-persistence-contract.test.cjs</code> não foi executado: inclui compilação JVM e escrita de evidências; a instrumentação Android/CDP também ficou fora desta execução.</li>
+          <li><code>tsc -p tsconfig.app.json --noEmit</code> passou. O lint do serviço mantém os 23 erros e 76 avisos preexistentes, sem novos apontamentos em comparação ao HEAD de origem. O lint completo não está aprovado.</li>
+          <li>Manifesto P0.4: 12 destinos no estado <code>already-applied</code>. Os testes existentes de sessão foram preservados; isso não encerra a validação da persistência real Android/iOS.</li>
+          <li>A redução da espera foi demonstrada com relógio controlado: antes, a falha dependia de disparar o timeout; depois, encerra antes dele. Não é uma medição de desempenho no aparelho.</li>
+        </ul>
+        <div class="command-card"><div class="command-heading"><strong>Reproduzir a regressão específica</strong><span>Raiz do projeto</span></div><pre><code>node --test src/MoodleIFRN/tests/course-navigation-failure.test.cjs
+node node_modules/typescript/bin/tsc -p tsconfig.app.json --noEmit</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Seis testes de navegação aprovados e checagem TypeScript sem geração de arquivos.</p></div>
+        <div class="command-card"><div class="command-heading"><strong>Regressões locais executadas</strong><span>PowerShell</span></div><pre><code>$testFiles = @(Get-ChildItem src/MoodleIFRN/tests -File | Where-Object {
+    $_.Name -match '\.test\.(cjs|mjs)$' -and $_.Name -ne 'native-persistence-contract.test.cjs'
+} | ForEach-Object { $_.FullName })
+node --test --test-concurrency=2 @testFiles</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Executa os testes locais sem acionar a instrumentação nativa. Nesta máquina, seis arquivos com esbuild exigiram execução fora do sandbox por bloqueio de leitura do diretório pai; não foi defeito do aplicativo.</p></div>
+        <h3>Validação no Android</h3>
+        <p>Dispositivo identificado: Moto g86 5G, Android 16, via USB. A inspeção somente leitura da WebView encontrou o Painel visível, sem curso, ponte ou erro ativo. Nenhuma APK foi gerada/instalada, nenhum toque foi automatizado e nenhuma sessão foi alterada. O aplicativo instalado ainda não valida este commit.</p>
+        <ol>
+          <li>Após autorização para preparar e instalar uma build com a correção, abrir manualmente uma disciplina e conferir ambiente, conteúdo e tema IFRN.</li>
+          <li>Voltar ao Painel e repetir com a mesma disciplina e com outra, inclusive de outro ambiente quando disponível.</li>
+          <li>Usar Voltar durante uma abertura e confirmar que a tentativa termina sem aguardar 45 segundos quando a operação nativa já terminou. Verificar que uma conclusão tardia não abre o curso.</li>
+          <li>Registrar separadamente primeira abertura sem sessão Moodle salva e troca de conta SUAP. Esses cenários dependem de autenticação manual e autorização para alterar a sessão; não limpar dados nem fazer logout automaticamente.</li>
+          <li>Confirmar que falhas reais continuam visíveis e que erro de navegação não é apresentado como sucesso ou cancelamento espontâneo.</li>
+        </ol>
+        <h3>Prioridades restantes</h3>
+        <table><thead><tr><th>Severidade</th><th>Impacto / próximo passo</th><th>Evidência atual</th></tr></thead><tbody>
+          <tr><td>P0 · identidade e concorrência</td><td>Preservar isolamento de conta e validar persistência Android/iOS antes de encerrar P0.4.</td><td>Regressões locais aprovadas; confirmação nativa pendente.</td></tr>
+          <tr><td>P1 · primeira abertura</td><td>Reproduzir conexão após login SUAP e mensagens de registro ausente/validação. Conferir a diferença entre navegador do sistema e InAppBrowser.</td><td>Hipótese de contexto de sessão ainda não confirmada no aparelho; nenhum token ou cookie será transportado entre contextos.</td></tr>
+          <tr><td>P1 · navegação</td><td>Validar este commit no aparelho e testar retornos repetidos ao Painel.</td><td>Espera indevida de até 45 segundos corrigida e comprovada localmente.</td></tr>
+          <tr><td>P2 · Ajuda</td><td>Investigar os seis botões, hit testing, sobreposições, VLibras e bridge, depois de validar cursos.</td><td>Causa do problema de toque ainda não comprovada; sem alteração nesta etapa.</td></tr>
+          <tr><td>P2 · desempenho</td><td>Medir tempos reais de sessão, matrícula, navegação e conteúdo; otimizar a etapa dominante.</td><td>Não há benchmark antes/depois do aplicativo; não se afirma melhora da abertura bem-sucedida.</td></tr>
+          <tr><td>P3 · manutenção</td><td>Tratar duplicação e código morto com provas de referências e testes.</td><td>Nenhum arquivo, fixture ou script excluído; alterações locais anteriores preservadas.</td></tr>
+        </tbody></table>
       </section>
 
       <section id="git" class="doc-section searchable">
