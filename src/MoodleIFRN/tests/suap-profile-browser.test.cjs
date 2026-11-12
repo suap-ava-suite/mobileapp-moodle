@@ -52,7 +52,9 @@ function loadService() {
         '@angular/core': {
             Injectable: () => value => value,
             NgZone: class NgZone {},
-            inject: token => token.name === 'NgZone' ? zone : secureGovBrowser,
+            inject: token => token.name === 'NgZone' ? zone
+                : token.name === 'PainelAvaService' ? { acquireInAppBrowserLease: async () => () => {} }
+                : secureGovBrowser,
         },
         '@static/opener': { CoreOpener: { openInApp: (url, options) => {
             nativeCalls.push({ url, options });
@@ -70,6 +72,7 @@ function loadService() {
                 }
             },
         },
+        './painel-ava.service': { PainelAvaService: class PainelAvaService {} },
     };
     const module = { exports: {} };
     vm.runInNewContext(compiled, {
@@ -138,7 +141,7 @@ test('páginas de ajuda aceitam seus hosts e links curtos exatos, sem liberar ou
     }
 });
 
-test('página de ajuda reutiliza o mesmo InAppBrowser e rejeita uma segunda janela simultânea', () => {
+test('página de ajuda reutiliza o mesmo InAppBrowser e rejeita uma segunda janela simultânea', async () => {
     const { service, browser, nativeCalls } = loadService();
     const page = {
         title: 'Central de Ajuda',
@@ -149,6 +152,7 @@ test('página de ajuda reutiliza o mesmo InAppBrowser e rejeita uma segunda jane
 
     service.openPage(page, { onReady: () => states.push('ready'), onError: message => states.push(message), onExit: () => {} });
     service.openPage(page, { onReady: assert.fail, onError: message => states.push(message), onExit: () => {} });
+    await new Promise(resolve => setImmediate(resolve));
 
     assert.equal(nativeCalls.length, 1);
     assert.equal(nativeCalls[0].url, page.url);
@@ -157,12 +161,13 @@ test('página de ajuda reutiliza o mesmo InAppBrowser e rejeita uma segunda jane
     assert.deepEqual(states.slice(1), ['ready']);
 });
 
-test('Perfil usa InAppBrowser interno, mantém cookies e mostra a página somente após o primeiro loadstop seguro', () => {
+test('Perfil usa InAppBrowser interno, mantém cookies e mostra a página somente após o primeiro loadstop seguro', async () => {
     const { service, browser, nativeCalls } = loadService();
     const states = [];
     const profileUrl = 'https://suap.ifrn.edu.br/comum/minha_conta/';
 
     service.open({ onReady: () => states.push('ready'), onError: message => states.push(message), onExit: () => states.push('exit') });
+    await new Promise(resolve => setImmediate(resolve));
 
     assert.equal(nativeCalls.length, 1);
     assert.equal(nativeCalls[0].url, profileUrl);
@@ -195,11 +200,12 @@ test('a tela Angular de espera usa a superfície neutra do tema IFRN', () => {
     assert.match(styles, /\.suap-profile-screen__content\s*\{\s*--background:\s*var\(--ifrn-canvas/);
 });
 
-test('navegação fora do SUAP é bloqueada e apresentada como erro recuperável', () => {
+test('navegação fora do SUAP é bloqueada e apresentada como erro recuperável', async () => {
     const { service, browser } = loadService();
     const errors = [];
 
     service.open({ onReady: assert.fail, onError: message => errors.push(message), onExit: () => {} });
+    await new Promise(resolve => setImmediate(resolve));
     browser.emit('beforeload', { url: 'https://example.test/profile' });
 
     assert.equal(browser.loaded.length, 0);
@@ -219,6 +225,7 @@ test('redirecionamento Gov.br fecha o InAppBrowser e usa somente o navegador seg
     };
 
     service.openPage(helpPage, { onReady: assert.fail, onError: message => states.push(message), onExit: () => states.push('exit') });
+    await new Promise(resolve => setImmediate(resolve));
     browser.emit('beforeload', { url: govUrl });
     assert.equal(browser.loaded.length, 0);
     assert.equal(browser.closed, 1);

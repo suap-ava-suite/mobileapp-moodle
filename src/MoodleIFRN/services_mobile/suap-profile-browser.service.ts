@@ -2,6 +2,7 @@
 import { inject, Injectable, NgZone } from '@angular/core';
 import { CoreOpener } from '@static/opener';
 import { GovBrBrowserService, isGovBrAuthorizationUrl } from './govbr-browser.service';
+import { PainelAvaService } from './painel-ava.service';
 
 export const SUAP_PROFILE_URL = 'https://suap.ifrn.edu.br/comum/minha_conta/';
 
@@ -40,6 +41,7 @@ interface BrowserAttempt {
     shown: boolean;
     terminal: boolean;
     govRedirect?: string;
+    releaseBrowserLease?: () => void;
 }
 
 /**
@@ -111,6 +113,7 @@ export class SuapProfileBrowserService {
 
     private readonly zone = inject(NgZone);
     private readonly govBrBrowser = inject(GovBrBrowserService);
+    private readonly painelAva = inject(PainelAvaService);
 
     open(handlers: SuapProfileBrowserHandlers): void {
         this.openPage(SUAP_PROFILE_PAGE, handlers);
@@ -138,8 +141,27 @@ export class SuapProfileBrowserService {
             terminal: false,
         };
         this.attempt = attempt;
+        void this.prepareBrowser(attempt);
+    }
 
+    /**
+     * Waits for the shared native browser before opening the requested page.
+     *
+     * @param attempt Interactive browser request that owns the reservation.
+     * @returns Resolves after opening or disposing a superseded request.
+     */
+    private async prepareBrowser(attempt: BrowserAttempt): Promise<void> {
+        const { page } = attempt;
         try {
+            // A profile refresh uses the same native plugin and can replace this window
+            // without an exit event. Drain it first and block new refreshes until exit.
+            const release = await this.painelAva.acquireInAppBrowserLease();
+            if (!this.isCurrent(attempt) || attempt.terminal) {
+                release();
+
+                return;
+            }
+            attempt.releaseBrowserLease = release;
             attempt.browser = CoreOpener.openInApp(page.url, {
                 beforeload: 'get',
                 clearcache: 'no',
@@ -175,8 +197,13 @@ export class SuapProfileBrowserService {
         }
 
         attempt.terminal = true;
+        if (!attempt.browser) {
+            this.finish(attempt);
+
+            return;
+        }
         try {
-            attempt.browser?.close();
+            attempt.browser.close();
         } catch {
             this.finish(attempt);
         }
@@ -314,6 +341,8 @@ export class SuapProfileBrowserService {
     private dispose(attempt: BrowserAttempt): void {
         attempt.subscriptions.forEach(subscription => subscription.unsubscribe());
         attempt.subscriptions = [];
+        attempt.releaseBrowserLease?.();
+        attempt.releaseBrowserLease = undefined;
         if (this.attempt === attempt) {
             this.attempt = undefined;
         }

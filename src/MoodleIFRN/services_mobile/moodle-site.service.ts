@@ -2043,17 +2043,19 @@ export class MoodleSiteService {
 
         try {
             // eslint-disable-next-line no-console
-            console.log(COURSE_LOG, 'chamando getAndOpenCourse', safeLogPayload({ courseId, siteIdPresent: !!siteId }));
-            // O handler nativo não aguarda navigateToSitePath. A Promise do helper
-            // pode resolver em /main: também aguardamos NavigationEnd do curso.
+            console.log(COURSE_LOG, 'chamando openNativeCourse', safeLogPayload({ courseId, siteIdPresent: !!siteId }));
+            // Observe route errors immediately, but retain the opening lock until the
+            // native navigation settles. A rejected navigation cannot activate the
+            // course route, so report it without waiting for the route's 45s timeout.
             const navigate = async (): Promise<void> => {
-                const navigationResults = await Promise.allSettled([
-                    openNativeCourse(courseId, siteId, enrolledCourse),
-                    navigation.promise,
-                ]);
-                const failed = navigationResults.find((result): result is PromiseRejectedResult => result.status === 'rejected');
-                if (failed) {
-                    throw failed.reason;
+                const routeResult = navigation.promise.then(
+                    () => ({ status: 'fulfilled' as const }),
+                    (reason: unknown) => ({ status: 'rejected' as const, reason }),
+                );
+                await openNativeCourse(courseId, siteId, enrolledCourse);
+                const result = await routeResult;
+                if (result.status === 'rejected') {
+                    throw result.reason;
                 }
             };
             if (typeof attempt.stageUntilSettled === 'function') {
@@ -2256,6 +2258,14 @@ export class MoodleSiteService {
     ): { promise: Promise<void>; dispose: () => void } {
         let dispose = (): void => { /* Instalado abaixo antes de retornar. */ };
         const promise = new Promise<void>((resolve, reject) => {
+            let disposed = false;
+            const onAbort = (): void => {
+                try {
+                    attempt.assertActive();
+                } catch (error) {
+                    reject(error);
+                }
+            };
             const timeout = window.setTimeout(() => {
                 reject(new Error(`A abertura do curso ${courseId} não confirmou a rota nativa em 45 segundos.`));
             }, 45000);
@@ -2271,9 +2281,16 @@ export class MoodleSiteService {
             });
 
             dispose = () => {
+                if (disposed) {
+                    return;
+                }
+                disposed = true;
                 window.clearTimeout(timeout);
                 subscription.unsubscribe();
+                attempt.signal.removeEventListener('abort', onAbort);
             };
+            attempt.signal.addEventListener('abort', onAbort, { once: true });
+            onAbort();
 
             // O helper pode somente selecionar a aba de um curso já visível.
             if (isCourseIndexPath(CoreNavigator.getCurrentPath() || '', courseId)) {
@@ -2282,7 +2299,7 @@ export class MoodleSiteService {
             }
         });
 
-        return { promise, dispose: () => dispose() };
+        return { promise: promise.finally(() => dispose()), dispose: () => dispose() };
     }
 
     /**

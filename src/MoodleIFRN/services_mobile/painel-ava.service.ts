@@ -436,12 +436,12 @@ export class PainelAvaService {
     }
 
     /**
-     * Reserva o InAppBrowser para o SSO Moodle. O plugin Android mantém uma janela
+     * Reserva o InAppBrowser para uma operação interativa. O plugin Android mantém uma janela
      * ativa; abrir outra pode encerrar a anterior e o callback antigo fechar a nova.
      *
      * @returns Função idempotente que libera a reserva.
      */
-    async acquireCourseSsoBrowserLease(): Promise<() => void> {
+    async acquireInAppBrowserLease(): Promise<() => void> {
         this.courseSsoBrowserLeaseCount++;
         this.cancelProfileRefresh?.();
         await this.profileRefresh?.catch(() => false);
@@ -455,6 +455,15 @@ export class PainelAvaService {
             released = true;
             this.courseSsoBrowserLeaseCount = Math.max(0, this.courseSsoBrowserLeaseCount - 1);
         };
+    }
+
+    /**
+     * Mantém o contrato dos cursos usando a mesma reserva das páginas de Ajuda e perfil.
+     *
+     * @returns Função idempotente que libera a reserva compartilhada.
+     */
+    acquireCourseSsoBrowserLease(): Promise<() => void> {
+        return this.acquireInAppBrowserLease();
     }
 
     /** Revalida apenas o perfil com cookies existentes, sem iniciar login ou consultar cursos. */
