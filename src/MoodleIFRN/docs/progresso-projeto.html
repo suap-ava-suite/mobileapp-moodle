@@ -21,7 +21,7 @@
         <tr><th>HEAD de teste</th><td><code>78326f54b</code> · <code>teste(ifrn): protege navegacao de cursos e links da ajuda</code>.</td></tr>
         <tr><th>Estado Git</th><td>Worktree contém alterações locais pré-existentes em Cordova, MoodleIFRN, core Moodle, assets e evidências não rastreadas. Foram preservadas; não as incluir em commits desta tarefa.</td></tr>
         <tr><th>Build nesta rodada</th><td>Não executado. Nenhuma APK foi gerada ou instalada e nenhum dado/sessão do celular foi alterado.</td></tr>
-        <tr><th>Testes desta rodada</th><td>Suíte Node MoodleIFRN 368/368 aprovada em duas execuções; teste JVM 1/1; TypeScript passou. Jest direto sem Gulp: 230/241 passaram, 8 falharam e 3 estão pendentes; ver <a href="testes-e-validacao.html">detalhes e limitações</a>.</td></tr>
+        <tr><th>Testes desta rodada</th><td>Suíte Node MoodleIFRN 368/368 em duas execuções; JVM 1/1; TypeScript passou. Jest após tarefas Gulp seguras: 233/241 passaram, 5 falharam por langpacks ausentes e 3 estão pendentes. Ver <a href="testes-e-validacao.html">detalhes e limitações</a>.</td></tr>
         <tr><th>Validação Android</th><td>Há build Gradle bem-sucedido de uma tentativa de correção em worktree temporário. O primeiro pacote de diagnóstico ficou incompleto por sincronizar somente <code>main.js</code>; a cópia integral dos assets corrigiu esse erro de artefato. A execução seguinte não mostrou esse erro de módulo nos logs, mas o telefone bloqueou antes da conferência visual do Marketplace e do curso.</td></tr>
       </tbody></table></div><p>Os testes Node da tentativa isolada foram registrados como aprovados antes da validação no aparelho. Essa tentativa não está integrada ao HEAD de referência. Consulte <a href="problemas-conhecidos.html">Problemas conhecidos</a>.</p></section>
       <section class="doc-section searchable"><p class="eyebrow">IMPLEMENTADO E COM EVIDÊNCIA</p><h2>O que pode ser afirmado</h2><ul>
@@ -41,7 +41,7 @@
       <section class="doc-section searchable"><p class="eyebrow">PENDÊNCIAS E PRÓXIMOS PASSOS</p><h2>Ordem recomendada</h2><ol>
         <li><strong>Prioridade alta:</strong> retomar validação manual do candidato de rota de curso no Android com o usuário; confirmar build/artefato/assinatura, tela do Marketplace, abertura nativa, primeiro curso e retorno. A validação foi interrompida pelo bloqueio do telefone; não a declare concluída.</li>
         <li><strong>Prioridade alta:</strong> resolver o erro de rota <code>param-5</code>. O harness reproduziu leitura consumida no <code>CoreNavigator</code>; confirmar causa no fluxo completo e aplicar correção somente após autorização para modificar <code>src/core/services/navigator.ts</code>. Manter P0.4 intacta.</li>
-        <li>Executar Gulp/Jest em worktree isolado e comparar a linha de base preparada; o Gulp padrão sobrescreve o bundle MoodleIFRN alterado no worktree atual.</li>
+        <li>Disponibilizar em ambiente isolado os langpacks espanhol e africâner esperados pelos testes e repetir Jest sem alterar as expectativas; o Gulp padrão continua fora de uso neste worktree porque sobrescreve o bundle modificado.</li>
         <li>Revalidar todos os links da Ajuda, VLibras e toque em Android e registrar quais destinos foram testados.</li>
         <li>Medir desempenho no aparelho antes/depois de uma otimização; nenhuma medição foi feita nesta tarefa.</li>
         <li>Retomar a validação manual de curso e links da Ajuda no Android após correção, sem instalar APK ou alterar sessão sem autorização específica.</li>
