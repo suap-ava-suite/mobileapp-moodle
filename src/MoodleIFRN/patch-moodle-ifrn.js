@@ -517,6 +517,12 @@ function main() {
         ? '• Patch versionado P0.4 já aplicado e íntegro'
         : '✔ Patch versionado P0.4 aplicado');
 
+    const routeParamsPatch = path.join(SCRIPT_DIR, 'patches/course-route-params.manifest.json');
+    const routeParamsResult = applyVersionedPatch(routeParamsPatch, PROJECT_ROOT);
+    console.log(routeParamsResult.state === 'already-applied'
+        ? '• Cache de parâmetros de rota já corrigido e íntegro'
+        : '✔ Cache de parâmetros de rota corrigido');
+
     patchLoginModule();
     patchMobileAuthCallback();
     patchMainMenuNavigation();

@@ -5,6 +5,7 @@
 <li>moodle-course/patch-course-menu.cjs;</li>
 <li>moodle-course/patch-loading-animation.cjs;</li>
 <li>scripts/apply-versioned-core-patch.cjs, usando patches/p0.4-session-isolation.manifest.json e seu patch versionado.</li>
+<li>scripts/apply-versioned-core-patch.cjs, usando patches/course-route-params.manifest.json para preservar objetos nas leituras repetidas de parâmetros das rotas Angular.</li>
 </ul>
 </section>
 <section class="doc-section searchable" id="o-que-pode-ser-alterado"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>O que pode ser alterado</h2>
@@ -22,6 +23,7 @@
 </ul>
 <p>O script registra assets do painel e folhas de estilo IFRN, a tarefa Gulp mobilemoodle-ts e os comandos npm patch:ifrn/build:mobilemoodle. Os scripts auxiliares integram o menu e o botão Voltar do curso e ajustam a animação do componente de loading.</p>
 <p>Além dessas edições por transformação textual, o manifesto P0.4 aplica um patch versionado em 12 destinos. Eles incluem classes de persistência SecureStorage Android/iOS/TypeScript, tabelas de banco de dados, armazenamento de sites e eventos do núcleo Moodle. O manifesto compara hashes-base e hashes finais; exige que todos os destinos estejam no estado-base ou todos no estado-final e interrompe sem escrever quando há estado parcial ou divergente. Não edite os hashes manualmente para forçar a aplicação.</p>
+<p><strong>Atualização de 13/11/2026 — LIDO + MEDIDO:</strong> o manifesto separado <code>course-route-params.manifest.json</code> tem um destino, <code>src/core/services/navigator.ts</code>. Ele corrige o consumo do objeto entre leitores de <code>ActivatedRoute</code>, sem alterar o Observable nem parâmetros congelados. O cache é um WeakMap por snapshot/referência; uma referência de curso já indisponível é rejeitada com orientação em português, sem expor o identificador interno. O script principal reaplica e verifica esse patch junto dos demais. O build Android não deve ser tratado como substituto de <code>npm run patch:ifrn</code>; revise e aplique o patch antes de compilar. A integridade usa o mesmo mecanismo de hashes e falha fechada do P0.4.</p>
 </section>
 <section class="doc-section searchable" id="fluxo-recomendado-apos-atualizar-moodle-mobile"><p class="eyebrow">DOCUMENTAÇÃO TÉCNICA</p><h2>Fluxo recomendado após atualizar Moodle Mobile</h2>
 <ol>

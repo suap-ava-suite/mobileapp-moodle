@@ -460,7 +460,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
         this.moodleSite.hideNativeCourseHandoff();
     }
 
-    /** Translate a known local database miss without exposing raw storage errors in the UI.
+    /** Translate known local navigation/storage failures without exposing internal references in the UI.
      *
      * @param error Error to display.
      * @param fallback Generic message for non-Error values.
@@ -473,6 +473,10 @@ export class MoodleOpenCoursePage implements OnDestroy {
             : '';
         if (/^No records found\.?$/i.test(message)) {
             return 'Não foi possível localizar os dados locais necessários para abrir este curso. Tente novamente.';
+        }
+        if (/Cannot use ['"]in['"] operator to search for ['"]courseformatoptions['"] in param-\d+/i.test(message)) {
+            return 'Não foi possível recuperar os dados de navegação desta disciplina. '
+                + 'Volte ao Painel e abra o curso novamente.';
         }
 
         return message || fallback;

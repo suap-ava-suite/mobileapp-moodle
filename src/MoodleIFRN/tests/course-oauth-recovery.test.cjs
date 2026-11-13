@@ -80,6 +80,23 @@ test('course bridge keeps one inline error instead of duplicating it in a native
     assert.equal(s.page.formError, 'Não foi possível localizar os dados locais necessários para abrir este curso. Tente novamente.');
     assert.equal(s.alertCalls, 0);
 });
+
+test('a legacy courseformatoptions parameter error has a useful Portuguese recovery message', async () => {
+    const s = setup();
+    s.page.courseId = 2836;
+    s.service.ensureSessionAndOpenCourse = async () => {
+        throw new TypeError("Cannot use 'in' operator to search for 'courseformatoptions' in param-4");
+    };
+
+    await s.page.tryOpenOrPromptConnect(false);
+
+    assert.equal(s.page.phase, 'error');
+    assert.equal(s.page.formError, 'Não foi possível recuperar os dados de navegação desta disciplina. '
+        + 'Volte ao Painel e abra o curso novamente.');
+    assert.doesNotMatch(s.page.formError, /param-4|courseformatoptions|Cannot use/);
+    assert.equal(s.browserCalls, 0);
+    assert.equal(s.page.loading, false);
+});
 test('missing browser return ends waiting and permits a new official attempt for the same environment', async () => {
     const s = setup(); await s.page.ionViewWillEnter();
     assert.equal(s.page.phase, 'waiting-browser'); assert.equal(s.page.loading, false);

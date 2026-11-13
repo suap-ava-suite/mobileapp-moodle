@@ -1,0 +1,14 @@
+{
+  "schema": "ifrn-core-patch/v1",
+  "id": "ifrn-course-route-params.v1",
+  "baseCommit": "ad6dded4b920a9627a3d6c2ba86c3bb2e8889c75",
+  "patchPath": "src/MoodleIFRN/patches/course-route-params.patch",
+  "patchSha256": "069b898718264445275630835cfd1bc02211908b570af569585001e7f2d5ad60",
+  "targets": [
+    {
+      "path": "src/core/services/navigator.ts",
+      "baseSha256": "d8bb0732b349b55f172ce79734b628419a034f9f41f45587d04a74711e76f3ec",
+      "postSha256": "bb1f5570d678a1e8095627400e00f7bb9e6823ef4012fd37c7ee18811cad5a46"
+    }
+  ]
+}

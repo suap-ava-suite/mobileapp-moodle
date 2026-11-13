@@ -1,0 +1,50 @@
+diff --git a/src/core/services/navigator.ts b/src/core/services/navigator.ts
+index 38f6ac819..a411ccc54 100644
+--- a/src/core/services/navigator.ts
++++ b/src/core/services/navigator.ts
+@@ -91,6 +91,7 @@ export class CoreNavigatorService {
+ 
+     protected routesDepth: Record<string, number> = {};
+     protected storedParams: Record<number, unknown> = {};
++    protected resolvedRouteParams = new WeakMap<ActivatedRouteSnapshot | ActivatedRoute, Map<string, unknown>>();
+     protected lastParamId = 0;
+     protected static readonly STORED_PARAM_PREFIX = 'param-';
+ 
+@@ -790,6 +791,13 @@ export class CoreNavigatorService {
+             return value;
+         }
+ 
++        // Angular queryParams is an Observable; cache per snapshot without mutating either object.
++        const routeKey = route instanceof ActivatedRouteSnapshot ? route : route.snapshot || route;
++        const resolvedParams = this.resolvedRouteParams.get(routeKey);
++        if (resolvedParams?.has(value)) {
++            return resolvedParams.get(value);
++        }
++
+         let storedParam = this.storedParams[value];
+ 
+         // Remove the parameter from our map if it's in there.
+@@ -803,10 +811,20 @@ export class CoreNavigatorService {
+             }
+         }
+ 
+-        // Override the param in the route so it's not retrieved again.
+-        route.queryParams[name] = storedParam ?? value;
++        if (storedParam !== undefined && storedParam !== null) {
++            const cache = resolvedParams || new Map<string, unknown>();
++            cache.set(value, storedParam);
++            this.resolvedRouteParams.set(routeKey, cache);
++
++            return storedParam;
++        }
+ 
+-        return storedParam ?? value;
++        if (name === 'course' && /^param-\d+$/.test(value)) {
++            throw new CoreError('Não foi possível recuperar os dados de navegação desta disciplina. '
++                + 'Volte ao Painel e abra o curso novamente.');
++        }
++
++        return value;
+     }
+ 
+     /**
