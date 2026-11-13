@@ -1,0 +1,67 @@
+# Documentação MoodleIFRN
+
+> **Ponto de entrada atual:** abra [`index.html`](./index.html) diretamente no navegador. O portal usa recursos locais em `assets/` e funciona sem servidor ou conexão externa. Para assumir uma tarefa, leia também [`continuidade-ia.html`](./continuidade-ia.html) e [`progresso-projeto.html`](./progresso-projeto.html).
+
+Os Markdown abaixo são referências técnicas e relatórios por assunto. Documentos com datas antigas podem registrar experiências históricas, não o estado do código atual. Confira as fontes, a branch e o painel de [problemas conhecidos](./problemas-conhecidos.html) antes de reaplicar uma correção.
+
+Índice da customização **AVA IFRN** no app Moodle Mobile.
+
+**Manual prático de desenvolvimento:** [abrir o guia HTML offline](./index.html).
+**Classificação do acervo:** [inventário da documentação](./INVENTARIO-DOCUMENTACAO.md).
+
+Tudo que é específico do IFRN vive em `src/MoodleIFRN/` (login, serviços, painel e tema), com o mínimo de alteração no núcleo do Moodle.
+
+## Comece por aqui
+
+Para passos de instalação e compilação, use o [manual HTML offline](./index.html). O script de reaplicação IFRN modifica pontos de integração do núcleo; consulte o escopo e revise o diff em [PATCH-AO-ATUALIZAR.md](./PATCH-AO-ATUALIZAR.md) antes de executá-lo.
+
+| Documento | Conteúdo |
+|-----------|----------|
+| [VISAO-GERAL.md](./VISAO-GERAL.md) | Arquitetura, fluxo do usuário e status do projeto |
+| [PONTE-PAINEL-MOODLE.md](./PONTE-PAINEL-MOODLE.md) | SUAP → Painel AVA → sessão Moodle Mobile |
+| [PATCH-AO-ATUALIZAR.md](./PATCH-AO-ATUALIZAR.md) | Reaplicar o módulo após atualizar o Moodle Mobile |
+| [PLAY-STORE-BETA.md](./PLAY-STORE-BETA.md) | Criar a ficha Moodle IFRN e publicar um teste beta na Google Play |
+| [DESEMPENHO-PAINEL-2026-10-26.md](./DESEMPENHO-PAINEL-2026-10-26.md) | Reduzir gravações repetidas e recargas desnecessárias do Painel |
+
+## Login e autenticação
+
+| Documento | Conteúdo |
+|-----------|----------|
+| [LOGIN-IFRN.md](./LOGIN-IFRN.md) | Tela de login IFRN |
+| [SERVICOS-AUTH-BIOMETRIA.md](./SERVICOS-AUTH-BIOMETRIA.md) | `AuthService` + biometria |
+| [CONTRATO-API.md](./CONTRATO-API.md) | Endpoints e payloads esperados |
+| [SEGURANCA.md](./SEGURANCA.md) | Medidas de segurança no cliente |
+
+## Painel de cursos (mobilemoodle)
+
+| Documento | Conteúdo |
+|-----------|----------|
+| [PAINEL-CURSOS.md](./PAINEL-CURSOS.md) | SPA do painel, rotas e integração |
+| [../mobilemoodle/core_mobile/SCRIPTS-TS.md](../mobilemoodle/core_mobile/SCRIPTS-TS.md) | Módulos TypeScript (`core_mobile/`) |
+| [TEMPLATES-HTML.md](./TEMPLATES-HTML.md) | Partials HTML e shell do `index.html` |
+| [TEMA-VISUAL.md](./TEMA-VISUAL.md) | SCSS/CSS, header AVA, safe-area, responsividade |
+
+## Scripts úteis
+
+```bash
+# Registrar / reparar rotas IFRN no Moodle Mobile
+npm run patch:ifrn
+
+# Compilar TypeScript e SCSS do painel → mobilemoodle.js (sem pasta css do tema)
+npm run build:mobilemoodle
+```
+
+## Recursos nativos (ícone / splash)
+
+Assets oficiais do Painel AVA para o build Cordova:
+
+| Arquivo | Uso | Tamanho |
+|---------|-----|---------|
+| `../resources/icon.png` (se presente) / `resources/` na raiz | Ícone do app | 1024×1024 |
+| Splash Cordova | Splash screen | ver `config.xml` |
+
+Identidade: fundo teal `#098E95` + marca branca do Painel AVA (`theme_ifrn25`).
+
+Favicons e splash **web** do painel:
+
+`mobilemoodle/static/theme/ifrn/favicon/` e `…/img/splash-logo.png`.

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Estado verificado da branch release do Moodle IFRN Mobile e transferência para a próxima tarefa.">
+  <title>Progresso do projeto | Moodle IFRN Mobile</title>
+  <link rel="stylesheet" href="assets/manual.css">
+  <script src="assets/manual.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topbar">
+    <button class="icon-button menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false">☰</button>
+    <a class="brand" href="index.html#inicio" aria-label="Moodle IFRN Mobile, início"><span class="brand-mark" aria-hidden="true">IF</span><span><strong>Moodle IFRN Mobile</strong><small>Progresso do projeto</small></span></a>
+    <div class="top-actions"><label class="search-wrap"><span class="visually-hidden">Pesquisar nesta página</span><input id="manual-search" type="search" placeholder="Pesquisar progresso" autocomplete="off"></label><button id="theme-toggle" class="icon-button" type="button" aria-label="Alternar tema">◐</button></div>
+  </header>
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação">
+      <nav>
+        <a href="index.html">Manual principal</a>
+        <a href="estrutura-arquitetura.html">Arquitetura e arquivos críticos</a>
+        <a href="android-celular-fisico.html">Android físico</a>
+        <a href="testes-e-validacao.html">Testes e fixtures</a>
+        <a href="problemas-conhecidos.html">Problemas conhecidos</a>
+        <a href="progresso-projeto.html">Progresso</a>
+        <a href="continuidade-ia.html">Continuidade entre IAs</a>
+      </nav>
+      <div class="sidebar-note">Atualizado em 13/11/2026</div>
+    </aside>
+    <main id="conteudo" class="content">
+      <section class="hero searchable">
+        <p class="eyebrow">ESTADO VERIFICADO · 13/11/2026</p>
+        <h1>Progresso do Moodle IFRN Mobile</h1>
+        <p>Esta página registra o estado da branch de release observado nesta tarefa. Confirme Git e worktrees novamente antes de continuar, pois o estado pode mudar depois desta atualização.</p>
+        <div class="callout warning"><strong>Alterações locais preservadas:</strong> o worktree release preexistente tinha mudanças em armazenamento seguro, sessões e P0.4 no Cordova e no núcleo Moodle. Elas foram consideradas relevantes, não foram copiadas, descartadas nem incluídas nesta publicação documental. A documentação foi preparada em um worktree isolado.</div>
+      </section>
+      <section class="doc-section searchable">
+        <p class="eyebrow">ESTADO ATUAL</p><h2>Branch, HEAD e validação</h2>
+        <div class="table-wrap"><table><tbody>
+          <tr><th>Branch de referência</th><td><code>release/2.0.1</code>, baseada em <code>origin/release/2.0.1</code>.</td></tr>
+          <tr><th>HEAD antes desta publicação documental</th><td><code>0a158c30a1500fe277229a5fa9bd5207aae89c86</code> — <code>docs(ifrn): registra limpeza autorizada e validacoes da fase 2</code>.</td></tr>
+          <tr><th>Commits na base remota</th><td>O histórico desde <code>6e58913fe</code> inclui a remoção de imports comprovadamente não utilizados, inventário e testes de documentação, limpeza previamente autorizada de cinco arquivos e o registro dessa validação. Consulte o histórico Git para os hashes completos.</td></tr>
+          <tr><th>Estado Git durante a preparação</th><td>Havia um worktree release com alterações locais relevantes e um worktree isolado para documentação. As alterações locais foram mantidas fora do commit; nenhum reset, limpeza ou substituição foi feito.</td></tr>
+          <tr><th>Build e testes desta tarefa</th><td>Não executados. Esta tarefa altera somente documentação e instruções; não representa validação de aplicação.</td></tr>
+          <tr><th>APK e teste Android desta tarefa</th><td>Não realizados. A documentação não foi instalada nem validada visualmente em celular nesta tarefa.</td></tr>
+        </tbody></table></div>
+      </section>
+      <section class="doc-section searchable">
+        <p class="eyebrow">IMPLEMENTADO COM EVIDÊNCIA REGISTRADA</p><h2>O que se pode afirmar</h2>
+        <ul>
+          <li>A release integra a customização IFRN ao Moodle Mobile, incluindo Marketplace, fluxo SUAP/Painel e abertura de curso nativo.</li>
+          <li>A correção <code>74d0a4038</code> para encerrar a espera de navegação após falha ou cancelamento está integrada; ela não resolve toda falha de abertura de curso.</li>
+          <li>A correção <code>338163584</code> protege a navegação da Ajuda contra concorrência com a atualização do perfil. Há validação manual de uma sequência no celular: autenticação SUAP iniciada pela Ajuda, retorno correto e abertura da Ouvidoria e de outro atendimento sem nova digitação de credenciais. Isso não cobre todos os seis links.</li>
+          <li>A release preserva o patch e os testes da P0.4. A persistência e o isolamento ainda precisam de validação nativa completa.</li>
+          <li>O portal HTML contém arquitetura, inventário de arquivos, inventário individual das fixtures, testes, execução Android, problemas conhecidos e continuidade entre agentes.</li>
+        </ul>
+      </section>
+      <section class="doc-section searchable">
+        <p class="eyebrow">HISTÓRICO DA RELEASE</p><h2>Commits relevantes já presentes na base</h2>
+        <div class="table-wrap"><table><thead><tr><th>Commit</th><th>Registro</th><th>Escopo</th></tr></thead><tbody>
+          <tr><td><code>0a158c30a</code></td><td>Registra a limpeza autorizada e as validações da Fase 2.</td><td>Documentação.</td></tr>
+          <tr><td><code>98a5ba56c</code></td><td>Aplica a limpeza autorizada de cinco arquivos.</td><td>Limpeza documentada e revisada.</td></tr>
+          <tr><td><code>e4909876e</code></td><td>Valida inventário, fixtures e navegação offline.</td><td>Testes e documentação; resultados pertencem àquele snapshot.</td></tr>
+          <tr><td><code>3b789af44</code></td><td>Mapeia arquitetura, arquivos e propostas de limpeza.</td><td>Arquitetura e inventário.</td></tr>
+          <tr><td><code>3c72c5ac5</code></td><td>Remove quatro imports sem uso comprovado.</td><td>Refatoração pequena.</td></tr>
+          <tr><td><code>6e58913fe</code></td><td>Integra correções de cursos e Ajuda na release 2.0.1.</td><td>Base anterior a esses cinco commits.</td></tr>
+        </tbody></table></div>
+        <p>Os resultados históricos de 358 testes em 50 arquivos e 369 testes em 51 arquivos pertencem a snapshots e escopos diferentes, documentados nos respectivos commits. Nenhum deles foi reexecutado nesta tarefa. A documentação desta publicação também não deve ser interpretada como validação desses testes.</p>
+      </section>
+      <section class="doc-section searchable">
+        <p class="eyebrow">PENDÊNCIAS</p><h2>Próximas ações recomendadas</h2>
+        <ol>
+          <li><strong>Prioridade alta — abertura de cursos:</strong> reproduzir no Android o erro <code>Cannot use "in" to search for "courseformatoptions" in param-5</code> e a tela inicial travada. No HEAD da release, <code>src/MoodleIFRN/navigation/open-native-course.ts</code> ainda envia <code>params: { course }</code>. Uma candidata que envia apenas o ID foi testada e compilada em uma tentativa isolada, mas não foi validada visualmente no aparelho nem integrada. Comparar contratos e manter os testes de sessão P0.4.</li>
+          <li>Registrar separadamente o erro de validação automática observado em outro computador Linux. Não há evidência de que Linux seja a causa; não alterar validações de identidade nem transportar cookies/tokens.</li>
+          <li>Validar no aparelho os seis destinos da Ajuda, incluindo toque, retorno e retomada após autenticação; somente parte da sequência tem confirmação manual registrada.</li>
+          <li>Validar P0.4 em Android e iOS, incluindo persistência e operações tardias entre tentativas/contas. Alterações locais de sessão preservadas não fazem parte desta atualização documental.</li>
+          <li>Medir desempenho em dispositivo antes de otimizar; não há medição antes/depois nesta tarefa.</li>
+        </ol>
+        <p>Use <a href="problemas-conhecidos.html">Problemas conhecidos</a> para evidências e limites, e <a href="continuidade-ia.html">Continuidade entre IAs</a> para iniciar a próxima sessão sem repetir investigações.</p>
+      </section>
+      <footer class="footer">Moodle IFRN Mobile · Progresso · 13/11/2026</footer>
+    </main>
+  </div>
+  <p id="live-status" class="visually-hidden" role="status" aria-live="polite"></p>
+</body>
+</html>

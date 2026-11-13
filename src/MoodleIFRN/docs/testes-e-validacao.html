@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Mapa dos testes MoodleIFRN, comandos e fixtures de sessão, navegação e Cordova.">
+  <title>Testes e fixtures | Moodle IFRN Mobile</title>
+  <link rel="stylesheet" href="assets/manual.css">
+  <script src="assets/manual.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topbar"><button class="icon-button menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false">☰</button><a class="brand" href="index.html#inicio" aria-label="Moodle IFRN Mobile, início"><span class="brand-mark" aria-hidden="true">IF</span><span><strong>Moodle IFRN Mobile</strong><small>Testes e fixtures</small></span></a><div class="top-actions"><label class="search-wrap"><span class="visually-hidden">Pesquisar nesta página</span><input id="manual-search" type="search" placeholder="Pesquisar testes" autocomplete="off"></label><button id="theme-toggle" class="icon-button" type="button" aria-label="Alternar tema">◐</button></div></header>
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav><a href="index.html">Manual principal</a><a href="estrutura-arquitetura.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a></nav><div class="sidebar-note">Aprovação automatizada não prova autenticação real.</div></aside>
+    <main id="conteudo" class="content">
+      <section class="hero searchable"><p class="eyebrow">REGRESSÃO · CONTRATOS · DIAGNÓSTICO</p><h1>Testes, linha de base e fixtures</h1><p>Os testes IFRN são majoritariamente scripts Node independentes em <code>src/MoodleIFRN/tests/</code>; o Jest/Gulp do núcleo é um grupo separado. Preserve casos de sessão mesmo quando falhem: uma falha pode ser a evidência do defeito que o teste protege.</p><div class="callout warning"><strong>P0.4 permanece protegido:</strong> não apague, ignore, enfraqueça ou altere as expectativas de concorrência de sessão para fazer a suíte passar. O patch e os contratos precisam continuar íntegros.</div></section>
+
+      <section class="doc-section searchable"><p class="eyebrow">01 · COMANDOS</p><h2>Executar testes</h2><p>Os scripts do pacote raiz estão declarados em <code>package.json</code>. <code>test:ci</code> executa Gulp e Jest em modo serial; é distinto da suíte Node MoodleIFRN.</p><div class="command-card"><div class="command-heading"><strong>Jest e tarefas Gulp</strong><span>Shell POSIX; Windows use Git Bash/WSL se a atribuição NODE_ENV falhar</span></div><pre><code>npm run test:ci</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Não inclui automaticamente todos os scripts Node em <code>src/MoodleIFRN/tests/</code>. No Windows, o script contém sintaxe Unix para definir <code>NODE_ENV</code>; use um shell POSIX ou registre a falha de compatibilidade sem editar o script por conveniência.</p></div><div class="command-card"><div class="command-heading"><strong>Regressão pontual de navegação</strong><span>Node 22</span></div><pre><code>node --test src/MoodleIFRN/tests/course-navigation-failure.test.cjs</code></pre><button class="copy-button" type="button">Copiar comando</button></div><div class="command-card"><div class="command-heading"><strong>Suíte Node no PowerShell (exclui teste JVM com efeitos colaterais)</strong><span>Raiz do repositório</span></div><pre><code>$testFiles = Get-ChildItem 'src/MoodleIFRN/tests' -File -Recurse | Where-Object {
+  $_.Name -match '\.test\.(cjs|mjs)$' -and $_.Name -ne 'native-persistence-contract.test.cjs'
+} | ForEach-Object { $_.FullName }
+node --test --test-concurrency=2 @testFiles</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Este padrão consta no manual e evita o teste que compila Java e grava evidências. Reveja a lista de arquivos antes de reutilizar, pois o conjunto muda ao longo do desenvolvimento.</p></div><div class="callout info">Os documentos da release registram resultados distintos: 358 testes em 50 arquivos na verificação do checkout de release e 369 em 51 na auditoria de limpeza. Os comandos/escopos e snapshots diferem; não compare as contagens como se fossem a mesma linha de base. Nenhum teste foi executado nesta tarefa documental.</div></section>
+
+      <section class="doc-section searchable"><p class="eyebrow">02 · COBERTURA FUNCIONAL</p><h2>Grupos existentes</h2><div class="table-wrap"><table><thead><tr><th>Grupo</th><th>Exemplos de arquivos</th><th>O que protege</th></tr></thead><tbody>
+        <tr><td>Sessão, persistência e tentativas</td><td><code>session-attempt-contract</code>, <code>session-persistence-adapter</code>, <code>session-cleanup</code>, <code>course-opening-attempt-regression</code>, <code>cache-publication-races</code></td><td>Autoridade de conta, isolamento, limpeza, persistência, publicação concorrente e recuperação.</td></tr>
+        <tr><td>Abertura e navegação de cursos</td><td><code>course-session-opening</code>, <code>course-native-route</code>, <code>course-navigation-*</code>, <code>course-saved-session</code>, <code>course-oauth-recovery</code>, <code>course-back-*</code></td><td>Preparação do site/sessão, abertura nativa, falhas, cancelamentos, retorno e corrida.</td></tr>
+        <tr><td>SUAP, gov.br e navegador</td><td><code>suap-mobile-auth-handoff</code>, <code>suap-govbr-routing</code>, <code>govbr-*</code>, <code>course-sso-browser</code>, <code>suap-profile-browser</code></td><td>Redirecionamento oficial e handoff do navegador sem misturar sessões.</td></tr>
+        <tr><td>Painel, comunicação e Ajuda</td><td><code>iframe-message-origin</code>, <code>painel-help-inappbrowser</code>, <code>help-profile-browser-race</code>, <code>painel-courses</code>, <code>panel-iframe-first-paint</code></td><td>Origem confiável, perfil, links de Ajuda, cursos e primeira renderização.</td></tr>
+        <tr><td>Tema, acessibilidade e plataforma</td><td><code>course-details-theme</code>, <code>course-handoff-visual</code>, <code>accessibility-vlibras</code>, <code>painel-ios-layout</code>, <code>cordova-storage-contract</code></td><td>Tema, layout, acessibilidade, contratos de Cordova e diferenças de plataforma.</td></tr>
+        <tr><td>Patches/recuperação</td><td><code>patch-manifest</code>, <code>versioned-core-patch</code>, <code>unknown-commit-recovery</code>, <code>p10-sqlite-reconciliation</code></td><td>Integridade de patches, recuperabilidade e protótipos de persistência.</td></tr>
+      </tbody></table></div><p>Arquivos <code>*.android.mjs</code> podem ser diagnósticos de aparelho e não entram necessariamente no padrão <code>node --test</code>. Leia o arquivo antes de executá-lo; confirme se ele interage com dispositivo, grava evidências ou exige autenticação.</p></section>
+
+            <section class="doc-section searchable"><p class="eyebrow">03 · FIXTURES</p><h2>Inventário de fixtures</h2><p>O HEAD remoto <code>release/2.0.1</code> contém 37 arquivos versionados em <code>tests/fixtures/</code>; a Fase 1 registrava 39. A página <a href="inventario-fixtures.html">Inventário individual das fixtures</a> já documenta cada arquivo, referência direta/dinâmica, finalidade, classificação e risco. Consulte-a antes de editar ou remover.</p><div class="callout info">Os grupos incluem adaptadores de persistência SQLite/Cordova, contratos de tentativa e sessão, instrumentação nativa P08, patch/reconciliação P09 e um fork experimental/harness P10. Há referências por <code>require</code>, caminho montado dinamicamente, glob Java e <code>plugin.xml</code>; ausência de import TS não é evidência de inutilidade.</div><div class="callout warning">A limpeza autorizada retirou dois assets do harness P10 após auditoria e regressões no commit <code>98a5ba56c</code>. Isso não autoriza remover outras fixtures. Preserve P0.4 e execute o inventário/testes relevantes antes de qualquer alteração.</div></section>
+
+      <section class="doc-section searchable"><p class="eyebrow">04 · REGRAS DE LINHA DE BASE</p><h2>Como interpretar os resultados</h2><ul>
+        <li>Antes da mudança, registre comando, contagem, falhas, código de saída e testes não executados. Diferencie falhas preexistentes de regressões.</li>
+        <li>Depois da mudança, repita os grupos afetados e execute <code>git diff --check</code>. Não altere expectativa só para obter aprovação.</li>
+        <li>Preserve autenticação, isolamento de conta, origem <code>postMessage</code>, recuperação e P0.4.</li>
+        <li>Testes unitários não provam login SUAP, OAuth, persistência nativa ou curso funcionando em aparelho. Siga <a href="android-celular-fisico.html">o roteiro Android físico</a>.</li>
+        <li>Esta tarefa foi somente documental: nenhum teste, TypeScript, lint ou build foi executado nela.</li>
+      </ul><p>Consulte os relatórios detalhados do manual e a página de <a href="progresso-projeto.html">progresso atual</a> antes de comparar resultados históricos.</p></section>
+      <footer class="footer">Moodle IFRN Mobile · Testes e fixtures · 13/11/2026</footer>
+    </main>
+  </div>
+  <p id="live-status" class="visually-hidden" role="status" aria-live="polite"></p>
+</body>
+</html>
