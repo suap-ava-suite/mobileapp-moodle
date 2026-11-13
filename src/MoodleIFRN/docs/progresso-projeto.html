@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Estado verificado do Moodle IFRN Mobile e transferência para a próxima tarefa.">
+  <title>Progresso do projeto | Moodle IFRN Mobile</title>
+  <link rel="stylesheet" href="assets/manual.css">
+  <script src="assets/manual.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topbar"><button class="icon-button menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false">☰</button><a class="brand" href="index.html#inicio" aria-label="Moodle IFRN Mobile, início"><span class="brand-mark" aria-hidden="true">IF</span><span><strong>Moodle IFRN Mobile</strong><small>Progresso do projeto</small></span></a><div class="top-actions"><label class="search-wrap"><span class="visually-hidden">Pesquisar nesta página</span><input id="manual-search" type="search" placeholder="Pesquisar progresso" autocomplete="off"></label><button id="theme-toggle" class="icon-button" type="button" aria-label="Alternar tema">◐</button></div></header>
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav><a href="index.html">Manual principal</a><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a></nav><div class="sidebar-note">Atualizado em 13/11/2026</div></aside>
+    <main id="conteudo" class="content">
+      <section class="hero searchable"><p class="eyebrow">ESTADO VERIFICADO · 13/11/2026</p><h1>Progresso do Moodle IFRN Mobile</h1><p>Esta é uma fotografia do repositório e das evidências disponíveis nesta sessão. Consulte Git novamente antes de agir; alterações locais podem avançar sem atualizar esta página.</p><div class="callout warning"><strong>Preserve o worktree:</strong> a branch principal desta sessão contém muitas alterações locais pré-existentes, incluindo arquivos em <code>src/core/</code>, Cordova, MoodleIFRN e artefatos de diagnóstico. Não as reverta, não as inclua no commit documental e não presuma que representem código integrado.</div></section>
+      <section class="doc-section searchable"><p class="eyebrow">ESTADO ATUAL</p><h2>Branch, referência e validação</h2><div class="table-wrap"><table><tbody>
+        <tr><th>Branch/HEAD de referência</th><td><code>fix/ifrn-course-opening-phase2</code> · <code>9b3d24f50cfa8ab773f74284cb39a0f3762b67dd</code> antes do commit documental desta sessão.</td></tr>
+        <tr><th>Último commit da referência</th><td><code>9b3d24f50</code> · <code>docs(ifrn): confirma retorno da Ajuda após login SUAP</code> · 12/11/2026.</td></tr>
+        <tr><th>Estado Git</th><td>Worktree com alterações e arquivos não rastreados anteriores à documentação; existem worktrees separados para outras tarefas/branches. Verifique status e cada worktree antes de editar. Nenhum deles foi limpo ou trocado nesta tarefa.</td></tr>
+        <tr><th>Build nesta tarefa</th><td>Não executado; tarefa limitada a documentação.</td></tr>
+        <tr><th>Testes nesta tarefa</th><td>Não executados; a contagem histórica do manual não é validação do HEAD atual.</td></tr>
+        <tr><th>Validação Android</th><td>Há build Gradle bem-sucedido de uma tentativa de correção em worktree temporário. O primeiro pacote de diagnóstico ficou incompleto por sincronizar somente <code>main.js</code>; a cópia integral dos assets corrigiu esse erro de artefato. A execução seguinte não mostrou esse erro de módulo nos logs, mas o telefone bloqueou antes da conferência visual do Marketplace e do curso.</td></tr>
+      </tbody></table></div><p>Os testes Node da tentativa isolada foram registrados como aprovados antes da validação no aparelho. Essa tentativa não está integrada ao HEAD de referência. Consulte <a href="problemas-conhecidos.html">Problemas conhecidos</a>.</p></section>
+      <section class="doc-section searchable"><p class="eyebrow">IMPLEMENTADO E COM EVIDÊNCIA</p><h2>O que pode ser afirmado</h2><ul>
+        <li>O aplicativo base Moodle Mobile tem rotas e shell Angular/Ionic; as personalizações IFRN estão concentradas em <code>src/MoodleIFRN/</code> e integram painel web embarcado, SUAP e cursos Moodle nativos.</li>
+        <li>A ponte do Painel valida origem/janela e há testes de contrato para mensagens, handoff de curso, OAuth, falhas e retorno.</li>
+        <li>O commit <code>338163584</code> protege o navegador de Ajuda da concorrência com atualização do perfil; evidência anterior valida um fluxo parcial em aparelho, sem cobertura confirmada dos seis botões.</li>
+        <li>O patch P0.4 e testes de sessão/concorrência estão versionados e precisam ser preservados; a validação persistente nativa segue pendente.</li>
+      </ul></section>
+      <section class="doc-section searchable"><p class="eyebrow">HISTÓRICO DA BRANCH DE REFERÊNCIA</p><h2>Commits recentes relevantes</h2><div class="table-wrap"><table><thead><tr><th>Commit</th><th>Data</th><th>Registro</th><th>Leitura</th></tr></thead><tbody>
+        <tr><td><code>9b3d24f50</code></td><td>12/11/2026</td><td>Confirma retorno da Ajuda após login SUAP.</td><td>Registro documental; fluxo manual parcial.</td></tr>
+        <tr><td><code>7495e1a5c</code></td><td>12/11/2026</td><td>Atualiza navegador da Ajuda e registra correção.</td><td>Consultar seus testes e documentação para escopo exato.</td></tr>
+        <tr><td><code>338163584</code></td><td>12/11/2026</td><td>Protege navegador de Ajuda contra atualização do perfil.</td><td>Correção de concorrência de navegador/perfil.</td></tr>
+        <tr><td><code>74d0a4038</code></td><td>12/11/2026</td><td>Encerra espera de rota após falha ou cancelamento.</td><td>Correção da espera de navegação do curso; não elimina todas as falhas de abertura.</td></tr>
+        <tr><td><code>2f8ad795e</code>, <code>b02998d89</code>, <code>3cbc4639c</code></td><td>11–12/11/2026</td><td>Registros de performance, regressões de curso e validação no Android.</td><td>Verificar o histórico completo antes de repetir experimentos; nenhum commit de outra branch é presumido integrado.</td></tr>
+      </tbody></table></div><p>Esses commits pertencem ao histórico consultado na branch desta página. Não use a lista para inferir que commits de branches temporárias ou a release estejam incorporados.</p></section>
+      <section class="doc-section searchable"><p class="eyebrow">PENDÊNCIAS E PRÓXIMOS PASSOS</p><h2>Ordem recomendada</h2><ol>
+        <li><strong>Prioridade alta:</strong> retomar validação manual do candidato de rota de curso no Android com o usuário; confirmar build/artefato/assinatura, tela do Marketplace, abertura nativa, primeiro curso e retorno. A validação foi interrompida pelo bloqueio do telefone; não a declare concluída.</li>
+        <li>Se o cenário confirmar erro, comparar o código testado com o HEAD e adicionar/ajustar regressão mantendo o contrato P0.4. Revisar a necessidade de tocar o núcleo só com justificativa e autorização.</li>
+        <li>Revalidar todos os links da Ajuda, VLibras e toque em Android e registrar quais destinos foram testados.</li>
+        <li>Medir desempenho no aparelho antes/depois de uma otimização; nenhuma medição foi feita nesta tarefa.</li>
+        <li>Após autorização e verificação do worktree da release, tratar separadamente a publicação/push solicitada em conversa anterior. Este trabalho documental não enviou código à release nem fez push.</li>
+      </ol><p>Não há porcentagens de conclusão. Os estados são: implementado com evidência, implementado com validação parcial, pendente ou não medido.</p></section>
+      <footer class="footer">Moodle IFRN Mobile · Progresso · 13/11/2026</footer>
+    </main>
+  </div>
+  <p id="live-status" class="visually-hidden" role="status" aria-live="polite"></p>
+</body>
+</html>

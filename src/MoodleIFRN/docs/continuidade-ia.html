@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Guia operacional de continuidade entre agentes de IA e desenvolvedores MoodleIFRN.">
+  <title>Continuidade entre IAs | Moodle IFRN Mobile</title>
+  <link rel="stylesheet" href="assets/manual.css">
+  <script src="assets/manual.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topbar"><button class="icon-button menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false">☰</button><a class="brand" href="index.html#inicio" aria-label="Moodle IFRN Mobile, início"><span class="brand-mark" aria-hidden="true">IF</span><span><strong>Moodle IFRN Mobile</strong><small>Continuidade entre IAs</small></span></a><div class="top-actions"><label class="search-wrap"><span class="visually-hidden">Pesquisar nesta página</span><input id="manual-search" type="search" placeholder="Pesquisar orientações" autocomplete="off"></label><button id="theme-toggle" class="icon-button" type="button" aria-label="Alternar tema">◐</button></div></header>
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav><a href="index.html">Manual principal</a><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a></nav><div class="sidebar-note">Leia o estado real antes de continuar.</div></aside>
+    <main id="conteudo" class="content">
+      <section class="hero searchable"><p class="eyebrow">GUIA DE CONTINUIDADE — AGENTES DE IA E DESENVOLVEDORES</p><h1>Continue do ponto documentado</h1><p>Use esta página junto das instruções curtas <code>AGENTS.md</code>. A página não substitui Git, código nem testes atuais: é um roteiro para consultar evidências existentes e preservar o trabalho em andamento.</p></section>
+      <section class="doc-section searchable"><p class="eyebrow">01 · ORDEM DE LEITURA</p><h2>O que ler primeiro</h2><ol>
+        <li><a href="../../../AGENTS.md">AGENTS.md da raiz</a> e <a href="../AGENTS.md">AGENTS.md de MoodleIFRN</a>.</li>
+        <li><a href="index.html">Portal HTML offline</a> para ambiente, scripts, build e referências existentes.</li>
+        <li><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a>.</li>
+        <li><a href="progresso-projeto.html">Progresso do projeto</a> e <a href="problemas-conhecidos.html">problemas conhecidos</a>.</li>
+        <li><a href="testes-e-validacao.html">Testes/fixtures</a> e <a href="android-celular-fisico.html">validação no aparelho físico</a>.</li>
+        <li>Para scripts específicos, consulte <code>PATCH-AO-ATUALIZAR.md</code>, <code>PAINEL-CURSOS.md</code>, <code>SEGURANCA.md</code> e os testes que cobrem os arquivos envolvidos.</li>
+      </ol><p>O caminho para a raiz no link HTML serve a navegação relativa quando esta página abre via <code>file://</code>; se o navegador bloquear acesso fora da pasta, abra o arquivo <code>AGENTS.md</code> no editor.</p></section>
+      <section class="doc-section searchable"><p class="eyebrow">02 · COMEÇAR UMA SESSÃO</p><h2>Reconhecer o estado sem sobrescrever trabalho</h2><div class="command-card"><pre><code>git status --short --branch
+git branch -vv
+git worktree list
+git log -10 --oneline
+git diff --stat</code></pre><button class="copy-button" type="button">Copiar comando</button></div><ol>
+        <li>Registre branch, HEAD e worktrees; confira arquivos modificados, staged e não rastreados antes de editar.</li>
+        <li>Leia o painel de progresso e a transferência da sessão anterior. Compare o objetivo pendente com o pedido atual do usuário.</li>
+        <li>Confira se a correção já existe no código atual, em testes ou em commits desta branch. Histórico de outra branch não significa integração.</li>
+        <li>Execute primeiro a linha de base relevante; anote falhas preexistentes e efeitos colaterais de scripts de build/patch.</li>
+        <li>Edite apenas o menor escopo autorizado, preserve estado local e repita os testes pertinentes.</li>
+      </ol></section>
+      <section class="doc-section searchable"><p class="eyebrow">03 · NÃO FAZER</p><h2>Limites que evitam regressões</h2><ul>
+        <li>Não iniciar refatoração geral nem repetir auditorias já documentadas sem uma pergunta concreta.</li>
+        <li>Não mudar autenticação SUAP, OAuth, identidade, sessão Moodle ou backend sem autorização e leitura do fluxo completo.</li>
+        <li>Não editar <code>src/core/</code>, <code>src/addons/</code>, plugins nativos ou configurações globais sem autorização explícita. Antes, explique arquivo, causa, por que não resolve em MoodleIFRN, riscos, testes e reversão.</li>
+        <li>Não apagar nem enfraquecer testes, P0.4, mocks, fixtures, harnesses, patches ou referências antigas só por parecerem sem uso.</li>
+        <li>Não executar <code>git reset --hard</code>, <code>git clean</code>, force push ou exclusão ampla; não misturar branches nem fazer merge/push sem autorização.</li>
+        <li>Não executar <code>npm run patch:ifrn</code> ou hooks sem ler seus efeitos. Scripts podem alterar core/configuração ou árvore Cordova gerada.</li>
+        <li>Não instalar/sobrescrever APK, desinstalar, limpar dados/cache, logout, trocar conta ou alterar configurações/permissões do telefone sem autorização explícita. Preservar a sessão real.</li>
+        <li>Não afirmar que login, curso, performance ou acessibilidade estão resolvidos com base só em teste unitário ou build.</li>
+      </ul></section>
+      <section class="doc-section searchable"><p class="eyebrow">04 · CHECKLIST OBRIGATÓRIO</p><h2>Antes de modificar código</h2><ul>
+        <li>[ ] Li as instruções <code>AGENTS.md</code> aplicáveis?</li><li>[ ] Conheço branch, HEAD e worktrees?</li><li>[ ] Verifiquei <code>git status</code> e preservei alterações locais?</li><li>[ ] Consultei progresso e problemas conhecidos?</li><li>[ ] Confirmei se a causa já foi investigada e se existe implementação em outra branch?</li><li>[ ] Identifiquei dependências, arquivos críticos, testes e fixtures?</li><li>[ ] Conheço a linha de base dos testes?</li><li>[ ] A alteração está dentro do escopo autorizado?</li><li>[ ] Se exige núcleo Moodle, expliquei motivo, risco, testes e reversão antes de pedir autorização?</li>
+      </ul><h2>Antes de finalizar</h2><ul>
+        <li>[ ] Executei testes relevantes e comparei a linha de base?</li><li>[ ] Investiguei novas regressões e rodei <code>git diff --check</code>?</li><li>[ ] Preservei autenticação, isolamento de sessão e P0.4?</li><li>[ ] Registrei arquivos, comportamento e limitações?</li><li>[ ] Atualizei progresso e problemas apenas com evidência?</li><li>[ ] Registrei build e teste físico como feitos ou não executados?</li><li>[ ] Preparei a transferência para a próxima pessoa?</li>
+      </ul></section>
+      <section class="doc-section searchable"><p class="eyebrow">05 · ENCERRAR E TRANSFERIR</p><h2>Modelo compacto de registro</h2><pre><code>Sessão / tarefa:
+Branch:
+HEAD:
+Objetivo:
+Estado: concluído | parcial | bloqueado
+O que foi alterado:
+O que foi testado (comandos/resultados):
+Build Android:
+Teste no celular:
+Problemas encontrados:
+Pendências:
+Não repetir (com evidência):
+Cuidados:
+Próxima ação:
+Commit(s):</code></pre><p>Acrescente um registro cronológico conciso nesta página ou em <a href="progresso-projeto.html">Progresso do projeto</a>; não crie um arquivo por sessão. Não inclua credenciais, tokens, cookies, dados acadêmicos, serial do aparelho ou logs brutos.</p></section>
+      <section class="doc-section searchable"><p class="eyebrow">TRANSFERÊNCIA ATUAL</p><h2>Documentação permanente · 13/11/2026</h2><div class="table-wrap"><table><tbody>
+        <tr><th>Tarefa</th><td>Criar instruções permanentes e guias operacionais para novas IAs.</td></tr>
+        <tr><th>Branch / HEAD de código</th><td><code>fix/ifrn-course-opening-phase2</code> · referência <code>9b3d24f50</code>; worktree tinha alterações locais anteriores.</td></tr>
+        <tr><th>Estado</th><td>Documentação criada/atualizada. Não foi executado build, teste automatizado, instalação ou validação autenticada nesta tarefa.</td></tr>
+        <tr><th>Não repetir</th><td>Não assumir que o candidato de navegação por ID foi integrado; não considerar o erro do computador Linux causado pelo sistema operacional; não considerar os seis links de Ajuda validados.</td></tr>
+        <tr><th>Cuidados</th><td>Preservar alterações locais; a rota do curso e o P0.4 são áreas sensíveis; manter a sessão do aparelho.</td></tr>
+        <tr><th>Próxima ação</th><td>Consultar a página de progresso e continuar a validação manual autorizada do candidato de rota de curso no Android; depois decidir integração/push em tarefa autorizada separada.</td></tr>
+      </tbody></table></div></section>
+      <footer class="footer">Moodle IFRN Mobile · Continuidade entre IAs · 13/11/2026</footer>
+    </main>
+  </div>
+  <p id="live-status" class="visually-hidden" role="status" aria-live="polite"></p>
+</body>
+</html>

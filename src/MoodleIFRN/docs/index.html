@@ -37,11 +37,17 @@
         <a href="#testes">Testes e diagnóstico</a>
         <a href="#arquitetura">Arquitetura</a>
         <a href="#problemas">Problemas comuns</a>
+        <a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a>
+        <a href="android-celular-fisico.html">Android físico por USB</a>
+        <a href="testes-e-validacao.html">Testes e fixtures</a>
+        <a href="problemas-conhecidos.html">Problemas conhecidos</a>
+        <a href="progresso-projeto.html">Progresso do projeto</a>
+        <a href="continuidade-ia.html">Continuidade entre IAs</a>
         <a href="#evolucao-cursos">Evolução e validação dos cursos</a>
         <a href="#git">Fluxo Git</a>
         <a href="#documentacao">Documentação existente</a>
       </nav>
-      <div class="sidebar-note">Manual offline · revisão técnica em 11/11/2026</div>
+      <div class="sidebar-note">Manual offline · revisão técnica em 13/11/2026</div>
     </aside>
 
     <main id="conteudo" class="content">
@@ -212,6 +218,12 @@ adb logcat -d</code></pre><button class="copy-button" type="button">Copiar coman
         <p><strong>Arquivos:</strong> <code>services_mobile/moodle-site.service.ts</code> e <code>tests/course-navigation-failure.test.cjs</code>. O log identifica <code>openNativeCourse</code>, que é a função realmente executada. Não houve alteração de OAuth, armazenamento, validação de identidade, loaders, núcleo Moodle ou plugins nativos.</p>
         <h3>Evidências locais</h3>
         <ul>
+          <li><a href="arquitetura-e-arquivos-criticos.html">Estrutura, fluxo e arquivos críticos MoodleIFRN</a></li>
+          <li><a href="android-celular-fisico.html">Como compilar e testar no celular Android físico</a></li>
+          <li><a href="testes-e-validacao.html">Testes, linha de base e fixtures</a></li>
+          <li><a href="problemas-conhecidos.html">Problemas conhecidos e estados comprovados</a></li>
+          <li><a href="progresso-projeto.html">Progresso, histórico e próxima tarefa</a></li>
+          <li><a href="continuidade-ia.html">Guia de continuidade para IAs e desenvolvedores</a></li>
           <li>Dois cenários falharam antes de suas respectivas correções: navegação recusada e cancelamento sem evento de rota. Depois, os seis casos novos passaram.</li>
           <li>Os casos também cobrem erro de rota antes de a navegação terminar, curso diferente do solicitado, conclusão tardia após cancelamento e timeout sem cancelamento pelo usuário.</li>
           <li>Regressões IFRN: 360 testes aprovados em 50 arquivos, zero falhas e zero testes ignorados. O arquivo <code>native-persistence-contract.test.cjs</code> não foi executado: inclui compilação JVM e escrita de evidências; a instrumentação Android/CDP também ficou fora desta execução.</li>
@@ -284,7 +296,7 @@ git push -u origin docs/minha-tarefa</code></pre><button class="copy-button" typ
         <div class="callout info"><strong>iOS:</strong> a configuração iOS do repositório está documentada nesta página, mas não foi validada em Mac/Xcode neste ambiente. Registre a primeira execução real em <code>RELATORIO-IOS.md</code> somente após testar.</div>
       </section>
 
-      <footer class="footer">Moodle IFRN Mobile · Manual local e offline · 11/11/2026</footer>
+      <footer class="footer">Moodle IFRN Mobile · Manual local e offline · revisão em 13/11/2026</footer>
     </main>
   </div>
   <div id="live-status" class="visually-hidden" aria-live="polite"></div>

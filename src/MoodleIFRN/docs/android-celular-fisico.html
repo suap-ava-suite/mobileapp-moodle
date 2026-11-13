@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Compilação, diagnóstico e validação no celular Android físico por USB.">
+  <title>Android físico por USB | Moodle IFRN Mobile</title>
+  <link rel="stylesheet" href="assets/manual.css">
+  <script src="assets/manual.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topbar">
+    <button class="icon-button menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false">☰</button>
+    <a class="brand" href="index.html#inicio" aria-label="Moodle IFRN Mobile, início"><span class="brand-mark" aria-hidden="true">IF</span><span><strong>Moodle IFRN Mobile</strong><small>Android físico por USB</small></span></a>
+    <div class="top-actions"><label class="search-wrap"><span class="visually-hidden">Pesquisar nesta página</span><input id="manual-search" type="search" placeholder="Pesquisar tópicos" autocomplete="off"></label><button id="theme-toggle" class="icon-button" type="button" aria-label="Alternar tema">◐</button></div>
+  </header>
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav>
+      <a href="index.html">Manual principal</a><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a>
+    </nav><div class="sidebar-note">Comandos ADB de leitura não alteram dados do aplicativo.</div></aside>
+    <main id="conteudo" class="content">
+      <section class="hero searchable"><p class="eyebrow">VALIDAÇÃO EM DISPOSITIVO REAL</p><h1>Compilar e testar no celular Android</h1><p>O fluxo normal de validação usa um aparelho físico conectado por USB. O repositório não exige emulador. Separe build, instalação e validação autenticada: são etapas diferentes.</p><div class="callout warning"><strong>Preserve a sessão:</strong> sem autorização explícita, não instale ou substitua APK, desinstale, limpe dados/cache, faça logout, troque a conta, altere permissões nem reinicie o aparelho. Não execute ações que toquem em telas sensíveis em nome do usuário.</div></section>
+
+      <section class="doc-section searchable"><p class="eyebrow">01 · PREPARAR O APARELHO</p><h2>Depuração USB e identificação</h2><ol>
+        <li>No aparelho, abra <strong>Configurações → Sobre o telefone</strong> e toque sete vezes em <strong>Número da versão</strong> (o rótulo varia conforme fabricante) para habilitar as opções do desenvolvedor.</li>
+        <li>Em <strong>Opções do desenvolvedor</strong>, habilite <strong>Depuração USB</strong>. Confirme o diálogo de confiança no aparelho quando conectá-lo ao computador.</li>
+        <li>Conecte por cabo de dados e consulte a saída antes de usar qualquer comando direcionado ao dispositivo.</li>
+      </ol><div class="command-card"><div class="command-heading"><strong>Diagnóstico somente leitura</strong><span>PowerShell, macOS ou Linux</span></div><pre><code>adb devices -l
+adb shell getprop ro.product.model
+adb shell getprop ro.build.version.release
+adb shell getprop ro.build.version.sdk
+adb shell dumpsys package com.moodle.moodlemobile</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Confira o estado <code>device</code>, modelo, versão Android/API e metadados do package. Se houver mais de um aparelho, use <code>adb -s &lt;SERIAL&gt;</code> depois de identificar o alvo; não registre o serial em documentação pública.</p></div><p>Se o status mostrar <code>unauthorized</code>, desbloqueie o aparelho e aceite o diálogo de depuração. Não revogue autorizações nem altere outras opções como tentativa automática de diagnóstico.</p></section>
+
+      <section class="doc-section searchable"><p class="eyebrow">02 · BUILD</p><h2>Compilar sem instalar</h2><p>Confirme as versões e os requisitos Android do repositório no <a href="index.html#requisitos">manual principal</a>. O projeto usa <code>com.moodle.moodlemobile</code>; o identificador não prova que uma APK tem a mesma assinatura da versão instalada.</p><div class="command-card"><div class="command-heading"><strong>Ordem do build debug no Windows PowerShell</strong><span>Raiz do repositório</span></div><pre><code>npm.cmd run build:mobilemoodle
+node src/MoodleIFRN/build-native.mjs --platform=android
+.\node_modules\.bin\cordova.cmd prepare android
+.\node_modules\.bin\cordova.cmd build android --debug</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected"><code>build:mobilemoodle</code> regenera o painel IFRN. <code>build-native.mjs</code> gera a aplicação web Cordova/idioma. <code>prepare</code> aplica hooks e prepara Android. <code>build --debug</code> compila; estes comandos não instalam a APK.</p></div><p>A APK debug normalmente fica em <code>platforms/android/app/build/outputs/apk/debug/app-debug.apk</code>. Confirme a saída efetiva do Gradle antes de usar esse caminho.</p></section>
+
+      <section class="doc-section searchable"><p class="eyebrow">03 · VERIFICAR O ARTEFATO</p><h2>Package ID, assinatura e hash</h2><p>Antes de qualquer instalação, compare o package ID e os certificados da APK com o aplicativo já instalado. Uma incompatibilidade de assinatura impede atualização no lugar; desinstalar para contornar isso apaga os dados locais e não é permitido sem autorização.</p><div class="command-card"><div class="command-heading"><strong>PowerShell</strong><span>Metadados locais</span></div><pre><code>$apk = 'platforms/android/app/build/outputs/apk/debug/app-debug.apk'
+Get-FileHash -LiteralPath $apk -Algorithm SHA256
+$bt = Get-ChildItem "$env:ANDROID_HOME/build-tools" -Directory | Sort-Object { [version]($_.Name -replace '-.*$', '') } -Descending | Select-Object -First 1
+& "$($bt.FullName)/aapt.exe" dump badging $apk
+& "$($bt.FullName)/apksigner.bat" verify --print-certs $apk</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Requer Android SDK configurado em <code>ANDROID_HOME</code> e Build-Tools. Guarde hash e certificado no registro de build; não copie chaves privadas ou credenciais.</p></div><div class="command-card"><div class="command-heading"><strong>Comparar com a assinatura instalada (somente leitura)</strong><span>Copie apenas o APK estático</span></div><pre><code>adb shell pm path com.moodle.moodlemobile
+$deviceApk = Read-Host 'Cole o caminho base.apk retornado, sem o prefixo package:'
+adb pull $deviceApk .\\installed-app.apk
+& "$($bt.FullName)/apksigner.bat" verify --print-certs .\\installed-app.apk</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Compare os certificados impressos. <code>adb pull</code> copia o pacote instalado; não lê os dados privados da aplicação. Em instalações divididas, use o caminho do APK base.</p></div><div class="callout warning">Instalar é uma operação separada. Só após autorização explícita, seleção do aparelho e confirmação de package/certificado, use <code>$serial = Read-Host 'Serial do aparelho escolhido'</code> e depois <code>adb -s $serial install -r $apk</code>. Não desinstale para contornar assinatura incompatível: isso apaga os dados locais e pode perder a sessão real.</div></section>
+
+      <section class="doc-section searchable"><p class="eyebrow">04 · EXECUÇÃO E DIAGNÓSTICO</p><h2>Abrir e observar o aplicativo</h2><p>Depois de uma instalação autorizada, o usuário pode abrir o app pelo launcher. Para iniciar a activity pelo ADB, este comando apenas coloca o app em primeiro plano, mas ainda pode reabrir uma sessão existente; use-o somente como parte de uma validação combinada:</p><div class="command-card"><pre><code>adb shell monkey -p com.moodle.moodlemobile 1</code></pre><button class="copy-button" type="button">Copiar comando</button></div><p>Para logs, capture apenas a janela de tempo necessária. Saídas podem conter URLs, identificadores ou material de sessão; revise e sanitize antes de salvar ou compartilhar. Não use <code>adb logcat -c</code>, pois isso apaga o buffer de logs.</p><div class="command-card"><div class="command-heading"><strong>Logcat filtrado por PID</strong><span>Após abrir o app</span></div><pre><code>$appPid = adb shell pidof com.moodle.moodlemobile
+adb logcat -v time --pid=$appPid</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Interrompa a captura com Ctrl+C. Redija credenciais, tokens, cookies, URLs privadas e dados acadêmicos antes de anexar evidências.</p></div><h3>Inspecionar a WebView</h3><p>Em uma build que permita depuração WebView, conecte o aparelho, abra Chrome no computador e use <code>chrome://inspect/#devices</code>. Só inspecione a WebView autorizada; evite copiar storage, cookies, tokens ou dados do estudante. Builds de produção podem desabilitar a depuração.</p></section>
+
+      <section class="doc-section searchable"><p class="eyebrow">05 · ROTEIRO MANUAL</p><h2>Validar navegação, toque e curso</h2><ol>
+        <li>Registre a branch, commit, hash da APK, package ID, certificado, modelo e Android API.</li>
+        <li>Com o usuário presente, valide Marketplace → login oficial SUAP → Painel. Anote se a conta já tinha sessão Moodle.</li>
+        <li>Abra uma disciplina específica, aguarde a tela nativa e verifique o tema IFRN, conteúdo, loading e retorno ao Painel.</li>
+        <li>Repita apenas os cenários autorizados de primeira abertura, abertura recorrente e troca de conta. Não troque nem faça logout por conta própria.</li>
+        <li>Para problemas de toque, registre tela/elemento, WebView ou navegador, orientação, versão Android, resultado de VLibras e logs sanitizados. Não conclua que há sobreposição só pelo sintoma.</li>
+      </ol><p>Unidade e integração automatizadas não substituem este roteiro. O estado de validação atual e as pendências ficam em <a href="progresso-projeto.html">Progresso do projeto</a> e <a href="problemas-conhecidos.html">Problemas conhecidos</a>.</p></section>
+      <footer class="footer">Moodle IFRN Mobile · Android físico · 13/11/2026</footer>
+    </main>
+  </div>
+  <p id="live-status" class="visually-hidden" role="status" aria-live="polite"></p>
+</body>
+</html>

@@ -1,5 +1,9 @@
 # Documentação MoodleIFRN
 
+> **Ponto de entrada atual:** abra [`index.html`](./index.html) diretamente no navegador. O portal usa recursos locais em `assets/` e funciona sem servidor ou conexão externa. Para assumir uma tarefa, leia também [`continuidade-ia.html`](./continuidade-ia.html) e [`progresso-projeto.html`](./progresso-projeto.html).
+
+Os Markdown abaixo são referências técnicas e relatórios por assunto. Documentos com datas antigas podem registrar experiências históricas, não o estado do código atual. Confira as fontes, a branch e o painel de [problemas conhecidos](./problemas-conhecidos.html) antes de reaplicar uma correção.
+
 Índice da customização **AVA IFRN** no app Moodle Mobile.
 
 **Manual prático de desenvolvimento:** [abrir o guia HTML offline](./index.html).
