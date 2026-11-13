@@ -212,6 +212,20 @@ test('session inspection failure displays an error without browser authenticatio
     assert.equal(s.page.phase, 'error');
     assert.ok(s.page.formError);
 });
+
+test('a mismatched OAuth callback blocks automatic reconnection on bridge reentry', async () => {
+    const s = setup();
+    s.service.isIdentityMismatchPending = () => true;
+    s.service.lastError = 'Synthetic callback identity mismatch';
+
+    await s.page.ionViewWillEnter();
+
+    assert.equal(s.browserCalls, 0);
+    assert.equal(s.ensureCalls, 0);
+    assert.equal(s.page.phase, 'error');
+    assert.equal(s.page.formError, 'Synthetic callback identity mismatch');
+    assert.equal(s.timers.size, 0);
+});
 test('fallback Angular entry and the matching Ionic lifecycle event initialize the course once', async () => {
     let releasePlatform;
     const s = setup(() => new Promise(resolve => { releasePlatform = resolve; }));

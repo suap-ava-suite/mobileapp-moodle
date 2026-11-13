@@ -89,6 +89,7 @@ function loadService(overrides = {}) {
             },
             openBrowserForOAuthLogin: async () => { externalFallbackCalls++; return true; },
         } },
+        '@features/login/constants': { NO_SITE_ID: 'NoSite', LOGIN_SSO_LAUNCH_DATA: 'CoreLoginLaunchData' },
         '@services/config': { CoreConfig: { delete: async () => {} } },
         '@services/sites': { CoreSites: coreSites },
         '@services/urlschemes': { CoreCustomURLSchemes: {
@@ -259,6 +260,36 @@ function deferred() {
 
     return { promise, resolve };
 }
+
+test('connecting a changed Panel account switches the native context once and preserves the selected course', async () => {
+    const switches = [];
+    const { MoodleSiteService, state } = loadService({ coreSites: {
+        getCurrentSite: () => ({ isLoggedOut: () => false }),
+        isLoggedIn: () => true,
+        logout: async options => switches.push(options),
+    } });
+    const service = Object.create(MoodleSiteService.prototype);
+    const pending = { courseId: 42, siteUrl: 'https://academico.ava.ifrn.edu.br' };
+    service.ensureLoginObserver = () => {};
+    service.logger = { debug() {} };
+    service.matchCurrentMoodleIdentity = () => ({ hasExpected: true, matches: false, candidateCount: 1 });
+    service.getPendingOpenCourse = () => pending;
+    service.openCourseOAuthInApp = async () => assert.fail('OAuth must wait for the native context switch');
+
+    const result = await service.performStartSuapOAuthLogin({}, { stage: async (_stage, operation) => operation() });
+
+    assert.equal(result, 'switched');
+    assert.equal(switches.length, 1);
+    assert.equal(switches[0].siteId, 'NoSite', 'Leave the active context without deleting the saved account');
+    assert.equal(switches[0].redirectPath, '/login/moodle-open-course');
+    assert.equal(switches[0].redirectOptions.params.courseId, pending.courseId);
+    assert.equal(switches[0].redirectOptions.params.siteUrl, pending.siteUrl);
+    assert.equal(switches[0].redirectOptions.params.startOAuth, true);
+    assert.equal(state().session.get('ifrn_painel_owner'), 'synthetic-owner');
+    assert.equal(service.consumeOAuthResume(pending.courseId, pending.siteUrl), true);
+    assert.equal(service.consumeOAuthResume(pending.courseId, pending.siteUrl), false);
+    assert.equal(state().browserUrl, undefined);
+});
 
 test('same course and Moodle site join one in-progress native opening', async () => {
     const { MoodleSiteService } = loadService();
@@ -583,9 +614,39 @@ function realNativeHandler(gateForToken, options = {}) {
             try { return await handler.handleCustomURL(url, attempt); }
             catch (error) { state.unexpectedError = error.message; throw error; }
         },
-        state, sites,
+        state, sites, config: context.CoreConfig, CoreError: SyntheticCoreError,
     };
 }
+
+test('first native SSO attempt accepts an absent legacy current-site setting after account logout', async () => {
+    const native = realNativeHandler(() => deferred());
+    native.config.get = async () => { throw new native.CoreError('No records found.'); };
+
+    const attempt = await native.sites.beginSessionAttempt('synthetic-new-owner', 'synthetic-new-epoch', () => true, () => false);
+
+    assert.equal(attempt.state, 'pending');
+    assert.equal(attempt.previousSiteId, undefined);
+    assert.equal(native.state.attemptRecord.owner, 'synthetic-new-owner');
+    assert.equal(native.state.attemptRecord.epoch, 'synthetic-new-epoch');
+    assert.equal(native.state.persisted, 0);
+    assert.equal(native.state.secureWrites, 0);
+    assert.equal(native.sites.currentSite, undefined);
+});
+
+test('unexpected legacy config failures still reject the first native SSO attempt without publishing credentials', async () => {
+    const native = realNativeHandler(() => deferred());
+    const failure = new native.CoreError('synthetic configuration read failed');
+    native.config.get = async () => { throw failure; };
+
+    await assert.rejects(
+        native.sites.beginSessionAttempt('synthetic-new-owner', 'synthetic-new-epoch', () => true, () => false),
+        error => error === failure,
+    );
+    assert.equal(native.state.attemptRecord, undefined);
+    assert.equal(native.state.persisted, 0);
+    assert.equal(native.state.secureWrites, 0);
+    assert.equal(native.sites.currentSite, undefined);
+});
 
 test('P0 PENDENTE: core handler in flight must not activate A or navigate after cancellation and account B',async()=>{
     const gateA=deferred(),gateB=deferred();

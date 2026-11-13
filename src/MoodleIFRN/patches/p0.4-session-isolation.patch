@@ -344,7 +344,7 @@ index 6dcd0df53..e3f5d4c7d 100644
  
  export type SchemaVersionsDBEntry = {
 diff --git a/src/core/services/sites.ts b/src/core/services/sites.ts
-index 6278f493c..2d7cadf0c 100644
+index 6278f493c..c7626a82d 100644
 --- a/src/core/services/sites.ts
 +++ b/src/core/services/sites.ts
 @@ -25,17 +25,19 @@ import {
@@ -417,7 +417,7 @@ index 6278f493c..2d7cadf0c 100644
              CoreLang.loadCustomStringsFromSite();
          });
  
-@@ -454,6 +478,128 @@ export class CoreSitesProvider {
+@@ -454,6 +478,136 @@ export class CoreSitesProvider {
          await sitesTable.initialize();
  
          this.sitesTable.setInstance(sitesTable);
@@ -470,7 +470,15 @@ index 6278f493c..2d7cadf0c 100644
 +                attempt.previousSiteId = previousRecord.siteId ?? undefined;
 +            } else if (!previousAttemptWasPending && !previousRecord) {
 +                // Legacy sessions don't have an owner receipt; resolve their Moodle identity before reuse.
-+                const legacySiteId = await CoreConfig.get<string>(CORE_SITE_CURRENT_SITE_ID_CONFIG);
++                let legacySiteId: string | undefined;
++                try {
++                    legacySiteId = await CoreConfig.get<string>(CORE_SITE_CURRENT_SITE_ID_CONFIG);
++                } catch (error) {
++                    // Logout removes this optional legacy pointer. Other storage failures must still reject.
++                    if (!(error instanceof CoreError) || error.message !== 'No records found.') {
++                        throw error;
++                    }
++                }
 +                if (legacySiteId) {
 +                    const legacySite = await CorePromiseUtils.ignoreErrors(this.getSite(legacySiteId));
 +                    if (legacySite && validateIdentity(legacySite.getInfo()?.username ?? '')) {
@@ -546,7 +554,7 @@ index 6278f493c..2d7cadf0c 100644
      }
  
      /**
-@@ -823,7 +969,12 @@ export class CoreSitesProvider {
+@@ -823,7 +977,12 @@ export class CoreSitesProvider {
          privateToken = '',
          login = true,
          oauthId?: number,
@@ -559,7 +567,7 @@ index 6278f493c..2d7cadf0c 100644
          if (typeof login !== 'boolean') {
              login = true;
          }
-@@ -920,6 +1071,255 @@ export class CoreSitesProvider {
+@@ -920,6 +1079,255 @@ export class CoreSitesProvider {
          }
      }
  
@@ -815,7 +823,7 @@ index 6278f493c..2d7cadf0c 100644
      /**
       * Having the result of isValidMoodleVersion, it treats the error message to be shown.
       *
-@@ -1369,6 +1769,7 @@ export class CoreSitesProvider {
+@@ -1369,6 +1777,7 @@ export class CoreSitesProvider {
          }
  
          const site = await this.getSite(siteId);
@@ -823,7 +831,7 @@ index 6278f493c..2d7cadf0c 100644
  
          await site.deleteDB();
  
-@@ -1381,7 +1782,12 @@ export class CoreSitesProvider {
+@@ -1381,7 +1790,12 @@ export class CoreSitesProvider {
          // Site deleted from sites list, now delete the folder.
          await site.deleteFolder();
  
@@ -837,7 +845,7 @@ index 6278f493c..2d7cadf0c 100644
  
          CoreEvents.trigger(CoreEvents.SITE_DELETED, site, siteId);
      }
-@@ -1705,8 +2111,45 @@ export class CoreSitesProvider {
+@@ -1705,8 +2119,45 @@ export class CoreSitesProvider {
       *
       * @param siteId ID of the site the user is accessing.
       */
@@ -884,7 +892,7 @@ index 6278f493c..2d7cadf0c 100644
  
          CoreEvents.trigger(CoreEvents.LOGIN, { siteId }, siteId);
      }
-@@ -1738,7 +2181,18 @@ export class CoreSitesProvider {
+@@ -1738,7 +2189,18 @@ export class CoreSitesProvider {
       * @param options Logout options.
       */
      async internalLogout(options: InternalLogoutOptions = {}): Promise<void> {
@@ -903,7 +911,7 @@ index 6278f493c..2d7cadf0c 100644
              return;
          }
  
-@@ -1891,6 +2345,7 @@ export class CoreSitesProvider {
+@@ -1891,6 +2353,7 @@ export class CoreSitesProvider {
              token: '',
              privateToken: '',
              loggedOut: 0,
@@ -911,7 +919,7 @@ index 6278f493c..2d7cadf0c 100644
          };
  
          promises.push(this.sitesTable.update(newData, { id: siteId }));
-@@ -1954,7 +2409,12 @@ export class CoreSitesProvider {
+@@ -1954,7 +2417,12 @@ export class CoreSitesProvider {
                      loadedSite.privateToken = '';
                  }
  
@@ -925,7 +933,7 @@ index 6278f493c..2d7cadf0c 100644
              })),
              ...this.deleteTokensListeners.map(listener => Promise.resolve(listener())),
          ]);
-@@ -2112,13 +2572,78 @@ export class CoreSitesProvider {
+@@ -2112,13 +2580,78 @@ export class CoreSitesProvider {
      async getStoredCurrentSiteId(): Promise<string> {
          await this.migrateCurrentSiteLegacyTable();
  
@@ -1004,7 +1012,7 @@ index 6278f493c..2d7cadf0c 100644
          await CoreConfig.delete(CORE_SITE_CURRENT_SITE_ID_CONFIG);
      }
  
-@@ -2366,8 +2891,11 @@ export class CoreSitesProvider {
+@@ -2366,8 +2899,11 @@ export class CoreSitesProvider {
       * @param siteId Site ID.
       * @returns Stored tokens.
       */
@@ -1018,7 +1026,7 @@ index 6278f493c..2d7cadf0c 100644
  
          return {
              token: result?.token ?? '',
-@@ -2404,7 +2932,7 @@ export class CoreSitesProvider {
+@@ -2404,7 +2940,7 @@ export class CoreSitesProvider {
              return site;
          }
  

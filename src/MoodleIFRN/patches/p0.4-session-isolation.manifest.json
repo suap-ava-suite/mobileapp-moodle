@@ -3,7 +3,7 @@
   "id": "ifrn-p0.4-session-isolation.v1",
   "baseCommit": "4942598b6",
   "patchPath": "src/MoodleIFRN/patches/p0.4-session-isolation.patch",
-  "patchSha256": "777dc0627d17bfd0ca9ec885207e481cd023d5b120ceff3f50c491abda53824b",
+  "patchSha256": "146de56e9606099bc52048e5cf9c3b349513b6a182594087dc84530850b6f528",
   "targets": [
     {
       "path": "cordova-plugin-moodleapp/src/android/SecureStorage.java",
@@ -53,7 +53,7 @@
     {
       "path": "src/core/services/sites.ts",
       "baseSha256": "8a2d0d27df80ca48817348bce2113fa7a54b959231e598d5097692f2b53ab13d",
-      "postSha256": "acef5f83d9a2fa979aa02a05f364208b3b40a74f39b03fa8ed6bbc8d8d163973"
+      "postSha256": "221b7a04038e20765569f762cc0d1f84cf143ea31eceb58a14379257adf7b26e"
     },
     {
       "path": "src/core/services/urlschemes.ts",

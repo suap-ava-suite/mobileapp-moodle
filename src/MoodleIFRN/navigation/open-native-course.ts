@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CoreCourseHelper } from '@features/course/services/course-helper';
 import type { CoreEnrolledCourseData } from '@features/courses/services/courses';
 import { MAIN_MENU_HOME_PAGE_NAME } from '@features/mainmenu/constants';
 import { CoreNavigator } from '@services/navigator';
+import { CoreSites } from '@services/sites';
 
 /**
  * Entra na rota nativa do curso sem depender da seleção automática do Dashboard.
@@ -29,28 +29,23 @@ export async function openNativeCourse(
     siteId: string,
     enrolledCourse?: CoreEnrolledCourseData,
 ): Promise<void> {
+    if (!Number.isSafeInteger(courseId) || courseId <= 0) {
+        throw new Error('Identificador de curso Moodle inválido.');
+    }
+    if (!siteId || CoreSites.getCurrentSiteId() !== siteId) {
+        throw new Error('O ambiente Moodle mudou durante a abertura. Selecione o curso novamente pelo Painel.');
+    }
+
     // O painel IFRN vive fora de /main e cada retorno a ele pode deixar uma
     // página de curso antiga na pilha Ionic da aba. Sempre abrir a rota nativa
     // como raiz evita que Voltar reabra o curso anterior.
-    let course: { id: number } | Awaited<ReturnType<typeof CoreCourseHelper.getCourse>>['course'];
-    if (enrolledCourse?.id === courseId) {
-        // O serviço IFRN já validou a matrícula e carregou este registro. Reutilizá-lo
-        // evita que getCourse faça uma segunda consulta de cursos antes da navegação.
-        course = enrolledCourse;
-    } else {
-        try {
-            ({ course } = await CoreCourseHelper.getCourse(courseId, siteId));
-        } catch {
-            // Igual ao helper getAndOpenCourse: um erro ao buscar detalhes não
-            // impede a página nativa de tentar carregar o curso pelo ID.
-            course = { id: courseId };
-        }
-    }
-
+    // Objetos viram referências consumíveis param-N no CoreNavigator. O componente
+    // Angular nativo resolve o curso pelo ID e usa o cache Moodle quando disponível.
+    // A matrícula exata já confirmada permite dispensar a consulta de acesso convidado.
     const navigated = await CoreNavigator.navigate(`/main/${MAIN_MENU_HOME_PAGE_NAME}/course/${courseId}`, {
         animated: false,
         reset: true,
-        params: { course },
+        params: enrolledCourse?.id === courseId ? { isGuest: false } : undefined,
     });
     if (!navigated) {
         throw new Error('Não foi possível navegar para o curso. Tente novamente pelo Painel.');

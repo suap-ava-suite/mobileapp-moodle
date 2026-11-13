@@ -1761,14 +1761,9 @@ export class MoodleSiteService {
             oauthFlowActive: this.oauthFlowActive,
         });
 
-        // Uma sessão de outra conta não deve ser reutilizada nem provocar um
-        // ciclo de OAuth automático. A tela oferece a troca explícita de conta.
-        if (hasSession && match.hasExpected && !match.matches) {
-            this.reportCourseAccessIssue('identity-mismatch', this.getPendingOpenCourse()?.courseId || 0);
-
-            return 'oauth-mismatch';
-        }
-
+        // A conta anterior permanece salva, mas nunca autoriza este curso.
+        // A ponte conecta a conta atual pelo switch/SSO já existente.
+        // A validação do retorno OAuth continua obrigatória antes da retomada.
         return 'need-oauth';
     }
 
@@ -1985,8 +1980,8 @@ export class MoodleSiteService {
         let courses: MoodleCourseSummary[];
 
         try {
-            // Usa uma única resposta atualizada para validar a matrícula e entregar o
-            // objeto completo à rota; openNativeCourse não precisará buscar a lista outra vez.
+            // Valida a matrícula na conta/site atuais e atualiza o cache que os
+            // componentes Angular nativos consultam ao resolver o curso pelo ID.
             enrolledCourses = await attempt.stage('enrolments-fresh', () => CoreCourses.getUserCourses(false, siteId));
             assertSessionStillCurrent();
             courses = enrolledCourses.map((course) => this.toCourseSummary(course));
@@ -2163,9 +2158,31 @@ export class MoodleSiteService {
             let settled = false;
             let frame = 0;
             const observer = new MutationObserver(scheduleCheck);
+            const animations = new Set<Animation>();
+
+            const observeCourseAnimations = (): void => {
+                const page = Array.from(document.querySelectorAll<HTMLElement>('page-core-course-index'))
+                    .find(candidate => candidate.getAttribute('data-course-id') === String(courseId)
+                        && !candidate.closest('.ion-page-hidden, .ion-page-invisible, [hidden]')
+                        && candidate.getClientRects().length > 0);
+                for (const animation of page?.getAnimations?.() || []) {
+                    if (animation.playState !== 'running' || animations.has(animation)) {
+                        continue;
+                    }
+                    animations.add(animation);
+                    // Ionic uses Web Animations, whose completion does not emit CSS animationend.
+                    animation.addEventListener('finish', scheduleCheck);
+                    animation.addEventListener('cancel', scheduleCheck);
+                }
+            };
 
             const cleanup = (): void => {
                 observer.disconnect();
+                animations.forEach(animation => {
+                    animation.removeEventListener('finish', scheduleCheck);
+                    animation.removeEventListener('cancel', scheduleCheck);
+                });
+                animations.clear();
                 document.removeEventListener('transitionend', scheduleCheck, true);
                 document.removeEventListener('animationend', scheduleCheck, true);
                 attempt.signal.removeEventListener('abort', onAbort);
@@ -2204,6 +2221,7 @@ export class MoodleSiteService {
                     return;
                 }
                 if (!isReady(document, courseId)) {
+                    observeCourseAnimations();
                     return;
                 }
 
@@ -2235,6 +2253,7 @@ export class MoodleSiteService {
             attempt.signal.addEventListener('abort', onAbort, { once: true });
             observer.observe(document.documentElement, {
                 childList: true,
+                characterData: true,
                 subtree: true,
                 attributes: true,
                 attributeFilter: ['class', 'aria-busy', 'data-course-id', 'hidden'],
