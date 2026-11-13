@@ -17,20 +17,21 @@
     <main id="conteudo" class="content">
       <section class="hero searchable"><p class="eyebrow">ESTADO VERIFICADO · 13/11/2026</p><h1>Progresso do Moodle IFRN Mobile</h1><p>Esta é uma fotografia do repositório e das evidências disponíveis nesta sessão. Consulte Git novamente antes de agir; alterações locais podem avançar sem atualizar esta página.</p><div class="callout warning"><strong>Preserve o worktree:</strong> a branch principal desta sessão contém muitas alterações locais pré-existentes, incluindo arquivos em <code>src/core/</code>, Cordova, MoodleIFRN e artefatos de diagnóstico. Não as reverta, não as inclua no commit documental e não presuma que representem código integrado.</div></section>
       <section class="doc-section searchable"><p class="eyebrow">ESTADO ATUAL</p><h2>Branch, referência e validação</h2><div class="table-wrap"><table><tbody>
-        <tr><th>Branch/HEAD de referência</th><td><code>fix/ifrn-course-opening-phase2</code> · <code>9b3d24f50cfa8ab773f74284cb39a0f3762b67dd</code> antes do commit documental desta sessão.</td></tr>
-        <tr><th>Último commit da referência</th><td><code>9b3d24f50</code> · <code>docs(ifrn): confirma retorno da Ajuda após login SUAP</code> · 12/11/2026.</td></tr>
-        <tr><th>Estado Git</th><td>Worktree com alterações e arquivos não rastreados anteriores à documentação; existem worktrees separados para outras tarefas/branches. Verifique status e cada worktree antes de editar. Nenhum deles foi limpo ou trocado nesta tarefa.</td></tr>
-        <tr><th>Build nesta tarefa</th><td>Não executado; tarefa limitada a documentação.</td></tr>
-        <tr><th>Testes nesta tarefa</th><td>Não executados; a contagem histórica do manual não é validação do HEAD atual.</td></tr>
+        <tr><th>Branch/HEAD analisados</th><td><code>test/ifrn-unit-regression</code> · base <code>d26021990</code> (<code>docs(ifrn): criar guia permanente de continuidade</code>). A branch de teste foi criada neste trabalho; consulte o HEAD atual no Git.</td></tr>
+        <tr><th>HEAD de teste</th><td><code>78326f54b</code> · <code>teste(ifrn): protege navegacao de cursos e links da ajuda</code>.</td></tr>
+        <tr><th>Estado Git</th><td>Worktree contém alterações locais pré-existentes em Cordova, MoodleIFRN, core Moodle, assets e evidências não rastreadas. Foram preservadas; não as incluir em commits desta tarefa.</td></tr>
+        <tr><th>Build nesta rodada</th><td>Não executado. Nenhuma APK foi gerada ou instalada e nenhum dado/sessão do celular foi alterado.</td></tr>
+        <tr><th>Testes desta rodada</th><td>Suíte Node MoodleIFRN 368/368 aprovada em duas execuções; teste JVM 1/1; TypeScript passou. Jest direto sem Gulp: 230/241 passaram, 8 falharam e 3 estão pendentes; ver <a href="testes-e-validacao.html">detalhes e limitações</a>.</td></tr>
         <tr><th>Validação Android</th><td>Há build Gradle bem-sucedido de uma tentativa de correção em worktree temporário. O primeiro pacote de diagnóstico ficou incompleto por sincronizar somente <code>main.js</code>; a cópia integral dos assets corrigiu esse erro de artefato. A execução seguinte não mostrou esse erro de módulo nos logs, mas o telefone bloqueou antes da conferência visual do Marketplace e do curso.</td></tr>
       </tbody></table></div><p>Os testes Node da tentativa isolada foram registrados como aprovados antes da validação no aparelho. Essa tentativa não está integrada ao HEAD de referência. Consulte <a href="problemas-conhecidos.html">Problemas conhecidos</a>.</p></section>
       <section class="doc-section searchable"><p class="eyebrow">IMPLEMENTADO E COM EVIDÊNCIA</p><h2>O que pode ser afirmado</h2><ul>
         <li>O aplicativo base Moodle Mobile tem rotas e shell Angular/Ionic; as personalizações IFRN estão concentradas em <code>src/MoodleIFRN/</code> e integram painel web embarcado, SUAP e cursos Moodle nativos.</li>
-        <li>A ponte do Painel valida origem/janela e há testes de contrato para mensagens, handoff de curso, OAuth, falhas e retorno.</li>
+        <li>A ponte do Painel valida origem/janela; nesta rodada, testes passaram pelos seis IDs de Ajuda via handler Angular e rejeitaram origem, iframe e identificador não autorizados. Toque físico ainda requer Android.</li>
         <li>O commit <code>338163584</code> protege o navegador de Ajuda da concorrência com atualização do perfil; evidência anterior valida um fluxo parcial em aparelho, sem cobertura confirmada dos seis botões.</li>
         <li>O patch P0.4 e testes de sessão/concorrência estão versionados e precisam ser preservados; a validação persistente nativa segue pendente.</li>
       </ul></section>
       <section class="doc-section searchable"><p class="eyebrow">HISTÓRICO DA BRANCH DE REFERÊNCIA</p><h2>Commits recentes relevantes</h2><div class="table-wrap"><table><thead><tr><th>Commit</th><th>Data</th><th>Registro</th><th>Leitura</th></tr></thead><tbody>
+        <tr><td><code>78326f54b</code></td><td>13/11/2026</td><td>Protege rota de curso e os seis destinos de Ajuda com testes de regressão.</td><td>Commit desta branch de teste; não foi enviado à release.</td></tr>
         <tr><td><code>9b3d24f50</code></td><td>12/11/2026</td><td>Confirma retorno da Ajuda após login SUAP.</td><td>Registro documental; fluxo manual parcial.</td></tr>
         <tr><td><code>7495e1a5c</code></td><td>12/11/2026</td><td>Atualiza navegador da Ajuda e registra correção.</td><td>Consultar seus testes e documentação para escopo exato.</td></tr>
         <tr><td><code>338163584</code></td><td>12/11/2026</td><td>Protege navegador de Ajuda contra atualização do perfil.</td><td>Correção de concorrência de navegador/perfil.</td></tr>
@@ -39,10 +40,11 @@
       </tbody></table></div><p>Esses commits pertencem ao histórico consultado na branch desta página. Não use a lista para inferir que commits de branches temporárias ou a release estejam incorporados.</p></section>
       <section class="doc-section searchable"><p class="eyebrow">PENDÊNCIAS E PRÓXIMOS PASSOS</p><h2>Ordem recomendada</h2><ol>
         <li><strong>Prioridade alta:</strong> retomar validação manual do candidato de rota de curso no Android com o usuário; confirmar build/artefato/assinatura, tela do Marketplace, abertura nativa, primeiro curso e retorno. A validação foi interrompida pelo bloqueio do telefone; não a declare concluída.</li>
-        <li>Se o cenário confirmar erro, comparar o código testado com o HEAD e adicionar/ajustar regressão mantendo o contrato P0.4. Revisar a necessidade de tocar o núcleo só com justificativa e autorização.</li>
+        <li><strong>Prioridade alta:</strong> resolver o erro de rota <code>param-5</code>. O harness reproduziu leitura consumida no <code>CoreNavigator</code>; confirmar causa no fluxo completo e aplicar correção somente após autorização para modificar <code>src/core/services/navigator.ts</code>. Manter P0.4 intacta.</li>
+        <li>Executar Gulp/Jest em worktree isolado e comparar a linha de base preparada; o Gulp padrão sobrescreve o bundle MoodleIFRN alterado no worktree atual.</li>
         <li>Revalidar todos os links da Ajuda, VLibras e toque em Android e registrar quais destinos foram testados.</li>
         <li>Medir desempenho no aparelho antes/depois de uma otimização; nenhuma medição foi feita nesta tarefa.</li>
-        <li>Após autorização e verificação do worktree da release, tratar separadamente a publicação/push solicitada em conversa anterior. Este trabalho documental não enviou código à release nem fez push.</li>
+        <li>Retomar a validação manual de curso e links da Ajuda no Android após correção, sem instalar APK ou alterar sessão sem autorização específica.</li>
       </ol><p>Não há porcentagens de conclusão. Os estados são: implementado com evidência, implementado com validação parcial, pendente ou não medido.</p></section>
       <footer class="footer">Moodle IFRN Mobile · Progresso · 13/11/2026</footer>
     </main>

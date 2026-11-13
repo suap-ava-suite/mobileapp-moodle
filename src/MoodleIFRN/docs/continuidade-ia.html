@@ -65,13 +65,14 @@ Não repetir (com evidência):
 Cuidados:
 Próxima ação:
 Commit(s):</code></pre><p>Acrescente um registro cronológico conciso nesta página ou em <a href="progresso-projeto.html">Progresso do projeto</a>; não crie um arquivo por sessão. Não inclua credenciais, tokens, cookies, dados acadêmicos, serial do aparelho ou logs brutos.</p></section>
-      <section class="doc-section searchable"><p class="eyebrow">TRANSFERÊNCIA ATUAL</p><h2>Documentação permanente · 13/11/2026</h2><div class="table-wrap"><table><tbody>
-        <tr><th>Tarefa</th><td>Criar instruções permanentes e guias operacionais para novas IAs.</td></tr>
-        <tr><th>Branch / HEAD de código</th><td><code>fix/ifrn-course-opening-phase2</code> · referência <code>9b3d24f50</code>; worktree tinha alterações locais anteriores.</td></tr>
-        <tr><th>Estado</th><td>Documentação criada/atualizada. Não foi executado build, teste automatizado, instalação ou validação autenticada nesta tarefa.</td></tr>
-        <tr><th>Não repetir</th><td>Não assumir que o candidato de navegação por ID foi integrado; não considerar o erro do computador Linux causado pelo sistema operacional; não considerar os seis links de Ajuda validados.</td></tr>
-        <tr><th>Cuidados</th><td>Preservar alterações locais; a rota do curso e o P0.4 são áreas sensíveis; manter a sessão do aparelho.</td></tr>
-        <tr><th>Próxima ação</th><td>Consultar a página de progresso e continuar a validação manual autorizada do candidato de rota de curso no Android; depois decidir integração/push em tarefa autorizada separada.</td></tr>
+      <section class="doc-section searchable"><p class="eyebrow">TRANSFERÊNCIA ATUAL</p><h2>Testes unitários IFRN · 13/11/2026</h2><div class="table-wrap"><table><tbody>
+        <tr><th>Tarefa</th><td>Ampliar testes de abertura de curso e dos seis destinos da Ajuda; executar a suíte real sem alterar produção.</td></tr>
+        <tr><th>Branch / base</th><td><code>test/ifrn-unit-regression</code> · base <code>d26021990</code> · commit de testes <code>78326f54b</code>. Verifique o HEAD atual e o commit documental no Git.</td></tr>
+        <tr><th>Estado</th><td>Três testes adicionados. 51 arquivos / 368 testes passaram em duas execuções. TypeScript passou; Jest direto sem Gulp teve 8 falhas ligadas a preparo de ativos e 3 pendentes. Nenhum build Android ou teste no celular.</td></tr>
+        <tr><th>Arquivos alterados</th><td><code>tests/course-native-route.test.cjs</code>, <code>tests/painel-help-inappbrowser.test.cjs</code> e páginas de teste/progresso/continuidade. Outros arquivos locais não pertencem a esta tarefa.</td></tr>
+        <tr><th>Não repetir</th><td>Não rodar o Gulp padrão neste worktree: <code>mobilemoodle-ts</code> sobrescreve o bundle que já tinha alterações locais. Não interpretar os resultados Jest sem Gulp como regressões confirmadas.</td></tr>
+        <tr><th>Achado e cuidado</th><td>Harness reproduz que uma leitura subsequente de parâmetro armazenado do <code>CoreNavigator</code> pode resultar em <code>param-5</code>, hipótese para erro <code>courseformatoptions</code>. A alteração do núcleo <code>src/core/services/navigator.ts</code> está aguardando autorização; não editar antes da resposta. P0.4 fica pendente.</td></tr>
+        <tr><th>Próxima ação</th><td>Confirmar autorização para o núcleo; se autorizada, implementar a correção mínima e teste de regressão sem enfraquecer P0.4. Depois rodar Gulp/Jest em worktree descartável e organizar teste autenticado no aparelho com o usuário.</td></tr>
       </tbody></table></div></section>
       <footer class="footer">Moodle IFRN Mobile · Continuidade entre IAs · 13/11/2026</footer>
     </main>
