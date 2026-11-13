@@ -15,6 +15,63 @@ const linksModule = { exports: {} };
 vm.runInNewContext(linksCode, { module: linksModule, exports: linksModule.exports });
 const links = linksModule.exports.PAINEL_HELP_LINKS;
 
+function loadPainelPage(openPage) {
+    class DomSanitizer {}
+    class Router {}
+    class AuthService {}
+    class PainelAvaService {}
+    class MoodleSiteService {}
+    class SuapProfileBrowserService {}
+    const dependencies = new Map([
+        [DomSanitizer, { bypassSecurityTrustResourceUrl: url => url }],
+        [Router, {}],
+        [AuthService, {}],
+        [PainelAvaService, {}],
+        [MoodleSiteService, {}],
+        [SuapProfileBrowserService, { openPage }],
+    ]);
+    const angular = {
+        Component: () => component => component,
+        ViewChild: () => () => {},
+        inject: token => dependencies.get(token) || {},
+    };
+    const mocks = {
+        '@angular/core': angular,
+        '@angular/platform-browser': { DomSanitizer },
+        '@angular/router': { Router },
+        '@/core/shared.module': { CoreSharedModule: class {} },
+        '@services/navigator': { CoreNavigator: {} },
+        '@services/lang': { CoreLang: {} },
+        '@services/platform': { CorePlatform: {} },
+        '@/MoodleIFRN/services_mobile/auth.service': { AuthService },
+        '@/MoodleIFRN/services_mobile/painel-ava.service': { PainelAvaService },
+        '@/MoodleIFRN/services_mobile/moodle-site.service': { MoodleSiteService },
+        '../mobilemoodle/core_mobile/course-target': { resolveCourseSite: () => undefined },
+        '@services/overlays/alerts': { CoreAlerts: {} },
+        '../navigation/painel-host-layout': { readPainelHostLayout: () => undefined },
+        '../services_mobile/suap-login-telemetry': { reportSuapDuration: () => undefined },
+        '../services_mobile/suap-profile-browser.service': {
+            SUAP_PROFILE_PAGE: { title: 'Perfil SUAP', url: 'https://suap.ifrn.edu.br/comum/minha_conta/', allowedHosts: ['suap.ifrn.edu.br'] },
+            SuapProfileBrowserService,
+        },
+        '../services_mobile/painel-help-links': { getPainelHelpLink: linksModule.exports.getPainelHelpLink },
+    };
+    const context = {
+        exports: {},
+        require: id => mocks[id] || {},
+        window: { location: { origin: 'https://app.ifrn.test' } },
+        document: {},
+        performance: require('node:perf_hooks').performance,
+    };
+    const panelSource = fs.readFileSync(path.join(root, 'painel', 'painel.ts'), 'utf8');
+    const panelCode = ts.transpileModule(panelSource, {
+        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    }).outputText;
+    vm.runInNewContext(panelCode, context, { filename: 'src/MoodleIFRN/painel/painel.ts' });
+
+    return context.exports.PainelPage;
+}
+
 const expected = {
     'central-ajuda': ['Central de Ajuda', 'https://ajuda.ead.ifrn.edu.br/'],
     ouvidoria: ['Ouvidoria', 'https://ead.ifrn.edu.br/acesso-a-informacao/ouvidoria/'],
@@ -64,4 +121,44 @@ test('links de Ajuda não usam target externo e encaminham somente o identificad
     assert.match(panel, /case 'MOODLE_IFRN_OPEN_HELP_LINK':\s*this\.openHelpLink\(data\.helpId\)/);
     assert.match(panel, /getPainelHelpLink\(helpId\)/);
     assert.match(browserService, /title: 'Perfil SUAP'/);
+});
+
+test('cada uma das seis mensagens de Ajuda abre seu destino configurado dentro do app', () => {
+    for (const [id, [title, url]] of Object.entries(expected)) {
+        const opened = [];
+        const PainelPage = loadPainelPage((...args) => opened.push(args));
+        const page = new PainelPage();
+        const frameWindow = {};
+        page.painelFrame = { nativeElement: { contentWindow: frameWindow } };
+
+        page.onWindowMessage({
+            source: frameWindow,
+            origin: 'https://app.ifrn.test',
+            data: { type: 'MOODLE_IFRN_OPEN_HELP_LINK', helpId: id },
+        });
+
+        assert.equal(opened.length, 1, `${id} deve abrir uma página interna`);
+        assert.equal(opened[0][0].title, title);
+        assert.equal(opened[0][0].url, url);
+        assert.equal(page.internalPageTitle, title);
+        assert.equal(page.internalPageLoading, true);
+    }
+});
+
+test('mensagem de Ajuda ignora origem, iframe e identificador não autorizados', () => {
+    const opened = [];
+    const PainelPage = loadPainelPage((...args) => opened.push(args));
+    const page = new PainelPage();
+    const frameWindow = {};
+    page.painelFrame = { nativeElement: { contentWindow: frameWindow } };
+
+    for (const event of [
+        { source: frameWindow, origin: 'https://attacker.example', data: { type: 'MOODLE_IFRN_OPEN_HELP_LINK', helpId: 'central-ajuda' } },
+        { source: {}, origin: 'https://app.ifrn.test', data: { type: 'MOODLE_IFRN_OPEN_HELP_LINK', helpId: 'central-ajuda' } },
+        { source: frameWindow, origin: 'https://app.ifrn.test', data: { type: 'MOODLE_IFRN_OPEN_HELP_LINK', helpId: 'https://attacker.example/' } },
+    ]) {
+        page.onWindowMessage(event);
+    }
+
+    assert.equal(opened.length, 0);
 });

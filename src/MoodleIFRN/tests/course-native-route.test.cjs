@@ -3,14 +3,21 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
 const test = require('node:test');
-function setup(tab = null, success = true) {
+function setup(tab = null, success = true, courseLookup = null) {
     const navigation = [];
     const fetched = [];
     const helper = [];
     const course = { id: 4022, format: 'topics' };
     const mocks = {
         '@features/course/services/course-helper': { CoreCourseHelper: {
-            getCourse: async (...args) => { fetched.push(args); return { course }; },
+            getCourse: async (...args) => {
+                fetched.push(args);
+                if (courseLookup) {
+                    return courseLookup(...args);
+                }
+
+                return { course: args[0] === course.id ? course : { ...course, id: args[0] } };
+            },
             getAndOpenCourse: async (...args) => { helper.push(args); },
         } },
         '@features/mainmenu/constants': { MAIN_MENU_HOME_PAGE_NAME: 'home' },
@@ -22,7 +29,7 @@ function setup(tab = null, success = true) {
     const context = { exports: {}, require: id => mocks[id] };
     vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/MoodleIFRN/navigation/open-native-course.ts', 'utf8'), {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-    }).outputText, context);
+    }).outputText, context, { filename: 'src/MoodleIFRN/navigation/open-native-course.ts' });
     return { open: context.exports.openNativeCourse, navigation, fetched, helper, course };
 }
 test('from the IFRN panel or OAuth bridge, enters the course without opening the standalone main landing', async () => {
@@ -54,8 +61,20 @@ test('opening another course from an existing native tab replaces the old course
     assert.deepEqual(s.fetched[0], [2836, 'presencial-site']);
     assert.equal(s.navigation[0][0], '/main/home/course/2836');
     assert.equal(s.navigation[0][1].reset, true);
-    assert.equal(s.navigation[0][1].params.course, s.course);
+    assert.equal(s.navigation[0][1].params.course.id, 2836);
+    assert.notEqual(s.navigation[0][1].params.course, s.course);
     assert.equal(s.helper.length, 0);
+});
+test('failed course detail lookup still navigates with only the requested course id', async () => {
+    const s = setup(null, true, async () => { throw new Error('synthetic details lookup failure'); });
+
+    await s.open(9142, 'academic-site');
+
+    assert.deepEqual(s.fetched[0], [9142, 'academic-site']);
+    assert.equal(s.navigation.length, 1);
+    assert.equal(s.navigation[0][0], '/main/home/course/9142');
+    assert.deepEqual(Object.keys(s.navigation[0][1].params.course), ['id']);
+    assert.equal(s.navigation[0][1].params.course.id, 9142);
 });
 test('rejected native route is reported instead of being treated as an opened course', async () => {
     const s = setup(null, false);
