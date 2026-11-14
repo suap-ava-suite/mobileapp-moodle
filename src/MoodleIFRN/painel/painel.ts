@@ -1,9 +1,21 @@
-import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+// (C) Copyright 2015 Moodle Pty Ltd.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { CoreSharedModule } from '@/core/shared.module';
 import { CoreNavigator } from '@services/navigator';
-import { CoreLang } from '@services/lang';
 import { CorePlatform } from '@services/platform';
 import { AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
@@ -18,6 +30,9 @@ import {
     SuapProfileBrowserService,
 } from '../services_mobile/suap-profile-browser.service';
 import { getPainelHelpLink } from '../services_mobile/painel-help-links';
+import { PainelNativeComponent } from './painel-native';
+import { buildNativePainelModel, type NativePainelCourse, type NativePainelModel } from './painel-native-model';
+import { readOAuthProfile } from '../mobilemoodle/core_mobile/oauth-profile';
 
 export interface MoodleIfrnBridgeApi {
     openCourse: (courseId: number | string, courseName?: string, siteUrl?: string) => Promise<void>;
@@ -30,11 +45,11 @@ export interface MoodleIfrnBridgeApi {
     selector: 'page-painel',
     templateUrl: './painel.html',
     styleUrls: ['./painel.scss'],
-    imports: [CoreSharedModule],
+    imports: [CoreSharedModule, PainelNativeComponent],
 })
 export class PainelPage implements OnInit, OnDestroy {
 
-    private readonly sanitizer = inject(DomSanitizer);
+    private readonly ngZone = inject(NgZone);
     private readonly router = inject(Router);
     private readonly authService = inject(AuthService);
     private readonly painelAva = inject(PainelAvaService);
@@ -48,7 +63,7 @@ export class PainelPage implements OnInit, OnDestroy {
 
     @ViewChild('painelFrame') painelFrame?: ElementRef<HTMLIFrameElement>;
 
-    safePainelUrl?: SafeResourceUrl;
+    nativeDashboard: NativePainelModel | null = null;
     private hostAppearanceObserver?: MutationObserver;
     internalPageTitle = '';
     internalPageScreenOpen = false;
@@ -60,13 +75,7 @@ export class PainelPage implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.painelStartedAt = performance.now();
 
-        const base = document.querySelector('base')?.getAttribute('href') || '/';
-        const root = base.endsWith('/') ? base : `${base}/`;
-        const language = CoreLang.getCurrentLanguageSync();
-        const langParam = language ? `?lang=${encodeURIComponent(language)}` : '';
-        const url = `${root}mobilemoodle/index.html${langParam}#/painel`;
-
-        this.safePainelUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+        this.loadNativeDashboard();
 
         this.registerBridge();
         document.addEventListener('resume', this.onAppResume);
@@ -105,7 +114,55 @@ export class PainelPage implements OnInit, OnDestroy {
     };
 
     private reloadPainelFrame(): void {
-        this.painelFrame?.nativeElement.contentWindow?.location.reload();
+        // Compatibility name for existing resume/profile callbacks: the UI is now Angular.
+        this.loadNativeDashboard();
+    }
+
+    private loadNativeDashboard(): void {
+        // getDashboard keeps the existing owner/expiry checks. No new authentication/cache path.
+        const raw = this.painelAva.getDashboard();
+        this.nativeDashboard = buildNativePainelModel(raw, readOAuthProfile()?.profile || this.painelAva.getProfile());
+    }
+
+    get nativeCourseOpening(): boolean {
+        return this.openingCourse;
+    }
+
+    async onNativeCourse(course: NativePainelCourse): Promise<void> {
+        const id = course.moodle_course_id;
+        if (!Number.isSafeInteger(id) || !id || id < 0 || !course.moodle_site_url || this.openingCourse) {
+            return;
+        }
+        if (course.is_enrolled === false) {
+            this.openingCourse = true;
+            try {
+                await this.handleOpenEnrol(id, course.ambiente?.id);
+            } finally {
+                this.openingCourse = false;
+            }
+        } else {
+            await this.handleOpenCourse(id, course.name, course.moodle_site_url);
+        }
+    }
+
+    onNativeHelp(id: string): void { this.openHelpLink(id); }
+    async onNativeEnrolment(course: NativePainelCourse): Promise<void> {
+        if (!course.moodle_course_id || !course.moodle_site_url || this.openingCourse) {
+            return;
+        }
+        this.openingCourse = true;
+        try {
+            await this.handleOpenEnrol(course.moodle_course_id, course.ambiente?.id);
+        } finally {
+            this.openingCourse = false;
+        }
+    }
+    onNativeProfile(): void { this.openSuapProfile(); }
+    onNativeMarketplace(): void { void this.handleGoToMarketplace(); }
+    onNativeLogout(): void { void this.handleLogout(); }
+    onNativeRefresh(): void {
+        this.loadNativeDashboard();
+        void this.refreshProfileWhenPlatformIsReady();
     }
 
     onPainelFrameLoad(): void {
@@ -128,6 +185,7 @@ export class PainelPage implements OnInit, OnDestroy {
 
     ionViewDidEnter(): void {
         this.registerBridge();
+        this.loadNativeDashboard();
         // O menu nativo só perde o contexto azul quando a entrada do painel terminou.
         document.documentElement.classList.remove('ifrn-course-context');
     }
@@ -135,7 +193,7 @@ export class PainelPage implements OnInit, OnDestroy {
     private registerBridge(): void {
         this.bridgeApi ??= {
             openCourse: (courseId: number | string, courseName?: string, siteUrl?: string) =>
-                this.handleOpenCourse(courseId, courseName, siteUrl),
+                this.ngZone.run(() => this.handleOpenCourse(courseId, courseName, siteUrl)),
             openEnrol: (courseId: number | string, ambienteId?: number | string) =>
                 this.handleOpenEnrol(courseId, ambienteId),
             goToMarketplace: () => this.handleGoToMarketplace(),

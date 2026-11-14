@@ -46,6 +46,12 @@
         <a href="progresso-projeto.html">Progresso do projeto</a>
         <a href="continuidade-ia.html">Continuidade entre IAs</a>
         <a href="#problemas">Problemas comuns</a>
+        <a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a>
+        <a href="android-celular-fisico.html">Android físico por USB</a>
+        <a href="testes-e-validacao.html">Testes e fixtures</a>
+        <a href="problemas-conhecidos.html">Problemas conhecidos</a>
+        <a href="progresso-projeto.html">Progresso do projeto</a>
+        <a href="continuidade-ia.html">Continuidade entre IAs</a>
         <a href="#evolucao-cursos">Evolução e validação dos cursos</a>
         <a href="#git">Fluxo Git</a>
         <a href="#documentacao">Documentação existente</a>
@@ -67,6 +73,9 @@
     </aside>
 
     <main id="conteudo" class="content">
+<section class="doc-section searchable" id="painel-safe-area-20261114"><p class="eyebrow">ATUALIZAÇÃO MAIS RECENTE · 14/11/2026</p><h2>Painel abaixo da barra de status</h2><p>O recuo nativo do Android voltou a ser respeitado no Painel Angular. O usuário confirmou o resultado e autorizou a integração/publicação na release com documentação. Consulte o <a href="progresso-projeto.html#painel-safe-area-20261114">progresso</a>, a <a href="continuidade-ia.html#painel-safe-area-20261114">transferência para outro Codex</a> e os <a href="testes-e-validacao.html#painel-safe-area-20261114">resultados de integração e contratos pendentes</a>. Esta entrada substitui o estado anterior; os registros seguintes são históricos.</p></section>
+
+<section class="doc-section searchable" id="sessao-painel-angular-20261114"><p class="eyebrow">CONTINUIDADE · 14/11/2026</p><h2>Último estado: Painel Angular com visual institucional</h2><p>O Painel voltou a usar o tema original em componentes Angular. O usuário avaliou como quase perfeito e apontará os ajustes restantes depois. Implementação isolada em <code>perf/ifrn-course-shell</code>; não presumir integração à release.</p><p>Comece pelo <a href="progresso-projeto.html#sessao-painel-angular-20261114">progresso desta sessão</a>, pela <a href="continuidade-ia.html#sessao-painel-angular-20261114">transferência para outra IA</a> e pelos <a href="testes-e-validacao.html#sessao-painel-angular-20261114">testes e cinco contratos P0.4 pendentes</a>. Preserve esta interface, os dados e as sessões; aguarde o relato específico do usuário.</p></section>
       <section id="inicio" class="hero searchable">
         <p class="eyebrow">GUIA PARA DESENVOLVEDORES</p>
         <h1>Conheça, execute e mantenha o Moodle IFRN Mobile</h1>
@@ -234,6 +243,12 @@ adb logcat -d</code></pre><button class="copy-button" type="button">Copiar coman
         <p><strong>Arquivos:</strong> <code>services_mobile/moodle-site.service.ts</code> e <code>tests/course-navigation-failure.test.cjs</code>. O log identifica <code>openNativeCourse</code>, que é a função realmente executada. Não houve alteração de OAuth, armazenamento, validação de identidade, loaders, núcleo Moodle ou plugins nativos.</p>
         <h3>Evidências locais</h3>
         <ul>
+          <li><a href="arquitetura-e-arquivos-criticos.html">Estrutura, fluxo e arquivos críticos MoodleIFRN</a></li>
+          <li><a href="android-celular-fisico.html">Como compilar e testar no celular Android físico</a></li>
+          <li><a href="testes-e-validacao.html">Testes, linha de base e fixtures</a></li>
+          <li><a href="problemas-conhecidos.html">Problemas conhecidos e estados comprovados</a></li>
+          <li><a href="progresso-projeto.html">Progresso, histórico e próxima tarefa</a></li>
+          <li><a href="continuidade-ia.html">Guia de continuidade para IAs e desenvolvedores</a></li>
           <li>Dois cenários falharam antes de suas respectivas correções: navegação recusada e cancelamento sem evento de rota. Depois, os seis casos novos passaram.</li>
           <li>Os casos também cobrem erro de rota antes de a navegação terminar, curso diferente do solicitado, conclusão tardia após cancelamento e timeout sem cancelamento pelo usuário.</li>
           <li>Regressões IFRN: 360 testes aprovados em 50 arquivos, zero falhas e zero testes ignorados. O arquivo <code>native-persistence-contract.test.cjs</code> não foi executado: inclui compilação JVM e escrita de evidências; a instrumentação Android/CDP também ficou fora desta execução.</li>

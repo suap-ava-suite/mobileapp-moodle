@@ -16,7 +16,6 @@ const fs = require('fs');
 const path = require('path');
 const { patchCourseMenu } = require('./moodle-course/patch-course-menu.cjs');
 const { patchLoadingAnimation } = require('./moodle-course/patch-loading-animation.cjs');
-const { applyVersionedPatch } = require('./scripts/apply-versioned-core-patch.cjs');
 
 const SCRIPT_DIR = __dirname;
 const PROJECT_ROOT = path.resolve(SCRIPT_DIR, '..', '..');
@@ -511,11 +510,9 @@ function main() {
     console.log('MoodleIFRN — reaplicando integrações...\n');
     console.log(`Projeto: ${PROJECT_ROOT}\n`);
 
-    const sessionPatch = path.join(SCRIPT_DIR, 'patches/p0.4-session-isolation.manifest.json');
-    const sessionPatchResult = applyVersionedPatch(sessionPatch, PROJECT_ROOT);
-    console.log(sessionPatchResult.state === 'already-applied'
-        ? '• Patch versionado P0.4 já aplicado e íntegro'
-        : '✔ Patch versionado P0.4 aplicado');
+    // P0.4 retired from production at the user's request. Keep its patch and tests
+    // as historical evidence; builds use Moodle's standard persistence/SSO APIs.
+    console.log('• P0.4 experimental desativado; persistência oficial do Moodle preservada');
 
     patchLoginModule();
     patchMobileAuthCallback();

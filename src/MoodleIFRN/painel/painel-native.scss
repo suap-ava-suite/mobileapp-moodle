@@ -1,0 +1,24 @@
+:host {
+
+    display: flex; flex-direction: column; height: 100%; min-height: 0;
+    font-family: var(--dsgov-font-family); color: var(--dsgov-text-darkest);
+    --primary: var(--dsgov-blue-70); --primary-dark: var(--dsgov-blue-80);
+    --ion-color-primary: #1351b4; --ion-color-primary-rgb: 19, 81, 180;
+    --ion-color-primary-contrast: #fff; --ion-color-primary-contrast-rgb: 255, 255, 255;
+    --ion-color-primary-shade: #0c326f; --ion-color-primary-tint: #155bcb;
+    --ion-text-color: var(--dsgov-text-darkest); --ion-background-color: var(--dsgov-bg-white);
+
+}
+
+.native-panel-frame { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+ion-content { --background: var(--dsgov-bg-gray); }
+.painel-card-link { display: block; width: 100%; padding: 0; border: 0; background: none; text-align: start; color: inherit; cursor: pointer; }
+.painel-card-link:disabled { opacity: .65; cursor: default; }
+.painel-card-link:focus-visible { outline: 3px solid var(--dsgov-blue-70); outline-offset: 4px; }
+.modal-content-body-help-link, .modal-button-option { width: 100%; text-align: start; cursor: pointer; }
+.native-state { padding: 20px; text-align: center; line-height: 1.5; }
+.profile-image img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+.sidebar-modal__panel { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+
+// Buttons replace legacy anchors while keeping the original appearance and keyboard focus.
+:host(.highlight_links) .painel-card-link { text-decoration: underline; }

@@ -1,0 +1,102 @@
+<div id="main-content" class="native-panel-frame">
+<ion-header class="ava-header">
+    <ion-toolbar class="ava-toolbar">
+        <div class="ava-toolbar-inner">
+            <img class="ava-header-logo" src="mobilemoodle/static/theme/ifrn/img/ifrn-logo.png" alt="IFRN" />
+            <div class="ava-header-brand"><span class="ava-header-title">Painel AVA</span><span class="ava-header-subtitle">Ambiente Virtual de Aprendizagem</span></div>
+            <nav class="ava-header-actions" aria-label="Opções do painel">
+                <button type="button" class="ava-header-action" aria-label="Acessibilidade" (click)="section.set('accessibility')"><ion-icon name="accessibility-outline" aria-hidden="true" /></button>
+                <button type="button" class="ava-header-action" aria-label="Ajuda" (click)="section.set('help')"><ion-icon name="help-circle-outline" aria-hidden="true" /></button>
+                <button type="button" class="ava-header-action ava-header-profile" aria-label="Abrir perfil" (click)="section.set('profile')">
+                    <div class="profile-image profile-image--initials" aria-hidden="true">
+                        @if (data()?.photo && !photoFailed()) { <img [src]="data()?.photo" alt="" (error)="photoFailed.set(true)" /> } @else { {{ initials() }} }
+                    </div><span>{{ data()?.name || 'Estudante' }}</span>
+                </button>
+            </nav>
+        </div>
+    </ion-toolbar>
+</ion-header>
+<ion-content class="painel-page-content">
+    <div class="painel-page" [style.zoom]="fontScale() / 100">
+        @if (preferenceError()) { <p class="native-state" role="alert">{{ preferenceError() }}</p> }
+        @if (!data()) {
+            <div class="native-state" role="alert"><p>Os dados do Painel não estão disponíveis para a conta atual.</p>
+                <ion-button (click)="refresh.emit()">Tentar novamente</ion-button><ion-button fill="outline" (click)="marketplace.emit()">Voltar ao início</ion-button>
+            </div>
+        } @else {
+            <div class="ava-topbar" role="tablist" aria-label="Abas do painel">
+                @for (tab of tabs; track tab.id) {
+                    <button type="button" class="ava-tab" [class.is-active]="group() === tab.id" role="tab" [attr.aria-selected]="group() === tab.id" (click)="setGroup(tab.id)">
+                        <span class="ava-tab__label-desktop">{{ tab.id === 'diarios' ? 'Meus Diários' : tab.id === 'coordenacoes' ? 'Salas de Coordenação' : 'Cursos com Autoinscrição' }}</span>
+                        <span class="ava-tab__label-mobile">{{ tab.label }}</span>
+                    </button>
+                }
+            </div>
+            <div class="painel-filters" aria-label="Filtros de cursos">
+                <button type="button" class="painel-filter-button" aria-haspopup="dialog" [attr.aria-expanded]="section() === 'filter'" (click)="section.set('filter')"><ion-icon name="options-outline" aria-hidden="true" />Filtros</button>
+                <button type="button" class="painel-filter-chip" aria-haspopup="dialog" (click)="section.set('filter')"><span>{{ filterLabel() }}</span><ion-icon name="chevron-down-outline" aria-hidden="true" /></button>
+            </div>
+            <section class="page-intro"><h2>{{ pageTitle() }}</h2></section>
+            @if (busy()) { <p class="native-state" role="status" aria-live="polite">Preparando a disciplina…</p> }
+            <div class="card-container" [attr.aria-busy]="busy()">
+                @for (course of courses(); track course.key) {
+                    <ion-card class="painel-card" [class.painel-card--autoinscricao]="group() === 'autoinscricoes'">
+                        <ion-card-content>
+                            <button type="button" class="painel-card-link course-open" [disabled]="!canOpen(course)" (click)="selectCourse(course)">
+                                <h2 class="painel-card-title">{{ course.name }}</h2><span class="painel-card-header-shortname">{{ course.shortname }}</span>
+                            </button>
+                            <div class="painel-card-details"><div class="painel-card-details-info">
+                                <div class="painel-card-info-icon"><ion-icon name="school-outline" aria-hidden="true" /><span>{{ course.environment }}</span></div>
+                                <div class="painel-card-details-info-published"><ion-icon name="checkmark-circle-outline" aria-hidden="true" /><span>{{ course.published ? 'Publicado' : 'Não publicado' }}</span></div>
+                                <button type="button" class="painel-card-details-info-favourite" [attr.aria-label]="isFavourite(course) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'" [attr.aria-pressed]="isFavourite(course)" (click)="toggleFavourite(course)"><ion-icon [name]="isFavourite(course) ? 'star' : 'star-outline'" aria-hidden="true" /></button>
+                            </div></div>
+                            @if (!course.moodle_site_url) { <p role="status">Ambiente não identificado. Atualize o Painel.</p> }
+                            @if (group() === 'autoinscricoes') {
+                                <div class="painel-card-actions"><ion-button size="small" [disabled]="!canOpen(course)" (click)="selectCourse(course)">{{ course.is_enrolled ? 'Acessar curso' : 'Inscreva-se' }}</ion-button>
+                                @if (course.is_enrolled) { <ion-button size="small" fill="outline" (click)="manageEnrolment.emit(course)">Gerenciar inscrição</ion-button> }</div>
+                            }
+                        </ion-card-content>
+                    </ion-card>
+                } @empty { <p class="native-state">Nenhuma disciplina corresponde a esta seleção.</p> }
+            </div>
+        }
+    </div>
+</ion-content>
+</div>
+@if (section() !== 'courses') {
+    <div class="sidebar-modal">
+        <div class="sidebar-modal__backdrop" (click)="closePanel()" aria-hidden="true"></div>
+        <section class="sidebar-modal__panel" role="dialog" aria-modal="true" aria-labelledby="native-sidebar-title">
+            <div class="sidebar-modal__header"><div class="sidebar-modal__header-title"><ion-icon [name]="section() === 'help' ? 'help-circle-outline' : section() === 'filter' ? 'filter-outline' : section() === 'profile' ? 'person-circle-outline' : 'accessibility-outline'" aria-hidden="true" /><span id="native-sidebar-title">{{ panelTitle() }}</span></div>
+                <button type="button" class="sidebar-modal__close" aria-label="Fechar" (click)="closePanel()"><ion-icon name="close-outline" aria-hidden="true" /></button>
+            </div>
+            <div class="sidebar-modal__body">
+                @if (section() === 'profile') {
+                    <div class="ava-modal-body"><p class="ava-modal-body__user">{{ data()?.name }}</p><div class="ava-button-options"><span class="modal-content-body-title">Links</span>
+                        <button type="button" class="modal-button-option" (click)="openProfile.emit()">Perfil no SUAP</button>
+                        <button type="button" class="modal-button-option" (click)="marketplace.emit()">Marketplace IFRN</button></div>
+                        <button type="button" class="modal-button-option exit-button" (click)="logout.emit()">Sair</button>
+                    </div>
+                } @else if (section() === 'help') {
+                    <div class="ava-modal-body">@for (link of helpLinks; track link.id) {
+                        @if (link.id === 'ava-moodle') { <span class="modal-content-body-title">Centrais de Atendimento</span> }
+                        <button type="button" class="modal-content-body-help-link" [disabled]="busy()" (click)="openHelp.emit(link.id)">{{ link.title }}</button>
+                    }</div>
+                } @else if (section() === 'filter') {
+                    <div class="ava-modal-body">
+                        <ion-searchbar [value]="search()" (ionInput)="search.set($event.detail.value || '')" placeholder="Buscar disciplina" aria-label="Buscar disciplina" />
+                        <label class="filter-select-area"><ion-icon name="book-outline" aria-hidden="true" /><select [value]="filter()" (change)="setFilter(filterSelect.value)" #filterSelect aria-label="Situação dos cursos">@for (option of filterOptions; track option.id) { <option [value]="option.id">{{ option.label }}</option> }</select></label>
+                        <button type="button" class="modal-content-body-filter-button" (click)="closePanel()">Filtrar</button>
+                        <button type="button" class="modal-content-body-filter-clear" (click)="clearFilters()"><ion-icon name="trash-outline" aria-hidden="true" /><span>Limpar filtros</span></button>
+                    </div>
+                } @else {
+                    <div class="ava-modal-body accessiblity-options">
+                        @for (option of accessibilityOptions; track option.key) { <div class="custom-checkbox-access"><input type="checkbox" class="checkbox-access-input" [id]="'native-' + option.key" [checked]="accessibility()[option.key]" (change)="toggleAccessibility(option.key)" /><label class="checkbox-access-label" [for]="'native-' + option.key"><span class="label-container"><ion-icon class="icon-id" [name]="option.icon" aria-hidden="true" />{{ option.label }}</span><ion-icon class="icon-checked" name="checkmark-circle" aria-hidden="true" /></label></div> }
+                        <div class="selector-cycle-access"><span>Zoom:</span><button type="button" class="cycle-btn" (click)="cycleZoom()"><ion-icon name="search-outline" aria-hidden="true" /><span>{{ fontScale() }}%</span></button></div>
+                        <div class="selector-cycle-access"><span>Modo de cor:</span><button type="button" class="cycle-btn" (click)="cycleColor()"><ion-icon name="color-palette-outline" aria-hidden="true" /><span>{{ colorModeLabel() }}</span></button></div>
+                    </div>
+                }
+            </div>
+        </section>
+    </div>
+}

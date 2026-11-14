@@ -31,7 +31,7 @@ import {
 import { markNativeSuapEntryAuthenticated } from '@/MoodleIFRN/navigation/suap-entry-state';
 import { isNativeMoodleLanding } from '@/MoodleIFRN/navigation/navigation-policy';
 import { CoreNavigator, CoreRedirectPayload } from '@services/navigator';
-import { CoreSites, CoreSiteCheckResponse, CoreSitesSessionAttempt } from '@services/sites';
+import { CoreSites, CoreSiteCheckResponse } from '@services/sites';
 import { CoreSitesFactory } from '@services/sites-factory';
 import { CoreConfig } from '@services/config';
 import { CoreCustomURLSchemes } from '@services/urlschemes';
@@ -43,10 +43,11 @@ import { useIfrnBrazilianPortuguese } from './ifrn-language';
 import { CourseOpeningAttempt } from '../navigation/course-opening-attempt';
 import {
     isNativeCourseContentReady,
-    isNativeCourseShellReady,
+    nativeCourseShellWaitReason,
     observeNativeCourseProgression,
 } from '../navigation/course-content-readiness';
 import { openNativeCourse } from '../navigation/open-native-course';
+import { NativeCourseLoginQueue } from '../navigation/native-course-login-queue';
 import { selectSuapProvider } from './suap-provider';
 import type { InAppBrowserObject } from '@awesome-cordova-plugins/in-app-browser/ngx';
 import { InAppBrowser } from '@singletons';
@@ -683,7 +684,7 @@ export class MoodleSiteService {
     };
     private oauthPreparation?: Promise<'switched' | 'opened' | 'already-active'>;
     private courseOAuthBrowser?: InAppBrowserObject;
-    private courseCoreSessionAttempt?: CoreSitesSessionAttempt;
+    private readonly nativeCourseLoginQueue = new NativeCourseLoginQueue();
 
     private cancelSilentCourseSso?: () => void;
     private courseSsoGeneration = 0;
@@ -895,10 +896,6 @@ export class MoodleSiteService {
     /** Fecha somente o InAppBrowser de OAuth dos cursos e descarta o launch pendente. */
     cancelCourseOAuthBrowser(): void {
         this.courseSsoGeneration = (this.courseSsoGeneration || 0) + 1;
-        if (this.courseCoreSessionAttempt) {
-            CoreSites.cancelSessionAttempt(this.courseCoreSessionAttempt);
-            this.courseCoreSessionAttempt = undefined;
-        }
         const cancel = this.cancelSilentCourseSso;
         cancel?.();
         this.cancelSilentCourseSso = undefined;
@@ -911,7 +908,8 @@ export class MoodleSiteService {
             if (!cancel) {
                 browser?.close();
             }
-            this.courseSsoCleanup = CoreConfig.delete(LOGIN_SSO_LAUNCH_DATA).catch(() => undefined);
+            this.courseSsoCleanup = this.nativeCourseLoginQueue.idle()
+                .then(() => CoreConfig.delete(LOGIN_SSO_LAUNCH_DATA)).catch(() => undefined);
         }
     }
 
@@ -1985,8 +1983,8 @@ export class MoodleSiteService {
         let courses: MoodleCourseSummary[];
 
         try {
-            // Usa uma única resposta atualizada para validar a matrícula e entregar o
-            // objeto completo à rota; openNativeCourse não precisará buscar a lista outra vez.
+            // Esta resposta atualizada valida a matrícula. A rota nativa recebe somente
+            // o ID: objetos em parâmetros temporários podem ser consumidos por outra etapa.
             enrolledCourses = await attempt.stage('enrolments-fresh', () => CoreCourses.getUserCourses(false, siteId));
             assertSessionStillCurrent();
             courses = enrolledCourses.map((course) => this.toCourseSummary(course));
@@ -2004,8 +2002,6 @@ export class MoodleSiteService {
         console.log(COURSE_LOG, 'quantidade de cursos Moodle =', courses.length);
 
         const found = courses.some((course) => course.id === courseId);
-        const enrolledCourse = enrolledCourses.find((course) => course.id === courseId);
-
         // eslint-disable-next-line no-console
         console.log(COURSE_LOG, 'courseId encontrado =', found);
 
@@ -2052,7 +2048,7 @@ export class MoodleSiteService {
                     () => ({ status: 'fulfilled' as const }),
                     (reason: unknown) => ({ status: 'rejected' as const, reason }),
                 );
-                await openNativeCourse(courseId, siteId, enrolledCourse);
+                await openNativeCourse(courseId);
                 const result = await routeResult;
                 if (result.status === 'rejected') {
                     throw result.reason;
@@ -2132,7 +2128,17 @@ export class MoodleSiteService {
      * @returns Promise resolved after the themed header is painted.
      */
     private waitForNativeCourseShell(courseId: number, attempt: CourseOpeningAttempt): Promise<void> {
-        return this.waitForNativeCourseReadiness(courseId, attempt, isNativeCourseShellReady);
+        let previousReason = '';
+
+        return this.waitForNativeCourseReadiness(courseId, attempt, (documentRef, id) => {
+            const reason = nativeCourseShellWaitReason(documentRef, id);
+            if (reason !== previousReason) {
+                previousReason = reason;
+                attempt.record(`shell-${reason}`, reason === 'ready' ? 'ok' : 'start');
+            }
+
+            return reason === 'ready';
+        });
     }
 
     /**
@@ -2548,6 +2554,7 @@ export class MoodleSiteService {
             && sessionStorage.getItem('ifrn_painel_owner') === panelOwner
             && sessionStorage.getItem(COURSE_SESSION_EPOCH_KEY) === epoch;
         await this.courseSsoCleanup;
+        await this.nativeCourseLoginQueue.idle();
         if (!isCurrent()) {
             throw new Error('A tentativa de conexão foi cancelada.');
         }
@@ -2561,7 +2568,6 @@ export class MoodleSiteService {
         const login = new URL('auth/suap/login.php', `${siteCheck.siteUrl.replace(/\/$/, '')}/`);
         login.searchParams.set('next', launchUrl);
         const attemptOwner = (panelOwner || sessionStorage.getItem('ifrn_username') || '').trim().toLowerCase();
-        const ownerEpoch = epoch || '0';
         const identityCandidates = this.getExpectedIdentityCandidates();
         if (!attemptOwner || !identityCandidates.length) {
             throw new Error('Não foi possível confirmar a identidade SUAP para iniciar a sessão Moodle.');
@@ -2579,24 +2585,10 @@ export class MoodleSiteService {
             releaseProfileBrowser();
         };
 
-        let coreAttempt: CoreSitesSessionAttempt;
-        try {
-            coreAttempt = await CoreSites.beginSessionAttempt(
-                attemptOwner,
-                ownerEpoch,
-                isCurrent,
-                username => matchMoodleAgainstCandidates(username, identityCandidates).matches,
-            );
-        } catch (error) {
-            releaseProfileBrowserLease();
-            throw error;
-        }
         if (!isCurrent()) {
-            CoreSites.cancelSessionAttempt(coreAttempt);
             releaseProfileBrowserLease();
             throw new Error('A tentativa de conexão foi cancelada.');
         }
-        this.courseCoreSessionAttempt = coreAttempt;
         let flow: ReturnType<typeof startCourseSsoBrowser>;
         try {
             flow = startCourseSsoBrowser({
@@ -2617,19 +2609,23 @@ export class MoodleSiteService {
                 acceptToken: async (url, attempt) => {
                     attempt.assertActive();
                     this.oauthCallbackReceived = true;
-                    // O núcleo continua validando passport, site e token; LOGIN valida a identidade.
-                    await CoreCustomURLSchemes.handleCustomURL(url, coreAttempt);
-                    attempt.assertActive();
-                    if (!CoreSites.isSessionAttemptCurrent(coreAttempt) || coreAttempt.state !== 'committed') {
-                        throw new Error('A tentativa de sessão Moodle não foi confirmada.');
+                    // Use Moodle's official passport/token/site validation. No experimental
+                    // session ledger or native credential fencing is installed by IFRN.
+                    await this.nativeCourseLoginQueue.run(
+                        () => CoreCustomURLSchemes.handleCustomURL(url),
+                        () => {
+                            attempt.assertActive();
+                            if (!isCurrent()) {
+                                throw new Error('A tentativa de conexão foi cancelada.');
+                            }
+                        },
+                    );
+                    if (!this.hasMatchingPresencialSession(siteCheck.siteUrl)) {
+                        throw new Error('A conta Moodle retornada não corresponde à conta SUAP ativa.');
                     }
                 },
             });
         } catch (error) {
-            CoreSites.cancelSessionAttempt(coreAttempt);
-            if (this.courseCoreSessionAttempt === coreAttempt) {
-                this.courseCoreSessionAttempt = undefined;
-            }
             releaseProfileBrowserLease();
             throw error;
         }
@@ -2638,20 +2634,15 @@ export class MoodleSiteService {
         try {
             await flow.completion;
         } catch (error) {
-            if (coreAttempt.state !== 'committed') {
-                CoreSites.cancelSessionAttempt(coreAttempt);
-            }
             if (isCurrent()) {
                 this.oauthCallbackReceived = false;
-                this.courseSsoCleanup = CoreConfig.delete(LOGIN_SSO_LAUNCH_DATA).catch(() => undefined);
+                this.courseSsoCleanup = this.nativeCourseLoginQueue.idle()
+                    .then(() => CoreConfig.delete(LOGIN_SSO_LAUNCH_DATA)).catch(() => undefined);
                 await this.courseSsoCleanup;
             }
             throw error;
         } finally {
             releaseProfileBrowserLease();
-            if (this.courseCoreSessionAttempt === coreAttempt) {
-                this.courseCoreSessionAttempt = undefined;
-            }
             if (this.courseSsoGeneration === generation && this.courseOAuthBrowser === flow.browser) {
                 this.courseOAuthBrowser = undefined;
                 this.cancelSilentCourseSso = undefined;

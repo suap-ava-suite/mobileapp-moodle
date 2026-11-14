@@ -2303,6 +2303,72 @@
   App.parseRoute = parseRoute;
   App.loadRoute = loadRoute;
 
+  // src/MoodleIFRN/mobilemoodle/core_mobile/vlibras-widget.ts
+  var SCRIPT_ID = "vlibras-script";
+  var SCRIPT_URL = "https://vlibras.gov.br/app/vlibras-plugin.js";
+  function loadVlibrasWidget() {
+    const root = getOrCreateRoot();
+    root.classList.add("enabled", "ifrn-vlibras-compact");
+    root.querySelector("[vw-plugin-wrapper]")?.style.removeProperty("display");
+    const shared = window.__ifrnVlibrasLoader ?? (window.__ifrnVlibrasLoader = { status: "idle" });
+    if (shared.status === "loaded") {
+      return Promise.resolve();
+    }
+    if (shared.promise) {
+      return shared.promise;
+    }
+    if (window.VLibras?.Widget) {
+      shared.status = "loaded";
+      return Promise.resolve();
+    }
+    document.getElementById(SCRIPT_ID)?.remove();
+    const script = document.createElement("script");
+    script.id = SCRIPT_ID;
+    script.src = SCRIPT_URL;
+    script.async = true;
+    const promise = new Promise((resolve, reject) => {
+      script.addEventListener("load", () => {
+        if (!window.VLibras?.Widget) {
+          shared.status = "error";
+          script.remove();
+          root.classList.remove("enabled");
+          reject(new Error("O script oficial do VLibras n\xE3o disponibilizou o widget."));
+          return;
+        }
+        shared.status = "loaded";
+        resolve();
+      }, { once: true });
+      script.addEventListener("error", () => {
+        shared.status = "error";
+        script.remove();
+        root.classList.remove("enabled");
+        reject(new Error("N\xE3o foi poss\xEDvel carregar o servi\xE7o oficial do VLibras."));
+      }, { once: true });
+    });
+    shared.status = "loading";
+    shared.promise = promise;
+    document.body.appendChild(script);
+    return promise.finally(() => {
+      if (shared.promise === promise) {
+        shared.promise = void 0;
+      }
+    });
+  }
+  function getOrCreateRoot() {
+    let root = document.querySelector("div[vw]");
+    if (!root) {
+      root = document.createElement("div");
+      root.setAttribute("vw", "");
+      root.className = "enabled ifrn-vlibras-compact";
+      root.innerHTML = '<div vw-access-button class="active"></div><div vw-plugin-wrapper><div class="vw-plugin-top-wrapper"></div></div>';
+      document.body.appendChild(root);
+    }
+    if (!root.querySelector("[vw-access-button]") || !root.querySelector("[vw-plugin-wrapper]")) {
+      root.innerHTML = '<div vw-access-button class="active"></div><div vw-plugin-wrapper><div class="vw-plugin-top-wrapper"></div></div>';
+    }
+    return root;
+  }
+
   // src/MoodleIFRN/mobilemoodle/core_mobile/app-accessibility.ts
   /*!
    * app-accessibility.ts
@@ -2319,7 +2385,6 @@
     "highlight_links",
     "stop_animations",
     "hidden_illustrative_image",
-    "big_cursor",
     "vlibras_active",
     "high_line_height"
   ];
@@ -2338,13 +2403,14 @@
     highlight_links: false,
     stop_animations: false,
     hidden_illustrative_image: false,
-    big_cursor: false,
     vlibras_active: false,
     high_line_height: false,
     zoom_level: 100,
     color_mode: "default"
   };
   var vlibrasReady = false;
+  var vlibrasLoading = false;
+  var vlibrasFailed = false;
   function getEl(id) {
     return document.getElementById(id);
   }
@@ -2375,41 +2441,36 @@
     } catch {
     }
   }
+  function setVlibrasStatus(message) {
+    const status = document.getElementById("vlibras-status");
+    if (!status) {
+      return;
+    }
+    status.textContent = message;
+    status.hidden = !message;
+  }
   function ensureVlibras() {
-    if (vlibrasReady || !state.vlibras_active) {
+    if (!state.vlibras_active || vlibrasFailed) {
       return;
     }
-    if (!document.querySelector("div[vw]")) {
-      const root = document.createElement("div");
-      root.setAttribute("vw", "");
-      root.className = "enabled";
-      root.innerHTML = '<div vw-access-button class="active"></div><div vw-plugin-wrapper><div class="vw-plugin-top-wrapper"></div></div>';
-      document.body.appendChild(root);
+    const load = loadVlibrasWidget();
+    setVlibrasStatus("");
+    if (vlibrasReady || vlibrasLoading) {
+      return;
     }
-    if (window.VLibras?.Widget) {
-      try {
-        new window.VLibras.Widget("https://vlibras.gov.br/app");
-        vlibrasReady = true;
-      } catch {
-        vlibrasReady = true;
+    vlibrasLoading = true;
+    void load.then(() => {
+      vlibrasReady = true;
+      vlibrasLoading = false;
+      return true;
+    }).catch(() => {
+      vlibrasLoading = false;
+      vlibrasFailed = true;
+      if (state.vlibras_active) {
+        setVlibrasStatus("N\xE3o foi poss\xEDvel carregar o VLibras. Verifique sua conex\xE3o e tente novamente.");
       }
-      return;
-    }
-    if (document.getElementById("vlibras-script")) {
-      return;
-    }
-    const script = document.createElement("script");
-    script.id = "vlibras-script";
-    script.src = "https://vlibras.gov.br/app/vlibras-plugin.js";
-    script.onload = () => {
-      try {
-        new window.VLibras.Widget("https://vlibras.gov.br/app");
-        vlibrasReady = true;
-      } catch {
-        vlibrasReady = true;
-      }
-    };
-    document.body.appendChild(script);
+      return false;
+    });
   }
   function applyToBody() {
     const body = document.body;
@@ -2439,6 +2500,13 @@
       return;
     }
     state[key] = !!value;
+    if (key === "vlibras_active") {
+      if (value) {
+        vlibrasFailed = false;
+      } else {
+        setVlibrasStatus("");
+      }
+    }
     saveState();
     applyToBody();
   }

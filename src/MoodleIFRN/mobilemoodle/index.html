@@ -10,7 +10,7 @@
     <meta name="referrer" content="no-referrer">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' https://vlibras.gov.br; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.cdnfonts.com https://vlibras.gov.br; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com https://fonts.cdnfonts.com https://ava-painel-statics.pages.dev data:; connect-src 'self' http://127.0.0.1:8000 http://localhost:8000 https://suap.ifrn.edu.br https://painel.ead.ifrn.edu.br https://vlibras.gov.br; frame-src https://vlibras.gov.br; base-uri 'self'; form-action 'self'; object-src 'none'">
+        content="default-src 'self'; script-src 'self' https://vlibras.gov.br https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.cdnfonts.com https://vlibras.gov.br; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com https://fonts.cdnfonts.com https://ava-painel-statics.pages.dev https://vlibras.gov.br https://cdn.jsdelivr.net data:; connect-src 'self' http://127.0.0.1:8000 http://localhost:8000 https://suap.ifrn.edu.br https://painel.ead.ifrn.edu.br https://vlibras.gov.br; frame-src https://vlibras.gov.br; base-uri 'self'; form-action 'self'; object-src 'none'">
     <title>Painel AVA · IFRN</title>
     <link rel="icon" type="image/png" sizes="32x32" href="static/theme/ifrn/favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="static/theme/ifrn/favicon/favicon-16x16.png">
@@ -114,7 +114,7 @@
         }
     </style>
     <link rel="stylesheet" href="static/vendor/ionic/css/ionic.bundle.css">
-    <link id="ifrn-panel-theme" rel="stylesheet" href="mobilemoodle.css?v=811ecee00e73">
+    <link id="ifrn-panel-theme" rel="stylesheet" href="mobilemoodle.css?v=8338803fd031">
     <script type="module" src="static/vendor/ionic/dist/ionic/ionic.esm.js"></script>
     <script type="module" src="static/vendor/ionicons/dist/ionicons/ionicons.esm.js"></script>
 </head>
@@ -263,17 +263,6 @@
             </div>
 
             <div class="custom-checkbox-access">
-                <input type="checkbox" class="checkbox-access-input" id="big_cursor">
-                <label class="checkbox-access-label" for="big_cursor">
-                    <span class="label-container">
-                        <ion-icon class="icon-id" name="navigate-outline" aria-hidden="true"></ion-icon>
-                        Cursor do mouse grande
-                    </span>
-                    <ion-icon class="icon-checked" name="checkmark-circle" aria-hidden="true"></ion-icon>
-                </label>
-            </div>
-
-            <div class="custom-checkbox-access">
                 <input type="checkbox" class="checkbox-access-input" id="vlibras_active">
                 <label class="checkbox-access-label" for="vlibras_active">
                     <span class="label-container">
@@ -283,6 +272,7 @@
                     <ion-icon class="icon-checked" name="checkmark-circle" aria-hidden="true"></ion-icon>
                 </label>
             </div>
+            <p id="vlibras-status" class="vlibras-status" role="status" aria-live="polite" hidden></p>
 
             <div class="custom-checkbox-access">
                 <input type="checkbox" class="checkbox-access-input" id="high_line_height">

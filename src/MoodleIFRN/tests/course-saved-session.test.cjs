@@ -3,6 +3,12 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
 const test = require('node:test');
+// Load the real local queue; the service now owns this dependency.
+const queueContext = { exports: {} };
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/MoodleIFRN/navigation/native-course-login-queue.ts', 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText, queueContext);
+
 const url = 'https://academico.ava.ifrn.edu.br';
 function setup(entries) {
     let current;
@@ -26,7 +32,7 @@ function setup(entries) {
         '@services/sites': { CoreSites: sites },
         '@static/url': { CoreUrl: { sameDomainAndPath: (a, b) => a.replace(/\/$/, '') === b.replace(/\/$/, '') } },
     };
-    const context = { exports: {}, require: id => mocks[id] || {}, console, URL };
+    const context = { exports: {}, require: id => id === '../navigation/native-course-login-queue' ? queueContext.exports : mocks[id] || {}, console, URL };
     vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/MoodleIFRN/services_mobile/moodle-site.service.ts', 'utf8'), {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     }).outputText, context);

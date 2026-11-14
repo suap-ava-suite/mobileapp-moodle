@@ -3,6 +3,12 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
 const test = require('node:test');
+// Load the real local queue; the service now owns this dependency.
+const queueContext = { exports: {} };
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/MoodleIFRN/navigation/native-course-login-queue.ts', 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText, queueContext);
+
 
 class FakeCourseOpeningAttempt {
     cancelled = false;
@@ -44,7 +50,7 @@ function createService() {
     };
     const context = {
         exports: {},
-        require: id => mocks[id] || {},
+        require: id => id === '../navigation/native-course-login-queue' ? queueContext.exports : mocks[id] || {},
         console,
         document,
         HTMLElement: FakeHTMLElement,

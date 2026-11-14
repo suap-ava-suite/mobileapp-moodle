@@ -81,12 +81,6 @@ export class IfrnCourseMenuComponent implements OnChanges, OnDestroy {
             hint: 'Esconde imagens decorativas sem texto alternativo.',
         },
         {
-            key: 'big_cursor',
-            label: 'Cursor do mouse grande',
-            icon: 'fas-hand-pointer',
-            hint: 'Aumenta o cursor quando disponível.',
-        },
-        {
             key: 'vlibras_active',
             label: 'Habilitar VLibras',
             icon: 'fas-hands-asl-interpreting',
