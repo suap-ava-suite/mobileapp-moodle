@@ -3,13 +3,17 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
 const test = require('node:test');
+const queueContext = { exports: {} };
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/MoodleIFRN/navigation/native-course-login-queue.ts', 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText, queueContext);
 test('Android Back returns the IFRN course index to panel while delegating activities and overlays', () => {
     const mocks = {
         '@angular/core': { Injectable: () => c => c, inject: () => ({}) },
         '@static/logger': { CoreLogger: { getInstance: () => ({}) } },
         '@/core/constants': { BackButtonPriority: { CORE_TABS: 40 } },
     };
-    const context = { exports: {}, require: id => mocks[id] || {}, console };
+    const context = { exports: {}, require: id => id === '../navigation/native-course-login-queue' ? queueContext.exports : mocks[id] || {}, console };
     vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/MoodleIFRN/services_mobile/moodle-site.service.ts', 'utf8'), {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     }).outputText, context);

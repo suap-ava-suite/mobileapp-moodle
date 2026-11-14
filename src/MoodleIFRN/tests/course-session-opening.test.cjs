@@ -4,6 +4,10 @@ const vm = require('node:vm');
 const ts = require('typescript');
 const test = require('node:test');
 const ssoModule = { exports: {} };
+const queueModule = { exports: {} };
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/MoodleIFRN/navigation/native-course-login-queue.ts', 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText, { exports: queueModule.exports });
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/MoodleIFRN/services_mobile/course-sso-browser.ts', 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText, { exports: ssoModule.exports, URL, setTimeout, clearTimeout });
@@ -25,6 +29,7 @@ function loadService(overrides = {}) {
     let browserShown = false;
     let browserHidden = false;
     let callbackUrl;
+    let callbackArgumentCount;
     let browserScriptResult = false;
     let externalFallbackCalls = 0;
     let lastTriggeredEvent;
@@ -40,6 +45,9 @@ function loadService(overrides = {}) {
     let coreGeneration = 0;
     let activeCoreAttempt;
     const defaultCoreSites = {
+        isLoggedIn: () => true,
+        getCurrentSite: () => ({ getId: () => 'synthetic-site', getURL: () => 'https://academico.ava.ifrn.edu.br',
+            getInfo: () => ({ username: 'synthetic-owner' }), isLoggedOut: () => false }),
         beginSessionAttempt: async (owner, epoch, isOwnerCurrent, validateIdentity) => {
             const attempt = { attemptId: `test-${++coreGeneration}`, generation: coreGeneration, owner, epoch,
                 state: 'pending', isOwnerCurrent, validateIdentity };
@@ -75,6 +83,7 @@ function loadService(overrides = {}) {
         '@angular/core': { Injectable: injectable, inject: () => ({}) },
         '@angular/router': { NavigationEnd: class {}, NavigationError: class {}, Router: class {} },
         '../navigation/course-opening-attempt': { CourseOpeningAttempt: FakeCourseOpeningAttempt },
+        '../navigation/native-course-login-queue': queueModule.exports,
         '@/MoodleIFRN/navigation/handoff-loading': {
             hideHandoffLoading() {},
             showHandoffLoading() {},
@@ -89,11 +98,17 @@ function loadService(overrides = {}) {
             },
             openBrowserForOAuthLogin: async () => { externalFallbackCalls++; return true; },
         } },
-        '@services/config': { CoreConfig: { delete: async () => {} } },
+        '@services/config': { CoreConfig: { delete: async () => {}, get: async () => { throw new Error('No records found'); } } },
+        '@static/url': { CoreUrl: { sameDomainAndPath: (a, b) => {
+            const left = new URL(a); const right = new URL(b);
+            return left.origin === right.origin && left.pathname.replace(/\/$/, '') === right.pathname.replace(/\/$/, '');
+        } } },
         '@services/sites': { CoreSites: coreSites },
         '@services/urlschemes': { CoreCustomURLSchemes: {
             isCustomURLToken: url => url.startsWith('moodlemobile://token='),
-            handleCustomURL: async (url, attempt) => {
+            handleCustomURL: async (...args) => {
+                const [url, attempt] = args;
+                callbackArgumentCount = args.length;
                 callbackUrl = url;
                 if (overrides.coreHandler) return overrides.coreHandler(url, attempt);
                 await overrides.acceptToken?.(url, attempt);
@@ -125,11 +140,13 @@ function loadService(overrides = {}) {
         value: session.get('ifrn_painel_owner') || session.get('ifrn_username') || '',
     }];
     context.exports.MoodleSiteService.prototype.painelAva = panelAva;
+    // Object.create bypasses field initializers; supply the actual production coordinator.
+    context.exports.MoodleSiteService.prototype.nativeCourseLoginQueue = new queueModule.exports.NativeCourseLoginQueue();
 
     return {
         MoodleSiteService: context.exports.MoodleSiteService,
         state: () => ({ subscriptions, browserOptions, browserUrl, browserClosed, browserShown, browserHidden,
-            callbackUrl, session, externalFallbackCalls, lastTriggeredEvent,
+            callbackUrl, callbackArgumentCount, session, externalFallbackCalls, lastTriggeredEvent,
             panelAva,
             setBrowserScriptResult: value => browserScriptResult = value,
             markExternalFallbackCall: () => externalFallbackCalls++ }),
@@ -252,6 +269,30 @@ test('account change or logout epoch rejects a late validation result', async ()
 });
 
 module.exports={loadService,deferred};
+
+test('first Moodle session opens official SSO without reading a missing current-site record or the P0.4 ledger', async () => {
+    let authenticated = false;
+    const { MoodleSiteService, state } = loadService({
+        coreSites: {
+            beginSessionAttempt: () => { throw new Error('Retired P0.4 must not run'); },
+            isLoggedIn: () => authenticated,
+            getCurrentSite: () => authenticated ? {
+                getInfo: () => ({ username: 'synthetic-owner' }), isLoggedOut: () => false,
+                getURL: () => 'https://academico.ava.ifrn.edu.br', getId: () => 'synthetic-site',
+            } : null,
+        },
+        coreHandler: async () => { authenticated = true; },
+    });
+    const service = Object.create(MoodleSiteService.prototype);
+    service.courseOAuthBrowserSubscriptions = [];
+    const pending = service.openCourseOAuthInApp({ siteUrl: 'https://academico.ava.ifrn.edu.br', config: {} });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.ok(state().browserUrl, 'no saved Moodle session must not block browser creation');
+    state().subscriptions.get('beforeload')({ url: 'moodlemobile://token=SYNTHETIC_FIRST_LOGIN' });
+    await pending;
+    assert.equal(state().callbackArgumentCount, 1, 'use the official Moodle handler signature');
+    assert.equal(service.hasMatchingPresencialSession('https://academico.ava.ifrn.edu.br'), true);
+});
 
 function deferred() {
     let resolve;

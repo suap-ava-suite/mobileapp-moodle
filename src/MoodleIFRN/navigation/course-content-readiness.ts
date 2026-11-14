@@ -21,21 +21,28 @@
  * @returns Whether the themed native course header is ready.
  */
 export function isNativeCourseShellReady(documentRef: Document, courseId: number): boolean {
+    return nativeCourseShellWaitReason(documentRef, courseId) === 'ready';
+}
+
+/** Returns only a static DOM readiness reason, never a title, account or course payload. */
+export function nativeCourseShellWaitReason(documentRef: Document, courseId: number): string {
     const page = findVisibleCoursePage(documentRef, courseId);
     const view = documentRef.defaultView;
     if (!page || !view) {
-        return false;
+        return 'page-not-visible';
     }
 
     const theme = view.getComputedStyle(page).getPropertyValue('--ifrn-ava').trim();
-    if (!theme || page.getAnimations?.().some(animation => animation.playState === 'running')) {
-        return false;
-    }
+    if (!theme) return 'theme-missing';
+    if (page.getAnimations?.().some(animation => animation.playState === 'running')) return 'animation-running';
 
     const header = page.querySelector<HTMLElement>('.core-course-header');
     const title = header?.querySelector<HTMLElement>('h1');
 
-    return !!header && isVisible(header) && !!title?.textContent?.trim();
+    if (!header || !isVisible(header)) return 'header-not-visible';
+    if (!title?.textContent?.trim()) return 'title-missing';
+
+    return 'ready';
 }
 
 /**
