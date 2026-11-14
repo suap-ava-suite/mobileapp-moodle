@@ -1,0 +1,28 @@
+:host { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.native-header ion-toolbar { --background: #1351b4; --color: #fff; }
+ion-content { --background: var(--ion-background-color, #f6f8fa); }
+.native-panel { margin: 0 auto; max-width: 1120px; padding: 24px 20px max(24px, env(safe-area-inset-bottom)); color: var(--ion-text-color, #17324d); }
+.native-brand { display: flex; gap: 20px; align-items: center; margin-bottom: 24px; }
+.native-brand img { width: 110px; height: auto; object-fit: contain; }
+.native-brand p { margin: 0 0 6px; font-size: .85em; }
+.native-brand h1 { margin: 0; font-size: 1.4em; font-weight: 700; }
+.native-navigation { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 20px; }
+ion-button { --border-radius: 8px; text-transform: none; }
+ion-segment { margin-bottom: 16px; }
+.native-filters { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+ion-searchbar { padding: 0; }
+.native-courses { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 18px; }
+.native-course { position: relative; background: var(--ion-card-background, #fff); border: 1px solid var(--ion-color-light-shade, #dce3e9); border-radius: 12px; overflow: hidden; }
+.course-open { display: flex; flex-direction: column; gap: 10px; background: transparent; color: inherit; width: 100%; height: 100%; min-height: 190px; text-align: start; padding: 22px 52px 22px 22px; cursor: pointer; }
+.course-open:focus-visible { outline: 3px solid #1351b4; outline-offset: -4px; }
+.course-open:disabled { cursor: default; opacity: .65; }
+.course-open h2 { margin: 0; font-size: 1.15em; font-weight: 700; line-height: 1.4; }
+.course-open p { margin: 0; font-size: .9em; }
+.environment { color: var(--ion-color-primary, #1351b4); font-size: .85em; }
+.course-state { font-size: .8em; }
+.favourite { position: absolute; right: 4px; bottom: 4px; }
+.native-help { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+.native-profile img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; }
+.state { padding: 20px; text-align: center; line-height: 1.5; }
+.high-contrast { --background: #000; --ion-text-color: #fff; --ion-card-background: #111; --ion-color-primary: #ffeb3b; }
+@media (max-width: 480px) { .native-panel { padding-inline: 16px; } .native-brand { gap: 14px; } .native-brand img { width: 76px; } .native-filters { flex-wrap: wrap; } }

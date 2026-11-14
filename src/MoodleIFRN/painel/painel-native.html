@@ -1,0 +1,81 @@
+<ion-header class="native-header">
+    <ion-toolbar>
+        <ion-buttons slot="start"><ion-button (click)="marketplace.emit()" aria-label="Voltar ao Marketplace">
+            <ion-icon slot="icon-only" name="arrow-back-outline" />
+        </ion-button></ion-buttons>
+        <ion-title>Painel AVA</ion-title>
+        <ion-buttons slot="end"><ion-button (click)="section.set('profile')" aria-label="Abrir perfil">
+            <ion-icon slot="icon-only" name="person-circle-outline" />
+        </ion-button></ion-buttons>
+    </ion-toolbar>
+</ion-header>
+<ion-content [class.high-contrast]="highContrast()" [style.font-size.%]="fontScale()">
+    <div class="native-panel">
+        <header class="native-brand">
+            <img src="mobilemoodle/static/theme/ifrn/img/ifrn-logo.png" alt="Instituto Federal do Rio Grande do Norte" />
+            <div><p>Ambiente Virtual de Aprendizagem</p><h1>Olá, {{ data()?.name || 'estudante' }}</h1></div>
+        </header>
+        <nav class="native-navigation" aria-label="Navegação do Painel">
+            <ion-button [fill]="section() === 'courses' ? 'solid' : 'outline'" (click)="section.set('courses')">Disciplinas</ion-button>
+            <ion-button [fill]="section() === 'profile' ? 'solid' : 'outline'" (click)="section.set('profile')">Perfil</ion-button>
+            <ion-button [fill]="section() === 'help' ? 'solid' : 'outline'" (click)="section.set('help')">Ajuda</ion-button>
+            <ion-button [fill]="section() === 'accessibility' ? 'solid' : 'outline'" (click)="section.set('accessibility')">Acessibilidade</ion-button>
+        </nav>
+        @if (preferenceError()) { <p class="state" role="alert">{{ preferenceError() }}</p> }
+        @if (section() === 'courses') {
+            @if (!data()) {
+                <div class="state" role="alert"><p>Os dados do Painel não estão disponíveis para a conta atual.</p>
+                    <ion-button (click)="refresh.emit()">Tentar novamente</ion-button>
+                    <ion-button fill="outline" (click)="marketplace.emit()">Voltar ao início</ion-button>
+                </div>
+            } @else {
+                <ion-segment [value]="group()" (ionChange)="setGroup($event.detail.value)" aria-label="Grupos de disciplinas">
+                    @for (tab of tabs; track tab.id) { <ion-segment-button [value]="tab.id"><ion-label>{{ tab.label }}</ion-label></ion-segment-button> }
+                </ion-segment>
+                <div class="native-filters">
+                    <ion-searchbar [value]="search()" (ionInput)="search.set($event.detail.value || '')" placeholder="Buscar disciplina" aria-label="Buscar disciplina" />
+                    <ion-button fill="outline" [attr.aria-pressed]="onlyFavourites()" (click)="onlyFavourites.set(!onlyFavourites())">
+                        <ion-icon slot="start" [name]="onlyFavourites() ? 'star' : 'star-outline'" />Favoritos
+                    </ion-button>
+                </div>
+                @if (busy()) { <p class="state" role="status" aria-live="polite">Preparando a disciplina…</p> }
+                <div class="native-courses" [attr.aria-busy]="busy()">
+                    @for (course of courses(); track course.key) {
+                        <article class="native-course">
+                            <button type="button" class="course-open" [disabled]="!canOpen(course)" (click)="selectCourse(course)">
+                                <h2>{{ course.name }}</h2><p>{{ course.shortname }}</p>
+                                <span class="environment">{{ course.environment }}</span>
+                                <span class="course-state">{{ course.published ? 'Publicado' : 'Não publicado' }}</span>
+                                @if (!course.moodle_site_url) { <span>Ambiente não identificado</span> }
+                                @if (course.is_enrolled === false) { <strong>Ver inscrição</strong> }
+                            </button>
+                            <ion-button class="favourite" fill="clear" [attr.aria-label]="isFavourite(course) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
+                                [attr.aria-pressed]="isFavourite(course)" (click)="toggleFavourite(course)">
+                                <ion-icon slot="icon-only" [name]="isFavourite(course) ? 'star' : 'star-outline'" />
+                            </ion-button>
+                        </article>
+                    } @empty { <p class="state">Nenhuma disciplina corresponde a esta seleção.</p> }
+                </div>
+            }
+        } @else if (section() === 'help') {
+            <section aria-labelledby="native-help-title"><h2 id="native-help-title">Central de atendimento</h2>
+                <div class="native-help">@for (link of helpLinks; track link.id) {
+                    <ion-button expand="block" fill="outline" [disabled]="busy()" (click)="openHelp.emit(link.id)">{{ link.title }}</ion-button>
+                }</div>
+            </section>
+        } @else if (section() === 'profile') {
+            <section class="native-profile" aria-labelledby="native-profile-title">
+                @if (data()?.photo && !photoFailed()) { <img [src]="data()?.photo" alt="Foto de perfil" (error)="photoFailed.set(true)" /> }
+                <h2 id="native-profile-title">{{ data()?.name || 'Perfil' }}</h2>
+                <ion-button (click)="openProfile.emit()">Abrir Perfil SUAP</ion-button>
+                <ion-button fill="outline" (click)="logout.emit()">Sair</ion-button>
+            </section>
+        } @else {
+            <section aria-labelledby="native-accessibility-title"><h2 id="native-accessibility-title">Acessibilidade</h2>
+                <ion-button fill="outline" [attr.aria-pressed]="highContrast()" (click)="highContrast.set(!highContrast())">Alto contraste</ion-button>
+                <ion-button fill="outline" (click)="fontScale.set(fontScale() === 100 ? 130 : 100)">Tamanho do texto: {{ fontScale() }}%</ion-button>
+                <ion-button (click)="enableLibras()">Ativar VLibras</ion-button>
+            </section>
+        }
+    </div>
+</ion-content>

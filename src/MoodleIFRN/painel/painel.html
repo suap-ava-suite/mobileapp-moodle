@@ -1,14 +1,12 @@
-<ion-content [fullscreen]="true" [scrollY]="false" [scrollX]="false" class="painel-page-content">
-    <iframe
-        #painelFrame
-        *ngIf="safePainelUrl"
-        [src]="safePainelUrl"
-        class="painel-iframe"
-        title="Painel AVA"
-        allow="fullscreen"
-        (load)="onIframeLoad()">
-    </iframe>
-</ion-content>
+<ifrn-painel-native
+    [data]="nativeDashboard"
+    [busy]="nativeCourseOpening"
+    (openCourse)="onNativeCourse($event)"
+    (openHelp)="onNativeHelp($event)"
+    (openProfile)="onNativeProfile()"
+    (marketplace)="onNativeMarketplace()"
+    (logout)="onNativeLogout()"
+    (refresh)="onNativeRefresh()" />
 
 <ion-modal
     [isOpen]="internalPageScreenOpen"

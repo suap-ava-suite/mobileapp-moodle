@@ -28,16 +28,20 @@ function contains(node, predicate) {
     return ts.forEachChild(node, child => contains(child, predicate)) || false;
 }
 
-test('iframe do Painel começa antes da espera pelos plugins Cordova', () => {
+test('Painel Angular recebe os dados locais antes da espera pelos plugins Cordova, sem iframe', () => {
     const init = findMethod('ngOnInit');
     const statements = [...init.body.statements];
-    const urlIndex = statements.findIndex(statement => contains(statement, node =>
-        ts.isBinaryExpression(node) && node.left.getText(file) === 'this.safePainelUrl'));
+    const dataIndex = statements.findIndex(statement => contains(statement, node =>
+        ts.isCallExpression(node) && node.expression.getText(file) === 'this.loadNativeDashboard'));
     const refreshIndex = statements.findIndex(statement => contains(statement, node =>
         ts.isCallExpression(node) && node.expression.getText(file) === 'this.refreshProfileWhenPlatformIsReady'));
 
-    assert.ok(urlIndex >= 0, 'ngOnInit precisa atribuir a URL local do iframe');
-    assert.ok(refreshIndex > urlIndex, 'a URL do iframe deve ser atribuída antes do trabalho dependente da plataforma');
+    assert.ok(dataIndex >= 0, 'ngOnInit deve ler o dashboard da conta atual');
+    assert.ok(refreshIndex > dataIndex, 'dados locais devem estar disponíveis antes do trabalho dependente da plataforma');
+    const template = fs.readFileSync('src/MoodleIFRN/painel/painel.html', 'utf8');
+    assert.doesNotMatch(template, /<iframe\b/i);
+    assert.match(template, /<ifrn-painel-native\b/);
+    assert.match(template, /\(openCourse\)="onNativeCourse\(\$event\)"/);
     assert.equal(contains(init, ts.isAwaitExpression), false, 'ngOnInit não deve bloquear a primeira renderização');
 });
 
