@@ -234,10 +234,10 @@
 
 :host {
   --keyboard-height: 0px;
-  --ion-safe-area-top: env(safe-area-inset-top, 0px);
-  --ion-safe-area-right: 0px;
-  --ion-safe-area-bottom: 0px;
-  --ion-safe-area-left: 0px;
+  --ion-safe-area-top: inherit;
+  --ion-safe-area-right: inherit;
+  --ion-safe-area-bottom: inherit;
+  --ion-safe-area-left: inherit;
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-right: env(safe-area-inset-right, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);

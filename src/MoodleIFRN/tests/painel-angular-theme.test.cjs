@@ -15,7 +15,7 @@ test('legacy root variables and accessibility selectors target the Angular host 
     assert.doesNotMatch(result, /:host[^{}]* :host/);
 });
 
-test('theme adapter preserves all original declarations, keyframes and local asset targets', () => {
+test('theme adapter preserves visuals and assets while inheriting native safe areas', () => {
     const original = fs.readFileSync('src/MoodleIFRN/mobilemoodle/mobilemoodle.css', 'utf8');
     const result = painelAngularTheme(original);
     const declarations = css => {
@@ -23,7 +23,10 @@ test('theme adapter preserves all original declarations, keyframes and local ass
         postcss.parse(css).walkDecls(decl => values.push([decl.prop, decl.value.replaceAll('../mobilemoodle/static/', 'static/'), decl.important]));
         return values;
     };
-    assert.deepEqual(declarations(result), declarations(original));
+    const expected = declarations(original).map(([property, value, important]) => [
+        property, /^--ion-safe-area-(top|right|bottom|left)$/.test(property) ? 'inherit' : value, important,
+    ]);
+    assert.deepEqual(declarations(result), expected);
     assert.match(result, /url\(["']?\.\.\/mobilemoodle\/static\/theme\/ifrn\/fonts\/rawline-400\.woff2/);
     postcss.parse(result).walkRules(rule => {
         if (rule.parent.type === 'atrule' && /keyframes$/.test(rule.parent.name)) return;
@@ -46,4 +49,18 @@ test('Angular panel consumes the reproducible generated theme and keeps native e
     assert.doesNotMatch(html, /<iframe|\?\?/i);
     assert.match(html, /id="main-content"/);
     assert.match(html, /\(click\)="selectCourse\(course\)"/);
+});
+
+// The standalone web panel's env() resets must not hide Cordova's measured insets.
+test('native theme inherits Android/iOS insets instead of replacing them with standalone defaults', () => {
+    const defaults = ':root { --ion-safe-area-top: env(safe-area-inset-top, 0px); --ion-safe-area-right: 0px; --ion-safe-area-bottom: 0px; --ion-safe-area-left: 0px; --primary: #1351b4; }';
+    const inherited = [];
+    postcss.parse(painelAngularTheme(defaults)).walkDecls(/^--ion-safe-area-/, decl => {
+        assert.equal(decl.value, 'inherit', decl.prop + ' must inherit from the Ionic page');
+        inherited.push(decl.prop);
+    });
+    assert.equal(inherited.length, 4);
+    assert.match(painelAngularTheme(defaults), /--primary: #1351b4/);
+    // The common input remains suitable for the standalone panel; only the Angular output changes.
+    assert.match(defaults, /--ion-safe-area-top: env\(safe-area-inset-top, 0px\)/);
 });
