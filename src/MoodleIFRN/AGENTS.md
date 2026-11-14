@@ -7,7 +7,7 @@
 - `marketplace-ifrn/`: entrada institucional e início da autenticação.
 - `ifrn-login/`: rota de compatibilidade que redireciona para o Marketplace; não é um formulário paralelo de credenciais.
 - `services_mobile/`: serviços SUAP, painel, navegador interno, seleção de ambiente Moodle, sessão, identidade e perfil.
-- `painel/`: na branch `perf/ifrn-course-shell`, Painel em componentes Angular (OnPush/signals), sem iframe ativo; o host mantém os handlers existentes e a ponte legada para compatibilidade/testes. Confirme a branch antes de usar o mapa.
+- `painel/`: na release com a integração `c40a5584a` (origem `perf/ifrn-course-shell`), Painel em componentes Angular (OnPush/signals), sem iframe ativo; o host mantém os handlers existentes e a ponte legada para compatibilidade/testes. Confirme a branch antes de usar o mapa.
 - `moodle-open-course/`: ponte de entrada/recuperação antes de abrir um curso nativo.
 - `navigation/`: guardas, políticas, estado de handoff, coordenação e rota nativa.
 - `mobilemoodle/`: painel web leve, seus módulos TypeScript, SCSS e bundles gerados.
@@ -35,7 +35,7 @@ Após correções relevantes, atualize as páginas HTML existentes em `docs/`: p
 
 ## Transferência atual — Painel Angular e tema (14/11/2026)
 
-- Estado, commits, APK, testes e limites: [Progresso atual](docs/progresso-projeto.html#sessao-painel-angular-20261114) e [Continuidade](docs/continuidade-ia.html#sessao-painel-angular-20261114). HEAD funcional `ee06ed1a3` em `perf/ifrn-course-shell`; código não integrado automaticamente à release. O checkout original conserva o trabalho anterior.
+- Estado, commits, APK, testes e limites: [Progresso atual](docs/progresso-projeto.html#sessao-painel-angular-20261114) e [Continuidade](docs/continuidade-ia.html#sessao-painel-angular-20261114). HEAD funcional `ee06ed1a3` em `perf/ifrn-course-shell`; referência anterior à integração publicada; consulte o bloco de continuidade mais recente abaixo. O checkout original conserva o trabalho anterior.
 - O usuário aprovou esta direção visual como quase perfeita e informará erros específicos depois. Manter os componentes Angular e a interface institucional; não reintroduzir iframe nem refazer o layout por preferência. A próxima ação é tratar somente os pontos relatados.
 - Tema: edite `mobilemoodle/static/theme/ifrn/scss/painel.scss` para regras compartilhadas; `painel/painel-native.scss` para adaptações Angular. `mobilemoodle/build.mjs` usa `scripts/painel-angular-theme.cjs` para gerar `painel/painel-native-theme.css`: não editar a folha gerada. O adaptador preserva declarações e corrige `:root/body` para o host encapsulado. Execute `npm run build:mobilemoodle` antes do build web nativo e os testes `painel-angular-theme.test.cjs`.
 - O candidato desativa a aplicação automática P0.4 e usa o núcleo/plugin oficiais. `scripts/cordova-runtime-check.cjs` exige o baseline de sessão e um plugin preparado com `cordova.define`; não copie JS bruto nem aceite `cordova.js` vazio. O guard não sobrescreve arquivos do usuário: faça build em worktree isolado.
@@ -48,3 +48,5 @@ Após correções relevantes, atualize as páginas HTML existentes em `docs/`: p
 - O Painel Angular deve herdar `--ion-safe-area-*` do Ionic. Não restaurar resets de `env()`/zero do painel independente no host, não editar a folha gerada e não substituir por margens fixas. A correção foi conferida na APK sem overrides de diagnóstico e o usuário confirmou o resultado.
 - Na integração, manter `vlibras-widget.ts` e os estilos usados pela versão testada; a reversão antiga da release não continha essa dependência. Preservar a limpeza aprovada, 37 fixtures e seus contratos. Resultado integrado: 383/388 Node; cinco contratos P0.4 continuam reprovados e preservados.
 - O checkout original e o worktree antigo da release têm alterações locais preservadas. Não compilar cegamente um checkout antigo com patch experimental aplicado. Uma nova limpeza, logout ou troca de conta continua exigindo autorização específica.
+
+- Publicação confirmada: `release/2.0.1` no GitHub recebeu `c40a5584a` (integração), conferido por `git ls-remote`. O commit documental seguinte registra essa confirmação. Preservar a sessão atual e continuar apenas os ajustes específicos relatados pelo usuário.

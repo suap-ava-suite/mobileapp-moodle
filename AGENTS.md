@@ -31,9 +31,9 @@ Este repositório é o Moodle Mobile oficial personalizado para o IFRN. A aplica
 
 ## Continuidade registrada em 14/11/2026
 
-- O candidato com Painel Angular e tema original recuperado está em `perf/ifrn-course-shell`, HEAD funcional `ee06ed1a3`; localize-o com `git worktree list`. Não presuma integração à release ou ao checkout atual.
+- O candidato com Painel Angular e tema original recuperado está em `perf/ifrn-course-shell`, HEAD funcional `ee06ed1a3`; localize-o com `git worktree list`. Essa era a referência anterior à publicação; consulte o registro de integração mais recente abaixo.
 - Antes de alterar a interface ou retomar testes, leia a [transferência mais recente](src/MoodleIFRN/docs/continuidade-ia.html#sessao-painel-angular-20261114) e o [progresso](src/MoodleIFRN/docs/progresso-projeto.html#sessao-painel-angular-20261114). O usuário avaliou o Painel como quase perfeito e relatará os ajustes depois; preservar esta referência.
-- A retirada experimental P0.4 foi autorizada somente no candidato; os testes/histórico foram preservados e cinco contratos continuam falhando. Não reaplicar patches nem apagar esses testes automaticamente. A autorização anterior para limpar dados do celular já foi consumida; novas operações exigem autorização específica.
+- A retirada experimental P0.4 foi autorizada no candidato e incorporada à release com a integração publicada; os testes/histórico foram preservados e cinco contratos continuam falhando. Não reaplicar patches nem apagar esses testes automaticamente. A autorização anterior para limpar dados do celular já foi consumida; novas operações exigem autorização específica.
 
 ## Continuidade da correção de insets e integração — 14/11/2026
 
@@ -41,3 +41,5 @@ Este repositório é o Moodle Mobile oficial personalizado para o IFRN. A aplica
 - O Painel Angular deve herdar `--ion-safe-area-*` do Ionic. Não restaurar resets de `env()`/zero do painel independente no host, não editar a folha gerada e não substituir por margens fixas. A correção foi conferida na APK sem overrides de diagnóstico e o usuário confirmou o resultado.
 - Na integração, manter `vlibras-widget.ts` e os estilos usados pela versão testada; a reversão antiga da release não continha essa dependência. Preservar a limpeza aprovada, 37 fixtures e seus contratos. Resultado integrado: 383/388 Node; cinco contratos P0.4 continuam reprovados e preservados.
 - O checkout original e o worktree antigo da release têm alterações locais preservadas. Não compilar cegamente um checkout antigo com patch experimental aplicado. Uma nova limpeza, logout ou troca de conta continua exigindo autorização específica.
+
+- Publicação confirmada: `release/2.0.1` no GitHub recebeu `c40a5584a` (integração), conferido por `git ls-remote`. O commit documental seguinte registra essa confirmação. Preservar a sessão atual e continuar apenas os ajustes específicos relatados pelo usuário.
