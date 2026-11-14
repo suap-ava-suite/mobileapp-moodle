@@ -146,6 +146,17 @@ export class PainelPage implements OnInit, OnDestroy {
     }
 
     onNativeHelp(id: string): void { this.openHelpLink(id); }
+    async onNativeEnrolment(course: NativePainelCourse): Promise<void> {
+        if (!course.moodle_course_id || !course.moodle_site_url || this.openingCourse) {
+            return;
+        }
+        this.openingCourse = true;
+        try {
+            await this.handleOpenEnrol(course.moodle_course_id, course.ambiente?.id);
+        } finally {
+            this.openingCourse = false;
+        }
+    }
     onNativeProfile(): void { this.openSuapProfile(); }
     onNativeMarketplace(): void { void this.handleGoToMarketplace(); }
     onNativeLogout(): void { void this.handleLogout(); }

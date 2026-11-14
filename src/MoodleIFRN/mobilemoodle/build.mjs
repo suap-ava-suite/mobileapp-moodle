@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { createHash } from 'crypto';
 import { compile } from 'sass';
+import angularTheme from '../scripts/painel-angular-theme.cjs';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(root, '../../..');
@@ -65,6 +66,8 @@ try {
     // Folha bloqueante no <head>: o iframe nunca pinta as logos sem o tema
     // enquanto aguarda o bundle deferred, inclusive ao voltar do curso nativo.
     fs.writeFileSync(join(root, 'mobilemoodle.css'), themeCss);
+    // Same declarations/assets, with root selectors scoped to the Angular host.
+    fs.writeFileSync(join(root, '../painel/painel-native-theme.css'), angularTheme.painelAngularTheme(themeCss));
     const themeVersion = createHash('sha256').update(themeCss).digest('hex').slice(0, 12);
     const indexPath = join(root, 'index.html');
     const indexHtml = fs.readFileSync(indexPath, 'utf8');
