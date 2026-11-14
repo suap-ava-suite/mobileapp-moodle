@@ -4,6 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
 import ts from 'typescript';
+import cordovaRuntimeCheck from './scripts/cordova-runtime-check.cjs';
 
 const args = process.argv.slice(2);
 const platformArgs = args.filter(arg => arg.startsWith('--platform='));
@@ -34,6 +35,7 @@ if(!dictionary || Object.keys(dictionary).length===0)throw new Error('Dicionári
 if(process.argv.includes('--check')){
     console.log(`Dicionário validado para ${platform}: ${Object.keys(dictionary).length} entradas; nenhum arquivo gerado.`);
 }else{
+    cordovaRuntimeCheck.assertCordovaRuntime(root, platform);
     execFileSync(process.execPath,[path.join(root,'node_modules/@angular/cli/bin/ng.js'),'run','app:ionic-cordova-build',`--platform=${platform}`,'--browser-target=app:build:development'],{
         cwd:root,stdio:'inherit',env:{...process.env,NODE_OPTIONS:'--max-old-space-size=8192'},
     });
