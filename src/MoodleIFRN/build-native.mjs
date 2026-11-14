@@ -36,6 +36,7 @@ if(process.argv.includes('--check')){
     console.log(`Dicionário validado para ${platform}: ${Object.keys(dictionary).length} entradas; nenhum arquivo gerado.`);
 }else{
     cordovaRuntimeCheck.assertCordovaRuntime(root, platform);
+    cordovaRuntimeCheck.assertStandardSessionCore(root);
     execFileSync(process.execPath,[path.join(root,'node_modules/@angular/cli/bin/ng.js'),'run','app:ionic-cordova-build',`--platform=${platform}`,'--browser-target=app:build:development'],{
         cwd:root,stdio:'inherit',env:{...process.env,NODE_OPTIONS:'--max-old-space-size=8192'},
     });
