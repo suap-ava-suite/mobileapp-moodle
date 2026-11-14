@@ -3,26 +3,11 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
 const test = require('node:test');
-function setup(tab = null, success = true, courseLookup = null) {
+function setup(success = true) {
     const navigation = [];
-    const fetched = [];
-    const helper = [];
-    const course = { id: 4022, format: 'topics' };
     const mocks = {
-        '@features/course/services/course-helper': { CoreCourseHelper: {
-            getCourse: async (...args) => {
-                fetched.push(args);
-                if (courseLookup) {
-                    return courseLookup(...args);
-                }
-
-                return { course: args[0] === course.id ? course : { ...course, id: args[0] } };
-            },
-            getAndOpenCourse: async (...args) => { helper.push(args); },
-        } },
         '@features/mainmenu/constants': { MAIN_MENU_HOME_PAGE_NAME: 'home' },
         '@services/navigator': { CoreNavigator: {
-            getCurrentMainMenuTab: () => tab,
             navigate: async (...args) => { navigation.push(args); return success; },
         } },
     };
@@ -30,53 +15,31 @@ function setup(tab = null, success = true, courseLookup = null) {
     vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/MoodleIFRN/navigation/open-native-course.ts', 'utf8'), {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     }).outputText, context, { filename: 'src/MoodleIFRN/navigation/open-native-course.ts' });
-    return { open: context.exports.openNativeCourse, navigation, fetched, helper, course };
+    return { open: context.exports.openNativeCourse, navigation };
 }
-test('from the IFRN panel or OAuth bridge, enters the course without opening the standalone main landing', async () => {
+test('opens the native course using its stable route ID without transient object parameters', async () => {
     const s = setup();
-    await s.open(4022, 'academic-site');
-    assert.deepEqual(s.fetched[0], [4022, 'academic-site']);
+
+    await s.open(4022);
+
     assert.equal(s.navigation.length, 1);
     assert.equal(s.navigation[0][0], '/main/home/course/4022');
+    assert.equal(s.navigation[0][1].animated, false);
     assert.equal(s.navigation[0][1].reset, true);
-    assert.equal(s.navigation[0][1].params.course, s.course);
-    assert.equal(s.helper.length, 0);
-});
-test('reuses the already validated enrolled course without fetching it again', async () => {
-    const s = setup();
-    const enrolledCourse = { id: 4022, fullname: 'Synthetic enrolled course', format: 'topics' };
-    await s.open(4022, 'academic-site', enrolledCourse);
-    assert.equal(s.fetched.length, 0);
-    assert.equal(s.navigation[0][1].params.course, enrolledCourse);
-});
-test('does not reuse an enrolled course object for a different course id', async () => {
-    const s = setup();
-    await s.open(4022, 'academic-site', { id: 2836, fullname: 'Different synthetic course' });
-    assert.deepEqual(s.fetched[0], [4022, 'academic-site']);
-    assert.equal(s.navigation[0][1].params.course, s.course);
+    assert.equal(s.navigation[0][1].params, undefined);
 });
 test('opening another course from an existing native tab replaces the old course stack', async () => {
-    const s = setup('home');
-    await s.open(2836, 'presencial-site');
-    assert.deepEqual(s.fetched[0], [2836, 'presencial-site']);
+    const s = setup();
+
+    await s.open(2836);
+
+    assert.equal(s.navigation.length, 1);
     assert.equal(s.navigation[0][0], '/main/home/course/2836');
     assert.equal(s.navigation[0][1].reset, true);
-    assert.equal(s.navigation[0][1].params.course.id, 2836);
-    assert.notEqual(s.navigation[0][1].params.course, s.course);
-    assert.equal(s.helper.length, 0);
-});
-test('failed course detail lookup still navigates with only the requested course id', async () => {
-    const s = setup(null, true, async () => { throw new Error('synthetic details lookup failure'); });
-
-    await s.open(9142, 'academic-site');
-
-    assert.deepEqual(s.fetched[0], [9142, 'academic-site']);
-    assert.equal(s.navigation.length, 1);
-    assert.equal(s.navigation[0][0], '/main/home/course/9142');
-    assert.deepEqual(Object.keys(s.navigation[0][1].params.course), ['id']);
-    assert.equal(s.navigation[0][1].params.course.id, 9142);
+    assert.equal(s.navigation[0][1].params, undefined);
 });
 test('rejected native route is reported instead of being treated as an opened course', async () => {
-    const s = setup(null, false);
-    await assert.rejects(() => s.open(4022, 'academic-site'), /Não foi possível navegar/);
+    const s = setup(false);
+
+    await assert.rejects(() => s.open(4022), /Não foi possível navegar/);
 });

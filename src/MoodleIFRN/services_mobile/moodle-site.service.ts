@@ -1985,8 +1985,8 @@ export class MoodleSiteService {
         let courses: MoodleCourseSummary[];
 
         try {
-            // Usa uma única resposta atualizada para validar a matrícula e entregar o
-            // objeto completo à rota; openNativeCourse não precisará buscar a lista outra vez.
+            // Esta resposta atualizada valida a matrícula. A rota nativa recebe somente
+            // o ID: objetos em parâmetros temporários podem ser consumidos por outra etapa.
             enrolledCourses = await attempt.stage('enrolments-fresh', () => CoreCourses.getUserCourses(false, siteId));
             assertSessionStillCurrent();
             courses = enrolledCourses.map((course) => this.toCourseSummary(course));
@@ -2004,8 +2004,6 @@ export class MoodleSiteService {
         console.log(COURSE_LOG, 'quantidade de cursos Moodle =', courses.length);
 
         const found = courses.some((course) => course.id === courseId);
-        const enrolledCourse = enrolledCourses.find((course) => course.id === courseId);
-
         // eslint-disable-next-line no-console
         console.log(COURSE_LOG, 'courseId encontrado =', found);
 
@@ -2052,7 +2050,7 @@ export class MoodleSiteService {
                     () => ({ status: 'fulfilled' as const }),
                     (reason: unknown) => ({ status: 'rejected' as const, reason }),
                 );
-                await openNativeCourse(courseId, siteId, enrolledCourse);
+                await openNativeCourse(courseId);
                 const result = await routeResult;
                 if (result.status === 'rejected') {
                     throw result.reason;
