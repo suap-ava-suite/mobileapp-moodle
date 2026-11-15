@@ -57,3 +57,8 @@ Após correções relevantes, atualize as páginas HTML existentes em `docs/`: p
 - A fonte permanente fica em `scripts/patch-inappbrowser-layout.cjs`, dentro de MoodleIFRN. O usuário autorizou especificamente o Java InAppBrowser usado na compilação. O hook já existente reaplica o patch às cópias geradas; não editar o Java gerado como única fonte nem estender esta exceção ao núcleo Moodle.
 - A janela IFRN `hidden=yes`/`ifrnlayoutfullscreen=yes` permanece anexada invisível e sem interceptar interação. Só fica visível após `postVisualStateCallback`; respostas tardias após ocultar/fechar/substituir não podem reabri-la. Preservar as guardas e o harness JVM de `tests/suap-login-appearance.test.cjs`.
 - 25/25 regressões focadas, TypeScript e build nativo passaram. A APK testada reaproveita os assets de c217d4481, não o checkout antigo com P0.4. Falta validar no aparelho físico e completar login/callback com o usuário; não instalar no telefone nem interromper sua sessão no AVD sem autorização.
+
+## Publicação da correção SUAP — 15/11/2026
+
+- Publicação autorizada e confirmada em `origin/release/2.0.1`: correção `7552b8ea9` e documentação `34eb8c3ca` (origens `8566b4fe1` e `ff5eef640`). `git ls-remote` confirmou `34eb8c3cae71baf0307b8e699bf0c797ed08a0b6` após o push; o commit documental seguinte registra essa confirmação. Ver [progresso](docs/progresso-projeto.html#suap-flash-release-20261115) e [transferência](docs/continuidade-ia.html#suap-flash-release-20261115).
+- Integração em `integrate/ifrn-suap-flash-release`, com 25/25 testes focados e links locais conferidos. Alterações anteriores dos outros worktrees permanecem preservadas. Não presumir que a branch local antiga da release ou a APK instalada em outro dispositivo já corresponde ao remoto.
