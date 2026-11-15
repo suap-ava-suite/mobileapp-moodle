@@ -50,3 +50,10 @@ Após correções relevantes, atualize as páginas HTML existentes em `docs/`: p
 - O checkout original e o worktree antigo da release têm alterações locais preservadas. Não compilar cegamente um checkout antigo com patch experimental aplicado. Uma nova limpeza, logout ou troca de conta continua exigindo autorização específica.
 
 - Publicação confirmada: `release/2.0.1` no GitHub recebeu `c40a5584a` (integração), conferido por `git ls-remote`. O commit documental seguinte registra essa confirmação. Preservar a sessão atual e continuar apenas os ajustes específicos relatados pelo usuário.
+
+## Correção validada da janela SUAP — 15/11/2026
+
+- Commit `8566b4fe1`: o flash preto no AVD Android Studio foi removido e o usuário confirmou. Consulte [a transferência atual](docs/continuidade-ia.html#suap-hidden-window-fix-20261115) e [a evidência](docs/progresso-projeto.html#suap-hidden-window-fix-20261115). Esse registro substitui a pendência de investigação da apresentação no emulador.
+- A fonte permanente fica em `scripts/patch-inappbrowser-layout.cjs`, dentro de MoodleIFRN. O usuário autorizou especificamente o Java InAppBrowser usado na compilação. O hook já existente reaplica o patch às cópias geradas; não editar o Java gerado como única fonte nem estender esta exceção ao núcleo Moodle.
+- A janela IFRN `hidden=yes`/`ifrnlayoutfullscreen=yes` permanece anexada invisível e sem interceptar interação. Só fica visível após `postVisualStateCallback`; respostas tardias após ocultar/fechar/substituir não podem reabri-la. Preservar as guardas e o harness JVM de `tests/suap-login-appearance.test.cjs`.
+- 25/25 regressões focadas, TypeScript e build nativo passaram. A APK testada reaproveita os assets de c217d4481, não o checkout antigo com P0.4. Falta validar no aparelho físico e completar login/callback com o usuário; não instalar no telefone nem interromper sua sessão no AVD sem autorização.
