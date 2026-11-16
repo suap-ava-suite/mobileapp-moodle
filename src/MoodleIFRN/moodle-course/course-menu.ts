@@ -11,6 +11,7 @@ import { AddonMessages } from '@addons/messages/services/messages';
 import { ADDON_MESSAGES_PAGE_NAME, ADDONS_MESSAGES_MENU_FEATURE_NAME } from '@addons/messages/constants';
 import { ADDONS_NOTIFICATIONS_MAIN_PAGE_NAME, ADDONS_NOTIFICATIONS_MENU_FEATURE_NAME } from '@addons/notifications/constants';
 import type { CoreCourseFormatComponent } from '@features/course/components/course-format/course-format';
+import { IfrnAcademicProgressComponent } from '../academic-progress/progress.component';
 import {
     IfrnCourseAccessibilityService,
     IfrnA11yBoolKey,
@@ -29,7 +30,7 @@ interface A11yToggle {
 @Component({
     selector: 'ifrn-course-menu',
     standalone: true,
-    imports: [CoreSharedModule],
+    imports: [CoreSharedModule, IfrnAcademicProgressComponent],
     templateUrl: './course-menu.html',
     styleUrls: ['./course-menu.scss'],
     host: {
@@ -138,6 +139,10 @@ export class IfrnCourseMenuComponent implements OnChanges, OnDestroy {
         } catch {
             return false;
         }
+    }
+
+    get courseSiteUrl(): string {
+        return CoreSites.getCurrentSite()?.getURL() || '';
     }
 
     get indexEnabled(): boolean {

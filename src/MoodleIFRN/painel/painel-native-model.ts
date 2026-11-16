@@ -87,7 +87,8 @@ export function buildNativePainelModel(raw: unknown, profile: Record<string, unk
                 is_enrolled: enrolled === true,
                 enrolled: enrolled === true,
                 isfavourite: source['isfavourite'] === true || source['favourite'] === true,
-                progress: typeof source['progress'] === 'number' ? Math.max(0, Math.min(100, source['progress'])) : null,
+                progress: typeof source['progress'] === 'number' && Number.isFinite(source['progress'])
+                    && source['progress'] >= 0 && source['progress'] <= 100 ? source['progress'] : null,
                 hasprogress: source['hasprogress'] === true,
                 published: ![false, 0, '0'].includes(source['visible'] as boolean | number | string),
                 source: 'painel',

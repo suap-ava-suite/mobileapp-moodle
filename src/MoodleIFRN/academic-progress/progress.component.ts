@@ -1,0 +1,88 @@
+// (C) Copyright 2015 Moodle Pty Ltd.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import {
+    ChangeDetectionStrategy, Component, Input, OnChanges, OnDestroy, SimpleChanges, computed, inject, signal,
+} from '@angular/core';
+import { CoreSharedModule } from '@/core/shared.module';
+import { CoreCourse } from '@features/course/services/course';
+import type { CoreCourseSection, CoreCourseModuleData } from '@features/course/services/course-helper';
+import { IfrnAcademicProgressService } from './progress.service';
+import { activityLabel, panelProgress, unavailableProgress, type ProgressSnapshot } from './progress-model';
+
+@Component({
+    selector: 'ifrn-academic-progress',
+    standalone: true,
+    imports: [CoreSharedModule],
+    templateUrl: './progress.component.html',
+    styleUrls: ['./progress.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    host: { '[attr.data-progress-context]': 'compact ? "panel" : "course"' },
+})
+export class IfrnAcademicProgressComponent implements OnChanges, OnDestroy {
+
+    @Input() courseId = 0;
+    @Input() siteUrl = '';
+    @Input() compact = false;
+    @Input() serverProgress: number | null = null;
+    @Input() hasServerProgress = false;
+    @Input() sections: CoreCourseSection[] = [];
+    @Input() accountScope?: object | null;
+
+    readonly snapshot = signal<ProgressSnapshot | null>(null);
+    private readonly modules = signal<CoreCourseModuleData[]>([]);
+    private release?: () => void;
+    private readonly progress = inject(IfrnAcademicProgressService);
+
+    get view(): ProgressSnapshot {
+        return this.snapshot()
+            ?? (this.compact ? panelProgress(this.serverProgress, this.hasServerProgress) : unavailableProgress());
+    }
+
+    get percentage(): number | null {
+        return this.view.percent === null ? null : Math.round(this.view.percent);
+    }
+
+    get countsDiffer(): boolean {
+        return this.view.activityPercent !== null && this.percentage !== Math.round(this.view.activityPercent);
+    }
+
+    readonly activityRows = computed(() => {
+        if (this.view.confirmedAt === null) { return []; }
+        const statuses = new Map(this.view.activities.map(activity => [activity.cmid, activity]));
+        const seen = new Set<number>();
+
+        return this.modules().filter(module => {
+            if (module.course !== this.courseId || seen.has(module.id) || module.visibleoncoursepage === 0) { return false; }
+            seen.add(module.id);
+
+            return true;
+        }).map(module => ({ id: module.id, name: module.name, restricted: module.uservisible === false,
+            status: activityLabel(statuses.get(module.id) ?? (module.completion === 0
+                ? { cmid: module.id, tracking: 0, state: 0 } : undefined)) }));
+    });
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['sections'] || changes['courseId']) { this.modules.set(CoreCourse.getSectionsModules(this.sections)); }
+        if (!changes['courseId'] && !changes['siteUrl'] && !changes['compact'] && !changes['accountScope']) { return; }
+        this.release?.();
+        this.snapshot.set(unavailableProgress());
+        this.release = this.progress.watch(this.courseId, this.siteUrl, !this.compact, value => this.snapshot.set(value));
+    }
+
+    refresh(): void { this.progress.refresh(); }
+
+    ngOnDestroy(): void { this.release?.(); this.release = undefined; }
+
+}

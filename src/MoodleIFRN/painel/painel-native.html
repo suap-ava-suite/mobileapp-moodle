@@ -45,6 +45,12 @@
                             <button type="button" class="painel-card-link course-open" [disabled]="!canOpen(course)" (click)="selectCourse(course)">
                                 <h2 class="painel-card-title">{{ course.name }}</h2><span class="painel-card-header-shortname">{{ course.shortname }}</span>
                             </button>
+                            @if (course.is_enrolled && course.moodle_course_id && course.moodle_site_url) {
+                                <ifrn-academic-progress [courseId]="course.moodle_course_id" [siteUrl]="course.moodle_site_url"
+                                    [compact]="true" [accountScope]="data()"
+                                    [serverProgress]="course.progress === undefined ? null : course.progress"
+                                    [hasServerProgress]="course.hasprogress === true" />
+                            }
                             <div class="painel-card-details"><div class="painel-card-details-info">
                                 <div class="painel-card-info-icon"><ion-icon name="school-outline" aria-hidden="true" /><span>{{ course.environment }}</span></div>
                                 <div class="painel-card-details-info-published"><ion-icon name="checkmark-circle-outline" aria-hidden="true" /><span>{{ course.published ? 'Publicado' : 'Não publicado' }}</span></div>

@@ -8,6 +8,9 @@
         </svg>
     </button>
 
+    <ifrn-academic-progress [courseId]="courseId" [siteUrl]="courseSiteUrl"
+        [sections]="format?.course?.id === courseId ? format?.sections || [] : []" />
+
     <ion-modal id="ifrn-course-drawer" [isOpen]="menuOpen" (didDismiss)="menuDismissed()"
         [enterAnimation]="menuEnterAnimation" [leaveAnimation]="menuLeaveAnimation"
         aria-labelledby="ifrn-course-drawer-title"

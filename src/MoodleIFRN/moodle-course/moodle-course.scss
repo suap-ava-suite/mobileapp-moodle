@@ -472,6 +472,14 @@ page-core-course-index .core-course-progress core-progress-bar .core-progress-te
     color: var(--ifrn-ava-dark);
 }
 
+// O resumo IFRN já apresenta o agregado: evita duplicá-lo no cabeçalho da aba de conteúdo.
+// Nas outras abas, ou sem o componente IFRN, o indicador original permanece disponível.
+html.ifrn-course-context page-core-course-index:has(
+    page-core-course-contents:not(.ion-page-hidden) ifrn-academic-progress[data-progress-context="course"]
+) > .core-course-header .core-course-progress {
+    display: none;
+}
+
 /* =========================================================
  * Abas nativas: Conteúdo / Participantes / Notas / Competências
  * (DOM real: core-tabs-outlet > ion-tab-bar.core-tabs-bar > swiper-slide)

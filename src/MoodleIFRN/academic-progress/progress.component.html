@@ -1,0 +1,62 @@
+<section class="academic-progress" [class.academic-progress--compact]="compact" aria-label="Progresso acadêmico">
+    <div class="academic-progress__heading">
+        <strong>{{ view.source === 'activities' ? 'Progresso das atividades' : 'Progresso da disciplina' }}</strong>
+        @if (percentage !== null) {
+            <span class="academic-progress__percentage">{{ percentage }}%</span>
+        }
+    </div>
+    @if (view.percent !== null) {
+        <div class="academic-progress__track" role="progressbar" aria-label="Progresso acadêmico confirmado"
+            aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="view.percent"
+            [attr.aria-valuetext]="percentage + '% confirmado pelo Moodle'">
+            <span class="academic-progress__fill" [class.academic-progress__fill--complete]="view.percent === 100"
+                [style.width.%]="view.percent"></span>
+        </div>
+    }
+    <div class="academic-progress__message" role="status" aria-live="polite">
+        @if (view.status === 'loading') {
+            <span>Consultando progresso…</span>
+        } @else if (view.status === 'disabled') {
+            <span>Acompanhamento de conclusão não habilitado.</span>
+        } @else if (view.status === 'empty') {
+            <span>Nenhuma atividade com acompanhamento de conclusão disponível.</span>
+        } @else if (view.percent === null) {
+            <span>Progresso indisponível no momento.</span>
+        } @else {
+            @if (view.total !== null && view.total > 0) {
+                <span>{{ view.completed }} de {{ view.total }} atividades concluídas ·
+                    {{ view.total - (view.completed || 0) }} pendentes</span>
+            }
+            @if (view.status === 'stale') {
+                <small>{{ view.source === 'painel' ? 'Último progresso recebido pelo Painel.'
+                    : 'Último progresso confirmado; atualização pendente.' }}</small>
+            }
+        }
+    </div>
+    @if (!compact) {
+        <button type="button" class="academic-progress__refresh" (click)="refresh()" [disabled]="view.status === 'loading'">
+            <ion-icon name="refresh-outline" aria-hidden="true" />Atualizar progresso
+        </button>
+        @if (view.percent !== null && countsDiffer) {
+            <p class="academic-progress__note">O percentual informado pelo Moodle pode seguir critérios diferentes
+                da contagem de atividades.</p>
+        }
+        @if (activityRows().length) {
+            <details class="academic-progress__activities">
+                <summary>Conclusão por atividade</summary>
+                <p>Os botões de conclusão e os critérios oficiais permanecem na lista do curso. Acesso não significa conclusão.</p>
+                <ul>
+                    @for (activity of activityRows(); track activity.id) {
+                        <li [class.academic-progress__activity--complete]="activity.status.completed">
+                            <ion-icon [name]="activity.status.icon" aria-hidden="true" />
+                            <div><span>{{ activity.name }}</span><strong>{{ activity.status.text }}</strong>
+                                @if (activity.status.tracking) { <small>{{ activity.status.tracking }}</small> }
+                                @if (activity.restricted) { <small>Atividade restrita · acesso controlado pelo Moodle</small> }
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </details>
+        }
+    }
+</section>
