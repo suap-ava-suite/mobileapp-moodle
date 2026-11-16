@@ -1,9 +1,11 @@
 # Menos trabalho repetido ao abrir o Painel
 
+> **Registro histórico — renderização revisada em 16/11/2026.** Este relatório preserva o cenário e os resultados da data indicada; não é uma nova execução de testes. O Painel atual usa componentes Angular em `painel/painel-native.*`, e os cursos usam as páginas Angular/Ionic do Moodle Mobile na WebView Cordova. O documento web legado e seus testes continuam no repositório. Consulte a [arquitetura atual](../arquitetura-e-arquivos-criticos.html#sessao-painel-angular-20261114) antes de aplicar instruções de layout ou navegação deste registro.
+
 A leitura dos snapshots regravava perfil e listas no sessionStorage mesmo quando
 o conteúdo já era idêntico. Além disso, toda resposta válida de atualização de
 perfil retornava `true`, inclusive quando os nomes não mudavam. O host interpretava
-esse retorno como mudança e recarregava o iframe inteiro do Painel.
+esse retorno como mudança e recarregava todo o documento web legado do Painel. Esse era o comportamento observado em 26/10/2026; na tela atual, `reloadPainelFrame()` mantém o nome de compatibilidade, mas atualiza o modelo do Painel Angular.
 
 ## Alterações
 
@@ -42,7 +44,7 @@ TypeScript e os builds web/Android também passaram.
 
 O APK foi instalado com `adb install -r`. Na revalidação real do perfil no Android,
 o serviço retornou `changed=false`, fez zero gravações de armazenamento e manteve
-o mesmo documento do iframe com os cards presentes. Os cursos Acadêmico
+o mesmo documento web legado com os cards presentes naquela APK. Os cursos Acadêmico
 `4022/contents` e Presencial `2836/contents` abriram sem erro após a instalação.
 Não foram apagados os dados ou as sessões do app.
 

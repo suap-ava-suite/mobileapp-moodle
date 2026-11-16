@@ -1,6 +1,8 @@
 # Sessões e integração dos cursos — 20/10/2026
 
-## Caminho atual
+> **Registro histórico — renderização revisada em 16/11/2026.** Este relatório preserva o cenário e os resultados da data indicada; não é uma nova execução de testes. O Painel atual usa componentes Angular em `painel/painel-native.*`, e os cursos usam as páginas Angular/Ionic do Moodle Mobile na WebView Cordova. O documento web legado e seus testes continuam no repositório. Consulte a [arquitetura atual](../arquitetura-e-arquivos-criticos.html#sessao-painel-angular-20261114) antes de aplicar instruções de layout ou navegação deste registro.
+
+## Caminho observado em 20/10/2026
 
 `marketplace-ifrn` usa `services_mobile/suap-entry.service.ts` para a entrada oficial. O caminho atualmente chamado é `loginWithSuap()`, que autentica o Painel e salva perfil/dashboard; não cria por si só uma sessão nativa Moodle. Há também o método `login()` de entrada nativa configurado para o Acadêmico, com configuração pública, provedor SUAP e callback do núcleo. Nesse caminho alternativo, `complete()` verifica a conta Moodle, consulta o perfil e compara a identidade do Painel antes de persistir perfil/dashboard. A existência desse método não significa que seja usado na entrada atual nem que estabeleça sessões de todos os ambientes.
 
@@ -61,11 +63,11 @@ As alterações servidor-servidor descritas acima continuam sendo proposta: não
 
 Após o relato de instabilidade, foram corrigidas condições não cobertas pela primeira rodada:
 
-- O iframe escrevia o curso pendente antes de encaminhar o clique ao bridge. Portanto, mesmo um segundo clique rejeitado pelo bloqueio podia alterar o ambiente da primeira abertura. Agora, quando hospedado no Painel, o iframe apenas encaminha o pedido; a shell aceita e persiste a tentativa.
+- No Painel web legado, o documento incorporado escrevia o curso pendente antes de encaminhar o clique ao bridge. Portanto, mesmo um segundo clique rejeitado pelo bloqueio podia alterar o ambiente da primeira abertura. Na correção daquela rodada, quando hospedado no Painel, o documento legado passou a encaminhar apenas o pedido; a shell aceita e persiste a tentativa.
 - Sair da ponte Ionic só removia o timer do navegador. Agora a saída/destruição também invalida os awaits pendentes, evitando OAuth ou UI de erro disparados depois de navegar para outra tela.
 - A landing nativa redirecionava ao Marketplace quando a flag de origem do curso não estava disponível. Agora retorna ao Painel quando sua própria sessão e dashboard são válidos; sessão Moodle isolada não autoriza esse retorno.
 - Uma marca antiga de entrada SUAP não intercepta a passagem de uma abertura de curso ativa. A recuperação transporta explicitamente o ambiente, além do ID do curso.
-- O bridge é registrado novamente ao reentrar no Painel Ionic em cache; destruir uma instância antiga não remove o bridge da instância atual. Mensagens são aceitas somente do iframe do Painel na origem do app.
+- O bridge é registrado novamente ao reentrar no Painel Ionic em cache; destruir uma instância antiga não remove o bridge da instância atual. Na ponte legada, mensagens são aceitas somente da janela esperada do Painel na origem do app. Na tela atual, a seleção de curso chega ao host por output Angular; as validações do receptor legado continuam preservadas.
 - A ausência de sessão Moodle agora mostra a ação **Conectar este ambiente**, sem abrir o navegador automaticamente. Tentar novamente apenas revalida a sessão. A ação de conectar revalida antes de abrir OAuth, e somente o redirect explícito de troca de conta pode retomar a autenticação. Uma flag persistida abandonada não inicia outro OAuth.
 
 Os testes dessa rodada incluem 35 casos de sessão, navegação, cliques, consulta dos cursos e OAuth. Os scripts de perfil/foto/identidade e Marketplace também passaram; TypeScript aprovado e bundle mobilemoodle recompilado. O build web Android com Cordova foi executado para validar também o template. O Android estava desconectado nesta rodada, portanto ainda não foi possível verificar a versão instalada nem reproduzir nela as aberturas. O novo fluxo não deve ser apresentado como autenticação silenciosa de um Moodle sem token: nesse caso continua existindo a conexão oficial explícita.

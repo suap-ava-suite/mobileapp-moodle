@@ -1,5 +1,7 @@
 # Flash das logos ao voltar do curso para o painel
 
+> **Registro histórico — renderização revisada em 16/11/2026.** Este relatório preserva o cenário e os resultados da data indicada; não é uma nova execução de testes. O Painel atual usa componentes Angular em `painel/painel-native.*`, e os cursos usam as páginas Angular/Ionic do Moodle Mobile na WebView Cordova. O documento web legado e seus testes continuam no repositório. Consulte a [arquitetura atual](../arquitetura-e-arquivos-criticos.html#sessao-painel-angular-20261114) antes de aplicar instruções de layout ou navegação deste registro.
+
 ## Problema
 
 Ao retornar de um curso nativo, o painel era recriado e aparecia brevemente com
@@ -29,7 +31,7 @@ Os 24 testes de regressão executados para perfil, cursos e listagem passaram.
 O script `tests/painel-first-paint.android.mjs` inspeciona o WebView real por CDP.
 Ele abre duas cópias isoladas do HTML com scripts bloqueados por sandbox:
 uma sem o tema, para reproduzir a imagem grande, e outra com o CSS inicial.
-Compara o tamanho real das imagens nos dois casos e remove os iframes ao terminar.
+Compara o tamanho real das imagens nos dois casos e remove os documentos incorporados de teste ao terminar. Esses elementos pertencem ao harness isolado do Painel web legado; não são a tela atual do curso.
 Não altera os perfis ou as sessões do aplicativo.
 
 Resultado no Android conectado: sem a folha inicial, a logo do cabeçalho mediu
@@ -41,7 +43,7 @@ Build web/Cordova e Gradle `assembleDebug` concluíram. O APK foi instalado com
 `adb install -r`, preservando os dados. A tentativa adicional de abrir o primeiro
 curso disponível chegou à rota de conexão `/login/moodle-open-course`; não foi
 iniciado outro OAuth. Portanto, esta rodada não comprova uma navegação completa
-por um curso nativo autenticado; a verificação do primeiro desenho do iframe e
+por um curso nativo autenticado; a verificação do primeiro desenho do documento web legado e
 os testes automatizados são as evidências da correção.
 
 Após conectar o ADB e encaminhar o socket de depuração do WebView para a porta

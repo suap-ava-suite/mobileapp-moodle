@@ -1,12 +1,14 @@
 # AVA IFRN Mobile — relatório técnico de adaptação iOS
 
+> **Registro histórico — renderização revisada em 16/11/2026.** Este relatório preserva o cenário e os resultados da data indicada; não é uma nova execução de testes. O Painel atual usa componentes Angular em `painel/painel-native.*`, e os cursos usam as páginas Angular/Ionic do Moodle Mobile na WebView Cordova. O documento web legado e seus testes continuam no repositório. Consulte a [arquitetura atual](../arquitetura-e-arquivos-criticos.html#sessao-painel-angular-20261114) antes de aplicar instruções de layout ou navegação deste registro.
+
 Auditoria refeita em 19/10/2026. Escopo: iOS, com verificações de preservação do Android. Este documento substitui o relatório da rodada anterior e descreve o checkout e os testes desta nova execução.
 
 ## 1. Resumo executivo
 
 O projeto tem configuração declarada para Cordova iOS 7.1.1, mas **não tem plataforma iOS preparada** neste checkout: existe apenas `platforms/android`. O ambiente disponível é Linux, sem Xcode, simulador ou iPhone disponível para homologação.
 
-Foram corrigidos: seleção de plataforma no build web IFRN, formato do número de build iOS, mínimo iOS incompatível com o builder instalado, resolução das safe areas entre host/iframe e comunicação do teclado nativo iOS com o painel. As permissões iOS foram localizadas. O bundle mobilemoodle foi regenerado pelas fontes. O tratamento especial do teclado está condicionado a `cordova.platformId === 'ios'` no host; Android conserva seu cálculo local anterior.
+Foram corrigidos: seleção de plataforma no build web IFRN, formato do número de build iOS, mínimo iOS incompatível com o builder instalado, resolução das safe areas entre host/documento web legado e comunicação do teclado nativo iOS com o painel. As permissões iOS foram localizadas. O bundle mobilemoodle foi regenerado pelas fontes. O tratamento especial do teclado está condicionado a `cordova.platformId === 'ios'` no host; Android conserva seu cálculo local anterior.
 
 **A versão iOS não está pronta para distribuição.** Faltam preparação/compilação nativas, validação dos plugins/Pods com a ferramenta Apple atual, identidade e assinatura institucionais, auditoria de privacidade e testes de ponta a ponta em iPhone.
 
@@ -52,14 +54,14 @@ P0: bloqueia entrega iOS; P1: obrigatório para homologação; P2: manutenção.
 | OAuth Moodle/cursos | SuapBrowserService.login e MoodleSiteService usam openBrowserForOAuthLogin | Mecanismo oficial preservado | Validar navegador do sistema, callback e identidade nos três ambientes | P0 |
 | Cancelamento | Marketplace tem cancelConnection; painel observa exit e timeout de 120s; OAuth externo exige retorno/cancelamento explícito | Código existente, sem ensaio nativo | Cancelar em cada etapa, voltar do Safari sem callback, tentar novamente e rejeitar retorno tardio | P1 |
 | Callback | plugin e moodle.config usam moodlemobile; core implementa handleOpenURL e valida assinatura SSO | Scheme declarado, sem URL Types gerado inspecionado | Conferir configuração final e servidores; testar app aberto/fechado e coexistência com Moodle oficial | P0 |
-| Cookies/WKWebView | ionic-webview, wkwebview-cookies, wkuserscript; core fixIframeCookies específico iOS | Integração disponível, cookies não homologados | Testar os contextos Safari/IAB/WebView e limpeza apenas da sessão pertinente | P0 |
+| Cookies de conteúdo incorporado/WKWebView | ionic-webview, wkwebview-cookies, wkuserscript; core `fixIframeCookies` específico iOS (nome real do método; não descreve a renderização principal do Painel/curso) | Integração disponível, cookies não homologados | Testar os contextos Safari/IAB/WebView e limpeza apenas da sessão pertinente | P0 |
 | Persistência | SQLite/CoreSites; snapshots em storage com owner/expiração; estado transitório IFRN em sessionStorage | Cache local não comprova sessão remota válida | Revogar/expirar sessão; matar processo durante OAuth e após login; testar reabertura offline | P0 |
 | Perfil/foto | mapNativeProfile e mergeVerifiedPanelProfile com comparação de identidade | Testes simulados passaram | Conferir foto e dados reais na troca de contas | P1 |
 | Cursos | resolução de site/curso e comparação de username em moodle-site.service | Código não alterado | Abrir Acadêmico, Presencial e AVA Aberto com sessões próprias e IDs repetidos | P0 |
 | Favoritos | chave por proprietário e site/ambiente + curso | Dois testes simulados de isolamento passaram | Repetir persistência e alternância de contas em iPhone | P1 |
 | Atividades/retorno | rotas de moodle-open-course e navegação do core | Sem execução nativa | Atividade → curso → painel, voltar visível, gesto lateral, links e erros | P1 |
-| Safe areas/recorte | env()/calc() do host podiam chegar sem resolução ao iframe | Resolvidos em pixels no host para quatro lados | Testar notch/home indicator, rotação, zoom e status bar em aparelho | P1 |
-| Teclado | plugin iOS escreve --keyboard-height no host; ion-app do host já encolhe | iframe iOS acompanha estado sem subtrair altura novamente | Confirmar foco/rolagem em campos finais e restauração após fechar teclado | P1 |
+| Safe areas/recorte | env()/calc() do host podiam chegar sem resolução ao documento web legado | Resolvidos em pixels no host para quatro lados | Testar notch/home indicator, rotação, zoom e status bar em aparelho | P1 |
+| Teclado | plugin iOS escreve --keyboard-height no host; ion-app do host já encolhe | Documento web legado no iOS acompanha estado sem subtrair altura novamente | Confirmar foco/rolagem em campos finais e restauração após fechar teclado | P1 |
 | Rede/ATS/CSP | access e allow-navigation usam *; prepare.js 7.1.1 gera NSAllowsArbitraryLoads para wildcard | Permissão ampla preexistente; CSP não substitui ATS | Auditar plist final/TLS/redirects e allowlists sem quebrar ambientes e atividades | P1 |
 | Arquivos/offline | file, file-transfer, opener, chooser, zip e SQLite têm iOS | Suporte declarado, sem execução | Download, abrir PDF, compartilhar, MIME, sandbox e offline | P1 |
 | Câmera/áudio/QR | plugins iOS e permissões; microfone também declarado pelo plugin local | Textos locais ajustados | Permitir/negar/revogar; capturar, anexar e voltar ao curso | P1 |
@@ -73,7 +75,7 @@ P0: bloqueia entrega iOS; P1: obrigatório para homologação; P2: manutenção.
 
 O core persiste os dados de lançamento SSO em CoreConfig, valida a assinatura do retorno e trata URLs repetidas. O estado transitório IFRN em sessionStorage tem prazo próprio; sua sobrevivência a encerramento do processo não foi demonstrada. O snapshot de perfil tem validade local máxima de 30 dias e não renova cookies/tokens nem atesta que a sessão do servidor continua válida. Conta, foto, favoritos e seleção de ambiente não foram reescritos.
 
-A documentação do InAppBrowser distingue abertura `_system`, `_blank`, eventos e limpeza de cookies; as versões usadas aqui são forks Moodle e precisam de ensaio específico. Não presumir compartilhamento automático de sessão Safari/IAB/WebView. O plugin wkwebview-cookies usado pelo core para iframes não prova que cookies de autenticação sejam compartilhados entre todos os navegadores. [Cordova InAppBrowser](https://cordova.apache.org/docs/en/latest/reference/cordova-plugin-inappbrowser/).
+A documentação do InAppBrowser distingue abertura `_system`, `_blank`, eventos e limpeza de cookies; as versões usadas aqui são forks Moodle e precisam de ensaio específico. Não presumir compartilhamento automático de sessão Safari/IAB/WebView. O plugin wkwebview-cookies usado pelo core para conteúdo incorporado não prova que cookies de autenticação sejam compartilhados entre todos os navegadores. [Cordova InAppBrowser](https://cordova.apache.org/docs/en/latest/reference/cordova-plugin-inappbrowser/).
 
 Inventário dos `plugin.xml` das dependências instaladas, confrontado com package.json/lock:
 
@@ -100,7 +102,7 @@ Suporte declarado em plugin.xml significa que há fontes iOS, não que compilem 
 | CFBundleVersion tinha quatro componentes | `config.xml`: 5.2.1.0 → 5.2.1 | versionCode e android-versionCode preservados |
 | iOS 15 fora da faixa do builder | `config.xml`: deployment-target 16.0; `.browserslistrc`: iOS >=16 | Queries Android/Chrome preservadas |
 | Safe areas do host podiam conter env()/calc() sem valor numérico | Novo `navigation/painel-host-layout.ts` mede no documento do host usando propriedades CSS concretas; `painel/painel.ts` copia os quatro valores em px | Usa os mesmos insets do host Android; não altera plugin/configuração Android |
-| Teclado nativo não observado corretamente no iframe iOS | `mobilemoodle/core_mobile/app-keyboard.ts`: observa layout do host; iOS usa altura para estado/foco, deixa altura local em zero pois host já encolhe; restaura inset inferior ao fechar | Ramo condicionado ao runtime Cordova iOS; cálculo Android por visualViewport preservado |
+| Teclado nativo não observado corretamente no documento web legado no iOS | `mobilemoodle/core_mobile/app-keyboard.ts`: observa layout do host; iOS usa altura para estado/foco, deixa altura local em zero pois host já encolhe; restaura inset inferior ao fechar | Ramo condicionado ao runtime Cordova iOS; cálculo Android por visualViewport preservado |
 | Descrições de permissões em inglês/localização só en | `config.xml`, bloco iOS: câmera/fotos/microfone em português e pt-BR incluído, mantendo en | Nenhuma permissão Android alterada |
 | Bundle precisa refletir fontes | `mobilemoodle/mobilemoodle.js` regenerado por npm run build:mobilemoodle após alterações das fontes | Artefato compartilhado gerado pela mesma rotina |
 | Mock antigo impedia teste de entrada | `src/MoodleIFRN/diagnosticos/test-marketplace-entry.cjs`: mock de loginWithSuap e da classe SuapEntryAccountError; correção mantida conforme orientação do usuário | Apenas teste; nenhum fluxo de produção alterado |
@@ -172,7 +174,7 @@ O gulp prepara assets/idiomas e chama o gerador mobilemoodle. O postinstall apli
 | XML/CFBundleVersion | XML válido; 5.2.1 com três segmentos numéricos |
 | Build-native --check Android/iOS | Ambos passaram; 2795 entradas de idioma |
 | Argumentos inválidos do build-native | Quatro casos rejeitados: plataforma desconhecida, valor com sufixo, plataforma duplicada e argumento desconhecido |
-| painel-ios-layout.test.mjs | 6 casos passaram: quatro margens/rotação, teclado iOS sem redução dupla, browser independente, fallback Android, cálculo do iframe Android e origem inacessível |
+| painel-ios-layout.test.mjs | 6 casos passaram: quatro margens/rotação, teclado iOS sem redução dupla, browser independente, fallback Android, cálculo do documento web legado no Android e origem inacessível |
 | painel-favourites-isolation.test.mjs | 2 casos passaram: recriação do painel, sites com mesmo courseid, alternância e isolamento de contas |
 | src/MoodleIFRN/diagnosticos/test-marketplace-entry.cjs | Passou após correção dos mocks; teste simulado de entrada/cancelamento/recuperação |
 | src/MoodleIFRN/diagnosticos/test-oauth.cjs | Passou: snapshot de perfil/foto, expiração local e compatibilidade de sessão simulados |
@@ -197,7 +199,7 @@ Roteiro pendente para simulador e iPhone (registrar modelo, versão iOS, Xcode, 
 5. Abrir cursos Acadêmico, Presencial e AVA Aberto, com sessões separadas; repetir courseid em sites distintos, sessão expirada e conta sem matrícula.
 6. Abrir atividade, arquivo e link; retornar à atividade/curso/painel pelos controles visíveis e gesto de voltar. Exercitar menus, erros de rede, timeout, lista vazia e cancelamento de carregamento.
 7. Favoritar/desfavoritar, encerrar processo e reabrir; alternar contas. Testar após login e também matar o processo enquanto OAuth está aberto.
-8. Teclado no iframe: foco em campo final, fechamento, rotação, home indicator e notch; confirmar que o host encolhe uma vez e não há espaços duplicados. Conferir status bar e claro/escuro após retomada.
+8. Teclado: o roteiro original abrangia o documento web legado. Para o Painel Angular atual, revalidar foco em campo final, fechamento, rotação, home indicator e notch; confirmar recuo único e ausência de espaços duplicados. Conferir status bar e claro/escuro após retomada. Os resultados do harness legado não comprovam esse comportamento no componente atual.
 9. VoiceOver, foco, zoom/texto ampliado, contraste e redução de movimento. Ativar VLibras, navegar e testar falha de carregamento remoto/CSP e sobreposição de controles.
 10. Download/PDF/compartilhamento/offline; câmera/fotos/áudio/QR com permissões concedidas/negadas; Face ID/Touch ID e cancelamento; notificações locais e APNs em foreground/background/processo encerrado.
 
