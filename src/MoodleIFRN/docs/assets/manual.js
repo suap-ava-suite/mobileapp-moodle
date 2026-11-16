@@ -14,6 +14,7 @@
   var stylesheet = document.querySelector('link[href$="assets/manual.css"]');
   var portalPrefix = stylesheet ? stylesheet.getAttribute("href").replace(/assets\/manual\.css$/, "") : "";
   [
+    ["progresso-academico.html", "Progresso acadêmico dos cursos"],
     ["estrutura-arquitetura.html", "Estrutura do MoodleIFRN"],
     ["inventario-arquivos.html", "Inventário de arquivos"],
     ["inventario-fixtures.html", "Inventário das fixtures"],

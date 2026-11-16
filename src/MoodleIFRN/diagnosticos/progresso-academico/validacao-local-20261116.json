@@ -1,0 +1,102 @@
+{
+  "evidencia": "MEDIDO",
+  "data": "2026-11-16",
+  "branch": "feat/progresso-academico-ifrn",
+  "base": "f0e7b32d1ded8fcfef6799a74c9e693fa8e8e360",
+  "commitFuncional": "30df49c2f39438f14b1913810bccff583aed24c6",
+  "ambiente": {
+    "node": "v22.23.2",
+    "dados": "Exclusivamente fixtures sintéticas e mocks; sem SUAP, AVA ou aparelho."
+  },
+  "suiteNode": {
+    "comando": "node - <<'NODE'\nconst fs=require('fs'); const cp=require('child_process');\nconst files=fs.readdirSync('src/MoodleIFRN/tests').filter(f=>/\\.test\\.(cjs|mjs)$/.test(f)&&f!=='native-persistence-contract.test.cjs').map(f=>'src/MoodleIFRN/tests/'+f);\nconst result=cp.spawnSync(process.execPath,['--test','--test-concurrency=2',...files],{encoding:'utf8',env:{...process.env,NODE_OPTIONS:'--max-old-space-size=3072'},maxBuffer:12*1024*1024});\nconsole.log('Arquivos:',files.length,'Exit:',result.status); console.log((result.stdout||'').split('\\n').filter(s=>/^not ok|^# (tests|pass|fail|cancelled|skipped|duration)|error:|failureType:/.test(s)).join('\\n')); if(result.error) console.log(result.error.code); if(result.stderr) console.log(result.stderr.slice(-1800));\nNODE",
+    "exclusao": "native-persistence-contract.test.cjs escreve evidência fora do escopo; não executado.",
+    "antes": {
+      "arquivos": 57,
+      "tests": 391,
+      "pass": 386,
+      "fail": 5,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 9113.334365
+    },
+    "depois": {
+      "arquivos": 58,
+      "tests": 437,
+      "pass": 432,
+      "fail": 5,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 9646.492779
+    },
+    "novos": {
+      "arquivo": "src/MoodleIFRN/tests/academic-progress.test.cjs",
+      "executadosNaSuiteCompleta": 46,
+      "aprovados": 46
+    },
+    "resultado": "FALHOU nas mesmas cinco expectativas P0.4 da base; nenhuma regressão nova. Testes originais intactos."
+  },
+  "verificacoes": [
+    {
+      "comando": "node node_modules/typescript/bin/tsc --noEmit --project tsconfig.app.json --incremental false",
+      "resultado": "PASSOU"
+    },
+    {
+      "comando": "NODE_OPTIONS=--max-old-space-size=3072 node_modules/.bin/ngc --project tsconfig.app.json --noEmit --incremental false",
+      "resultado": "PASSOU",
+      "escopo": "Tipos e templates Angular; não é um build APK."
+    },
+    {
+      "comando": "ESLint.lintFiles(['src/MoodleIFRN/academic-progress/*.ts','src/MoodleIFRN/academic-progress/*.html'])",
+      "resultado": "PASSOU",
+      "erros": 0,
+      "avisos": 0
+    },
+    {
+      "comando": "sass.compile(file).css (em memória)",
+      "resultado": "PASSOU",
+      "bytesCss": {
+        "academic-progress/progress.component.scss": 3213,
+        "moodle-course/course-menu.scss": 10914,
+        "moodle-course/moodle-course.scss": 59235
+      }
+    },
+    {
+      "comando": "Verificador Node/JSDOM de href/src/IDs em src/MoodleIFRN/docs + simulação do manual.js em file://",
+      "resultado": "PASSOU",
+      "html": 31,
+      "referenciasLocais": 1281,
+      "ids": 412,
+      "erros": 0,
+      "interface": "Pesquisa, navegação, menu e cópia simulada; sem renderização visual."
+    },
+    {
+      "comando": "node --check src/MoodleIFRN/docs/assets/manual.js",
+      "resultado": "PASSOU"
+    },
+    {
+      "comando": "git diff --check",
+      "resultado": "PASSOU"
+    }
+  ],
+  "limites": [
+    "NÃO EXECUTADO: build Android desta funcionalidade, instalação, conta real, conclusão/submissão, avaliação ou sincronização física Web/mobile.",
+    "NÃO VERIFICADO: revisão implantada do AVA, disponibilidade de todas as APIs nos ambientes, WebView real, responsividade pintada, TalkBack, latência e consumo de memória.",
+    "NÃO MEDIDO: cobertura percentual de linhas e desempenho físico.",
+    "As durações acima são das execuções dos testes no computador; não medem desempenho do aplicativo.",
+    "Nenhuma alteração de núcleo, dependência, configuração global, sessão, dispositivo ou dado acadêmico.",
+    "Trabalho anterior de AAB/documentação e item não rastreado preexistente preservados e não incluídos."
+  ],
+  "fontesPublicas": [
+    "https://github.com/suap-ava-suite/moodle-tool_painelava/blob/main/api/get_progresso.php",
+    "https://github.com/suap-ava-suite/djangoapp-painel_ava/blob/main/src/painel/v1/services.py",
+    "https://github.com/suap-ava-suite/djangoapp-painel_ava/blob/main/src/theme_ifrn25/templates/theme/ifrn25/frontpage/partials/modals/card-container.html",
+    "https://github.com/moodle/moodle/blob/MOODLE_405_STABLE/completion/classes/progress.php",
+    "https://github.com/moodle/moodle/blob/MOODLE_405_STABLE/lib/completionlib.php",
+    "https://govbr-ds.gitlab.io/tools/govbr-ds-wiki/referencias/tokens/"
+  ],
+  "portalPreparadoNoGit": { "html": 28, "referenciasLocais": 1111, "erros": 0 },
+  "arquivosCriados": ["src/MoodleIFRN/academic-progress/progress-model.ts","src/MoodleIFRN/academic-progress/progress-store.ts","src/MoodleIFRN/academic-progress/progress.service.ts","src/MoodleIFRN/academic-progress/progress.component.ts","src/MoodleIFRN/academic-progress/progress.component.html","src/MoodleIFRN/academic-progress/progress.component.scss","src/MoodleIFRN/tests/academic-progress.test.cjs","src/MoodleIFRN/docs/progresso-academico.html","src/MoodleIFRN/diagnosticos/progresso-academico/validacao-local-20261116.json"],
+  "arquivosAlterados": ["src/MoodleIFRN/moodle-course/course-menu.ts","src/MoodleIFRN/moodle-course/course-menu.html","src/MoodleIFRN/moodle-course/course-menu.scss","src/MoodleIFRN/moodle-course/moodle-course.scss","src/MoodleIFRN/painel/painel-native.ts","src/MoodleIFRN/painel/painel-native.html","src/MoodleIFRN/painel/painel-native-model.ts","src/MoodleIFRN/docs/index.html","src/MoodleIFRN/docs/assets/manual.js","src/MoodleIFRN/docs/progresso-projeto.html","src/MoodleIFRN/docs/continuidade-ia.html"],
+  "arquivosExcluidos": []
+}
