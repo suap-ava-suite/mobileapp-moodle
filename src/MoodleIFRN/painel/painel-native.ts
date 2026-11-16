@@ -18,12 +18,13 @@ import { createCourseFavourites } from '../mobilemoodle/core_mobile/course-favou
 import { loadVlibrasWidget } from '../mobilemoodle/core_mobile/vlibras-widget';
 import { PAINEL_HELP_LINKS, type PainelHelpLinkId } from '../services_mobile/painel-help-links';
 import { type NativePainelCourse, type NativePainelGroup, type NativePainelModel } from './painel-native-model';
+import { IfrnAcademicProgressComponent } from '../academic-progress/progress.component';
 
 @Component({
     selector: 'ifrn-painel-native',
     templateUrl: './painel-native.html',
     styleUrls: ['./painel-native-theme.css', './painel-native.scss'],
-    imports: [CoreSharedModule],
+    imports: [CoreSharedModule, IfrnAcademicProgressComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         '[class]': 'appearanceClasses()',
