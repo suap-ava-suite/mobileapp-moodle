@@ -79,8 +79,7 @@
             <div class="sidebar-modal__body">
                 @if (section() === 'profile') {
                     <div class="ava-modal-body"><p class="ava-modal-body__user">{{ data()?.name }}</p><div class="ava-button-options"><span class="modal-content-body-title">Links</span>
-                        <button type="button" class="modal-button-option" (click)="openProfile.emit()">Perfil no SUAP</button>
-                        <button type="button" class="modal-button-option" (click)="marketplace.emit()">Marketplace IFRN</button></div>
+                        <button type="button" class="modal-button-option" (click)="openProfile.emit()">Perfil no SUAP</button></div>
                         <button type="button" class="modal-button-option exit-button" (click)="logout.emit()">Sair</button>
                     </div>
                 } @else if (section() === 'help') {
