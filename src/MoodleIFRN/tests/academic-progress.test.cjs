@@ -310,43 +310,104 @@ test('metadados maliciosos dos erros não aparecem em snapshots nem são registr
     }
     release();
 });
-test('componente mantém sinais, troca de curso e teardown idempotente; nomes são texto escapado', async () => {
+test('componente mantém atualização da porcentagem, troca de curso e teardown idempotente', async () => {
     const angular = await import('@angular/core'); const watches = []; const released = [];
-    const progress = { watch: (...args) => { watches.push(args); return () => released.push(args); }, refresh() {} };
+    const progress = { watch: (...args) => { watches.push(args); return () => released.push(args); } };
     const { IfrnAcademicProgressComponent } = load('progress.component', {
         '@angular/core': { ...angular, Component: () => type => type, Input: () => () => {}, inject: () => progress },
         '@/core/shared.module': { CoreSharedModule: {} },
-        '@features/course/services/course': { CoreCourse: { getSectionsModules: sections => sections.flatMap(s => s.modules) } },
         './progress.service': {},
     });
     const component = new IfrnAcademicProgressComponent();
     component.courseId = 7; component.siteUrl = 'https://example.test';
-    component.sections = [{ modules: [{ id: 1, course: 7, name: '<script>FICTICIO</script>', uservisible: true, completion: 2 },
-        { id: 2, course: 8, name: 'OUTRO_CURSO', uservisible: true, completion: 2 }] }];
-    component.ngOnChanges({ courseId: {}, sections: {} });
-    assert.equal(component.activityRows().length, 0, 'sem contexto confirmado não mostra nomes antigos');
+    component.ngOnChanges({ courseId: {} });
+    assert.equal(component.percentage, null, 'sem contexto confirmado não inventa progresso');
+    watches[0][3](model.summarizeProgress(payload([1, 0]), 1));
+    assert.equal(component.percentage, 50);
     watches[0][3](model.summarizeProgress(payload([1]), 1));
-    assert.equal(component.activityRows()[0].status.text, 'Concluído'); assert.equal(component.percentage, 100);
-    assert.equal(component.activityRows().length, 1, 'itens de outra disciplina são ignorados');
+    assert.equal(component.percentage, 100, 'confirmação recebida atualiza a barra');
     component.courseId = 8; component.ngOnChanges({ courseId: {} });
     assert.equal(released.length, 1); assert.equal(component.view.percent, null); assert.equal(watches[1][0], 8);
-    assert.equal(component.activityRows().length, 0);
     component.ngOnDestroy(); component.ngOnDestroy(); assert.equal(released.length, 2);
     const template = fs.readFileSync(root + 'progress.component.html', 'utf8');
-    assert.match(template, /\{\{ activity.name \}\}/); assert.doesNotMatch(template, /\[innerHTML\]/);
+    assert.doesNotMatch(template, /\[innerHTML\]/);
 });
 test('HTML acessível e SCSS responsivo compilam sem CDN, tamanho fixo ou dependência de cor isolada', async () => {
     const { parseTemplate } = await import('@angular/compiler');
     const html = fs.readFileSync(root + 'progress.component.html', 'utf8');
     assert.equal(parseTemplate(html, 'progress.component.html').errors, null);
-    for (const expected of ['role="progressbar"', 'aria-valuemin="0"', 'aria-valuemax="100"', '[attr.aria-valuenow]', 'aria-live="polite"', '<summary>', 'activity.status.text']) assert.ok(html.includes(expected), expected);
+    for (const expected of ['role="progressbar"', 'aria-valuemin="0"', 'aria-valuemax="100"', '[attr.aria-valuenow]', 'aria-live="polite"']) assert.ok(html.includes(expected), expected);
     const css = require('sass').compile(path.resolve(root + 'progress.component.scss')).css;
-    for (const expected of ['flex-wrap: wrap', 'overflow-wrap: anywhere', 'prefers-reduced-motion', '.ion-palette-dark', 'forced-colors: active', ':focus-visible']) assert.ok(css.includes(expected), expected);
+    for (const expected of ['flex-wrap: wrap', 'overflow-wrap: anywhere', 'prefers-reduced-motion', '.ion-palette-dark', 'forced-colors: active']) assert.ok(css.includes(expected), expected);
+    assert.doesNotMatch(css, /academic-progress__(refresh|activities|activity--complete|note)|summary/);
     assert.doesNotMatch(css, /!important|https?:\/\/|width:\s*\d{3,}px/);
     const course = fs.readFileSync('src/MoodleIFRN/moodle-course/course-menu.html', 'utf8');
     const panel = fs.readFileSync('src/MoodleIFRN/painel/painel-native.html', 'utf8');
     assert.ok(course.includes('<ifrn-academic-progress')); assert.ok(panel.includes('<ifrn-academic-progress'));
     assert.ok(panel.includes('course.is_enrolled &&'), 'não mostra progresso para autoinscrição ainda não efetivada');
+});
+test('template Angular mantém a barra do curso sem bloco extra e preserva o resumo compacto do Painel', async () => {
+    const { JSDOM } = require('jsdom');
+    const dom = new JSDOM('<!doctype html><html><body></body></html>');
+    const names = ['window', 'document', 'Node', 'Element', 'HTMLElement', 'Event', 'navigator'];
+    const descriptors = new Map(names.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
+    for (const name of names) Object.defineProperty(globalThis, name, { configurable: true, value: dom.window[name] });
+    let TestBed, angular;
+    try {
+        await import('@angular/compiler');
+        angular = await import('@angular/core');
+        ({ TestBed } = await import('@angular/core/testing'));
+        const testing = await import('@angular/platform-browser-dynamic/testing');
+        TestBed.initTestEnvironment(testing.BrowserDynamicTestingModule, testing.platformBrowserDynamicTesting());
+        const token = new angular.InjectionToken('Progresso simulado');
+        const callbacks = [], released = [];
+        const progress = { watch: (...args) => {
+            callbacks.push(args);
+            return () => released.push(args);
+        } };
+        const { IfrnAcademicProgressComponent } = load('progress.component', {
+            '@angular/core': { ...angular, Component: metadata => {
+                const { templateUrl, styleUrls, ...inline } = metadata;
+                return angular.Component({ ...inline, imports: [],
+                    template: fs.readFileSync(root + 'progress.component.html', 'utf8'),
+                    styles: [require('sass').compile(path.resolve(root + 'progress.component.scss')).css] });
+            } },
+            '@/core/shared.module': { CoreSharedModule: {} },
+            './progress.service': { IfrnAcademicProgressService: token },
+        });
+        TestBed.configureTestingModule({ imports: [IfrnAcademicProgressComponent],
+            providers: [{ provide: token, useValue: progress }, angular.provideZonelessChangeDetection()] });
+        const fixture = TestBed.createComponent(IfrnAcademicProgressComponent);
+        fixture.componentRef.setInput('courseId', 7);
+        fixture.componentRef.setInput('siteUrl', 'https://example.test');
+        fixture.detectChanges();
+        const element = fixture.nativeElement;
+        for (const percent of [0, 50, 100]) {
+            callbacks.at(-1)[3](model.summarizeProgress(payload([1, 1, 1, 1, 0], percent), 1));
+            fixture.detectChanges();
+            assert.equal(element.querySelector('[role="progressbar"]').getAttribute('aria-valuenow'), String(percent));
+            assert.equal(element.querySelector('.academic-progress__percentage').textContent.trim(), percent + '%');
+            assert.equal(element.querySelector('.academic-progress__fill').style.width, percent + '%');
+            assert.equal(element.querySelector('button, details, summary, ul'), null);
+            assert.doesNotMatch(element.textContent, /atividades concluídas|pendentes|Atualizar progresso|critérios diferentes|Conclusão por atividade/);
+        }
+        callbacks.at(-1)[3](model.unavailableProgress()); fixture.detectChanges();
+        assert.equal(element.querySelector('[role="progressbar"]'), null);
+        assert.match(element.textContent, /Progresso indisponível no momento/);
+        fixture.componentRef.setInput('compact', true); fixture.detectChanges();
+        callbacks.at(-1)[3](model.summarizeProgress(payload([1, 1, 1, 1, 0], 50), 1)); fixture.detectChanges();
+        assert.equal(callbacks.at(-1)[2], false, 'Painel permanece no modo de consulta compacta');
+        assert.match(element.textContent, /4 de 5 atividades concluídas/);
+        assert.equal(element.querySelector('[role="progressbar"]').getAttribute('aria-valuenow'), '50');
+        fixture.destroy(); assert.equal(released.length, 2);
+    } finally {
+        TestBed?.resetTestEnvironment(); angular?.destroyPlatform();
+        for (const [name, descriptor] of descriptors) {
+            if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+            else delete globalThis[name];
+        }
+        dom.window.close();
+    }
 });
 test('normalização do Painel rejeita valores inválidos sem limitar silenciosamente para 0/100', () => {
     const exports = {};

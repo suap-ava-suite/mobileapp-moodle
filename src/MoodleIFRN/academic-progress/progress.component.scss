@@ -27,18 +27,6 @@
 .academic-progress__fill--complete { background: var(--academic-green); }
 .academic-progress__message { font-size: .875rem; }
 .academic-progress__message small { display: block; }
-.academic-progress__refresh { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; min-height: 44px; padding: 8px 12px; border: 1px solid currentColor; border-radius: 6px; background: transparent; color: inherit; cursor: pointer; }
-.academic-progress__refresh:disabled { opacity: .6; cursor: default; }
-.academic-progress__refresh:focus-visible, summary:focus-visible { outline: 3px solid var(--academic-blue); outline-offset: 3px; }
-.academic-progress__activities { margin-top: 12px; }
-.academic-progress__activities summary { cursor: pointer; min-height: 44px; padding-block: 10px; font-weight: 600; }
-.academic-progress__activities ul { list-style: none; padding: 0; margin: 0; }
-.academic-progress__activities li { display: flex; align-items: start; gap: 10px; padding-block: 10px; border-top: 1px solid var(--academic-track); }
-.academic-progress__activities li > ion-icon { flex-shrink: 0; margin-top: 4px; }
-.academic-progress__activities li > div { min-width: 0; }
-.academic-progress__activities strong, .academic-progress__activities small { display: block; }
-.academic-progress__activity--complete > ion-icon { color: var(--academic-green); }
-.academic-progress__note, .academic-progress__activities p { font-size: .875rem; }
 
 :host-context(.dark), :host-context(.ion-palette-dark) {
     --academic-blue: var(--blue-warm-vivid-30, #81aefc);
