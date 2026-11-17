@@ -14,6 +14,7 @@ import { SuapBrowserService } from './suap-browser.service';
 import { CoreOpener } from '@static/opener';
 import { OAUTH_PROFILE_KEY, OAUTH_PROFILE_MAX_AGE_SECONDS, profileIdentity } from '../mobilemoodle/core_mobile/oauth-profile';
 import { beginNativeSuapEntry, readNativeSuapEntry, endNativeSuapEntry, markNativeSuapEntryAuthenticated } from '../navigation/suap-entry-state';
+import { MobileAuthAttemptCoordinator } from '../navigation/mobile-auth-attempt';
 import { clearFreshPanelProfile, FRESH_PROFILE_SKIP_KEY, reportSuapDuration }
     from './suap-login-telemetry';
 import { PAINEL_AVA_CONFIG } from './painel-ava.config';
@@ -219,7 +220,10 @@ export class SuapEntryService {
     private readonly suapBrowser = inject(SuapBrowserService);
     private loading = false;
     private staged?: { profile: Profile; dashboard: unknown; until: number; siteId?: string };
-    private mobileCallbackProcessing = false;
+    private readonly mobileAuthAttempts = new MobileAuthAttemptCoordinator();
+    private mobileCallbackProcessingAttempt?: number;
+    private mobileAuthLoadingAttempt?: number;
+    private mobileAuthAbortController?: AbortController;
     private mobileLoginTimer?: ReturnType<typeof setTimeout>;
 
     /** A entrada do painel usa o OAuth SUAP sem exigir conta no Moodle Acadêmico. */
@@ -231,11 +235,18 @@ export class SuapEntryService {
             return;
         }
         const loginStartedAt = performance.now();
-        this.loading = true;
         this.cancel();
+        this.loading = true;
+        const attemptId = this.mobileAuthAttempts.begin();
+        const controller = typeof AbortController === 'function' ? new AbortController() : undefined;
+        this.mobileAuthAbortController = controller;
+        this.mobileAuthLoadingAttempt = attemptId;
         onStatus('Acessando o SUAP…');
         try {
             const pkce = await createMobilePkce();
+            if (!this.mobileAuthAttempts.isCurrent(attemptId)) {
+                return;
+            }
             const pending = { ...pkce, expectedIdentity: expectedIdentity.trim(), startedAt: Date.now() };
             const capabilityHeaders = new Headers();
             capabilityHeaders.set('Accept', 'application/json');
@@ -244,15 +255,22 @@ export class SuapEntryService {
                 capability = await fetch(new URL('/auth/mobile/capability/', PAINEL_AVA_CONFIG.baseUrl), {
                     method: 'GET', credentials: 'omit', cache: 'no-store', redirect: 'error',
                     headers: capabilityHeaders,
+                    ...(controller ? { signal: controller.signal } : {}),
                 });
             } catch {
-                await this.loginWithLegacySuap(expectedIdentity, onStatus);
+                if (this.mobileAuthAttempts.isCurrent(attemptId)) {
+                    await this.loginWithLegacySuap(expectedIdentity, onStatus, attemptId);
+                }
+                return;
+            }
+            if (!this.mobileAuthAttempts.isCurrent(attemptId)) {
                 return;
             }
             if (!capability.ok) {
-                await this.loginWithLegacySuap(expectedIdentity, onStatus);
+                await this.loginWithLegacySuap(expectedIdentity, onStatus, attemptId);
                 return;
             }
+            this.mobileAuthAttempts.bind(attemptId, pkce.state);
             sessionStorage.setItem(MOBILE_SUAP_PENDING_KEY, JSON.stringify(pending));
             beginNativeSuapEntry(expectedIdentity.trim());
             const startUrl = new URL('/auth/mobile/start/', PAINEL_AVA_CONFIG.baseUrl);
@@ -263,26 +281,36 @@ export class SuapEntryService {
             // Use o navegador do sistema; Gov.br não será aberto em WebView.
             const opened = window.open(startUrl.toString(), '_system');
             if (!opened) {
-                sessionStorage.removeItem(MOBILE_SUAP_PENDING_KEY);
-                endNativeSuapEntry();
+                this.failMobileLogin('Não foi possível abrir o navegador seguro para o SUAP.', attemptId, pkce.state);
                 throw new Error('Não foi possível abrir o navegador seguro para o SUAP.');
             }
             this.mobileLoginTimer = setTimeout(() => this.failMobileLogin(
                 'A tentativa de login expirou ou foi cancelada. Toque em Entrar no AVA para tentar novamente.',
+                attemptId,
+                pkce.state,
             ), 300000);
             reportSuapDuration('suap-browser-open-requested', performance.now() - loginStartedAt);
         } finally {
-            this.loading = false;
-            onStatus('');
+            if (this.mobileAuthLoadingAttempt === attemptId) {
+                this.loading = false;
+                this.mobileAuthLoadingAttempt = undefined;
+                if (this.mobileAuthAttempts.isCurrent(attemptId)) {
+                    onStatus('');
+                }
+            }
         }
     }
 
     private async loginWithLegacySuap(
         expectedIdentity: string,
         onStatus: (message: string) => void,
+        attemptId: number,
     ): Promise<void> {
         onStatus('Carregando cursos e confirmando seu perfil…');
         const panel = await firstValueFrom(this.painel.authenticateWithBrowser({ readOnly: true, reuseSession: false }));
+        if (!this.mobileAuthAttempts.isCurrent(attemptId)) {
+            return;
+        }
         const identity = panelIdentity(panel.diagnosticProfile);
         const dashboard = panel.diagnosticDashboard;
         if (!identity || !panel.diagnosticProfile || panel.diagnosticOwner !== identity) {
@@ -484,12 +512,12 @@ export class SuapEntryService {
             sessionStorage.removeItem('ifrn_painel_token');
             localStorage.removeItem('ifrn_painel_token');
             this.biometricService.disable();
-            this.cancel();
             // O perfil e o nome de exibição já foram validados junto com a
             // identidade e persistidos acima. Não aguarde outra ida ao navegador
             // antes de abrir o Painel; a tela revalida o perfil em segundo plano.
             this.authService.openMobileMoodle('/painel');
             void this.painel.refreshSavedProfile().catch(() => undefined);
+            this.cancel();
         } catch (error) {
             for (const { storage, values } of backup) {
                 for (const { key, value: old } of values) {
@@ -513,12 +541,21 @@ export class SuapEntryService {
     }
 
     cancel(): void {
+        const mobileAttemptWasLoading = this.mobileAuthLoadingAttempt !== undefined;
+        this.mobileAuthAttempts.invalidate();
+        this.mobileAuthAbortController?.abort();
+        this.mobileAuthAbortController = undefined;
+        this.mobileAuthLoadingAttempt = undefined;
+        this.mobileCallbackProcessingAttempt = undefined;
+        if (mobileAttemptWasLoading) {
+            this.loading = false;
+        }
+        sessionStorage.removeItem(MOBILE_SUAP_PENDING_KEY);
         clearFreshPanelProfile();
         if (this.mobileLoginTimer) {
             clearTimeout(this.mobileLoginTimer);
             this.mobileLoginTimer = undefined;
         }
-        this.mobileCallbackProcessing = false;
         this.staged = undefined;
         endNativeSuapEntry();
     }
@@ -537,32 +574,58 @@ export class SuapEntryService {
     }
 
     private handleMobileAuthResume(): void {
-        if (!sessionStorage.getItem(MOBILE_SUAP_PENDING_KEY)) {
+        const pending = this.readPendingMobileAuth();
+        if (!pending) {
+            return;
+        }
+        const attemptId = this.mobileAuthAttempts.adopt(pending.state);
+        if (attemptId === undefined) {
             return;
         }
 
         // Give handleOpenURL/APP_LAUNCHED_URL time to deliver a successful callback first.
         setTimeout(() => {
-            if (sessionStorage.getItem(MOBILE_SUAP_PENDING_KEY) && !this.mobileCallbackProcessing) {
-                this.failMobileLogin('Login cancelado ou interrompido. Toque em Entrar no AVA para tentar novamente.');
+            if (this.isCurrentMobileAuthAttempt(attemptId, pending.state)
+                && this.mobileCallbackProcessingAttempt !== attemptId) {
+                this.failMobileLogin(
+                    'Login cancelado ou interrompido. Toque em Entrar no AVA para tentar novamente.',
+                    attemptId,
+                    pending.state,
+                );
             }
         }, 1500);
     }
 
     private async completeMobileAuthCallback(rawUrl: string): Promise<void> {
-        if (this.mobileCallbackProcessing) {
+        let callback: URL;
+        try {
+            callback = new URL(rawUrl);
+        } catch {
             return;
         }
-        this.mobileCallbackProcessing = true;
+        const code = callback.searchParams.get('code') || '';
+        const state = callback.searchParams.get('state') || '';
+        const pending = this.readPendingMobileAuth();
+
+        // Callback atrasado de outra conta/tentativa não pode falhar nem remover o
+        // estado de um login novo. A validação da tentativa atual vem antes do code.
+        if (!pending || !state || state !== pending.state) {
+            return;
+        }
+        const attemptId = this.mobileAuthAttempts.adopt(state);
+        if (attemptId === undefined || this.mobileCallbackProcessingAttempt === attemptId) {
+            return;
+        }
+        this.mobileCallbackProcessingAttempt = attemptId;
         const callbackStartedAt = performance.now();
+        const controller = this.mobileAuthAbortController
+            ?? (typeof AbortController === 'function' ? new AbortController() : undefined);
+        if (controller) {
+            this.mobileAuthAbortController = controller;
+        }
+        const isCurrentAttempt = (): boolean => this.isCurrentMobileAuthAttempt(attemptId, state);
         try {
-            const callback = new URL(rawUrl);
-            const code = callback.searchParams.get('code') || '';
-            const state = callback.searchParams.get('state') || '';
-            const pending = JSON.parse(sessionStorage.getItem(MOBILE_SUAP_PENDING_KEY) || 'null') as {
-                state?: string; verifier?: string; expectedIdentity?: string; startedAt?: number;
-            } | null;
-            if (!pending || !code || !state || state !== pending.state
+            if (!code
                 || typeof pending.verifier !== 'string' || Date.now() - Number(pending.startedAt) > 300000) {
                 throw new Error('O retorno do SUAP não corresponde à tentativa atual. Inicie o login novamente.');
             }
@@ -577,11 +640,18 @@ export class SuapEntryService {
                 redirect: 'error',
                 headers: exchangeHeaders,
                 body: JSON.stringify({ code, state, verifier: pending.verifier }),
+                ...(controller ? { signal: controller.signal } : {}),
             });
+            if (!isCurrentAttempt()) {
+                return;
+            }
             if (!exchange.ok) {
                 throw new Error('O código de retorno expirou ou já foi utilizado. Entre no AVA novamente.');
             }
             const tokens = await exchange.json() as { username?: string; access?: string };
+            if (!isCurrentAttempt()) {
+                return;
+            }
             if (!tokens.username || !tokens.access) {
                 throw new Error('O servidor não confirmou a identidade autenticada pelo SUAP.');
             }
@@ -598,7 +668,11 @@ export class SuapEntryService {
                 cache: 'no-store',
                 redirect: 'error',
                 headers: bootstrapHeaders,
+                ...(controller ? { signal: controller.signal } : {}),
             });
+            if (!isCurrentAttempt()) {
+                return;
+            }
             if (!bootstrapResponse.ok) {
                 if (bootstrapResponse.status === 409) {
                     throw new Error(
@@ -613,6 +687,9 @@ export class SuapEntryService {
             const bootstrap = await bootstrapResponse.json() as {
                 username?: string; profile?: Profile; dashboard?: Profile;
             };
+            if (!isCurrentAttempt()) {
+                return;
+            }
             const identity = panelIdentity(bootstrap.profile);
             if (!bootstrap.profile || !identity || identity !== tokens.username || bootstrap.username !== identity) {
                 throw new Error('A identidade do Painel não corresponde ao vínculo escolhido no SUAP.');
@@ -636,9 +713,16 @@ export class SuapEntryService {
                     cache: 'no-store',
                     redirect: 'error',
                     headers: profileHeaders,
+                    ...(controller ? { signal: controller.signal } : {}),
                 });
+                if (!isCurrentAttempt()) {
+                    return;
+                }
                 if (profileResponse.ok) {
                     const verifiedProfile = await profileResponse.json() as Profile;
+                    if (!isCurrentAttempt()) {
+                        return;
+                    }
                     const profileOwner = panelIdentity(verifiedProfile);
                     if (profileOwner === identity) {
                         profile = mergeVerifiedPanelProfile(profile, verifiedProfile, identity);
@@ -648,13 +732,16 @@ export class SuapEntryService {
                 // O bootstrap continua suficiente para o login; não reutilize dados
                 // de outra identidade se a atualização autenticada não estiver disponível.
             }
+            if (!isCurrentAttempt()) {
+                return;
+            }
 
             this.staged = {
                 profile: { ...profile, identificacao: identity },
                 dashboard: bootstrap.dashboard,
                 until: Date.now() + 180000,
             };
-            sessionStorage.removeItem(MOBILE_SUAP_PENDING_KEY);
+            this.removePendingMobileAuth(state);
             if (this.mobileLoginTimer) {
                 clearTimeout(this.mobileLoginTimer);
                 this.mobileLoginTimer = undefined;
@@ -662,22 +749,62 @@ export class SuapEntryService {
             reportSuapDuration('suap-callback-to-profile-and-courses', performance.now() - callbackStartedAt);
             await this.commit();
         } catch (error) {
+            if (!isCurrentAttempt()) {
+                return;
+            }
             const message = error instanceof Error ? error.message : 'Não foi possível concluir a autenticação SUAP.';
-            this.failMobileLogin(message);
+            this.failMobileLogin(message, attemptId, state);
             void CoreAlerts.showError(message);
         } finally {
-            this.mobileCallbackProcessing = false;
+            if (this.mobileCallbackProcessingAttempt === attemptId) {
+                this.mobileCallbackProcessingAttempt = undefined;
+            }
         }
     }
 
-    private failMobileLogin(message: string): void {
-        sessionStorage.removeItem(MOBILE_SUAP_PENDING_KEY);
+    private readPendingMobileAuth(): {
+        state: string; verifier: string; expectedIdentity?: string; startedAt: number;
+    } | null {
+        try {
+            const value = JSON.parse(sessionStorage.getItem(MOBILE_SUAP_PENDING_KEY) || 'null') as {
+                state?: unknown; verifier?: unknown; expectedIdentity?: unknown; startedAt?: unknown;
+            } | null;
+            if (!value || typeof value.state !== 'string' || typeof value.verifier !== 'string'
+                || typeof value.startedAt !== 'number') {
+                return null;
+            }
+
+            return {
+                state: value.state,
+                verifier: value.verifier,
+                expectedIdentity: typeof value.expectedIdentity === 'string' ? value.expectedIdentity : undefined,
+                startedAt: value.startedAt,
+            };
+        } catch {
+            return null;
+        }
+    }
+
+    private isCurrentMobileAuthAttempt(attemptId: number, state: string): boolean {
+        return this.mobileAuthAttempts.isCurrent(attemptId, state)
+            && this.readPendingMobileAuth()?.state === state;
+    }
+
+    private removePendingMobileAuth(state: string): void {
+        if (this.readPendingMobileAuth()?.state === state) {
+            sessionStorage.removeItem(MOBILE_SUAP_PENDING_KEY);
+        }
+    }
+
+    private failMobileLogin(message: string, attemptId: number, state: string): void {
+        if (!this.isCurrentMobileAuthAttempt(attemptId, state)) {
+            return;
+        }
+        this.cancel();
         if (this.mobileLoginTimer) {
             clearTimeout(this.mobileLoginTimer);
             this.mobileLoginTimer = undefined;
         }
-        this.mobileCallbackProcessing = false;
-        endNativeSuapEntry();
         sessionStorage.setItem('ifrn_mobile_suap_error_v1', message);
         CoreEvents.trigger('IFRN_SUAP_MOBILE_AUTH_FAILED', { message });
     }

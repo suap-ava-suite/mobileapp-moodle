@@ -37,10 +37,12 @@ function setup(entries) {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     }).outputText, context);
     const service = new context.exports.MoodleSiteService();
-    service.getExpectedIdentityCandidates = () => [{ key: 'perfil.matricula', value: '123' }];
+    let expectedIdentity = '123';
+    service.getExpectedIdentityCandidates = () => [{ key: 'perfil.matricula', value: expectedIdentity }];
     const find = () => service.findStoredSiteIdForExpectedIdentities(url);
     find.service = service;
     find.sites = sites;
+    find.expect = identity => expectedIdentity = identity;
     return find;
 }
 test('restores a valid historical session even when canonical entry is logged out', async () => {
@@ -64,6 +66,24 @@ test('after restart, restores the saved matching account and subsequently reuses
     assert.equal(await s.service.ensureMatchingMoodleSession(url), 'loaded-stored');
     s.sites.getSites = async () => { throw new Error('Current session needs no database lookup'); };
     assert.equal(await s.service.ensureMatchingMoodleSession(url), 'matched-current');
+});
+
+test('Conta A → Conta B → Conta A restores only the saved Moodle site whose username matches', async () => {
+    const s = setup({
+        moodleA: { username: '123' },
+        moodleB: { username: '456' },
+    });
+
+    assert.equal(await s.service.ensureMatchingMoodleSession(url), 'loaded-stored');
+    assert.equal(s.sites.getCurrentSite().getId(), 'moodleA');
+
+    s.expect('456');
+    assert.equal(await s.service.ensureMatchingMoodleSession(url), 'loaded-stored');
+    assert.equal(s.sites.getCurrentSite().getId(), 'moodleB');
+
+    s.expect('123');
+    assert.equal(await s.service.ensureMatchingMoodleSession(url), 'loaded-stored');
+    assert.equal(s.sites.getCurrentSite().getId(), 'moodleA');
 });
 
 test('secure storage failure in another environment never affects the selected session', async () => {

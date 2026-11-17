@@ -39,7 +39,8 @@ test('returning from the system browser without an OAuth callback cancels the pe
     const source = read('src/MoodleIFRN/services_mobile/suap-entry.service.ts');
     assert.match(source, /document\.addEventListener\('resume', \(\) => this\.handleMobileAuthResume\(\)\)/);
     assert.match(source, /private handleMobileAuthResume\(\): void/);
-    assert.match(source, /this\.failMobileLogin\('Login cancelado ou interrompido/);
+    assert.match(source, /this\.failMobileLogin\([\s\S]*?'Login cancelado ou interrompido[\s\S]*?attemptId[\s\S]*?pending\.state/);
+    assert.match(source, /this\.isCurrentMobileAuthAttempt\(attemptId, pending\.state\)/);
     assert.match(source, /}, 1500\)/);
 });
 

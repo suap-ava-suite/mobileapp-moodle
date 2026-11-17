@@ -106,7 +106,7 @@ test('profile refresh does not block navigation to the Panel after verified prof
     assert.match(painel, /refreshSavedProfileNames\(data\.profile, data\.url, origin, true,[\s\S]*?markFreshPanelProfile\(savedProfile\.identity\)/);
     assert.match(suap, /this\.authService\.openMobileMoodle\('\/painel'\);\s*void this\.painel\.refreshSavedProfile\(\)\.catch\(\(\) => undefined\);/);
     assert.match(suap, /profile: mergeVerifiedPanelProfile\(profile, panel\.diagnosticProfile, identity\),[\s\S]*?this\.authService\.openMobileMoodle\('\/painel'\);/);
-    assert.match(suap, /cancel\(\): void \{\s*clearFreshPanelProfile\(\);/);
+    assert.match(suap, /cancel\(\): void \{[\s\S]*?mobileAuthAttempts\.invalidate\(\);[\s\S]*?clearFreshPanelProfile\(\);/);
 });
 
 test('actual profile refresh method skips the redundant browser after successful SUAP commit', async () => {
@@ -162,6 +162,7 @@ test('actual SUAP commit starts profile refresh after navigating to the Panel', 
     const dashboard = { diarios: [{ id: 43 }] };
     const context = {
         CoreSites: { getCurrentSite: () => null },
+        MOBILE_SUAP_PENDING_KEY: 'ifrn_mobile_suap_pkce_pending_v1',
         OAUTH_PROFILE_KEY: 'oauth-profile',
         OAUTH_PROFILE_MAX_AGE_SECONDS: 60,
         FRESH_PROFILE_SKIP_KEY: telemetry.FRESH_PROFILE_SKIP_KEY,
@@ -187,6 +188,11 @@ test('actual SUAP commit starts profile refresh after navigating to the Panel', 
         };
         this.painel = { refreshSavedProfile: async () => { refreshOrder.push('refresh'); } };
         this.biometricService = { disable() {} };
+        this.mobileAuthAttempts = { invalidate() {} };
+        this.mobileAuthAbortController = undefined;
+        this.mobileAuthLoadingAttempt = undefined;
+        this.mobileCallbackProcessingAttempt = undefined;
+        this.mobileLoginTimer = undefined;
       }
       ${methods.get('commit')}
       ${methods.get('cancel')}

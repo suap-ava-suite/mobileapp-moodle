@@ -137,6 +137,29 @@ export class MoodleOpenCoursePage implements OnDestroy {
         }
     }
 
+    /** Inicia o SSO Moodle para a identidade já validada no Painel. */
+    async reconnectMoodleAccount(): Promise<void> {
+        if (this.loading || this.accountIssue?.kind !== 'identity-mismatch') {
+            return;
+        }
+
+        await this.startOAuthFlow();
+    }
+
+    /** Limpa a identidade local e deixa o próximo login SUAP escolher a conta. */
+    async switchSuapAccount(): Promise<void> {
+        if (this.loading || this.accountIssue?.kind !== 'identity-mismatch') {
+            return;
+        }
+
+        this.loading = true;
+        try {
+            await this.moodleSite.switchSuapAccount();
+        } finally {
+            this.loading = false;
+        }
+    }
+
     async ionViewWillEnter(): Promise<void> {
         if (this.skipNextIonicEntry && !this.fallbackLifecycleActive) {
             this.skipNextIonicEntry = false;

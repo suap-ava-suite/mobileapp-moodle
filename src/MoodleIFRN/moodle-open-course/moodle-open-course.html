@@ -61,12 +61,29 @@
                     </dl>
                     <p class="moodle-open-course__account-help">
                         A conta deste ambiente é diferente da utilizada no Painel.
-                        Renove o acesso pelo login principal com a matrícula do Painel.
+                        O app só abre o curso depois de confirmar que as duas sessões pertencem à mesma conta.
                     </p>
                 }
 
                 <div class="moodle-open-course__actions">
-                    @if (accountIssue) {
+                    @if (accountIssue; as issue) {
+                        @if (issue.kind === 'identity-mismatch') {
+                            <ion-button
+                                expand="block"
+                                class="moodle-open-course__button"
+                                (click)="reconnectMoodleAccount()"
+                                [disabled]="loading">
+                                Entrar no Moodle com a conta do Painel
+                            </ion-button>
+                            <ion-button
+                                expand="block"
+                                fill="outline"
+                                class="moodle-open-course__button"
+                                (click)="switchSuapAccount()"
+                                [disabled]="loading">
+                                Trocar conta SUAP
+                            </ion-button>
+                        }
                         <ion-button
                             expand="block"
                             fill="outline"

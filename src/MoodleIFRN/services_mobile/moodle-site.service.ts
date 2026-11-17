@@ -23,6 +23,7 @@ import { CoreCourses, CoreEnrolledCourseData } from '@features/courses/services/
 import { CoreLoginHelper } from '@features/login/services/login-helper';
 import { AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
+import { SuapEntryService } from '@/MoodleIFRN/services_mobile/suap-entry.service';
 import {
     showHandoffLoading,
     hideHandoffLoading,
@@ -576,6 +577,7 @@ export class MoodleSiteService {
     }
     private readonly authService = inject(AuthService);
     private readonly painelAva = inject(PainelAvaService);
+    private readonly suapEntry = inject(SuapEntryService);
     private readonly router = inject(Router);
 
     /** Último resumo da sessão Moodle. */
@@ -615,28 +617,48 @@ export class MoodleSiteService {
         return this.lastError;
     }
 
-    /** Troca o login do Painel por escolha explícita, mantendo os sites Moodle salvos. */
+    /** Refaz o login do Painel exigindo a identidade que já estava ativa nele. */
     async returnToIfrnLogin(): Promise<void> {
-        this.cancelCourseOAuthBrowser();
         const expectedLogin = this.describeExpectedIdentity().value;
-        this.clearPendingOpenCourse();
-        this.clearCourseOriginFlags();
-        this.setIdentityMismatchPending(false);
-        sessionStorage.removeItem(OAUTH_PENDING_KEY);
-        sessionStorage.removeItem(RESUME_OAUTH_KEY);
-        this.oauthFlowActive = false;
-        this.oauthReturnNavigating = false;
-        this.oauthCallbackReceived = false;
-        this.hideNativeCourseHandoff();
-        this.lastCourseAccessIssue = null;
-        this.lastError = '';
-        this.authService.logout();
-        this.painelAva.clearSession();
+        this.clearAccountSwitchState();
         await CoreNavigator.navigate('/login/ifrn-login', {
             reset: true,
             animated: false,
             params: { forceLogin: true, username: expectedLogin || undefined },
         });
+    }
+
+    /**
+     * Troca explícita de conta. Não fixa a próxima tentativa à identidade antiga;
+     * o SUAP e a verificação posterior do Moodle continuam sendo a autoridade.
+     */
+    async switchSuapAccount(): Promise<void> {
+        this.clearAccountSwitchState();
+        await CoreNavigator.navigate('/login/marketplace-ifrn', {
+            reset: true,
+            animated: false,
+            params: { forceLogin: true },
+        });
+    }
+
+    /** Encerra a identidade do app e a sessão Moodle atualmente ativa ao tocar Sair. */
+    async logoutActiveAccount(): Promise<void> {
+        this.clearAccountSwitchState();
+
+        // removeAccount=false mantém metadados e sessões de outras contas; o
+        // logout forçado invalida somente o site Moodle que está ativo agora.
+        if (CoreSites.getCurrentSite()) {
+            await CoreSites.logout({ forceLogout: true, removeAccount: false });
+        }
+    }
+
+    private clearAccountSwitchState(): void {
+        this.suapEntry.cancel();
+        this.dismissCourseRecovery();
+        this.redirectingToPainel = false;
+        sessionStorage.removeItem('ifrn_mobile_suap_error_v1');
+        this.authService.logout();
+        this.painelAva.clearSession();
     }
 
     /**

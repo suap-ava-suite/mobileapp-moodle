@@ -407,8 +407,7 @@ export class PainelPage implements OnInit, OnDestroy {
     }
 
     private async handleLogout(): Promise<void> {
-        this.authService.logout();
-        this.painelAva.clearSession();
+        await this.moodleSite.logoutActiveAccount();
         await CoreNavigator.navigate('/login/marketplace-ifrn', { reset: true });
     }
 
