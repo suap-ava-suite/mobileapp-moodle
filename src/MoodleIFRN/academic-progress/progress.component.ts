@@ -13,13 +13,12 @@
 // limitations under the License.
 
 import {
-    ChangeDetectionStrategy, Component, Input, OnChanges, OnDestroy, SimpleChanges, computed, inject, signal,
+    ChangeDetectionStrategy, Component, Input, OnChanges, OnDestroy, SimpleChanges, inject, signal,
 } from '@angular/core';
 import { CoreSharedModule } from '@/core/shared.module';
-import { CoreCourse } from '@features/course/services/course';
-import type { CoreCourseSection, CoreCourseModuleData } from '@features/course/services/course-helper';
+import type { CoreCourseSection } from '@features/course/services/course-helper';
 import { IfrnAcademicProgressService } from './progress.service';
-import { activityLabel, panelProgress, unavailableProgress, type ProgressSnapshot } from './progress-model';
+import { panelProgress, unavailableProgress, type ProgressSnapshot } from './progress-model';
 
 @Component({
     selector: 'ifrn-academic-progress',
@@ -41,7 +40,6 @@ export class IfrnAcademicProgressComponent implements OnChanges, OnDestroy {
     @Input() accountScope?: object | null;
 
     readonly snapshot = signal<ProgressSnapshot | null>(null);
-    private readonly modules = signal<CoreCourseModuleData[]>([]);
     private release?: () => void;
     private readonly progress = inject(IfrnAcademicProgressService);
 
@@ -54,34 +52,12 @@ export class IfrnAcademicProgressComponent implements OnChanges, OnDestroy {
         return this.view.percent === null ? null : Math.round(this.view.percent);
     }
 
-    get countsDiffer(): boolean {
-        return this.view.activityPercent !== null && this.percentage !== Math.round(this.view.activityPercent);
-    }
-
-    readonly activityRows = computed(() => {
-        if (this.view.confirmedAt === null) { return []; }
-        const statuses = new Map(this.view.activities.map(activity => [activity.cmid, activity]));
-        const seen = new Set<number>();
-
-        return this.modules().filter(module => {
-            if (module.course !== this.courseId || seen.has(module.id) || module.visibleoncoursepage === 0) { return false; }
-            seen.add(module.id);
-
-            return true;
-        }).map(module => ({ id: module.id, name: module.name, restricted: module.uservisible === false,
-            status: activityLabel(statuses.get(module.id) ?? (module.completion === 0
-                ? { cmid: module.id, tracking: 0, state: 0 } : undefined)) }));
-    });
-
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes['sections'] || changes['courseId']) { this.modules.set(CoreCourse.getSectionsModules(this.sections)); }
         if (!changes['courseId'] && !changes['siteUrl'] && !changes['compact'] && !changes['accountScope']) { return; }
         this.release?.();
         this.snapshot.set(unavailableProgress());
         this.release = this.progress.watch(this.courseId, this.siteUrl, !this.compact, value => this.snapshot.set(value));
     }
-
-    refresh(): void { this.progress.refresh(); }
 
     ngOnDestroy(): void { this.release?.(); this.release = undefined; }
 
