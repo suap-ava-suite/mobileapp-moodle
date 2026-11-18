@@ -22,6 +22,7 @@ import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.servic
 import { MoodleSiteService } from '@/MoodleIFRN/services_mobile/moodle-site.service';
 import { resolveCourseSite } from '../mobilemoodle/core_mobile/course-target';
 import { CoreAlerts } from '@services/overlays/alerts';
+import { CoreLoadings } from '@services/overlays/loadings';
 import { readPainelHostLayout } from '../navigation/painel-host-layout';
 import { reportSuapDuration } from '../services_mobile/suap-login-telemetry';
 import {
@@ -56,6 +57,7 @@ export class PainelPage implements OnInit, OnDestroy {
     private readonly moodleSite = inject(MoodleSiteService);
     private readonly suapProfileBrowser = inject(SuapProfileBrowserService);
     private openingCourse = false;
+    private logoutInProgress = false;
     private bridgeApi?: MoodleIfrnBridgeApi;
     private painelStartedAt = 0;
     private painelFrameLoadReported = false;
@@ -410,8 +412,26 @@ export class PainelPage implements OnInit, OnDestroy {
     }
 
     private async handleLogout(): Promise<void> {
-        await this.moodleSite.logoutActiveAccount();
-        await CoreNavigator.navigate('/login/marketplace-ifrn', { reset: true });
+        if (this.logoutInProgress) {
+            return;
+        }
+
+        this.logoutInProgress = true;
+        let loading: Awaited<ReturnType<typeof CoreLoadings.show>> | undefined;
+
+        try {
+            // CoreSites.logout opens the Moodle /logout route, whose content is only
+            // core-loading. Keep a visible app-level transition over that route.
+            loading = await CoreLoadings.show('Saindo da conta…');
+            await this.moodleSite.logoutActiveAccount();
+            await CoreNavigator.navigate('/login/marketplace-ifrn', { reset: true, animated: false });
+        } finally {
+            try {
+                await loading?.dismiss();
+            } finally {
+                this.logoutInProgress = false;
+            }
+        }
     }
 
     onIframeLoad(): void {

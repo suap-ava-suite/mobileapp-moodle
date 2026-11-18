@@ -47,6 +47,14 @@
   <p><strong>NÃO VERIFICADO:</strong> ausência de flashes, uma única camada visual no aparelho, acessibilidade com leitor de tela em execução e retorno visual em Android. Validar em APK: abrir curso com sessão ativa, abrir com conexão Moodle pendente, esperar até o conteúdo, cancelar e voltar ao Painel.</p>
 </section>
 
+<section class="doc-section searchable" id="painel-logout-transicao-20261118">
+  <p class="eyebrow">AJUSTE VISUAL · 18/11/2026</p>
+  <h2>Transição visível ao sair do Painel</h2>
+  <p><strong>LIDO no código:</strong> o handler do Painel aguardava <code>MoodleSiteService.logoutActiveAccount()</code>. Quando existe site Moodle ativo, o serviço usa <code>CoreSites.logout()</code>, que navega para <code>/logout</code>. A página oficial dessa rota contém somente <code>&lt;core-loading /&gt;</code>; após a limpeza, o Painel ainda navega para o Marketplace. Isso explica a tela intermediária clara observada, embora o aparelho não tenha sido instrumentado nesta tarefa.</p>
+  <p><strong>Alteração em MoodleIFRN:</strong> o botão Sair agora apresenta o overlay Ionic “Saindo da conta…” antes de iniciar a sequência oficial e o mantém até a navegação ao Marketplace. Cliques repetidos durante a saída são ignorados e a navegação final não anima uma segunda transição. A limpeza de identidade e sessão Moodle não foi alterada.</p>
+  <p><strong>NÃO VERIFICADO no Android:</strong> a rota Moodle pode recarregar o WebView quando plugins de site foram carregados; o overlay criado no app não persiste a um reload completo. A validação visual deve confirmar esse caso. Remover também o documento intermediário exigiria mudança no fluxo/tela de logout do núcleo, que não foi alterado.</p>
+</section>
+
 <section class="doc-section searchable" id="progresso-ui-limpa-20261117"><p class="eyebrow">AJUSTE DE INTERFACE · 17/11/2026</p><h2>Bloco complementar retirado do curso</h2><p>Removidos apenas o resumo textual de atividades, o botão de atualização, a nota explicativa e o accordion. Barra, porcentagem, estados, atualização automática e modo compacto do Painel preservados.</p><p><strong>MEDIDO na branch de origem:</strong> 63/63 testes relevantes e TypeScript sem emissão aprovados. <strong>NÃO EXECUTADO:</strong> nova APK e validação visual Android. A integração desta correção na release está registrada neste commit. <a href="progresso-academico.html#interface-limpa-20261117">Detalhes</a>.</p></section>
 
 <section class="doc-section searchable" id="progresso-academico-release-20261116">
