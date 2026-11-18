@@ -747,58 +747,6 @@ body.highlight_links a[href] * {
   color: rgb(255, 255, 100) !important;
 }
 
-div[vw].enabled {
-  display: none !important;
-  margin: 0 !important;
-  top: auto !important;
-  bottom: 12px !important;
-  left: 8px !important;
-  right: initial !important;
-  z-index: 9998 !important;
-  transform: none !important;
-}
-
-body.vlibras_active div[vw].enabled {
-  display: block !important;
-}
-
-body.vlibras_active div[vw] [vw-access-button] {
-  transform: scale(0.85);
-  transform-origin: left bottom;
-}
-
-/* Mantém a janela expandida do VLibras dentro da área visível do celular,
-   deixando espaço para os controles de fechar e recolher no topo. */
-body.vlibras_active div[vw] [vw-plugin-wrapper],
-body.vlibras_active div[vw] .vw-plugin-wrapper {
-  position: fixed !important;
-  inset: auto max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) auto !important;
-  width: min(90vw, 380px) !important;
-  height: min(76vh, 560px) !important;
-  max-width: calc(100vw - 24px) !important;
-  max-height: calc(100vh - max(24px, env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))) !important;
-  overflow: hidden !important;
-  border-radius: 12px !important;
-}
-
-body.vlibras_active div[vw] iframe {
-  width: 100% !important;
-  height: 100% !important;
-  max-width: 100% !important;
-  max-height: 100% !important;
-}
-
-.vlibras-status {
-  margin: 0.25rem 0;
-  color: var(--ifrn-error, #d93514);
-  font-size: 0.875rem;
-  line-height: 1.4;
-}
-
-.vlibras-status[hidden] {
-  display: none;
-}
-
 body.stop_animations *,
 body.stop_animations *::before,
 body.stop_animations *::after {
@@ -871,7 +819,7 @@ body[data-zoom="160"] {
 }
 
 body.color_mode_low_contrast ion-app,
-body.color_mode_low_contrast ion-content, body.color_mode_low_contrast.vlibras_active div[vw].enabled {
+body.color_mode_low_contrast ion-content {
   filter: saturate(0.5);
 }
 
@@ -911,7 +859,7 @@ body.color_mode_colorblind {
 }
 
 body.color_mode_grayscale ion-app,
-body.color_mode_grayscale ion-content, body.color_mode_grayscale.vlibras_active div[vw].enabled {
+body.color_mode_grayscale ion-content {
   filter: grayscale(100%);
 }
 

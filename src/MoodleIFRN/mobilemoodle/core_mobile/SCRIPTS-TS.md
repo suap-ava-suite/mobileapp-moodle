@@ -71,7 +71,7 @@ Flag `DEMO_FORCE_500` em `api.ts`: quando `true`, força erro 500 no painel (só
 | `app-status.ts` | Loading enquanto os dados carregam, tela de erro, not found |
 | `app-views.ts` | Render do painel e do curso; atualiza título/subtítulo do header |
 | `app-router.ts` | Parse do hash + orquestra carregamento (`routeSeq` evita race) |
-| `app-accessibility.ts` | Preferências AVA: zoom, contraste, VLibras, etc. |
+| `app-accessibility.ts` | Preferências AVA: zoom, contraste e outros recursos de leitura. |
 | `app-sidebar.ts` | Sidebar AVA: perfil, acessibilidade, ajuda, filtros |
 | `app-keyboard.ts` | Safe-area (status bar) + altura do teclado virtual |
 | `app.ts` | Bootstrap: DOM, menu, base da API, `hashchange` |

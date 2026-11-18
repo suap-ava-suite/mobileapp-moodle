@@ -24,8 +24,7 @@ page-core-course-index, page-core-course-contents { --ion-font-family: "Rawline"
  *    --core-progressbar-*, --ion-card-*, vars de core-course-module).
  * 2) Seletores reais do DOM (não ion-segment — as abas usam ion-tab-bar + swiper).
  * 3) Especificidade alta (page-core-course-index.ion-page) + !important apenas
- *    onde inevitável: body.* (widgets de acessibilidade de terceiros) e
- *    div[vw] (VLibras com inline styles).
+ *    onde inevitável: body.* (preferências de acessibilidade do app) e
  */
 
 /* =========================================================
@@ -986,12 +985,8 @@ body[data-zoom="160"] page-addon-notifications-notification { font-size: 160%; }
 /* Marcador DevTools: computed style de page-core-course-index deve ter --ifrn-ava: #1351b4 */
 
 /* =========================================================
- * Acessibilidade do curso (espelho do Painel AVA / VLibras)
+ * Acessibilidade do curso (espelho do Painel AVA)
  * Preferências aplicadas no body pelo IfrnCourseAccessibilityService
- *
- * Exceções de prioridade: preferências de acessibilidade precisam prevalecer
- * sobre o conteúdo do curso; o widget VLibras também injeta estilos inline.
- * Elementos criados pelo app usam a cascata normal, sem prioridade forçada.
  * ========================================================= */
 @font-face {
     font-family: "opendyslexic";
@@ -1079,101 +1074,6 @@ ion-modal.ifrn-ava-side-modal--a11y::part(content) {
     border-radius: 0;
     overflow: hidden;
     background: #ffffff;
-}
-
-/* VLibras compacto — não cobre a tela inteira do app.
- * !important necessário: VLibras injeta position/display/size via inline styles. */
-div[vw].enabled,
-div[vw].ifrn-vlibras-compact.enabled {
-    display: none !important;
-    margin: 0 !important;
-    top: auto !important;
-    bottom: max(10px, env(safe-area-inset-bottom, 0px)) !important;
-    left: max(6px, env(safe-area-inset-left, 0px)) !important;
-    right: auto !important;
-    width: auto !important;
-    max-width: min(220px, 58vw) !important;
-    max-height: min(280px, 42vh) !important;
-    z-index: 9000 !important;
-    transform: none !important;
-    pointer-events: auto !important;
-}
-
-body.vlibras_active div[vw].enabled {
-    display: block !important;
-}
-
-body.vlibras_active div[vw] [vw-access-button],
-body.vlibras_active div[vw] [vw-access-button].active {
-    width: 48px !important;
-    height: 48px !important;
-    min-width: 48px !important;
-    min-height: 48px !important;
-    transform: none !important;
-}
-
-/* Limita a janela expandida em celular para manter visíveis os controles superiores. */
-body.vlibras_active div[vw] [vw-plugin-wrapper],
-body.vlibras_active div[vw] .vw-plugin-wrapper,
-body.vlibras_active div[vw] .vpw-settings-btn,
-body.vlibras_active div[vw] .vpw-box,
-body.vlibras_active div[vw] iframe {
-    max-width: min(90vw, 380px) !important;
-    max-height: min(76vh, 560px) !important;
-}
-
-body.vlibras_active div[vw] [vw-plugin-wrapper],
-body.vlibras_active div[vw] .vw-plugin-wrapper {
-    position: fixed !important;
-    inset: auto max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) auto !important;
-    width: min(90vw, 380px) !important;
-    height: min(76vh, 560px) !important;
-    max-width: calc(100vw - 24px) !important;
-    max-height: calc(100vh - max(24px, env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))) !important;
-    overflow: hidden !important;
-    border-radius: 12px !important;
-    box-shadow: 0 6px 18px rgb(0 0 0 / 25%) !important;
-}
-
-body.vlibras_active div[vw] iframe {
-    width: 100% !important;
-    height: 100% !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
-}
-
-/* Botão de emergência acima de qualquer overlay do VLibras.
- * Criado pelo app como filho direto do body, sem estilos inline.
- * O escopo abaixo vence regras genéricas de botão sem prioridade forçada.
- * A regra [hidden] vem depois para respeitar o fechamento pelo serviço. */
-body > button.ifrn-vlibras-escape {
-    position: fixed;
-    top: max(12px, env(safe-area-inset-top, 0px));
-    right: max(12px, env(safe-area-inset-right, 0px));
-    z-index: 2147483646;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-    padding: 10px 14px;
-    border: 0;
-    border-radius: 999px;
-    background: #0c326f;
-    color: #fff;
-    font: 600 0.875rem/1.2 system-ui, sans-serif;
-    box-shadow: 0 4px 16px rgb(0 0 0 / 35%);
-    cursor: pointer;
-    pointer-events: auto;
-    touch-action: manipulation;
-}
-
-body > button.ifrn-vlibras-escape[hidden] {
-    display: none;
-}
-
-body > button.ifrn-vlibras-escape:focus-visible {
-    outline: 2px solid #fff;
-    outline-offset: 2px;
 }
 
 body.stop_animations *,

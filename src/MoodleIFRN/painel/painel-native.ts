@@ -15,7 +15,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { CoreSharedModule } from '@/core/shared.module';
 import { createCourseFavourites } from '../mobilemoodle/core_mobile/course-favourites';
-import { loadVlibrasWidget } from '../mobilemoodle/core_mobile/vlibras-widget';
 import { PAINEL_HELP_LINKS, type PainelHelpLinkId } from '../services_mobile/painel-help-links';
 import { type NativePainelCourse, type NativePainelGroup, type NativePainelModel } from './painel-native-model';
 import { IfrnAcademicProgressComponent } from '../academic-progress/progress.component';
@@ -68,7 +67,6 @@ export class PainelNativeComponent {
         { key: 'highlight_links', label: 'Destacar links', icon: 'color-fill-outline' },
         { key: 'stop_animations', label: 'Parar animações', icon: 'pause-circle-outline' },
         { key: 'hidden_illustrative_image', label: 'Ocultar imagens ilustrativas', icon: 'image-outline' },
-        { key: 'vlibras_active', label: 'Habilitar VLibras', icon: 'hand-left-outline' },
         { key: 'high_line_height', label: 'Linhas mais distantes', icon: 'menu-outline' },
     ];
 
@@ -166,10 +164,6 @@ export class PainelNativeComponent {
         if (!this.accessibilityOptions.some(option => option.key === key)) {return;}
         const enabled = !this.accessibility()[key];
         this.accessibility.update(values => ({ ...values, [key]: enabled }));
-        if (key === 'vlibras_active') {
-            if (enabled) {await this.enableLibras();}
-            else {document.querySelector<HTMLElement>('[vw]')?.classList.remove('enabled');}
-        }
         if (key === 'stop_animations') {document.body.classList.toggle('stop_animations', enabled);}
         this.saveAccessibility();
     }
@@ -228,15 +222,6 @@ export class PainelNativeComponent {
             this.favouriteRevision.update(value => value + 1);
         } catch {
             this.preferenceError.set('Não foi possível salvar o favorito. Tente novamente.');
-        }
-    }
-
-    async enableLibras(): Promise<void> {
-        try {
-            await loadVlibrasWidget();
-            this.preferenceError.set('');
-        } catch {
-            this.preferenceError.set('Não foi possível carregar o VLibras. Verifique sua conexão e tente novamente.');
         }
     }
 

@@ -139,7 +139,7 @@ const purposes = {
     'mobilemoodle/core_mobile/app-router.ts': 'Router por hash e carregamento dinâmico dos três partials HTML.',
     'mobilemoodle/core_mobile/app-sidebar.ts': 'Menu lateral, perfil e comandos da Ajuda/acessibilidade.',
     'mobilemoodle/core_mobile/app-keyboard.ts': 'Insets, teclado e viewport do documento incorporado.',
-    'mobilemoodle/core_mobile/app-accessibility.ts': 'Preferências de acessibilidade, classes dinâmicas e integração VLibras do documento web legado.',
+    'mobilemoodle/core_mobile/app-accessibility.ts': 'Preferências de acessibilidade e classes dinâmicas do documento web legado.',
     'mobilemoodle/core_mobile/profile-refresh.ts': 'Atualização/mesclagem de dados do perfil do documento web legado.',
     'mobilemoodle/core_mobile/oauth-profile.ts': 'Leitura, validade, identidade e persistência do perfil OAuth compartilhado.',
     'mobilemoodle/core_mobile/course-favourites.ts': 'Favoritos de disciplina com isolamento por proprietário.',

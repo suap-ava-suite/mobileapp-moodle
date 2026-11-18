@@ -5,10 +5,8 @@
  *
  * Estado em localStorage (chave ifrn_a11y_prefs).
  * applyToBody() aplica classes CSS no <body> (ex.: color_mode_high_contrast).
- * VLibras é carregado sob demanda quando vlibras_active = true.
  */
 import { App } from './namespace';
-import { loadVlibrasWidget } from './vlibras-widget';
 
 
     const STORAGE_KEY = 'ifrn_a11y_prefs';
@@ -19,7 +17,6 @@ import { loadVlibrasWidget } from './vlibras-widget';
         'highlight_links',
         'stop_animations',
         'hidden_illustrative_image',
-        'vlibras_active',
         'high_line_height',
     ];
 
@@ -40,15 +37,10 @@ import { loadVlibrasWidget } from './vlibras-widget';
         highlight_links: false,
         stop_animations: false,
         hidden_illustrative_image: false,
-        vlibras_active: false,
         high_line_height: false,
         zoom_level: 100,
         color_mode: 'default',
     };
-
-    let vlibrasReady = false;
-    let vlibrasLoading = false;
-    let vlibrasFailed = false;
 
     function getEl(id: string): HTMLElement | null {
         return document.getElementById(id);
@@ -90,44 +82,6 @@ import { loadVlibrasWidget } from './vlibras-widget';
         }
     }
 
-    function setVlibrasStatus(message: string): void {
-        const status = document.getElementById('vlibras-status');
-        if (!status) {
-            return;
-        }
-
-        status.textContent = message;
-        status.hidden = !message;
-    }
-
-    /** Carrega o widget oficial sob demanda, com deduplicação entre Painel e curso. */
-    function ensureVlibras(): void {
-        if (!state.vlibras_active || vlibrasFailed) {
-            return;
-        }
-
-        // Também restaura o widget se o serviço de curso o tiver ocultado.
-        const load = loadVlibrasWidget();
-        setVlibrasStatus('');
-        if (vlibrasReady || vlibrasLoading) {
-            return;
-        }
-
-        vlibrasLoading = true;
-        void load.then(() => {
-            vlibrasReady = true;
-            vlibrasLoading = false;
-            return true;
-        }).catch(() => {
-            vlibrasLoading = false;
-            vlibrasFailed = true;
-            if (state.vlibras_active) {
-                setVlibrasStatus('Não foi possível carregar o VLibras. Verifique sua conexão e tente novamente.');
-            }
-            return false;
-        });
-    }
-
     /** Reflete o state atual em classes/atributos do document.body. */
     function applyToBody(): void {
         const body = document.body;
@@ -154,9 +108,6 @@ import { loadVlibrasWidget } from './vlibras-widget';
             body.removeAttribute('data-zoom');
         }
 
-        if (state.vlibras_active) {
-            ensureVlibras();
-        }
     }
 
     function setBool(key: A11yBoolKey, value: boolean): void {
@@ -165,13 +116,6 @@ import { loadVlibrasWidget } from './vlibras-widget';
         }
 
         state[key] = !!value;
-        if (key === 'vlibras_active') {
-            if (value) {
-                vlibrasFailed = false;
-            } else {
-                setVlibrasStatus('');
-            }
-        }
         saveState();
         applyToBody();
     }

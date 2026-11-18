@@ -82,12 +82,6 @@ export class IfrnCourseMenuComponent implements OnChanges, OnDestroy {
             hint: 'Esconde imagens decorativas sem texto alternativo.',
         },
         {
-            key: 'vlibras_active',
-            label: 'Habilitar VLibras',
-            icon: 'fas-hands-asl-interpreting',
-            hint: 'Widget oficial de Libras (vlibras.gov.br).',
-        },
-        {
             key: 'high_line_height',
             label: 'Linhas mais distantes',
             icon: 'fas-align-left',
