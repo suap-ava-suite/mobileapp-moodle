@@ -721,10 +721,11 @@ export class MoodleSiteService {
     private oauthCallbackReceived = false;
 
     /** Cobre a transição visual até o curso nativo estar pronto para aparecer. */
-    showNativeCourseHandoff(): void {
+    showNativeCourseHandoff(courseName?: string, message = 'Preparando disciplina…'): void {
         document.documentElement.classList.add('ifrn-course-opening');
         showHandoffLoading(this.applicationRef, this.environmentInjector, {
-            courseName: this.getPendingOpenCourse()?.courseName,
+            courseName: courseName || this.getPendingOpenCourse()?.courseName,
+            message,
             onCancel: () => this.cancelNativeCourseHandoff(),
         });
     }
@@ -1148,7 +1149,10 @@ export class MoodleSiteService {
             this.oauthCallbackReceived = false;
             this.oauthFlowActive = false;
             if (this.oauthReturnNavigating) {
-                this.showNativeCourseHandoff();
+                this.showNativeCourseHandoff(
+                    this.getPendingOpenCourse()?.courseName,
+                    'Retomando disciplina…',
+                );
             }
         });
     }
@@ -1163,7 +1167,7 @@ export class MoodleSiteService {
 
         sessionStorage.removeItem(OAUTH_PENDING_KEY);
         this.oauthReturnNavigating = true;
-        this.showNativeCourseHandoff();
+        this.showNativeCourseHandoff(pending.courseName, 'Retomando disciplina…');
         this.oauthCallbackReceived = false;
         try {
             await this.afterOAuthLogin();
@@ -1448,7 +1452,7 @@ export class MoodleSiteService {
         this.setPendingOpenCourse({ courseId, siteUrl, courseName });
         // Cover session restoration/validation too: activating a stored Moodle site can
         // briefly expose its legacy landing page before the selected course is routed.
-        this.showNativeCourseHandoff();
+        this.showNativeCourseHandoff(courseName, 'Verificando sessão…');
         const opening: NonNullable<MoodleSiteService['sessionOpening']> = {
             courseId,
             siteUrl,
@@ -1507,6 +1511,7 @@ export class MoodleSiteService {
         }
 
         if (identityResult === 'matched-current' || identityResult === 'loaded-stored') {
+            this.showNativeCourseHandoff(courseName, 'Abrindo curso…');
             await this.openCourseById(courseId, attempt);
             this.clearPendingOpenCourse();
 
@@ -1896,7 +1901,7 @@ export class MoodleSiteService {
         document.documentElement.classList.add('ifrn-course-opening');
         attempt.record?.('open-request', 'start');
         // Tokens já disponíveis durante a passagem por /main; sem atraso artificial.
-        this.showNativeCourseHandoff();
+        this.showNativeCourseHandoff(undefined, 'Abrindo curso…');
         const opening: NonNullable<MoodleSiteService['courseOpening']> = {
             courseId,
             siteId,
@@ -2083,7 +2088,8 @@ export class MoodleSiteService {
             }
             assertSessionStillCurrent();
 
-            // Release the handoff at the first painted, themed native course shell.
+            // Confirm that the requested native course shell is ready before waiting
+            // for its real Moodle content. Keep the same IFRN cover mounted throughout.
             await attempt.stage(
                 'course-shell-ready',
                 () => this.waitForNativeCourseShell(courseId, attempt),
@@ -2092,10 +2098,13 @@ export class MoodleSiteService {
                 'O cabeçalho da disciplina não ficou pronto a tempo. Verifique sua conexão e tente novamente.',
             );
             assertSessionStillCurrent();
-            hideHandoffLoading();
 
-            // Keep the logical open serialized until Moodle releases real content. The native
-            // course remains visible and its own compact loader stays inside the content region.
+            // The native core-loading stays behind the cover. Releasing it only after Moodle
+            // exposes usable course content avoids switching to a second visible skeleton.
+            this.showNativeCourseHandoff(
+                this.getPendingOpenCourse()?.courseName,
+                'Carregando conteúdo…',
+            );
             await attempt.stage(
                 'course-content-ready',
                 () => this.waitForNativeCourseContent(courseId, attempt),

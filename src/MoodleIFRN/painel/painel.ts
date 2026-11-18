@@ -336,6 +336,9 @@ export class PainelPage implements OnInit, OnDestroy {
             return;
         }
 
+        // Mount the shared cover before the panel marks its course card busy.
+        // This prevents a brief panel-only loading label before the handoff appears.
+        this.moodleSite.showNativeCourseHandoff(courseName);
         this.openingCourse = true;
         this.painelAva.stopProfileRefresh();
         try {

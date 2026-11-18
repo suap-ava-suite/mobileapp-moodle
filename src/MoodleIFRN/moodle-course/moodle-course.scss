@@ -561,19 +561,18 @@ page-core-course-contents core-course-format {
     background: transparent;
 }
 
-/*
- * During native course loading, keep Moodle's real aria-busy state but replace its
- * large generic placeholders with one compact IFRN indicator in the content area.
- */
+/* Keep Moodle's real aria-busy lifecycle and show a lightweight course skeleton. */
 page-core-course-index page-core-course-contents ion-content > core-loading[aria-busy="true"],
 page-core-course-contents ion-content > core-loading[aria-busy="true"],
 page-core-course-index core-course-format > core-loading[aria-busy="true"] {
     --loading-background: transparent;
     --loading-placeholder-padding: 0;
-    --loading-placeholder-gap: 0;
-    --loading-inline-min-height: 48px;
+    --loading-placeholder-gap: 12px;
+    --loading-placeholder-align-items: stretch;
+    --loading-placeholder-align-content: start;
+    --internal-loading-inline-min-height: 260px;
     display: block;
-    min-height: 48px;
+    min-height: 292px;
 }
 
 page-core-course-index page-core-course-contents ion-content > core-loading[aria-busy="true"] .core-loading-container,
@@ -581,14 +580,11 @@ page-core-course-contents ion-content > core-loading[aria-busy="true"] .core-loa
 page-core-course-index core-course-format > core-loading[aria-busy="true"] .core-loading-container {
     position: relative;
     inset: auto;
-    display: flex;
+    display: block;
     width: 100%;
-    min-height: 48px;
-    height: 48px;
-    flex-direction: row;
-    justify-content: center;
-    gap: 10px;
-    padding: 0 12px;
+    min-height: 260px;
+    height: auto;
+    padding: 0 10px;
     background: transparent;
     pointer-events: none;
 }
@@ -596,29 +592,68 @@ page-core-course-index core-course-format > core-loading[aria-busy="true"] .core
 page-core-course-index page-core-course-contents ion-content > core-loading[aria-busy="true"] .placeholder,
 page-core-course-contents ion-content > core-loading[aria-busy="true"] .placeholder,
 page-core-course-index core-course-format > core-loading[aria-busy="true"] .placeholder {
+    position: relative;
+    inset: auto;
+    display: grid;
+    width: 100%;
+    height: auto;
+    min-height: 240px;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: 12px;
+    overflow: hidden;
+    padding: 0 4px 20px;
+    margin: 0;
+}
+
+page-core-course-index page-core-course-contents ion-content > core-loading[aria-busy="true"] .placeholder.column > ion-skeleton-text.placeholder-element:nth-of-type(n + 4),
+page-core-course-contents ion-content > core-loading[aria-busy="true"] .placeholder.column > ion-skeleton-text.placeholder-element:nth-of-type(n + 4),
+page-core-course-index core-course-format > core-loading[aria-busy="true"] .placeholder.listwithicon > ion-item:nth-of-type(n + 4) {
     display: none;
 }
 
-page-core-course-index page-core-course-contents ion-content > core-loading[aria-busy="true"] .core-loading-container::before,
-page-core-course-contents ion-content > core-loading[aria-busy="true"] .core-loading-container::before,
-page-core-course-index core-course-format > core-loading[aria-busy="true"] .core-loading-container::before {
-    width: 18px;
-    height: 18px;
-    flex: 0 0 18px;
-    border: 2px solid color-mix(in srgb, var(--ifrn-ava, #1351b4) 18%, transparent);
-    border-top-color: var(--ifrn-ava, #1351b4);
-    border-radius: 50%;
-    animation: ifrn-course-inline-turn 850ms linear infinite;
-    content: "";
+ifrn-course-loading .course-loading__skeleton-card,
+page-core-course-index page-core-course-contents ion-content > core-loading[aria-busy="true"] .placeholder.column > ion-skeleton-text.placeholder-element,
+page-core-course-contents ion-content > core-loading[aria-busy="true"] .placeholder.column > ion-skeleton-text.placeholder-element {
+    display: block;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    width: 100%;
+    height: 78px;
+    border: 1px solid var(--ifrn-border, #ccc);
+    border-left: 4px solid var(--ifrn-ava, #1351b4);
+    border-radius: 12px;
+    --background: transparent;
+    background:
+        radial-gradient(circle, var(--ifrn-border-inner, #e6e6e6) 0 14px, transparent 15px) 12px center / 30px 30px no-repeat,
+        linear-gradient(var(--ifrn-border-inner, #e6e6e6), var(--ifrn-border-inner, #e6e6e6)) 54px 24px / 56% 10px no-repeat,
+        linear-gradient(var(--ifrn-border-inner, #e6e6e6), var(--ifrn-border-inner, #e6e6e6)) 54px 44px / 72% 8px no-repeat,
+        var(--ifrn-surface, #fff);
+    box-shadow: var(--ifrn-shadow, none);
 }
 
-page-core-course-index page-core-course-contents ion-content > core-loading[aria-busy="true"] .core-loading-container::after,
-page-core-course-contents ion-content > core-loading[aria-busy="true"] .core-loading-container::after,
-page-core-course-index core-course-format > core-loading[aria-busy="true"] .core-loading-container::after {
-    align-self: center;
-    color: var(--ifrn-muted, #5b6573);
-    font-size: 0.9rem;
-    content: "Carregando conteúdo da disciplina…";
+page-core-course-index core-course-format > core-loading[aria-busy="true"] .placeholder.listwithicon {
+    gap: 12px;
+    padding: 0 4px 20px;
+}
+
+page-core-course-index core-course-format > core-loading[aria-busy="true"] .placeholder.listwithicon > ion-item {
+    --background: var(--ifrn-surface, #fff);
+    --border-color: var(--ifrn-border, #ccc);
+    --border-style: solid;
+    --border-width: 1px;
+    --min-height: 76px;
+    --padding-start: 12px;
+    --padding-end: 12px;
+    border-radius: 12px;
+    box-shadow: var(--ifrn-shadow, none);
+}
+
+page-core-course-index page-core-course-contents ion-content > core-loading[aria-busy="true"] ion-skeleton-text.skeleton-text-animated,
+page-core-course-contents ion-content > core-loading[aria-busy="true"] ion-skeleton-text.skeleton-text-animated,
+page-core-course-index core-course-format > core-loading[aria-busy="true"] ion-skeleton-text.skeleton-text-animated {
+    animation: none;
+    background: var(--ifrn-border-inner, #e6e6e6);
 }
 
 /* Real Moodle section/module nodes are revealed only when the observer sees them in view. */
@@ -638,14 +673,7 @@ page-core-course-index.ifrn-course-progressive core-course-module.ifrn-course-pr
     to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
-@keyframes ifrn-course-inline-turn {
-    to { transform: rotate(360deg); }
-}
-
 @media (prefers-reduced-motion: reduce) {
-    page-core-course-index page-core-course-contents ion-content > core-loading[aria-busy="true"] .core-loading-container::before,
-    page-core-course-contents ion-content > core-loading[aria-busy="true"] .core-loading-container::before,
-    page-core-course-index core-course-format > core-loading[aria-busy="true"] .core-loading-container::before,
     page-core-course-index.ifrn-course-progressive core-course-section.ifrn-course-progressive-pending,
     page-core-course-index.ifrn-course-progressive core-course-section.ifrn-course-progressive-ready,
     page-core-course-index.ifrn-course-progressive core-course-module.ifrn-course-progressive-pending,

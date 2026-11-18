@@ -22,6 +22,7 @@ function setup(navigate) {
     let disposed = 0;
     let readinessCalls = 0;
     let clearedOrigins = 0;
+    const handoffMessages = [];
     class NavigationEnd {
         constructor(url) { this.url = url; this.urlAfterRedirects = url; }
     }
@@ -42,11 +43,17 @@ function setup(navigate) {
         '@features/courses/services/courses': { CoreCourses: { getUserCourses: async () => [{ id: courseId }] } },
         '../navigation/open-native-course': { openNativeCourse: (...args) => navigate(...args) },
         './ifrn-language': { useIfrnBrazilianPortuguese: async () => {} },
-        '@/MoodleIFRN/navigation/handoff-loading': { hideHandoffLoading() {} },
+        '@/MoodleIFRN/navigation/handoff-loading': {
+            showHandoffLoading(_applicationRef, _injector, options) { handoffMessages.push(options.message); },
+            hideHandoffLoading() {},
+        },
     };
     const context = { exports: {}, require: id => mocks[id] || {}, URL,
         console: { log() {}, warn() {}, error() {}, info() {} },
-        document: { querySelectorAll: () => [] },
+        document: {
+            documentElement: { classList: { add() {}, remove() {} } },
+            querySelectorAll: () => [],
+        },
         window: {
             setTimeout(callback) { const id = ++timerSequence; timers.set(id, callback); return id; },
             clearTimeout(id) { timers.delete(id); },
@@ -71,7 +78,7 @@ function setup(navigate) {
         emitEnd: id => listener?.(new NavigationEnd(`/main/home/course/${id}`)),
         emitError: error => listener?.(new NavigationError(`/main/home/course/${courseId}`, error)),
         expireRoute: () => [...timers.values()].forEach(callback => callback()),
-        state: () => ({ timers: timers.size, disposed, readinessCalls, clearedOrigins }),
+        state: () => ({ timers: timers.size, disposed, readinessCalls, clearedOrigins, handoffMessages }),
     };
 }
 
@@ -130,6 +137,7 @@ test('successful navigation still waits for the selected course route before tes
     await opening;
     assert.equal(result, courseId);
     assert.equal(s.state().readinessCalls, 2);
+    assert.deepEqual(s.state().handoffMessages, ['Carregando conteúdo…']);
     assert.equal(s.state().disposed, 1);
     assert.equal(s.state().timers, 0);
 });

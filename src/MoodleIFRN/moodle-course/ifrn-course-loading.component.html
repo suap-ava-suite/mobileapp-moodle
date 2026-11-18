@@ -1,4 +1,4 @@
-<div class="course-loading" role="status" aria-live="polite" aria-busy="true" aria-label="Abrindo sua disciplina">
+<div class="course-loading" role="status" aria-live="polite" aria-busy="true" [attr.aria-label]="message">
     <button
         type="button"
         class="course-loading__back"
@@ -10,15 +10,14 @@
     </button>
 
     <main class="course-loading__content">
-        <div class="course-loading__brand" aria-hidden="true">
-            @if (logoUrl) {
-                <img class="course-loading__logo" [src]="logoUrl" alt="" />
-            }
-            <span class="course-loading__spinner"></span>
-        </div>
-        <p class="course-loading__message">Abrindo sua disciplina...</p>
+        <p class="course-loading__message">{{ message }}</p>
         @if (courseName) {
             <p class="course-loading__course-name">{{ courseName }}</p>
         }
+        <div class="course-loading__skeleton" aria-hidden="true">
+            <span class="course-loading__skeleton-card"></span>
+            <span class="course-loading__skeleton-card"></span>
+            <span class="course-loading__skeleton-card"></span>
+        </div>
     </main>
 </div>

@@ -11,6 +11,7 @@ const HANDOFF_LOGO_PATH = 'mobilemoodle/static/theme/ifrn/img/splash-logo.png';
 
 interface HandoffOptions {
     courseName?: string;
+    message?: string;
     onCancel: () => void;
 }
 
@@ -42,6 +43,9 @@ export function showHandoffLoading(
 
     if (handoffComponent) {
         handoffComponent.setInput('courseName', options.courseName || '');
+        if (options.message) {
+            handoffComponent.setInput('message', options.message);
+        }
         handoffComponent.setInput('logoUrl', getHandoffLogoUrl());
         handoffComponent.setInput('onCancel', options.onCancel);
         handoffComponent.changeDetectorRef.detectChanges();
@@ -59,6 +63,9 @@ export function showHandoffLoading(
             hostElement: host,
         });
         component.setInput('courseName', options.courseName || '');
+        if (options.message) {
+            component.setInput('message', options.message);
+        }
         component.setInput('logoUrl', getHandoffLogoUrl());
         component.setInput('onCancel', options.onCancel);
         component.setInput('timingStartedAt', performance.now());

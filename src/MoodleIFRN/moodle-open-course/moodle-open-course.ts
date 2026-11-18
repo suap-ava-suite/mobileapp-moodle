@@ -177,14 +177,13 @@ export class MoodleOpenCoursePage implements OnDestroy {
         this.loading = false;
         this.formError = '';
         this.accountSwitchStarted = false;
+        this.moodleSite.showNativeCourseHandoff(undefined, 'Preparando disciplina…');
         await CorePlatform.ready();
         if (entry !== this.entryVersion) {
             return;
         }
 
         this.moodleSite.ensureLoginObserver();
-        // Cobre /main e o bootstrap Ionic antes de qualquer await de sessão/OAuth.
-        this.moodleSite.showNativeCourseHandoff();
         this.phase = 'loading';
 
         this.courseId = Number(CoreNavigator.getRouteNumberParam('courseId') || 0);
@@ -196,6 +195,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
             this.courseId = pending.courseId;
             this.courseName = pending.courseName || this.courseName;
         }
+        this.moodleSite.showNativeCourseHandoff(this.courseName, 'Verificando sessão…');
 
         // A rota do toque atual tem precedência; um pendente de outro curso não pode trocar o ambiente.
         const routeSiteUrl = CoreNavigator.getRouteParam<string>('siteUrl');
@@ -327,7 +327,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
         this.moodleSite.lastError = '';
         this.moodleSite.setIdentityMismatchPending(false);
         this.loading = true;
-        this.moodleSite.showNativeCourseHandoff();
+        this.moodleSite.showNativeCourseHandoff(this.courseName, 'Verificando sessão…');
 
         try {
             const result = await this.moodleSite.ensureSessionAndOpenCourse(
@@ -416,6 +416,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
                 siteUrl: this.moodleSiteUrl,
             });
 
+            this.moodleSite.showNativeCourseHandoff(this.courseName, 'Conectando ao curso…');
             this.phase = 'waiting-browser';
 
             const oauthResult = await this.moodleSite.startSuapOAuthLogin({
@@ -428,7 +429,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
             if (oauthResult === 'switched') {
                 // switch-account: a navegação reinicia esta página com startOAuth.
                 this.phase = 'loading';
-                this.moodleSite.showNativeCourseHandoff();
+                this.moodleSite.showNativeCourseHandoff(this.courseName, 'Retomando disciplina…');
 
                 return;
             }

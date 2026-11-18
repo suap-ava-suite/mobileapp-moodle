@@ -30,6 +30,23 @@
       <div class="sidebar-note">Atualizado em 13/11/2026</div>
     </aside>
     <main id="conteudo" class="content">
+<section class="doc-section searchable" id="course-loading-skeleton-20261117">
+  <p class="eyebrow">AJUSTE VISUAL · 17/11/2026</p>
+  <h2>Skeleton leve durante a abertura do conteúdo do curso</h2>
+  <p><strong>LIDO:</strong> o curso mantém cabeçalho e abas nativos Moodle. A área de conteúdo usa <code>core-loading</code>, cujo <code>aria-busy</code> acompanha a disponibilidade real dos dados.</p>
+  <p><strong>Implementado:</strong> a cobertura inicial e a área de conteúdo usam os mesmos três cartões skeleton estáticos; o círculo giratório foi removido e o shimmer dos placeholders foi desativado nessa área. Nenhum temporizador, segunda WebView ou cabeçalho fictício foi adicionado.</p>
+  <p><strong>MEDIDO localmente:</strong> 2 arquivos de teste focados passaram (2/2) e o SCSS compilou em memória. Na rodada ampla de cursos, 19/20 arquivos passaram; <code>course-session-opening.test.cjs</code> reportou 5 falhas nos contratos P0.4, também registrados como pendentes no histórico. Esse arquivo e a lógica de sessão não foram alterados. <strong>NÃO MEDIDO:</strong> fluidez no Android e tempo de abertura; ainda não houve build/instalação desta alteração no aparelho. O ajuste muda a apresentação enquanto carrega, não comprova redução do tempo de rede ou processamento.</p>
+</section>
+
+<section class="doc-section searchable" id="course-loading-unificado-20261118">
+  <p class="eyebrow">AJUSTE DE FLUXO VISUAL · 18/11/2026</p>
+  <h2>Um handoff contínuo até o conteúdo do curso</h2>
+  <p><strong>LIDO no código:</strong> a abertura tinha o estado ocupado do cartão do Painel, a cobertura Angular <code>ifrn-course-loading</code>, o skeleton de <code>core-loading</code> na área Moodle e um spinner próprio na ponte de autenticação/recuperação. A cobertura era removida após o cabeçalho; em seguida, o skeleton nativo permanecia visível até o conteúdo estar pronto.</p>
+  <p><strong>Alteração:</strong> o mesmo componente de cobertura começa antes de o cartão do Painel ficar ocupado e permanece sobre o conteúdo nativo até a verificação <code>isNativeCourseContentReady</code> confirmar a disciplina solicitada. Na abertura com sessão válida, atualizações de texto (“Preparando”, “Verificando sessão”, “Abrindo” e “Carregando conteúdo”) reutilizam o componente montado. Se faltar sessão Moodle, a escolha “Conectar ambiente” continua como pausa explícita para ação; depois do toque, a autenticação também usa a cobertura compartilhada. Erros continuam disponíveis. O loader Moodle permanece funcional para atualizações internas depois da primeira abertura.</p>
+  <p><strong>Validação local:</strong> 4/4 arquivos de teste focados (handoff, falha de navegação, voltar durante abertura e recuperação OAuth), <code>ngc --noEmit -p tsconfig.app.json</code> e <code>git diff --check</code> passaram. A suíte <code>course-session-opening.test.cjs</code> teve 13/18 casos; os cinco contratos P0.4 continuam falhando e foram preservados. Não foi feito build Cordova nem teste Android. O código não mede nem promete redução do tempo real de rede ou carregamento.</p>
+  <p><strong>NÃO VERIFICADO:</strong> ausência de flashes, uma única camada visual no aparelho, acessibilidade com leitor de tela em execução e retorno visual em Android. Validar em APK: abrir curso com sessão ativa, abrir com conexão Moodle pendente, esperar até o conteúdo, cancelar e voltar ao Painel.</p>
+</section>
+
 <section class="doc-section searchable" id="progresso-ui-limpa-20261117"><p class="eyebrow">AJUSTE DE INTERFACE · 17/11/2026</p><h2>Bloco complementar retirado do curso</h2><p>Removidos apenas o resumo textual de atividades, o botão de atualização, a nota explicativa e o accordion. Barra, porcentagem, estados, atualização automática e modo compacto do Painel preservados.</p><p><strong>MEDIDO na branch de origem:</strong> 63/63 testes relevantes e TypeScript sem emissão aprovados. <strong>NÃO EXECUTADO:</strong> nova APK e validação visual Android. A integração desta correção na release está registrada neste commit. <a href="progresso-academico.html#interface-limpa-20261117">Detalhes</a>.</p></section>
 
 <section class="doc-section searchable" id="progresso-academico-release-20261116">

@@ -25,6 +25,7 @@ import { ChangeDetectionStrategy, Component, Input, signal, type AfterViewInit, 
 export class IfrnCourseLoadingComponent implements AfterViewInit, OnDestroy {
 
     @Input() courseName = '';
+    @Input() message = 'Preparando disciplina…';
     @Input() logoUrl = '';
     @Input() onCancel?: () => void;
     @Input() timingStartedAt = 0;
