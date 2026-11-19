@@ -27,9 +27,21 @@
         <a href="progresso-projeto.html">Progresso</a>
         <a href="continuidade-ia.html">Continuidade entre IAs</a>
       </nav>
-      <div class="sidebar-note">Atualizado em 13/11/2026</div>
+      <div class="sidebar-note">Atualizado em 19/11/2026</div>
     </aside>
     <main id="conteudo" class="content">
+<section class="doc-section searchable" id="curso-bloqueio-p0-20261119">
+  <p class="eyebrow">ABERTURA DE CURSOS · 19/11/2026</p>
+  <h2>Recuperação de tentativa de curso interrompida</h2>
+  <p>Em um Moto G20 com Android 11, o estudante viu “Uma abertura de curso já está em andamento” ao selecionar uma disciplina e voltou a ver a mensagem após renovar o login. A investigação partiu da <code>release/2.0.1</code>, HEAD <code>b9097f633</code>.</p>
+  <p><code>MoodleSiteService.ensureSessionAndOpenCourse()</code> rejeitava um novo destino enquanto <code>sessionOpening</code> estivesse preenchido. A busca de sessão salva podia ficar pendente mesmo depois do cancelamento. Na rota, o prazo de 45 segundos rejeitava o observador, mas a abertura ainda aguardava a navegação. Duas grafias do mesmo ambiente também podiam ser tratadas como destinos diferentes. Os quatro casos foram reproduzidos em teste. A etapa que ficou pendente no aparelho durante o relato ainda precisa de confirmação.</p>
+  <p>A verificação da sessão passou a responder ao cancelamento e tem prazo de 45 segundos. Ativações Moodle já iniciadas continuam na fila nativa, com nova verificação de identidade antes de uma abertura prosseguir. O prazo da rota cancela somente o ID da navegação Angular iniciada para aquele curso. O botão Tentar novamente mantém o ambiente e pode iniciar outra tentativa após o encerramento da anterior.</p>
+  <p>A comparação de conta, ambiente e matrícula continua necessária antes do curso. A cobertura IFRN fica visível até o conteúdo nativo estar pronto e é encerrada em falha ou cancelamento. A barra de progresso acadêmico passou na regressão automatizada. Os contratos de persistência P0.4 continuam pendentes.</p>
+  <p>A APK anterior da rodada de diagnóstico foi empacotada sem o módulo web <code>cordova-plugin-moodleapp</code>. O build isolado da correção passou em TypeScript, Angular e Gradle. A APK debug foi conferida por dentro e inclui a correção, a ponte Cordova, o módulo Moodle e o SQLite. A assinatura coincide com a APK anteriormente conferida no Moto G20.</p>
+  <p><strong>APK de validação.</strong> Pasta temporária <code>ifrn-p0-course-20261119</code>, saída <code>project/platforms/android/app/build/outputs/apk/debug/app-debug.apk</code>. Pacote <code>com.moodle.moodlemobile</code>, versão <code>5.2.1/52100</code>, mínimo API 24 e alvo API 36. SHA-256 <code>C36D17EABB710137F0EF47BE5B1BB8285A1F7B36DB5C63375F3E9EF1CB7D9CFE</code>. Atualização autorizada no Moto G20 com Android 11 em 19/11/2026 às 10h57, por <code>adb install -r</code> e com o mesmo certificado. O SHA-256 do pacote instalado coincide com o da APK.</p>
+  <p><strong>Validação física parcial.</strong> O usuário relatou uma ocorrência da mensagem ao selecionar outra disciplina, seguida de novas tentativas sem a mensagem. Às 11h02, o trecho retido do Logcat registrou quatro conclusões de <code>course-content-ready</code>. As três tentativas com início e fim no trecho levaram de 2,58 a 2,79 s. A ocorrência relatada ficou sem confirmação no registro. Se voltar a aparecer, anotar o horário e o que aconteceu imediatamente antes do clique.</p>
+  <p><a href="testes-e-validacao.html#curso-bloqueio-p0-20261119">Resultados e roteiro de validação Android</a> · <a href="continuidade-ia.html#curso-bloqueio-p0-20261119">Transferência de trabalho</a></p>
+</section>
 <section class="doc-section searchable" id="remocao-vlibras-20261118">
   <p class="eyebrow">ALTERAÇÃO DE ESCOPO · 18/11/2026</p>
   <h2>Integração VLibras removida</h2>

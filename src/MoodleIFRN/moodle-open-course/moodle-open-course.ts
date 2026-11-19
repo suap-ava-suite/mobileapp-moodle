@@ -371,18 +371,18 @@ export class MoodleOpenCoursePage implements OnDestroy {
                     params: {
                         courseId: this.courseId,
                         courseName: this.courseName,
+                        siteUrl: this.moodleSiteUrl,
                         identityOnly: true,
                     },
                 });
             }
         } finally {
-            if (entry !== this.entryVersion) {
-                return;
-            }
-            this.loading = false;
+            if (entry === this.entryVersion) {
+                this.loading = false;
 
-            if (this.moodleSite.lastError && !this.formError) {
-                this.revealBridgeError(this.moodleSite.lastError);
+                if (this.moodleSite.lastError && !this.formError) {
+                    this.revealBridgeError(this.moodleSite.lastError);
+                }
             }
         }
     }

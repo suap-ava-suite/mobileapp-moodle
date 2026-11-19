@@ -229,7 +229,7 @@ test('progressive reveal waits for real section/module nodes to intersect and cl
     assert.equal(intersection.targets.size, 0);
 });
 
-test('the simple handoff yields to the themed course shell while the native content load continues', () => {
+test('the native course keeps the unified handoff from the shell through content readiness', () => {
     const source = fs.readFileSync(path.join(__dirname, '..', 'services_mobile', 'moodle-site.service.ts'), 'utf8');
     const openStart = source.indexOf('    openCourseById(courseId: number, attempt =');
     const performStart = source.indexOf('private async performOpenCourseById', openStart);
@@ -241,6 +241,9 @@ test('the simple handoff yields to the themed course shell while the native cont
     assert.match(source, /'course-shell-ready'/);
     assert.match(source, /'course-content-ready'/);
     assert.match(source, /startNativeCourseProgression\(courseId\)/);
-    assert.match(source, /hideHandoffLoading\(\);[\s\S]{0,400}course-content-ready/);
+    const shellReady = source.indexOf("'course-shell-ready'", performStart);
+    const contentReady = source.indexOf("'course-content-ready'", shellReady);
+    assert.ok(shellReady > performStart && contentReady > shellReady);
+    assert.doesNotMatch(source.slice(shellReady, contentReady), /hideHandoffLoading|hideNativeCourseHandoff/);
     assert.doesNotMatch(source, /attempt\.stage\('course-first-paint'[\s\S]{0,900}?\),\s*5000\)/);
 });

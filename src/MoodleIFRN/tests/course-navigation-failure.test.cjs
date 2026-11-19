@@ -36,7 +36,7 @@ function setup(navigate) {
     const site = { getURL: () => siteUrl, getInfo: () => ({ username: 'synthetic-owner', userid: 7 }) };
     const mocks = {
         '@angular/core': { Injectable: () => target => target },
-        '@angular/router': { NavigationEnd, NavigationError },
+        '@angular/router': { NavigationEnd, NavigationError, NavigationStart: class {} },
         '@services/sites': { CoreSites: { getCurrentSite: () => site,
             getCurrentSiteId: () => 'synthetic-site', isLoggedIn: () => true } },
         '@services/navigator': { CoreNavigator: { getCurrentPath: () => '/login/painel' } },

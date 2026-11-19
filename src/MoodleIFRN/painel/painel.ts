@@ -348,23 +348,27 @@ export class PainelPage implements OnInit, OnDestroy {
         } catch {
             // A preferência de logout web não impede a abertura nativa.
         }
-        let identityOnly = false;
         try {
-            // Recupera também contas persistidas após reiniciar o app. Com sessão
-            // válida, o clique termina no curso nativo sem passar pela ponte OAuth.
-            const result = await this.moodleSite.ensureSessionAndOpenCourse(id, target, courseName);
-            if (result === 'opened' || result === 'cancelled') {
-                this.openingCourse = false;
+            let identityOnly = false;
+            try {
+                // Recupera também contas persistidas após reiniciar o app.
+                const result = await this.moodleSite.ensureSessionAndOpenCourse(id, target, courseName);
+                if (result !== 'need-connect') {
+                    return;
+                }
+            } catch (error) {
+                if (this.destroyed) {
+                    return;
+                }
 
+                // Rede, permissão ou identidade não autorizam iniciar outra autenticação.
+                this.moodleSite.lastError = error instanceof Error ? error.message : 'Não foi possível abrir o curso.';
+                identityOnly = true;
+            }
+            if (this.destroyed) {
                 return;
             }
-        } catch (error) {
-            // Rede, permissão ou identidade não autorizam iniciar outra autenticação.
-            this.moodleSite.lastError = error instanceof Error ? error.message : 'Não foi possível abrir o curso.';
-            identityOnly = true;
-        }
 
-        try {
             // A ponte é aberta diretamente pelo Router: o navigateRoot do
             // NavController pode ficar pendente quando a origem é o iframe
             // do Painel e impedir que o próprio fluxo OAuth comece.

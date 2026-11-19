@@ -29,6 +29,8 @@ export class CourseOpeningAttempt {
     private terminalState?: CourseOpeningTerminalState;
     private terminalError?: Error;
 
+    constructor(private readonly isOwnerCurrent: () => boolean = () => true) {}
+
     get signal(): AbortSignal {
         return this.controller.signal;
     }
@@ -38,7 +40,7 @@ export class CourseOpeningAttempt {
     }
 
     get active(): boolean {
-        return !this.terminalState;
+        return !this.terminalState && this.isOwnerCurrent();
     }
 
     /** A user/back action is the only source of the cancelled state. */
@@ -49,6 +51,9 @@ export class CourseOpeningAttempt {
     assertActive(): void {
         if (this.terminalError) {
             throw this.terminalError;
+        }
+        if (!this.isOwnerCurrent()) {
+            throw new Error('A conta do Painel mudou durante a abertura da disciplina.');
         }
     }
 

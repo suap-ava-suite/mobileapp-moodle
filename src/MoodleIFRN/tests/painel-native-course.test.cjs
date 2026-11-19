@@ -30,10 +30,13 @@ function setup(open = async () => 'opened') {
         },
         removeEventListener: (event, callback) => documentListeners.get(event)?.delete(callback),
     };
-    const service = { ensureSessionAndOpenCourse: async (...args) => {
-        calls.push(args);
-        return open(...args);
-    } };
+    const service = {
+        showNativeCourseHandoff() {},
+        ensureSessionAndOpenCourse: async (...args) => {
+            calls.push(args);
+            return open(...args);
+        },
+    };
     const { PainelPage } = load('src/MoodleIFRN/painel/painel.ts', {
         '@angular/core': { Component: () => c => c, ViewChild: () => () => {},
             inject: id => id === token ? service : id === routerToken ? router : {
@@ -84,6 +87,24 @@ test('duplicate bridge messages cannot replace an in-progress course or environm
     complete('opened');
     await pending;
     assert.equal(s.navigation.length, 0);
+});
+
+test('a destroyed panel cannot open a late course recovery screen', async () => {
+    for (const finishWithError of [false, true]) {
+        let finish;
+        const s = setup(() => new Promise((resolve, reject) => {
+            finish = () => finishWithError ? reject(new Error('late failure')) : resolve('need-connect');
+        }));
+        const opening = s.page.handleOpenCourse(7, 'Course', academic);
+
+        s.page.ngOnDestroy();
+        finish();
+        await opening;
+
+        assert.equal(s.navigation.length, 0);
+        assert.equal(s.page.nativeCourseOpening, false);
+        assert.equal(s.service.lastError, undefined);
+    }
 });
 test('unconfirmed environment never selects a default Moodle', async () => {
     const s = setup();

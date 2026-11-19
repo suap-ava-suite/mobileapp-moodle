@@ -15,6 +15,26 @@
   <div class="layout">
     <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav><a href="index.html">Manual principal</a><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a></nav><div class="sidebar-note">Aprovação automatizada não prova autenticação real.</div></aside>
     <main id="conteudo" class="content">
+<section class="doc-section searchable" id="curso-bloqueio-p0-20261119">
+  <p class="eyebrow">REGRESSÃO DE CURSOS · 19/11/2026</p>
+  <h2>Recuperação do bloqueio de abertura</h2>
+  <p><code>tests/course-opening-recovery.test.cjs</code> carrega o serviço e a ponte reais com Router, sessão e relógio controlados. Reproduz a consulta pendente, o cancelamento, o prazo da rota e a equivalência de URL. Cobre a nova tentativa imediata, o Voltar, a troca de disciplina, A → B → A e o isolamento de retornos anteriores.</p>
+  <div class="command-card"><pre><code>node --test src/MoodleIFRN/tests/course-opening-recovery.test.cjs src/MoodleIFRN/tests/course-native-route.test.cjs src/MoodleIFRN/tests/painel-native-course.test.cjs
+node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json --incremental false
+git diff --check</code></pre><button class="copy-button" type="button">Copiar comando</button></div>
+  <p><strong>Regressão focal.</strong> 133 de 133 testes aprovados, incluindo ponte OAuth, sessões salvas e ausentes, navegação, carregamento, troca de conta e progresso acadêmico. Na suíte Node de primeiro nível, a linha de base no sandbox tinha 405 de 419 aprovados. Após a correção, 425 de 433 passaram no mesmo ambiente. Fora do sandbox, com as leituras do esbuild disponíveis, a rodada ampla passou em 431 de 437.</p>
+  <p><strong>Pendências.</strong> Cinco contratos P0.4 preservados continuam reprovados. A falha restante na rodada ampla foi o teste de descoberta do worktree Cordova, pois o pacote local <code>node_modules/cordova-plugin-moodleapp</code> está ausente naquele checkout. A compilação da APK usa dependências e plataforma preparadas separadamente. O cenário JVM isolado de persistência ficou fora desta rodada.</p>
+  <p><strong>Verificação de build.</strong> TypeScript e <code>git diff --check</code> aprovados. Build web e <code>:app:assembleDebug</code> concluídos em cópia temporária. O Gradle precisou consultar os repositórios configurados para resolver o índice AndroidX ausente no cache offline. A APK contém a correção, <code>cordova.js</code> e os registros dos plugins Moodle e SQLite. O ADB confirmou a atualização no Moto G20 e o SHA-256 instalado coincide com o artefato.</p>
+  <p><strong>Rodada no aparelho.</strong> Quatro aberturas chegaram a <code>course-content-ready</code>. O trecho disponível do Logcat não registrou a ocorrência relatada. O resultado confirma aberturas posteriores e mantém a ocorrência isolada em investigação.</p>
+  <h3>Validação no Moto G20</h3>
+  <ol>
+    <li>Conferir SHA-256, pacote e certificado antes da atualização autorizada. Preservar os dados no dispositivo.</li>
+    <li>Com a sessão existente, abrir a mesma disciplina do relato. Conferir a cobertura IFRN e o conteúdo nativo, inclusive a barra de progresso quando o curso oferecer conclusão.</li>
+    <li>Voltar ao Painel, reabrir a disciplina e abrir outra. Durante uma abertura lenta, usar Voltar ou Cancelar e repetir. Se houver erro, usar Tentar novamente na própria tela e verificar o destino.</li>
+    <li>Registrar nome da etapa, duração e resultado pelo diagnóstico <code>[IFRN-COURSE-OPEN]</code>. Usar só contas de teste autorizadas para repetir a validação com outra identidade.</li>
+  </ol>
+  <p><a href="progresso-projeto.html#curso-bloqueio-p0-20261119">Causa reproduzida e estado da correção</a>.</p>
+</section>
 <section class="doc-section searchable" id="progresso-academico-release-20261116">
 <p class="eyebrow">TESTES DA FUNCIONALIDADE · 16/11/2026</p><h2>Resultado da integração acadêmica</h2>
 <p>Integrados <code>30df49c2f</code> como <code>619215960</code>: 46 testes de <code>tests/academic-progress.test.cjs</code>, <code>tsc --noEmit</code>, <code>ngc --noEmit</code> aprovados. Contrato JVM separado: 1/1.</p>

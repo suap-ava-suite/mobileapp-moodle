@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/** Serializes non-cancellable Moodle callbacks without changing the Moodle persistence layer. */
+/** Serializes non-cancellable changes to the native Moodle session. */
 export class NativeCourseLoginQueue {
 
     private settled: Promise<void> = Promise.resolve();
 
-    run(action: () => Promise<void>, assertCurrent: () => void): Promise<void> {
+    run<T>(action: () => Promise<T>, assertCurrent: () => void): Promise<T> {
         const task = this.settled.then(async () => {
             assertCurrent();
-            await action();
+            const result = await action();
             assertCurrent();
 
-            return undefined;
+            return result;
         });
         // Failure/cancellation cannot poison the lane or release it before native work settles.
-        this.settled = task.catch(() => undefined);
+        this.settled = task.then(() => undefined, () => undefined);
 
         return task;
     }

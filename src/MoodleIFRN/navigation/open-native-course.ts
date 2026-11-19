@@ -14,6 +14,7 @@
 
 import { MAIN_MENU_HOME_PAGE_NAME } from '@features/mainmenu/constants';
 import { CoreNavigator } from '@services/navigator';
+import { NavController } from '@singletons';
 
 /**
  * Entra na rota nativa do curso sem depender da seleção automática do Dashboard.
@@ -24,11 +25,14 @@ export async function openNativeCourse(courseId: number): Promise<void> {
     // O painel IFRN vive fora de /main e cada retorno a ele pode deixar uma
     // página de curso antiga na pilha Ionic da aba. Sempre abrir a rota nativa
     // como raiz evita que Voltar reabra o curso anterior.
-    const navigated = await CoreNavigator.navigate(`/main/${MAIN_MENU_HOME_PAGE_NAME}/course/${courseId}`, {
-        animated: false,
-        reset: true,
-    });
-    if (!navigated) {
+    const path = `/main/${MAIN_MENU_HOME_PAGE_NAME}/course/${courseId}`;
+    // Await the Angular route itself. CoreNavigator also waits for the WebView to exit fullscreen.
+    const navigation = NavController.navigateRoot([path], { animated: false });
+    if (document.fullscreenElement) {
+        void document.exitFullscreen().catch(() => undefined);
+    }
+    const navigated = await navigation;
+    if (!navigated && !CoreNavigator.isCurrent(path)) {
         throw new Error('Não foi possível navegar para o curso. Tente novamente pelo Painel.');
     }
 }

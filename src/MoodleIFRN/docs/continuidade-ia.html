@@ -15,6 +15,19 @@
   <div class="layout">
     <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav><a href="index.html">Manual principal</a><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a></nav><div class="sidebar-note">Leia o estado real antes de continuar.</div></aside>
     <main id="conteudo" class="content">
+<section class="doc-section searchable" id="curso-bloqueio-p0-20261119">
+  <p class="eyebrow">TRANSFERÊNCIA · 19/11/2026</p>
+  <h2>Abertura de curso, cancelamento e nova tentativa</h2>
+  <p>A correção foi preparada sobre a <code>release/2.0.1</code>, HEAD <code>b9097f633</code>. As alterações locais da tarefa ficam em <code>src/MoodleIFRN/</code>. Consulte <code>git worktree list</code> para identificar o checkout da release antes de compilar.</p>
+  <ul>
+    <li><code>services_mobile/moodle-site.service.ts</code> e <code>navigation/course-opening-attempt.ts</code> coordenam a espera e validam a geração da conta. O bloqueio <code>sessionOpening</code> pertence à tentativa que o criou.</li>
+    <li><code>navigation/open-native-course.ts</code> abre a rota Ionic como raiz e aguarda o Router. O serviço guarda o ID da rota para cancelar apenas aquela navegação se ela ainda estiver pendente.</li>
+    <li><code>navigation/native-course-login-queue.ts</code> mantém a serialização de alterações nativas já enviadas. Se uma ativação ainda estiver pendente, uma nova tentativa pode encerrar sua espera no prazo e tentar novamente quando a operação nativa concluir.</li>
+    <li><code>moodle-open-course/moodle-open-course.ts</code> preserva curso e ambiente na recuperação. <code>painel/painel.ts</code> evita que uma página destruída abra uma recuperação atrasada.</li>
+  </ul>
+  <p>Preserve o fluxo oficial SUAP, a verificação de identidade Moodle, a cobertura até conteúdo pronto e os contratos P0.4. Após a atualização no Moto G20, foram confirmadas quatro conclusões de abertura. O usuário relatou uma ocorrência isolada da mensagem, ausente no trecho disponível do Logcat. A validação física é parcial. Se a mensagem reaparecer, registre o horário e a sequência entre a abertura anterior, o retorno ao Painel e o novo clique. Use apenas logs sanitizados. <a href="testes-e-validacao.html#curso-bloqueio-p0-20261119">Roteiro e evidências</a>.</p>
+  <p>Os 133 testes focados e o TypeScript passaram. O build debug reaproveitou uma plataforma Cordova Android 15.1.0 já preparada com os plugins da release, com recursos web recompilados para esta correção. O SHA-256 e a identificação do pacote estão no <a href="progresso-projeto.html#curso-bloqueio-p0-20261119">progresso da tarefa</a>.</p>
+</section>
 <section class="doc-section searchable" id="remocao-vlibras-20261118">
   <p class="eyebrow">TRANSFERÊNCIA ATUAL · 18/11/2026</p>
   <h2>VLibras removido a pedido do usuário</h2>
