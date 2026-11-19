@@ -67,6 +67,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
     private fallbackLifecycleActive = false;
     private skipNextIonicEntry = false;
     private browserWaitTimer?: ReturnType<typeof setTimeout>;
+    private courseOpeningOrigin?: AbortController;
 
     /**
      * Algumas navegações vindas do iframe do Painel montam a rota sem repassar
@@ -93,12 +94,14 @@ export class MoodleOpenCoursePage implements OnDestroy {
         // Invalida também awaits ainda pendentes: sair da ponte não pode
         // disparar OAuth ou recolocar a UI de erro depois em outra tela.
         this.entryVersion++;
+        this.courseOpeningOrigin?.abort();
         this.skipNextIonicEntry = false;
         this.clearBrowserWait();
     }
 
     ngOnDestroy(): void {
         this.entryVersion++;
+        this.courseOpeningOrigin?.abort();
         this.clearBrowserWait();
     }
 
@@ -173,6 +176,9 @@ export class MoodleOpenCoursePage implements OnDestroy {
         this.clearBrowserWait();
         // O Ionic mantém a ponte em cache: cada toque precisa reler curso e ambiente.
         const entry = ++this.entryVersion;
+        this.courseOpeningOrigin?.abort();
+        const origin = new AbortController();
+        this.courseOpeningOrigin = origin;
         this.initStarted = false;
         this.loading = false;
         this.formError = '';
@@ -231,7 +237,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
         if (!identityOnly) {
             this.loading = true;
             try {
-                if (await this.moodleSite.resumePendingOAuthCourse()) {
+                if (await this.moodleSite.resumePendingOAuthCourse(origin.signal)) {
                     if (entry !== this.entryVersion) {
                         return;
                     }
@@ -297,6 +303,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
     cancelOpening(): void {
         this.clearBrowserWait();
         this.entryVersion++;
+        this.courseOpeningOrigin?.abort();
         this.loading = false;
         this.moodleSite.dismissCourseRecovery();
         this.moodleSite.hideNativeCourseHandoff();
@@ -317,10 +324,11 @@ export class MoodleOpenCoursePage implements OnDestroy {
      * Verifica a sessão antes de oferecer ou iniciar uma conexão solicitada pelo usuário.
      */
     async tryOpenOrPromptConnect(connectIfNeeded = false): Promise<void> {
-        if (this.loading || !this.courseId) {
+        if (this.loading || !this.courseId || this.courseOpeningOrigin?.signal.aborted) {
             return;
         }
         const entry = this.entryVersion;
+        const origin = this.courseOpeningOrigin ??= new AbortController();
 
         this.formError = '';
         this.phase = 'loading';
@@ -334,6 +342,7 @@ export class MoodleOpenCoursePage implements OnDestroy {
                 this.courseId,
                 this.moodleSiteUrl,
                 this.courseName,
+                origin.signal,
             );
             if (entry !== this.entryVersion) {
                 return;

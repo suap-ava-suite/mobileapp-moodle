@@ -23,6 +23,8 @@ const scripts = Object.fromEntries([
     'navigation/open-native-course',
     'services_mobile/moodle-site.service',
     'moodle-open-course/moodle-open-course',
+    'mobilemoodle/core_mobile/course-target',
+    'painel/painel',
 ].map(file => [file, compile(file)]));
 
 function deferred() {
@@ -43,7 +45,7 @@ function observe(promise) {
     return result;
 }
 
-function setup({ saved = true } = {}) {
+function setup({ saved = true, navigationShell = false } = {}) {
     const values = new Map([['ifrn_painel_owner', 'student-a'], ['ifrn_username', 'student-a'], [epochKey, '1']]);
     const timers = new Map();
     const routeListeners = new Set();
@@ -52,6 +54,7 @@ function setup({ saved = true } = {}) {
     const overlay = { visible: false, messages: [] };
     const classes = new Set();
     let now = 0;
+    let nextNavigationId = 0;
     let courseNavigation;
     let path = painel;
     let epoch = 1;
@@ -63,16 +66,18 @@ function setup({ saved = true } = {}) {
         return id;
     };
     const clearTimeout = id => timers.delete(id);
-    class NavigationStart {
+    class RouterEvent {
         constructor(id, url) { this.id = id; this.url = url; }
     }
-    class NavigationEnd extends NavigationStart {
+    class NavigationStart extends RouterEvent {}
+    class NavigationEnd extends RouterEvent {
         constructor(id, url) { super(id, url); this.urlAfterRedirects = url; }
     }
-    class NavigationError extends NavigationStart {
+    class NavigationError extends RouterEvent {
         constructor(id, url, error) { super(id, url); this.error = error; }
     }
-    class NavigationCancel extends NavigationStart {}
+    class NavigationCancel extends RouterEvent {}
+    class NavigationSkipped extends RouterEvent {}
 
     const emit = event => [...routeListeners].forEach(listener => listener(event));
     const router = {
@@ -83,36 +88,54 @@ function setup({ saved = true } = {}) {
             },
         },
         currentNavigation: () => courseNavigation ?? null,
+        navigate: ([url]) => navigator.navigate(url),
     };
-    const startCourseRoute = url => {
-        const gate = deferred();
+    const beginRoute = (url, extras, gate) => {
         const navigation = {
-            id: routes.length + 1,
+            id: ++nextNavigationId,
+            extras,
             abort() {
                 if (courseNavigation === navigation) {
-                    courseNavigation = undefined;
                     emit(new NavigationCancel(navigation.id, url));
+                    courseNavigation = undefined;
                     gate.resolve(false);
                 }
             },
-            finish(error) {
+            redirect(target) {
+                assert.equal(courseNavigation, navigation);
+                emit(new NavigationCancel(navigation.id, url));
+                // Angular carries its original promise and extras.info over to a redirect.
+                return beginRoute(target, extras, gate);
+            },
+            finish(error, skipped = false) {
                 if (courseNavigation !== navigation) {
                     return;
                 }
-                courseNavigation = undefined;
                 if (error) {
                     emit(new NavigationError(navigation.id, url, error));
                     gate.reject(error);
-                    return;
+                } else if (skipped) {
+                    emit(new NavigationSkipped(navigation.id, url));
+                    gate.resolve(false);
+                } else {
+                    path = url;
+                    emit(new NavigationEnd(navigation.id, url));
+                    gate.resolve(true);
                 }
-                path = url;
-                emit(new NavigationEnd(navigation.id, url));
-                gate.resolve(true);
+                if (courseNavigation === navigation) {
+                    courseNavigation = undefined;
+                }
             },
         };
         routes.push(navigation);
         courseNavigation = navigation;
         emit(new NavigationStart(navigation.id, url));
+
+        return navigation;
+    };
+    const startCourseRoute = (url, extras = {}) => {
+        const gate = deferred();
+        beginRoute(url, extras, gate);
 
         return gate.promise;
     };
@@ -125,6 +148,7 @@ function setup({ saved = true } = {}) {
             }
             courseNavigation?.abort();
             path = url;
+            emit(new NavigationEnd(++nextNavigationId, url));
             return true;
         },
     };
@@ -146,12 +170,15 @@ function setup({ saved = true } = {}) {
         getSite: async id => stored.get(id),
         async loadSite(id) { loads.push(id); current = stored.get(id); return !!current; },
     };
+    const courses = { getUserCourses: async () => [{ id: courseId }, { id: otherCourseId }] };
     const sandbox = {
-        URL, AbortController, setTimeout, clearTimeout,
+        URL, Error, AbortController, setTimeout, clearTimeout,
         performance: { now: () => now },
         console: { log() {}, info() {}, warn() {}, error() {} },
-        window: { setTimeout, clearTimeout },
+        window: { setTimeout, clearTimeout, addEventListener() {}, removeEventListener() {} },
         document: {
+            addEventListener() {},
+            removeEventListener() {},
             documentElement: {
                 classList: { add: name => classes.add(name), remove: name => classes.delete(name) },
             },
@@ -172,20 +199,21 @@ function setup({ saved = true } = {}) {
     const nativeRoute = load('navigation/open-native-course', {
         '@features/mainmenu/constants': { MAIN_MENU_HOME_PAGE_NAME: 'home' },
         '@services/navigator': { CoreNavigator: navigator },
-        '@singletons': { NavController: { navigateRoot: url => startCourseRoute([url].flat()[0]) } },
+        '@singletons': { NavController: { navigateRoot: ([url], extras) => startCourseRoute(url, extras) } },
     });
     const module = load('services_mobile/moodle-site.service', {
         '@angular/core': { Injectable: () => type => type },
-        '@angular/router': { NavigationStart, NavigationEnd, NavigationError, NavigationCancel },
+        '@angular/router': { NavigationStart, NavigationEnd, NavigationError, NavigationCancel, NavigationSkipped },
         '@static/url': { CoreUrl: { sameDomainAndPath: (a, b) => a === b } },
         '@services/sites': { CoreSites: sites },
         '@services/navigator': { CoreNavigator: navigator },
         '@services/config': { CoreConfig: { delete: async () => {} } },
-        '@features/courses/services/courses': { CoreCourses: { getUserCourses: async () => [{ id: courseId }, { id: otherCourseId }] } },
+        '@features/courses/services/courses': { CoreCourses: courses },
         '../mobilemoodle/core_mobile/course-session-flags': { COURSE_SESSION_EPOCH_KEY: epochKey },
         '../navigation/course-opening-attempt': load('navigation/course-opening-attempt'),
         '../navigation/native-course-login-queue': load('navigation/native-course-login-queue'),
         '../navigation/open-native-course': nativeRoute,
+        '@/MoodleIFRN/navigation/navigation-policy': { isNativeMoodleLanding: () => false },
         './ifrn-language': { useIfrnBrazilianPortuguese: async () => {} },
         '@/MoodleIFRN/navigation/handoff-loading': {
             showHandoffLoading(_ref, _injector, { message }) {
@@ -193,6 +221,7 @@ function setup({ saved = true } = {}) {
                 overlay.messages.push(message);
             },
             hideHandoffLoading() { overlay.visible = false; },
+            shouldShowCourseHandoffOnBoot: () => false,
         },
     });
     const service = Object.assign(Object.create(module.MoodleSiteService.prototype), {
@@ -218,9 +247,28 @@ function setup({ saved = true } = {}) {
     });
     const page = new MoodleOpenCoursePage();
     Object.assign(page, { courseId, moodleSiteUrl: siteUrl });
+    const routerToken = Symbol();
+    const { PainelPage } = load('painel/painel', {
+        '@angular/core': {
+            Component: () => type => type,
+            ViewChild: () => () => {},
+            inject: type => type === module.MoodleSiteService
+                ? service
+                : (type === routerToken ? router : { stopProfileRefresh() {}, close() {} }),
+        },
+        '@angular/router': { Router: routerToken },
+        '@/MoodleIFRN/services_mobile/moodle-site.service': module,
+        '@services/navigator': { CoreNavigator: navigator },
+        '../mobilemoodle/core_mobile/course-target': load('mobilemoodle/core_mobile/course-target'),
+    });
+    const panel = new PainelPage();
+    if (navigationShell) {
+        delete service.markCourseOriginFromPainel;
+        service.initializeIfrnNavigationShell();
+    }
 
     return {
-        service, page, sites, values, routes, loads, overlay, classes, routeListeners, timers, navigator,
+        service, page, panel, sites, courses, values, routes, loads, overlay, classes, routeListeners, timers, navigator,
         open: (id = courseId, environment = siteUrl) => service.ensureSessionAndOpenCourse(id, environment),
         async advance(ms) {
             now += ms;
@@ -500,4 +548,198 @@ test('a previous OAuth bridge finishing cannot mark a newer return as idle', asy
     second.resolve();
     assert.equal(await currentReturn, true);
     assert.equal(s.service.isNativeCourseHandoffActive(), false);
+});
+
+test('a timeout cancels the redirected navigation before reauthentication and a new course', async () => {
+    const s = setup();
+    const first = observe(s.open());
+    await tick();
+    const redirect = s.routes[0].redirect(bridge);
+    await s.advance(45000);
+    assert.match(first.error?.message || '', /não confirmou a rota nativa/);
+    assert.equal(s.service.isNativeCourseHandoffActive(), false);
+    assert.equal(s.overlay.visible, false);
+
+    await s.service.returnToIfrnLogin();
+    s.changeAccount('student-a');
+    const second = observe(s.open(otherCourseId));
+    await tick();
+    assert.equal(s.routes.length, 3);
+    redirect.finish();
+    assert.equal(s.overlay.visible, true);
+    s.routes[2].finish();
+    await tick();
+    assert.equal(second.value, 'opened');
+});
+
+test('a route that ends at the recovery page reports the failure without waiting for a course timeout', async () => {
+    const s = setup();
+    const first = observe(s.open());
+    await tick();
+    s.routes[0].redirect(bridge).finish();
+    await tick();
+    assert.match(first.error?.message || '', /não chegou à disciplina solicitada/);
+    assert.equal(s.overlay.visible, false);
+    assert.equal(s.timers.size, 0);
+    assert.equal(s.routeListeners.size, 0);
+});
+
+test('a confirmed return to the panel retires the previous course even if its content is pending', async () => {
+    const s = setup({ navigationShell: true });
+    const oldContent = deferred();
+    s.service.waitForNativeCourseContent = () => oldContent.promise;
+    const first = observe(s.open());
+    await tick();
+    s.routes[0].finish();
+    await tick();
+    assert.equal(s.overlay.visible, true);
+
+    // This is a completed Router transition, not the IFRN toolbar handler.
+    await s.navigator.navigate(painel);
+    s.service.waitForNativeCourseContent = async () => {};
+    const second = observe(s.open(otherCourseId));
+    await tick();
+    assert.equal(first.value, 'cancelled', second.error?.message);
+    assert.equal(s.routes.length, 2);
+    oldContent.resolve();
+    await tick();
+    assert.equal(s.overlay.visible, true);
+    s.routes[1].finish();
+    await tick();
+    assert.equal(second.value, 'opened');
+    assert.equal(s.overlay.visible, false);
+    assert.equal(s.service.lastSummary.openedCourseId, otherCourseId);
+});
+
+test('destroying the initiating panel during session lookup cancels before Moodle can activate the old course', async () => {
+    const s = setup({ saved: false });
+    const read = deferred();
+    const getSites = s.sites.getSites;
+    s.sites.getSites = () => read.promise;
+    const first = observe(s.panel.handleOpenCourse(courseId, 'Synthetic course', siteUrl));
+    await tick();
+    s.panel.ngOnDestroy();
+    await tick();
+    assert.ok('value' in first, 'the abandoned panel must not keep the caller pending');
+    assert.equal(s.overlay.visible, false);
+    assert.equal(s.service.getPendingOpenCourse(), null);
+    s.sites.getSites = getSites;
+    const second = observe(s.open(otherCourseId));
+    await tick();
+    read.resolve([{ id: 'student-a', siteUrl }]);
+    await tick();
+    assert.equal(s.routes.length, 1);
+    assert.equal(s.overlay.visible, true);
+    s.routes[0].finish();
+    await tick();
+    assert.equal(second.value, 'opened');
+    assert.deepEqual(s.loads, ['student-a']);
+});
+
+test('destroying the recovery page during a session read never sends stale native navigation', async () => {
+    const s = setup({ saved: false });
+    const read = deferred();
+    s.sites.getSites = () => read.promise;
+    await s.navigator.navigate(bridge);
+    const first = observe(s.page.tryOpenOrPromptConnect(false));
+    await tick();
+    s.page.ngOnDestroy();
+    read.resolve([{ id: 'student-a', siteUrl }]);
+    await tick();
+    assert.equal(s.routes.length, 0);
+    assert.ok('value' in first);
+    assert.equal(s.overlay.visible, false);
+    assert.equal(s.service.isNativeCourseHandoffActive(), false);
+});
+
+test('a completed opening releases its slot for another course and a return to the first', async () => {
+    const s = setup({ navigationShell: true });
+    const selections = [courseId, otherCourseId, courseId];
+    for (const [index, id] of selections.entries()) {
+        const opening = s.open(id);
+        await tick();
+        assert.equal(s.routes.length, index + 1);
+        s.routes[index].finish();
+        assert.equal(await opening, 'opened');
+        assert.equal(s.service.isNativeCourseHandoffActive(), false);
+        assert.equal(s.overlay.visible, false);
+        await s.navigator.navigate(painel);
+    }
+});
+
+test('a failed stored session read releases the slot and Retry opens after the read recovers', async () => {
+    const s = setup({ saved: false });
+    const getSites = s.sites.getSites;
+    const failure = new Error('synthetic session read failed');
+    s.sites.getSites = async () => { throw failure; };
+    await assert.rejects(s.open(), failure);
+    assert.equal(s.service.isNativeCourseHandoffActive(), false);
+    assert.equal(s.overlay.visible, false);
+
+    s.sites.getSites = getSites;
+    const retry = s.open();
+    await tick();
+    assert.equal(s.routes.length, 1);
+    s.routes[0].finish();
+    assert.equal(await retry, 'opened');
+});
+
+test('an unexpected error before native navigation releases the overlay and allows another course', async () => {
+    const s = setup();
+    const getUserCourses = s.courses.getUserCourses;
+    const failure = new Error('synthetic enrollment exception');
+    s.courses.getUserCourses = () => { throw failure; };
+    await assert.rejects(s.open(), failure);
+    assert.equal(s.overlay.visible, false);
+    assert.equal(s.service.isNativeCourseHandoffActive(), false);
+    assert.equal(s.routes.length, 0);
+
+    s.courses.getUserCourses = getUserCourses;
+    const opening = s.open(otherCourseId);
+    await tick();
+    s.routes[0].finish();
+    assert.equal(await opening, 'opened');
+    assert.equal(s.service.lastSummary.openedCourseId, otherCourseId);
+    assert.equal(s.overlay.visible, false);
+});
+
+test('handing navigation to the Router keeps the cover when the initiating panel is destroyed', async () => {
+    const s = setup({ navigationShell: true });
+    const first = s.panel.handleOpenCourse(courseId, 'Synthetic course', siteUrl);
+    await tick();
+    assert.equal(s.routes.length, 1);
+    s.panel.ngOnDestroy();
+    assert.equal(s.overlay.visible, true);
+    s.routes[0].finish();
+    await first;
+    assert.equal(s.service.lastSummary.openedCourseId, courseId);
+    assert.equal(s.overlay.visible, false);
+});
+
+test('a content failure after a valid handoff still opens recovery from the cached panel', async () => {
+    const s = setup();
+    const failure = new Error('synthetic content failure');
+    s.service.waitForNativeCourseContent = async () => { throw failure; };
+    const opening = s.panel.handleOpenCourse(courseId, 'Synthetic course', siteUrl);
+    await tick();
+    s.panel.ionViewWillLeave();
+    s.routes[0].finish();
+    await opening;
+    assert.equal(s.navigator.getCurrentPath(), bridge);
+    assert.equal(s.service.lastError, failure.message);
+    assert.equal(s.overlay.visible, false);
+    assert.equal(s.service.isNativeCourseHandoffActive(), false);
+});
+
+test('the Router can skip an already active course without a timeout or a duplicate overlay', async () => {
+    const s = setup();
+    const native = s.navigator.navigate(`/main/home/course/${courseId}`);
+    s.routes[0].finish();
+    await native;
+    const reopening = s.open();
+    await tick();
+    s.routes[1].finish(undefined, true);
+    assert.equal(await reopening, 'opened');
+    assert.equal(s.timers.size, 0);
+    assert.equal(s.overlay.visible, false);
 });

@@ -209,6 +209,52 @@ test('cancel during launch preparation prevents opening the browser or accepting
     assert.equal(state().browserUrl,undefined);assert.equal(state().callbackUrl,undefined);
 });
 
+test('a stale OAuth callback cannot reach the native handler after another account starts', async () => {
+    const forwarded = [];
+    let nativeOwner = 'synthetic-account-a';
+    const siteUrl = 'https://academico.ava.ifrn.edu.br';
+    const { MoodleSiteService, state } = loadService({
+        coreSites: {
+            isLoggedIn: () => true,
+            getCurrentSite: () => ({
+                getURL: () => siteUrl,
+                getInfo: () => ({ username: nativeOwner }),
+                isLoggedOut: () => false,
+            }),
+        },
+        async coreHandler(url) {
+            forwarded.push(url);
+            nativeOwner = 'synthetic-account-b';
+        },
+    });
+    const service = Object.create(MoodleSiteService.prototype);
+    service.courseOAuthBrowserSubscriptions = [];
+    const writeOwner = (owner, epoch) => {
+        state().session.set('ifrn_painel_owner', owner);
+        state().session.set('ifrn_username', owner);
+        state().session.set('ifrn_moodle_session_epoch', epoch);
+    };
+    writeOwner('synthetic-account-a', 'synthetic-epoch-a');
+    const first = service.openCourseOAuthInApp({ siteUrl, config: {} }).catch(error => error);
+    await new Promise(resolve => setImmediate(resolve));
+    const staleCallback = state().subscriptions.get('customscheme');
+    assert.equal(typeof staleCallback, 'function');
+    service.cancelCourseOAuthBrowser();
+    writeOwner('synthetic-account-b', 'synthetic-epoch-b');
+
+    const second = service.openCourseOAuthInApp({ siteUrl, config: {} });
+    await new Promise(resolve => setImmediate(resolve));
+    const currentCallback = state().subscriptions.get('customscheme');
+    assert.notEqual(currentCallback, staleCallback);
+    staleCallback({ url: 'moodlemobile://token=synthetic-obsolete' });
+    currentCallback({ url: 'moodlemobile://token=synthetic-current' });
+    await second;
+    assert.match((await first).message, /cancelada/);
+    assert.deepEqual(forwarded, ['moodlemobile://token=synthetic-current']);
+    assert.equal(nativeOwner, 'synthetic-account-b');
+    assert.equal(service.hasMatchingPresencialSession(siteUrl), true);
+});
+
 test('course SSO waits for the profile InAppBrowser lease and releases it after callback', async () => {
     const refresh = deferred();
     let released = 0;

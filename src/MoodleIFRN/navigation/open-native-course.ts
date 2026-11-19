@@ -20,14 +20,15 @@ import { NavController } from '@singletons';
  * Entra na rota nativa do curso sem depender da seleção automática do Dashboard.
  *
  * @param courseId ID do curso.
+ * @param navigationOwner Identificador transitório da tentativa no Router.
  */
-export async function openNativeCourse(courseId: number): Promise<void> {
+export async function openNativeCourse(courseId: number, navigationOwner?: symbol): Promise<void> {
     // O painel IFRN vive fora de /main e cada retorno a ele pode deixar uma
     // página de curso antiga na pilha Ionic da aba. Sempre abrir a rota nativa
     // como raiz evita que Voltar reabra o curso anterior.
     const path = `/main/${MAIN_MENU_HOME_PAGE_NAME}/course/${courseId}`;
     // Await the Angular route itself. CoreNavigator also waits for the WebView to exit fullscreen.
-    const navigation = NavController.navigateRoot([path], { animated: false });
+    const navigation = NavController.navigateRoot([path], { animated: false, info: navigationOwner });
     if (document.fullscreenElement) {
         void document.exitFullscreen().catch(() => undefined);
     }

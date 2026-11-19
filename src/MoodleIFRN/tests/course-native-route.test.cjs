@@ -61,6 +61,16 @@ test('Ionic skipping the already current course route remains a successful navig
     await s.open(4022);
     assert.equal(s.navigation.length, 1);
 });
+
+test('passes only transient ownership metadata for an opening attempt', async () => {
+    const s = setup();
+    const owner = Symbol();
+    await s.open(4022, owner);
+    const [, extras] = s.navigation[0];
+    assert.equal(extras.info, owner);
+    assert.equal(extras.state, undefined);
+    assert.equal(extras.queryParams, undefined);
+});
 test('rejected native route is reported instead of being treated as an opened course', async () => {
     const s = setup(false);
 

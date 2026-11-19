@@ -23,25 +23,29 @@ function setup(navigate) {
     let readinessCalls = 0;
     let clearedOrigins = 0;
     const handoffMessages = [];
+    const nativeNavigation = { id: 1, extras: {}, abort() {} };
     class NavigationEnd {
-        constructor(url) { this.url = url; this.urlAfterRedirects = url; }
+        constructor(url, id) { this.url = url; this.urlAfterRedirects = url; this.id = id; }
     }
     class NavigationError {
-        constructor(url, error) { this.url = url; this.error = error; }
+        constructor(url, error) { this.url = url; this.error = error; this.id = nativeNavigation.id; }
     }
     const router = { events: { subscribe(callback) {
         listener = callback;
         return { unsubscribe() { disposed++; listener = undefined; } };
-    } } };
+    } }, currentNavigation: () => nativeNavigation };
     const site = { getURL: () => siteUrl, getInfo: () => ({ username: 'synthetic-owner', userid: 7 }) };
     const mocks = {
         '@angular/core': { Injectable: () => target => target },
-        '@angular/router': { NavigationEnd, NavigationError, NavigationStart: class {} },
+        '@angular/router': { NavigationEnd, NavigationError, NavigationSkipped: class {} },
         '@services/sites': { CoreSites: { getCurrentSite: () => site,
             getCurrentSiteId: () => 'synthetic-site', isLoggedIn: () => true } },
         '@services/navigator': { CoreNavigator: { getCurrentPath: () => '/login/painel' } },
         '@features/courses/services/courses': { CoreCourses: { getUserCourses: async () => [{ id: courseId }] } },
-        '../navigation/open-native-course': { openNativeCourse: (...args) => navigate(...args) },
+        '../navigation/open-native-course': { openNativeCourse: (id, info) => {
+            nativeNavigation.extras.info = info;
+            return navigate(id);
+        } },
         './ifrn-language': { useIfrnBrazilianPortuguese: async () => {} },
         '@/MoodleIFRN/navigation/handoff-loading': {
             showHandoffLoading(_applicationRef, _injector, options) { handoffMessages.push(options.message); },
@@ -75,7 +79,7 @@ function setup(navigate) {
     });
     return {
         service,
-        emitEnd: id => listener?.(new NavigationEnd(`/main/home/course/${id}`)),
+        emitEnd: id => listener?.(new NavigationEnd(`/main/home/course/${id}`, id === courseId ? nativeNavigation.id : 2)),
         emitError: error => listener?.(new NavigationError(`/main/home/course/${courseId}`, error)),
         expireRoute: () => [...timers.values()].forEach(callback => callback()),
         state: () => ({ timers: timers.size, disposed, readinessCalls, clearedOrigins, handoffMessages }),

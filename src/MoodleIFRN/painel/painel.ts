@@ -19,7 +19,7 @@ import { CoreNavigator } from '@services/navigator';
 import { CorePlatform } from '@services/platform';
 import { AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
-import { MoodleSiteService } from '@/MoodleIFRN/services_mobile/moodle-site.service';
+import { isCourseIndexPath, MoodleSiteService } from '@/MoodleIFRN/services_mobile/moodle-site.service';
 import { resolveCourseSite } from '../mobilemoodle/core_mobile/course-target';
 import { CoreAlerts } from '@services/overlays/alerts';
 import { CoreLoadings } from '@services/overlays/loadings';
@@ -57,6 +57,7 @@ export class PainelPage implements OnInit, OnDestroy {
     private readonly moodleSite = inject(MoodleSiteService);
     private readonly suapProfileBrowser = inject(SuapProfileBrowserService);
     private openingCourse = false;
+    private courseOpeningOrigin?: AbortController;
     private logoutInProgress = false;
     private bridgeApi?: MoodleIfrnBridgeApi;
     private painelStartedAt = 0;
@@ -178,11 +179,16 @@ export class PainelPage implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.destroyed = true;
+        this.courseOpeningOrigin?.abort();
         document.removeEventListener('resume', this.onAppResume);
         this.painelAva.stopProfileRefresh();
         this.suapProfileBrowser.close();
         this.hostAppearanceObserver?.disconnect();
         this.unregisterBridge();
+    }
+
+    ionViewWillLeave(): void {
+        this.courseOpeningOrigin?.abort();
     }
 
     ionViewDidEnter(): void {
@@ -328,7 +334,7 @@ export class PainelPage implements OnInit, OnDestroy {
         siteUrl?: string,
     ): Promise<void> {
         const id = Number(courseId);
-        if (!Number.isSafeInteger(id) || id <= 0 || this.openingCourse) {
+        if (!Number.isSafeInteger(id) || id <= 0 || this.openingCourse || this.destroyed) {
             return;
         }
         const target = resolveCourseSite({ viewurl: siteUrl });
@@ -338,6 +344,8 @@ export class PainelPage implements OnInit, OnDestroy {
             return;
         }
 
+        const origin = new AbortController();
+        this.courseOpeningOrigin = origin;
         // Mount the shared cover before the panel marks its course card busy.
         // This prevents a brief panel-only loading label before the handoff appears.
         this.moodleSite.showNativeCourseHandoff(courseName);
@@ -352,12 +360,13 @@ export class PainelPage implements OnInit, OnDestroy {
             let identityOnly = false;
             try {
                 // Recupera também contas persistidas após reiniciar o app.
-                const result = await this.moodleSite.ensureSessionAndOpenCourse(id, target, courseName);
+                const result = await this.moodleSite.ensureSessionAndOpenCourse(id, target, courseName, origin.signal);
                 if (result !== 'need-connect') {
                     return;
                 }
             } catch (error) {
-                if (this.destroyed) {
+                // A failed handoff can still be visible on the intended course while the panel is cached.
+                if (this.destroyed || (origin.signal.aborted && !isCourseIndexPath(CoreNavigator.getCurrentPath() || '', id))) {
                     return;
                 }
 
@@ -365,7 +374,7 @@ export class PainelPage implements OnInit, OnDestroy {
                 this.moodleSite.lastError = error instanceof Error ? error.message : 'Não foi possível abrir o curso.';
                 identityOnly = true;
             }
-            if (this.destroyed) {
+            if (this.destroyed || (!identityOnly && origin.signal.aborted)) {
                 return;
             }
 
@@ -383,6 +392,7 @@ export class PainelPage implements OnInit, OnDestroy {
                 },
             });
         } finally {
+            this.courseOpeningOrigin = undefined;
             this.openingCourse = false;
         }
     }

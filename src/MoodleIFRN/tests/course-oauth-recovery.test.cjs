@@ -13,7 +13,7 @@ function load(file, mocks, extra = {}) {
     const js = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     }).outputText;
-    const context = { exports: {}, require: id => id === '../navigation/native-course-login-queue' ? queueContext.exports : mocks[id] || {}, console, queueMicrotask, ...extra };
+    const context = { exports: {}, require: id => id === '../navigation/native-course-login-queue' ? queueContext.exports : mocks[id] || {}, console, queueMicrotask, AbortController, ...extra };
     vm.runInNewContext(js, context);
     return context.exports;
 }

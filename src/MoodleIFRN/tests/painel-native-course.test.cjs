@@ -5,7 +5,7 @@ const ts = require('typescript');
 const test = require('node:test');
 
 function load(file, mocks, extra = {}) {
-    const context = { exports: {}, require: id => mocks[id] || {}, console, URL, ...extra };
+    const context = { exports: {}, require: id => mocks[id] || {}, console, URL, AbortController, ...extra };
     vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     }).outputText, context);
