@@ -611,6 +611,37 @@ test('a confirmed return to the panel retires the previous course even if its co
     assert.equal(s.service.lastSummary.openedCourseId, otherCourseId);
 });
 
+test('a Router return to the panel cancels session restoration before course navigation starts', async () => {
+    const s = setup({ saved: false, navigationShell: true });
+    const staleRead = deferred();
+    let reads = 0;
+    s.sites.getSites = () => ++reads === 1
+        ? staleRead.promise
+        : Promise.resolve([{ id: 'student-a', siteUrl }]);
+
+    const first = observe(s.open());
+    await tick();
+    assert.equal(s.overlay.visible, true);
+
+    await s.navigator.navigate(bridge);
+    await s.navigator.navigate(painel);
+    await tick();
+
+    assert.equal(first.value, 'cancelled');
+    assert.equal(s.overlay.visible, false);
+
+    const second = observe(s.open(otherCourseId));
+    await tick();
+    staleRead.resolve([{ id: 'student-a', siteUrl }]);
+    await tick();
+    assert.equal(s.routes.length, 1);
+    assert.deepEqual(s.loads, ['student-a']);
+    s.routes[0].finish();
+    await tick();
+    assert.equal(second.value, 'opened');
+    assert.equal(s.service.lastSummary.openedCourseId, otherCourseId);
+});
+
 test('destroying the initiating panel during session lookup cancels before Moodle can activate the old course', async () => {
     const s = setup({ saved: false });
     const read = deferred();

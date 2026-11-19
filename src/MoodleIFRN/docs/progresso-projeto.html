@@ -30,6 +30,15 @@
       <div class="sidebar-note">Atualizado em 19/11/2026</div>
     </aside>
     <main id="conteudo" class="content">
+<section class="doc-section searchable" id="session-opening-panel-route-20261119">
+  <p class="eyebrow">CORREÇÃO LOCAL · ABERTURA DE CURSOS · 19/11/2026</p>
+  <h2>Cancelar a restauração pendente ao retornar ao Painel</h2>
+  <p><strong>LIDO no código:</strong> o observador do Router só chamava <code>cancelCourseOpeningForPanelExit()</code> na rota do Painel quando <code>courseOpenedFromPainel</code> já estava marcado. Essa marca só surge depois da validação da sessão e da matrícula. Se o usuário voltasse enquanto <code>sessionOpening</code> ainda consultava uma sessão salva, o observador ocultava a cobertura, mas deixava a tentativa ativa. A próxima disciplina era recusada com “Uma abertura de curso já está em andamento”.</p>
+  <p><strong>Alteração local:</strong> o retorno à rota exata <code>/login/painel</code> agora pede o cancelamento da abertura ativa mesmo antes da marca de origem existir. O serviço continua exigindo uma operação rastreada; quando não há <code>sessionOpening</code>, a abertura precisa manter a origem <code>painel</code>. A verificação de identidade, a fila de ativações nativas e a rejeição de callbacks tardios foram preservadas.</p>
+  <p><strong>MEDIDO:</strong> a nova regressão falhava antes da alteração (22/23 cenários; o retorno via Router deixava a Promise pendente). Após a alteração, <code>course-opening-recovery.test.cjs</code> passou 23/23 e os seis arquivos de teste focados passaram. <code>painel-help-inappbrowser.test.cjs</code> passou 4/4. <code>git diff --check</code> passou.</p>
+  <p><strong>Pendências:</strong> o TypeScript sem emissão não pôde iniciar no worktree isolado porque faltam declarações Cordova e de plugins. A suíte <code>course-session-opening.test.cjs</code> ficou em 14/19; as cinco falhas param ao montar o fixture do núcleo (<code>Expected 5 !== 13</code> ao extrair métodos), antes das asserções de sessão. Os contratos foram preservados, sem alteração de expectativas. Não houve build nem validação Android nesta correção.</p>
+  <p><strong>Ajuda do Painel:</strong> o carregamento do link interno permanece até o InAppBrowser receber <code>loadstop</code>; erro e saída têm callbacks próprios. Os testes dos seis destinos passaram. A espera por alguns segundos não foi cronometrada em dispositivo e não prova bloqueio permanente; esta alteração não mexeu nesse comportamento.</p>
+</section>
 <section class="doc-section searchable" id="curso-bloqueio-p0-retorno-20261119">
   <p class="eyebrow">ABERTURA DE CURSOS · 19/11/2026</p>
   <h2>Liberação da tentativa no retorno ao Painel</h2>

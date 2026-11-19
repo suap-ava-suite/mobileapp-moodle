@@ -801,9 +801,11 @@ export class MoodleSiteService {
             }
             if (path.includes('/login/painel')) {
                 this.redirectingToPainel = false;
-                // The Router can return here without invoking the IFRN Back handler.
-                const leftCourse = normalizeAppPath(path) === '/login/painel' && this.courseOpenedFromPainel;
-                if (!leftCourse || !this.cancelCourseOpeningForPanelExit(false)) {
+                // The Router can return here before course-origin flags are set,
+                // while session restoration is still pending. The active
+                // sessionOpening itself identifies the cancellable handoff.
+                const returnedToPanel = normalizeAppPath(path) === '/login/painel';
+                if (!returnedToPanel || !this.cancelCourseOpeningForPanelExit(false)) {
                     this.hideNativeCourseHandoff();
                 }
 

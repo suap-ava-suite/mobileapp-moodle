@@ -15,6 +15,17 @@
   <div class="layout">
     <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav><a href="index.html">Manual principal</a><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a></nav><div class="sidebar-note">Aprovação automatizada não prova autenticação real.</div></aside>
     <main id="conteudo" class="content">
+<section class="doc-section searchable" id="session-opening-panel-route-20261119">
+  <p class="eyebrow">CANCELAMENTO DE ABERTURA · 19/11/2026</p>
+  <h2>Regressão: voltar ao Painel antes da ativação do curso</h2>
+  <p>O teste novo em <code>tests/course-opening-recovery.test.cjs</code> segura a leitura das sessões salvas, navega pela ponte e retorna ao Painel antes de existir marca de origem do curso. Ele exige cancelamento imediato, cobertura removida, reabertura de outra disciplina e ausência de ativação duplicada quando a leitura antiga termina atrasada.</p>
+  <div class="command-card"><pre><code>NODE_PATH=/home/matheusluiz/mobileapp-moodle/node_modules node src/MoodleIFRN/tests/course-opening-recovery.test.cjs
+NODE_PATH=/home/matheusluiz/mobileapp-moodle/node_modules node --test src/MoodleIFRN/tests/course-opening-recovery.test.cjs src/MoodleIFRN/tests/painel-help-inappbrowser.test.cjs src/MoodleIFRN/tests/course-navigation-failure.test.cjs src/MoodleIFRN/tests/course-handoff-visual.test.cjs src/MoodleIFRN/tests/course-native-route.test.cjs src/MoodleIFRN/tests/painel-native-course.test.cjs
+NODE_PATH=/home/matheusluiz/mobileapp-moodle/node_modules node src/MoodleIFRN/tests/course-session-opening.test.cjs
+git diff --check</code></pre><button class="copy-button" type="button">Copiar comandos</button></div>
+  <p><strong>Resultados reais:</strong> o teste de recuperação passou 23/23 depois da correção; antes, a nova regressão reproduziu a Promise pendente (22/23). A execução agrupada passou nos seis arquivos indicados. Ajuda passou 4/4. A suíte da ponte OAuth/session passou 14/19; cinco casos falham na criação do fixture do núcleo, que encontrou 5 métodos onde o extrator esperava 13. Nenhum desses testes foi editado.</p>
+  <p><strong>Não executado:</strong> a verificação TypeScript completa não iniciou, pois este worktree não contém definições de tipo Cordova e plugins. Sem build ou teste Android; o tempo de espera dos links externos de Ajuda permanece não medido em dispositivo. Repetir a validação manual com retorno ao Painel durante restauração de sessão e abertura imediata de outro curso.</p>
+</section>
 <section class="doc-section searchable" id="curso-bloqueio-p0-retorno-20261119">
   <p class="eyebrow">REGRESSÃO DE CURSOS · 19/11/2026</p>
   <h2>Reprodução do bloqueio restante na release</h2>

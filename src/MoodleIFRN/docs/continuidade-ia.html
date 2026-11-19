@@ -15,6 +15,14 @@
   <div class="layout">
     <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav><a href="index.html">Manual principal</a><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a></nav><div class="sidebar-note">Leia o estado real antes de continuar.</div></aside>
     <main id="conteudo" class="content">
+<section class="doc-section searchable" id="session-opening-panel-route-20261119">
+  <p class="eyebrow">TRANSFERÊNCIA LOCAL · 19/11/2026</p>
+  <h2>Retorno ao Painel durante a restauração da sessão</h2>
+  <p>Foi reproduzido um intervalo que não estava coberto pela correção anterior: a tentativa ainda está em <code>sessionOpening</code>, antes de validar identidade e marcar a origem do curso. O observador de navegação só cancelava quando <code>courseOpenedFromPainel</code> já era verdadeiro; nesse intervalo, voltar a <code>/login/painel</code> escondia a cobertura, mas mantinha a trava.</p>
+  <p><code>services_mobile/moodle-site.service.ts</code> agora chama o cancelamento da tentativa ao confirmar qualquer chegada à rota exata do Painel. A regra interna continua exigindo uma operação ativa rastreada; quando não há <code>sessionOpening</code>, o serviço exige a origem <code>painel</code>. A regressão em <code>tests/course-opening-recovery.test.cjs</code> confirma também que a leitura antiga, quando retorna atrasada, não envia uma segunda ativação nem bloqueia a nova disciplina.</p>
+  <p>Validação local: caso de regressão passou após falhar antes da correção; arquivo de recuperação 23/23; arquivos relacionados de navegação, handoff, Painel e Ajuda passaram. A suíte da ponte mantém cinco falhas de montagem do fixture histórico do núcleo; não foram alteradas. TypeScript completo, build e validação em aparelho estão pendentes porque o worktree isolado não tem declarações Cordova/plugins. Nenhuma operação foi feita no dispositivo.</p>
+  <p>A tela de espera dos links de Ajuda depende de <code>loadstop</code> para apresentar o navegador interno. Os testes passaram, mas o tempo visual no Android continua não medido. Próxima etapa: compilar uma APK com esta alteração e, com autorização de instalação preservando os dados, reproduzir retorno rápido ao Painel durante restauração, abrir outra disciplina e conferir o retorno; avaliar separadamente a espera dos links de Ajuda.</p>
+</section>
 <section class="doc-section searchable" id="curso-bloqueio-p0-retorno-20261119">
   <p class="eyebrow">TRANSFERÊNCIA · 19/11/2026</p>
   <h2>Retorno ao Painel, redirecionamento e saída da página</h2>
