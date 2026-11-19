@@ -15,6 +15,31 @@
   <div class="layout">
     <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav><a href="index.html">Manual principal</a><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a></nav><div class="sidebar-note">Aprovação automatizada não prova autenticação real.</div></aside>
     <main id="conteudo" class="content">
+<section class="doc-section searchable" id="curso-bloqueio-p0-retorno-20261119">
+  <p class="eyebrow">REGRESSÃO DE CURSOS · 19/11/2026</p>
+  <h2>Reprodução do bloqueio restante na release</h2>
+  <p>Na linha de base de <code>d3145e583</code>, a suíte Node de primeiro nível executou 437 testes, com 431 aprovados. Com os cenários novos e sem a correção de produção, <code>course-opening-recovery.test.cjs</code> ficou em 15 de 20. As cinco falhas eram o retorno ao Painel com conteúdo pendente, o timeout de uma rota redirecionada, o redirecionamento concluído na ponte e a destruição do Painel ou da ponte durante a leitura da sessão.</p>
+  <p>A regressão ampla após o ajuste executou 450 testes e aprovou 444, sem testes ignorados ou cancelados. Os 169 testes focados passaram em duas execuções. O novo teste do callback OAuth obsoleto também passou e está incluído na suíte ampla. A verificação TypeScript usou <code>--typeRoots</code> para ler as declarações da instalação isolada, pois a release local não tinha todos os tipos instalados. <code>git diff --check</code> passou.</p>
+  <p>As seis falhas são as mesmas da linha de base. Cinco pertencem aos contratos P0.4 de persistência e concorrência nativa. Uma é a descoberta do worktree Cordova com o pacote local <code>cordova-plugin-moodleapp</code> ausente. O contrato JVM executado separadamente em outras rodadas ficou fora desta contagem.</p>
+  <div class="command-card"><pre><code>node --test src/MoodleIFRN/tests/course-opening-recovery.test.cjs src/MoodleIFRN/tests/course-navigation-failure.test.cjs src/MoodleIFRN/tests/course-handoff-visual.test.cjs
+node --test src/MoodleIFRN/tests/course-session-opening.test.cjs
+node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json --incremental false
+git diff --check</code></pre><button class="copy-button" type="button">Copiar comando</button></div>
+  <h3>Compilação e validação física pendentes</h3>
+  <p>A APK com SHA-256 <code>C36D17EABB710137F0EF47BE5B1BB8285A1F7B36DB5C63375F3E9EF1CB7D9CFE</code> contém a rodada anterior. Em cópia isolada com esta correção, dependências completas e Cordova Android 15.1.0 preparado, gere a nova APK no fluxo do <a href="android-celular-fisico.html">guia Android</a>.</p>
+  <div class="command-card"><pre><code>node node_modules/gulp/bin/gulp.js
+node src/MoodleIFRN/build-native.mjs --platform=android
+node node_modules/cordova/bin/cordova prepare android --nosave
+node node_modules/cordova/bin/cordova build android --debug
+Get-FileHash -Algorithm SHA256 platforms/android/app/build/outputs/apk/debug/app-debug.apk</code></pre><button class="copy-button" type="button">Copiar comando</button></div>
+  <ol>
+    <li>Conferir pacote, certificado e SHA-256. Com autorização de atualização e assinatura compatível, usar <code>adb install -r</code> no Moto G20 e conferir o artefato instalado.</li>
+    <li>Com a sessão existente, abrir o curso A, voltar ao Painel e tocar imediatamente no B. Depois voltar e reabrir o A.</li>
+    <li>Durante uma abertura lenta, usar Voltar ou Cancelar e tentar novamente. Conferir a cobertura durante a abertura e os toques após sua remoção.</li>
+    <li>Se a mensagem reaparecer, registrar o horário da ação e as etapas sanitizadas de <code>[IFRN-COURSE-OPEN]</code>, incluindo <code>open-conflict</code> se presente.</li>
+  </ol>
+  <p><a href="progresso-projeto.html#curso-bloqueio-p0-retorno-20261119">Causa reproduzida e estado da correção</a>.</p>
+</section>
 <section class="doc-section searchable" id="curso-bloqueio-p0-20261119">
   <p class="eyebrow">REGRESSÃO DE CURSOS · 19/11/2026</p>
   <h2>Recuperação do bloqueio de abertura</h2>

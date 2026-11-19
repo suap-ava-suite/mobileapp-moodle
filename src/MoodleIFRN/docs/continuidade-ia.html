@@ -15,6 +15,18 @@
   <div class="layout">
     <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav><a href="index.html">Manual principal</a><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a></nav><div class="sidebar-note">Leia o estado real antes de continuar.</div></aside>
     <main id="conteudo" class="content">
+<section class="doc-section searchable" id="curso-bloqueio-p0-retorno-20261119">
+  <p class="eyebrow">TRANSFERÊNCIA · 19/11/2026</p>
+  <h2>Retorno ao Painel, redirecionamento e saída da página</h2>
+  <p>Correção registrada em <code>d55d8eed9</code> na <code>release/2.0.1</code>, com linha de base em <code>d3145e583</code>. O teste emite o <code>NavigationEnd</code> do Router com o conteúdo anterior ainda pendente. Assim ele exercita o retorno ao Painel em que a cobertura sumia e o bloqueio permanecia.</p>
+  <ul>
+    <li><code>services_mobile/moodle-site.service.ts</code> cancela a abertura ao confirmar o retorno de um curso ao Painel e rastreia redirecionamentos pela marca transitória da tentativa. O evento <code>open-conflict</code> indica que uma abertura ativa recusou outro destino.</li>
+    <li><code>navigation/open-native-course.ts</code> encaminha a marca apenas em <code>extras.info</code>. O Router Angular 20 preserva o campo na cadeia de redirecionamento. A URL, a sessão e as credenciais continuam sob os contratos existentes.</li>
+    <li><code>painel/painel.ts</code> e <code>moodle-open-course/moodle-open-course.ts</code> dão ao serviço um sinal de saída da página. O serviço deixa de escutar esse sinal ao entregar a rota ao Router. Isso permite cancelar uma leitura abandonada e manter a abertura quando a própria navegação destrói a página de origem.</li>
+  </ul>
+  <p>Os novos testes ficam principalmente em <code>tests/course-opening-recovery.test.cjs</code>. <code>tests/course-session-opening.test.cjs</code> verifica o callback OAuth já descartado antes do envio ao núcleo. A garantia para trabalho nativo já enviado permanece coberta pelos cinco contratos P0.4 pendentes. <a href="testes-e-validacao.html#curso-bloqueio-p0-retorno-20261119">Resultados e comandos</a>.</p>
+  <p>Próxima ação. Compilar a revisão com este ajuste em uma cópia preparada e conferir a APK. Após autorização de atualização, repetir a sequência de voltar ao Painel e abrir outra disciplina na sessão existente do Moto G20.</p>
+</section>
 <section class="doc-section searchable" id="curso-bloqueio-p0-20261119">
   <p class="eyebrow">TRANSFERÊNCIA · 19/11/2026</p>
   <h2>Abertura de curso, cancelamento e nova tentativa</h2>

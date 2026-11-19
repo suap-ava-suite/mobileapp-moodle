@@ -30,6 +30,15 @@
       <div class="sidebar-note">Atualizado em 19/11/2026</div>
     </aside>
     <main id="conteudo" class="content">
+<section class="doc-section searchable" id="curso-bloqueio-p0-retorno-20261119">
+  <p class="eyebrow">ABERTURA DE CURSOS · 19/11/2026</p>
+  <h2>Liberação da tentativa no retorno ao Painel</h2>
+  <p>A correção foi registrada em <code>d55d8eed9</code> na <code>release/2.0.1</code>, com linha de base em <code>d3145e583</code>. O teste <code>a confirmed return to the panel retires the previous course even if its content is pending</code> reproduziu a mensagem “Uma abertura de curso já está em andamento”. No retorno confirmado pelo Router, a cobertura desaparecia e <code>sessionOpening</code> continuava ocupado pelo curso anterior. O clique em outra disciplina era recusado.</p>
+  <p>Outros testes mostraram que o timeout da rota deixava a Promise pendente quando o redirecionamento mudava o ID da navegação. Quando o redirecionamento chegava à ponte, a abertura também podia aguardar o prazo inteiro por um curso que já não seria ativado. A destruição do Painel e da ponte durante uma busca pendente deixava a tentativa anterior avançar.</p>
+  <p>O retorno confirmado ao Painel encerra a abertura do curso anterior. A saída da página cancela a preparação que ela iniciou antes de entregar a rota ao Router. A partir do envio, um identificador em <code>extras.info</code> acompanha a tentativa nos redirecionamentos, de modo que o prazo cancele apenas a navegação correspondente. O destino correto continua obrigatório para liberar a cobertura em sucesso.</p>
+  <p><strong>Resultados.</strong> Cinco cenários falharam na reprodução anterior à implementação e passaram com a correção. A suíte ampla passou de 431/437 para 444/450, com as mesmas seis falhas. As duas execuções focadas passaram em 169/169. O TypeScript passou com as declarações da instalação isolada e <code>git diff --check</code> passou. Os cinco contratos P0.4 foram preservados.</p>
+  <p><strong>Android.</strong> A APK já instalada corresponde à rodada de <code>d3145e583</code>. Este ajuste exige novo build debug e validação física. A causa da ocorrência isolada em Metodologia ainda carece de confirmação no aparelho. <a href="testes-e-validacao.html#curso-bloqueio-p0-retorno-20261119">Testes e roteiro para o Moto G20</a>.</p>
+</section>
 <section class="doc-section searchable" id="curso-bloqueio-p0-20261119">
   <p class="eyebrow">ABERTURA DE CURSOS · 19/11/2026</p>
   <h2>Recuperação de tentativa de curso interrompida</h2>
