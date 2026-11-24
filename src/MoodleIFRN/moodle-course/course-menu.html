@@ -39,6 +39,15 @@
                         </button>
 
                         <button type="button" class="ifrn-ava-nav-btn"
+                            [disabled]="!calendarEnabled || busy" (click)="choose('calendar')">
+                            <ion-icon name="fas-calendar-days" aria-hidden="true" />
+                            <span>
+                                <strong>Calendário</strong>
+                                <small>{{ calendarEnabled ? 'Eventos, atividades e prazos' : 'Indisponível neste AVA' }}</small>
+                            </span>
+                        </button>
+
+                        <button type="button" class="ifrn-ava-nav-btn"
                             [disabled]="!notificationsEnabled || busy" (click)="choose('notifications')">
                             <ion-icon name="fas-bell" aria-hidden="true" />
                             <span>

@@ -1,0 +1,191 @@
+<ion-header>
+    <ion-toolbar>
+        <ion-buttons slot="start">
+            <ion-button (click)="close()" aria-label="Voltar à disciplina">
+                <ion-icon slot="icon-only" name="fas-arrow-left" aria-hidden="true" />
+            </ion-button>
+        </ion-buttons>
+        <ion-title>Calendário</ion-title>
+        <ion-buttons slot="end">
+            <ion-button (click)="currentMonth()" [disabled]="!initialized()" aria-label="Voltar ao mês atual">Hoje</ion-button>
+        </ion-buttons>
+    </ion-toolbar>
+</ion-header>
+
+<ion-content class="calendar-scroll">
+    <ion-refresher slot="fixed" [disabled]="!initialized() || loading()" (ionRefresh)="refresh($event.target)">
+        <ion-refresher-content pullingText="Puxe para atualizar os eventos" />
+    </ion-refresher>
+    <main class="calendar-body">
+        <p class="calendar-course-name">{{ selectedCourseName() }}</p>
+        <div class="calendar-controls">
+            <label class="calendar-filter">
+                <span>Disciplina</span>
+                <select #courseFilter [value]="selection().courseId ?? ''" [disabled]="!initialized()"
+                    (change)="chooseCourse(courseFilter.value)">
+                    @for (course of courses(); track course.id) {
+                        <option [value]="course.id">{{ course.name }}</option>
+                    }
+                    <option value="">Todos os cursos deste AVA</option>
+                </select>
+            </label>
+            @if (canCreate() && isOnline()) {
+                <ion-button class="calendar-create" size="small" fill="outline" (click)="newEvent()" [disabled]="actionPending()">
+                    <ion-icon slot="start" name="fas-plus" aria-hidden="true" />
+                    Novo evento
+                </ion-button>
+            }
+        </div>
+
+        <div class="calendar-display" role="group" aria-label="Visualização do calendário">
+            <button type="button" [attr.aria-pressed]="selection().view === 'month'" (click)="chooseView('month')">
+                Mês
+            </button>
+            <button type="button" [attr.aria-pressed]="selection().view === 'list'" (click)="chooseView('list')">
+                Lista
+            </button>
+        </div>
+
+        <div class="calendar-month-nav">
+            <ion-button fill="clear" aria-label="Mês anterior" [disabled]="!initialized()" (click)="moveMonth(-1)">
+                <ion-icon slot="icon-only" name="fas-chevron-left" aria-hidden="true" />
+            </ion-button>
+            <h2 aria-live="polite">{{ monthLabel() }}</h2>
+            <ion-button fill="clear" aria-label="Próximo mês" [disabled]="!initialized()" (click)="moveMonth(1)">
+                <ion-icon slot="icon-only" name="fas-chevron-right" aria-hidden="true" />
+            </ion-button>
+        </div>
+
+        <div [attr.aria-busy]="loading()">
+            @if (loading()) {
+                <p class="calendar-status" role="status">
+                    <ion-spinner name="crescent" aria-hidden="true" />
+                    Carregando calendário…
+                </p>
+            } @else if (error()) {
+                <div class="calendar-status calendar-status--error" role="alert">
+                    <p>{{ error() }}</p>
+                    <ion-button size="small" fill="outline" (click)="refresh()">Tentar novamente</ion-button>
+                </div>
+            } @else if (monthView(); as month) {
+                @if (selection().view === 'month') {
+                    <div class="calendar-grid" role="group" aria-label="Dias do mês">
+                        @for (weekday of month.weekdays; track weekday.label) {
+                            <abbr [title]="weekday.label" aria-hidden="true">{{ weekday.short }}</abbr>
+                        }
+                        @for (cell of month.cells; track $index) {
+                            @if (cell) {
+                                <button type="button" class="calendar-day" (click)="selectDay(cell.day)"
+                                    [attr.aria-current]="cell.today ? 'date' : null"
+                                    [attr.aria-pressed]="cell.day === selection().day"
+                                    [attr.aria-label]="dayDescription(cell)">
+                                    <span>{{ cell.day }}</span>
+                                    @if (cell.events.length > 0) {
+                                        <span class="calendar-dot" aria-hidden="true"></span>
+                                    }
+                                </button>
+                            } @else {
+                                <div class="calendar-padding" aria-hidden="true"></div>
+                            }
+                        }
+                    </div>
+                }
+
+                <section class="calendar-events" aria-label="Eventos">
+                    <h2>{{ selection().view === 'month' ? dayLabel() : 'Eventos do mês' }}</h2>
+                    @if (!isOnline()) {
+                        <p class="calendar-note">Sem conexão. Os dados disponíveis podem estar desatualizados.</p>
+                    }
+                    @if (!hasMonthEvents()) {
+                        <p class="calendar-status">Nenhum evento para este mês e filtro.</p>
+                    }
+                    @for (day of displayedDays(); track day.day) {
+                        @if (selection().view === 'list') {
+                            <h3>{{ dateLabel(day.day) }}</h3>
+                        }
+                        @if (hasMonthEvents() && day.events.length === 0) {
+                            <p class="calendar-status">Nenhum evento nesta data.</p>
+                        }
+                        @if (day.events.length > 0) {
+                            <ul>
+                                @for (event of day.events; track event.id) {
+                                    <li>
+                                        <button type="button" class="calendar-event" (click)="openEvent(event, day.day)">
+                                            <ion-icon [name]="eventKind(event).icon" aria-hidden="true" />
+                                            <span class="calendar-event-text">
+                                                <strong>{{ event.name }}</strong>
+                                                <span>
+                                                    {{ eventKind(event).label }}@if (event.courseName) {
+                                                        <span> · {{ event.courseName }}</span>
+                                                    }
+                                                </span>
+                                                <span>{{ event.time || 'Horário não informado pelo Moodle' }}</span>
+                                                @if (event.overdue) {
+                                                    <span class="calendar-event-state">Prazo vencido</span>
+                                                }
+                                            </span>
+                                            <ion-icon name="fas-chevron-right" aria-hidden="true" />
+                                        </button>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    }
+                </section>
+            }
+        </div>
+    </main>
+</ion-content>
+
+<ion-modal #detailModal [isOpen]="!!detail()" (didDismiss)="closeDetail()" aria-label="Detalhes do evento">
+    <ng-template>
+        <ion-header>
+            <ion-toolbar>
+                <ion-buttons slot="start">
+                    <ion-button (click)="detailModal.dismiss()" aria-label="Voltar ao calendário">
+                        <ion-icon slot="icon-only" name="fas-arrow-left" aria-hidden="true" />
+                    </ion-button>
+                </ion-buttons>
+                <ion-title>Evento</ion-title>
+            </ion-toolbar>
+        </ion-header>
+        <ion-content class="calendar-scroll">
+            @if (detail(); as event) {
+                <article class="calendar-body calendar-detail">
+                    <h2>{{ event.name }}</h2>
+                    <dl>
+                        @if (event.courseName) {
+                            <dt>Disciplina</dt>
+                            <dd>{{ event.courseName }}</dd>
+                        }
+                        <dt>Data selecionada</dt>
+                        <dd>{{ dayLabel() }}</dd>
+                        <dt>Horário ou prazo</dt>
+                        <dd>{{ event.time || 'Horário não informado pelo Moodle' }}</dd>
+                        <dt>Tipo</dt>
+                        <dd>{{ eventKind(event).label }}</dd>
+                        @if (event.overdue) {
+                            <dt>Estado</dt>
+                            <dd>Prazo vencido</dd>
+                        }
+                    </dl>
+                    @if (event.description) {
+                        <h3>Descrição</h3>
+                        <core-format-text [text]="event.description" [siteId]="scope.siteId" [sanitize]="true" [filter]="false" />
+                    }
+                    @if (detailLoading()) {
+                        <p class="calendar-note" role="status">Atualizando detalhes…</p>
+                    }
+                    @if (detailNotice()) {
+                        <p class="calendar-note" role="status">{{ detailNotice() }}</p>
+                    }
+                    @if (event.activity) {
+                        <ion-button (click)="openActivity()" [disabled]="actionPending() || detailLoading()">
+                            {{ actionPending() ? 'Abrindo atividade…' : 'Abrir atividade' }}
+                        </ion-button>
+                    }
+                </article>
+            }
+        </ion-content>
+    </ng-template>
+</ion-modal>

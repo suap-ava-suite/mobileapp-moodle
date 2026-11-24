@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges, inject } from '@angular/core';
 import { createAnimation } from '@ionic/core';
 import type { Animation } from '@ionic/core';
 import { CoreSharedModule } from '@/core/shared.module';
@@ -12,12 +12,13 @@ import { ADDON_MESSAGES_PAGE_NAME, ADDONS_MESSAGES_MENU_FEATURE_NAME } from '@ad
 import { ADDONS_NOTIFICATIONS_MAIN_PAGE_NAME, ADDONS_NOTIFICATIONS_MENU_FEATURE_NAME } from '@addons/notifications/constants';
 import type { CoreCourseFormatComponent } from '@features/course/components/course-format/course-format';
 import { IfrnAcademicProgressComponent } from '../academic-progress/progress.component';
+import { IfrnCalendarNavigationService } from '../academic-calendar/calendar-navigation.service';
 import {
     IfrnCourseAccessibilityService,
     IfrnA11yBoolKey,
 } from './course-accessibility';
 
-type CourseMenuAction = 'index' | 'blocks' | 'notifications' | 'messages' | 'accessibility';
+type CourseMenuAction = 'index' | 'blocks' | 'notifications' | 'messages' | 'calendar' | 'accessibility';
 
 interface A11yToggle {
     key: IfrnA11yBoolKey;
@@ -31,6 +32,7 @@ interface A11yToggle {
     selector: 'ifrn-course-menu',
     standalone: true,
     imports: [CoreSharedModule, IfrnAcademicProgressComponent],
+    providers: [IfrnCalendarNavigationService],
     templateUrl: './course-menu.html',
     styleUrls: ['./course-menu.scss'],
     host: {
@@ -94,6 +96,7 @@ export class IfrnCourseMenuComponent implements OnChanges, OnDestroy {
     private generation = 0;
     private destroyed = false;
     private pendingAction?: CourseMenuAction;
+    private readonly calendar = inject(IfrnCalendarNavigationService);
 
     constructor(readonly a11y: IfrnCourseAccessibilityService) {}
 
@@ -145,6 +148,10 @@ export class IfrnCourseMenuComponent implements OnChanges, OnDestroy {
 
     get blocksEnabled(): boolean {
         return !!this.format?.loaded && !!this.format.displayBlocks && !!this.format.hasBlocks;
+    }
+
+    get calendarEnabled(): boolean {
+        return this.calendar.available;
     }
 
     get zoomLabel(): string {
@@ -255,6 +262,9 @@ export class IfrnCourseMenuComponent implements OnChanges, OnDestroy {
             }
             if (action === 'index') {
                 await this.format?.openCourseIndex();
+            } else if (action === 'calendar') {
+                const course = this.format?.course;
+                await this.calendar.open(this.courseId, course?.id === this.courseId ? course.fullname : undefined);
             } else if (action === 'blocks') {
                 const { CoreBlockSideBlocksComponent } = await import('@features/block/components/side-blocks/side-blocks');
                 if (!this.sameContext() || !this.blocksEnabled) {
@@ -315,6 +325,7 @@ export class IfrnCourseMenuComponent implements OnChanges, OnDestroy {
                 && !!site && !site.isFeatureDisabled(ADDONS_MESSAGES_MENU_FEATURE_NAME);
             case 'notifications': return this.notificationsEnabled
                 && !!site && !site.isFeatureDisabled(ADDONS_NOTIFICATIONS_MENU_FEATURE_NAME);
+            case 'calendar': return this.calendarEnabled;
             case 'accessibility': return true;
         }
     }
