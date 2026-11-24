@@ -15,6 +15,30 @@
   <div class="layout">
     <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav><a href="index.html">Manual principal</a><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a></nav><div class="sidebar-note">Leia o estado real antes de continuar.</div></aside>
     <main id="conteudo" class="content">
+      <section class="doc-section searchable" id="nome-curto-primeiro-acesso-20261124">
+        <p class="eyebrow">TRANSFERÊNCIA · 24/11/2026</p>
+        <h2>Manutenção do nome no primeiro acesso</h2>
+        <p><code>PainelPage</code> mostra o nome depois da revalidação inicial de <code>PainelAvaService.refreshSavedProfile()</code>. A lista já está visível durante essa espera. A conclusão da consulta atualiza a tela dentro da zona Angular e independe da preparação do idioma. A preferência pelo nome curto vem dos campos oficiais do perfil.</p>
+        <p><code>tests/painel-angular-native.test.cjs</code> cobre o primeiro desenho com um nome salvo incompleto e a chegada do nome usual com o idioma ainda pendente. Também cobre o resultado em que o nome do perfil confirmado não mudou. Em uma build autorizada, conferir o cabeçalho e o menu de perfil no primeiro acesso, antes de abrir qualquer curso. <a href="progresso-projeto.html#nome-curto-primeiro-acesso-20261124">Evidência e resultado</a>.</p>
+      </section>
+      <section class="doc-section searchable" id="nome-suap-primeiro-login-20261124">
+        <p class="eyebrow">TRANSFERÊNCIA · 24/11/2026</p>
+        <h2>Origem do nome curto</h2>
+        <p>Ao reproduzir um nome truncado, use a opção <strong>Sair</strong> do app e faça a autenticação manual. O problema foi observado no primeiro login, com perfil ainda ausente. Uma retomada com perfil salvo é um cenário diferente.</p>
+        <p><code>loginWithLegacySuap</code> solicita a verificação do nome na primeira sessão. <code>PainelAvaService</code> usa os endpoints de perfil SUAP já previstos e conserva a janela autenticada. <code>preferVerifiedSuapDisplayName</code> aceita somente o nome de apresentação da mesma conta. Mantenha a validação de origem e o prazo da consulta. <a href="progresso-projeto.html#nome-suap-primeiro-login-20261124">Evidência e testes</a>.</p>
+        <p>A rodada física no Moto G20 começou sem perfil salvo e confirmou o nome curto esperado vindo do SUAP. A correção foi incluída na <code>release/2.0.1</code> em <code>4566dfc0d</code>. O hash da APK e os resultados automatizados estão registrados no progresso.</p>
+      </section>
+      <section class="doc-section searchable" id="calendario-academico-20261124">
+        <p class="eyebrow">TRANSFERÊNCIA · 24/11/2026</p>
+        <h2>Manutenção do calendário acadêmico</h2>
+        <ul>
+          <li><code>moodle-course/course-menu.ts</code> abre o calendário após fechar o menu. <code>academic-calendar/calendar-navigation.service.ts</code> mantém o contexto e retoma a seleção na rota do curso de origem após o editor ou a atividade.</li>
+          <li><code>calendar-data.service.ts</code> verifica o proprietário do Painel e a identidade Moodle com a guarda IFRN existente. A sessão é delimitada por site, usuário e curso de origem. A listagem de disciplinas usa <code>CoreCourses</code> e o acesso às atividades usa <code>CoreCourse</code> e <code>CoreCourseModuleDelegate</code>.</li>
+          <li><code>course-calendar.component</code> apresenta mês, lista, filtro, detalhes e estados de erro. <code>calendar-model.ts</code> preserva datas e horários do servidor e só aceita destinos de atividade do AVA atual. <code>calendar-read.ts</code> compartilha consultas pendentes iguais, limita o tempo de espera da interface e descarta resultados obsoletos.</li>
+          <li>O cache persistente pertence ao Moodle Mobile. A atualização manual ignora o cache quando online. Uma resposta de autenticação inválida limpa a tela e exige uma leitura online para recuperar o acesso. Saída do contexto, logout e troca de conta encerram o calendário e seus observadores.</li>
+        </ul>
+        <p>O usuário confirmou o teste do calendário antes da integração à <code>release/2.0.1</code> em <code>9711f4c55</code>. Para completar a matriz, confira as permissões do serviço autenticado, o retorno após atividade ou editor e o layout no Android 11, Android 16 e iOS. <a href="testes-e-validacao.html#calendario-academico-20261124">Testes e roteiro</a> · <a href="progresso-projeto.html#calendario-academico-20261124">Progresso e APIs</a>.</p>
+      </section>
 <section class="doc-section searchable" id="guia-build-mobile-20261124">
   <p class="eyebrow">DOCUMENTAÇÃO · 24/11/2026</p>
   <h2>Guia de instalação e execução para Android e iOS</h2>

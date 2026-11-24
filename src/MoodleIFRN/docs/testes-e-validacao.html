@@ -15,6 +15,31 @@
   <div class="layout">
     <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav><a href="index.html">Manual principal</a><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a></nav><div class="sidebar-note">Aprovação automatizada não prova autenticação real.</div></aside>
     <main id="conteudo" class="content">
+      <section class="doc-section searchable" id="calendario-academico-20261124">
+        <p class="eyebrow">VALIDAÇÃO LOCAL · 24/11/2026</p>
+        <h2>Validar o calendário acadêmico</h2>
+        <p><strong>21 de 21 testes focados aprovados</strong> com dados fictícios. Cobrem mês e ano, fevereiro bissexto, fuso e meia-noite, primeiro dia da semana, filtros, eventos simultâneos e de dia inteiro, deduplicação, entrada vazia ou inválida, erro, timeout, cache, troca de conta e concorrência. A integração simulada usa menu, componente e adaptador IFRN reais e verifica o retorno da atividade e do editor. O teste de DOM usa Angular em JSDOM com o sanitizador do Angular.</p>
+        <p>A regressão selecionada passou de <strong>179/190</strong> para <strong>200/211</strong>. As mesmas 11 falhas aparecem na linha de base, cinco contratos P0.4, um teste de handoff visual e cinco testes do Painel com o mock antigo de abertura. A linha de base usou os arquivos do menu de <code>HEAD</code> em memória, preservando o checkout. TypeScript, compilador de templates Angular e Sass passaram.</p>
+        <div class="command-card">
+          <div class="command-heading"><strong>Validação local</strong><span>Na raiz do checkout</span></div>
+          <pre><code>node --test --experimental-test-isolation=none src/MoodleIFRN/tests/academic-calendar.test.cjs
+node --test --experimental-test-isolation=none src/MoodleIFRN/tests/{academic-calendar,academic-progress,accessibility-settings,course-*,govbr-browser,govbr-redirect-handoff,painel-help-inappbrowser,painel-native-course,suap-account-switch,suap-govbr-routing}.test.cjs src/MoodleIFRN/tests/profile-display-name.test.mjs
+./node_modules/.bin/tsc --noEmit -p tsconfig.app.json
+./node_modules/.bin/ngc --noEmit -p tsconfig.app.json
+./node_modules/.bin/sass --no-source-map src/MoodleIFRN/academic-calendar/course-calendar.component.scss &gt;/dev/null
+git diff --check</code></pre>
+        </div>
+        <h3>Roteiro para Android 11, Android 16 e iOS</h3>
+        <ol>
+          <li>Use uma build que já inclua o calendário. No Painel, abra a disciplina A e escolha <strong>Calendário</strong> no menu do curso. Confirme o mês atual, o filtro inicial e os eventos da disciplina com a mesma conta no AVA Web.</li>
+          <li>Troque o mês e o filtro rapidamente, vá a <strong>Hoje</strong> e selecione um dia vazio e um dia com eventos. Alterne entre Mês e Lista. Compare os horários e prazos, inclusive perto da meia-noite.</li>
+          <li>Confira <strong>Todos os cursos deste AVA</strong> e selecione outra disciplina pelo filtro. Feche o calendário, abra a disciplina B pelo Painel e confirme que o calendário começa na B.</li>
+          <li>Abra o detalhe de uma atividade. Use <strong>Abrir atividade</strong>, volte pelo sistema ou pelo cabeçalho e confira a retomada do mês, do dia e do filtro. Volte mais uma vez para a disciplina original.</li>
+          <li>Verifique <strong>Novo evento</strong> com uma conta autorizada. Na homologação, salve um evento de teste e confirme que aparece ao voltar. Em produção, a verificação pode terminar com o cancelamento do formulário.</li>
+          <li>Confira carregamento, atualização manual, conexão lenta e recuperação de erro. Repita com larguras de 320, 360, 390 e 412 px e em tablet, vertical e horizontal. Observe rolagem horizontal, áreas seguras, tamanho do texto, contraste e botão Voltar.</li>
+        </ol>
+        <p>Na integração à <code>release/2.0.1</code>, passaram <strong>165 de 165 testes selecionados</strong> do perfil, calendário, curso, progresso e autenticação. TypeScript, templates Angular e SCSS do calendário passaram. O usuário confirmou o teste do calendário no aplicativo e o nome curto no primeiro login do Moto G20. A matriz de layout em WebView, a criação de eventos com as permissões do AVA e a validação por versão de Android e iOS seguem pendentes. <a href="progresso-projeto.html#calendario-academico-20261124">Arquitetura e escopo</a>.</p>
+      </section>
 <section class="doc-section searchable" id="session-opening-panel-route-20261119">
   <p class="eyebrow">CANCELAMENTO DE ABERTURA · 19/11/2026</p>
   <h2>Regressão: voltar ao Painel antes da ativação do curso</h2>

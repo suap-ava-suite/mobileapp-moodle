@@ -30,6 +30,32 @@
       <div class="sidebar-note">Atualizado em 19/11/2026</div>
     </aside>
     <main id="conteudo" class="content">
+      <section class="doc-section searchable" id="nome-curto-primeiro-acesso-20261124">
+        <p class="eyebrow">CORREÇÃO DO PAINEL · 24/11/2026</p>
+        <h2>Nome curto no primeiro acesso ao Painel</h2>
+        <p>O teste reproduziu o nome antigo na primeira renderização. O Painel lia o perfil salvo antes de terminar a revalidação. O commit <code>3378c4c60</code> aguardava a consulta antes de navegar e <code>f2191a7ad</code> passou a abrir o Painel enquanto ela acontecia. A prioridade do nome curto validado segue a regra já documentada em <code>8e7bcce9f</code> e <code>4fcff12e8</code>.</p>
+        <p>Em <code>painel/painel.ts</code>, as disciplinas aparecem de imediato. O nome fica como “Estudante” durante a primeira consulta e o Painel atualiza o perfil assim que ela termina, inclusive se o nome confirmado coincidir com o salvo. Se a consulta falhar, o perfil salvo da conta ativa continua disponível. O preparo do idioma do curso e a verificação de identidade seguem seus fluxos existentes.</p>
+        <p>A regressão falhou antes da correção e passou depois. Foram aprovados 110 testes selecionados, o TypeScript, a verificação dos templates Angular e <code>git diff --check</code>. A primeira correção usou a base <code>3d612baf3</code> em <code>test/remocao-vlibras</code>. A compilação e o teste do primeiro login estão registrados na seção seguinte. <a href="markdown/CORRECAO-NOME-PERFIL-2026-10-25.md">Diagnóstico anterior do nome salvo</a> · <a href="continuidade-ia.html#nome-curto-primeiro-acesso-20261124">Continuidade</a>.</p>
+      </section>
+      <section class="doc-section searchable" id="nome-suap-primeiro-login-20261124">
+        <p class="eyebrow">CORREÇÃO DO PERFIL · 24/11/2026</p>
+        <h2>Nome vindo da primeira autenticação</h2>
+        <p>O Moto G20 reproduziu o nome incorreto em um login sem perfil salvo, mesmo na APK que já aguardava a consulta. A identificação veio do fluxo com navegador interno, com resposta HTTP 200 da API v2 do AVA. Os campos de nome usual e social ainda estavam truncados no perfil persistido.</p>
+        <p>No primeiro login desse fluxo, a aplicação consulta o nome curto no SUAP dentro da mesma janela autenticada. Usa esse nome quando os identificadores das duas fontes conferem. A revalidação do AVA preserva o nome confirmado. A consulta complementar tem prazo de 8 segundos e o perfil validado do Painel permanece disponível se ela falhar.</p>
+        <p>Passaram 84 testes selecionados e o TypeScript. Os testes incluem a entrada sem perfil salvo, a resposta de outra conta, a preservação do nome confirmado e a recuperação quando a consulta complementar falha. <a href="continuidade-ia.html#nome-suap-primeiro-login-20261124">Transferência de trabalho</a>.</p>
+        <p>A compilação Cordova/Gradle foi retomada após reiniciar o computador. A APK <code>5.2.1/52100</code> foi instalada no Moto G20 com <code>adb install -r</code> e certificado compatível. O SHA-256 no aparelho corresponde ao artefato compilado, <code>b02940b003a5984fffbadba45d7e57a727fcde7ad24712798dc16bda7c9cd36a</code>.</p>
+        <p><strong>Primeiro login validado no Moto G20.</strong> O diagnóstico observou a entrada sem perfil salvo e depois confirmou o nome curto esperado, com fonte SUAP autenticada. As duas consultas registradas pelo navegador retornaram HTTP 200. O usuário confirmou o resultado. A correção entrou na <code>release/2.0.1</code> no commit <code>4566dfc0d</code>.</p>
+      </section>
+      <section class="doc-section searchable" id="calendario-academico-20261124">
+        <p class="eyebrow">INTEGRAÇÃO À RELEASE · 24/11/2026</p>
+        <h2>Calendário acadêmico na disciplina</h2>
+        <p>Em um curso IFRN já aberto, escolha <strong>Calendário</strong> no menu do curso. A tela começa no mês atual e na disciplina de origem. O filtro oferece as disciplinas disponíveis e <strong>Todos os cursos deste AVA</strong>, sempre no mesmo site Moodle. A visão Mês mostra marcadores nos dias com eventos e a lista do dia selecionado logo abaixo. A visão Lista reúne os eventos do mês sem repetir o mesmo evento em vários dias.</p>
+        <p>O componente Angular/Ionic está em <code>academic-calendar/</code>. O adaptador reutiliza <code>AddonCalendar.getMonthlyEvents</code>, <code>AddonCalendar.getEventById</code> e o cache do Moodle Mobile. O site disponibiliza as funções <code>core_calendar_get_calendar_monthly_view</code> e <code>core_calendar_get_calendar_event_by_id</code> conforme as capacidades da sessão. A descrição passa pela sanitização do <code>core-format-text</code>. O botão de atividade usa o módulo nativo do curso quando o identificador, o curso e o acesso são confirmados.</p>
+        <p><strong>Novo evento</strong> aparece online quando o Moodle oferece <code>core_calendar_get_allowed_event_types</code> e <code>core_calendar_submit_create_update_form</code> e confirma pelo menos um tipo permitido no filtro corrente. O editor oficial recebe o curso e, quando o servidor fornece a data para criação, o dia selecionado. Ao voltar do editor ou da atividade, o mês, o dia e o filtro são retomados no curso de origem, com nova consulta quando há conexão.</p>
+        <p>A grade mantém a ordem de dias e o agrupamento da resposta mensal. Os rótulos são em português do Brasil. O fuso para a data atual vem do perfil ou da configuração Moodle quando disponível, com o fuso do aparelho como fallback. Horários, prazos e indicação de dia inteiro são exibidos conforme o servidor.</p>
+        <p>O calendário foi integrado à <code>release/2.0.1</code> no commit <code>9711f4c55</code>. O usuário confirmou que testou a funcionalidade no aplicativo. A matriz por plataforma e a verificação das permissões de criação de eventos do AVA seguem pendentes. <a href="testes-e-validacao.html#calendario-academico-20261124">Resultados e roteiro em dispositivo</a>.</p>
+        <p><a href="https://academico.ava.ifrn.edu.br/calendar/view.php?view=month">Calendário oficial do AVA IFRN</a>.</p>
+      </section>
 <section class="doc-section searchable" id="guia-build-mobile-20261124">
   <p class="eyebrow">DOCUMENTAÇÃO · 24/11/2026</p>
   <h2>Instalação, compilação e execução em Android e iOS</h2>
