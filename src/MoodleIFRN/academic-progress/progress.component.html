@@ -1,16 +1,21 @@
 <section class="academic-progress" [class.academic-progress--compact]="compact" aria-label="Progresso acadêmico">
     <div class="academic-progress__heading">
         <strong>{{ view.source === 'activities' ? 'Progresso das atividades' : 'Progresso da disciplina' }}</strong>
-        @if (percentage !== null) {
+        @if (!compact && percentage !== null) {
             <span class="academic-progress__percentage">{{ percentage }}%</span>
         }
     </div>
     @if (view.percent !== null) {
-        <div class="academic-progress__track" role="progressbar" aria-label="Progresso acadêmico confirmado"
-            aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="view.percent"
-            [attr.aria-valuetext]="percentage + '% confirmado pelo Moodle'">
-            <span class="academic-progress__fill" [class.academic-progress__fill--complete]="view.percent === 100"
-                [style.width.%]="view.percent"></span>
+        <div class="academic-progress__meter">
+            <div class="academic-progress__track" role="progressbar" aria-label="Progresso acadêmico confirmado"
+                aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="view.percent"
+                [attr.aria-valuetext]="percentage + '% confirmado pelo Moodle'">
+                <span class="academic-progress__fill" [class.academic-progress__fill--complete]="view.percent === 100"
+                    [style.width.%]="view.percent"></span>
+            </div>
+            @if (compact && percentage !== null) {
+                <span class="academic-progress__percentage">{{ percentage }}%</span>
+            }
         </div>
     }
     <div class="academic-progress__message" role="status" aria-live="polite">

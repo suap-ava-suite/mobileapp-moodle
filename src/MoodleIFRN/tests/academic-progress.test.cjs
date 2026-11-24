@@ -388,6 +388,7 @@ test('template Angular mantém a barra do curso sem bloco extra e preserva o res
             assert.equal(element.querySelector('[role="progressbar"]').getAttribute('aria-valuenow'), String(percent));
             assert.equal(element.querySelector('.academic-progress__percentage').textContent.trim(), percent + '%');
             assert.equal(element.querySelector('.academic-progress__fill').style.width, percent + '%');
+            assert.ok(element.querySelector('.academic-progress__heading .academic-progress__percentage'));
             assert.equal(element.querySelector('button, details, summary, ul'), null);
             assert.doesNotMatch(element.textContent, /atividades concluídas|pendentes|Atualizar progresso|critérios diferentes|Conclusão por atividade/);
         }
@@ -395,10 +396,27 @@ test('template Angular mantém a barra do curso sem bloco extra e preserva o res
         assert.equal(element.querySelector('[role="progressbar"]'), null);
         assert.match(element.textContent, /Progresso indisponível no momento/);
         fixture.componentRef.setInput('compact', true); fixture.detectChanges();
-        callbacks.at(-1)[3](model.summarizeProgress(payload([1, 1, 1, 1, 0], 50), 1)); fixture.detectChanges();
         assert.equal(callbacks.at(-1)[2], false, 'Painel permanece no modo de consulta compacta');
-        assert.match(element.textContent, /4 de 5 atividades concluídas/);
-        assert.equal(element.querySelector('[role="progressbar"]').getAttribute('aria-valuenow'), '50');
+        for (const percent of [0, 25, 50, 75, 99.8, 100]) {
+            callbacks.at(-1)[3](model.summarizeProgress(payload([1, 1, 1, 1, 0], percent), 1));
+            fixture.detectChanges();
+            const meter = element.querySelector('.academic-progress__meter');
+            const track = meter.querySelector('[role="progressbar"]');
+            const fill = track.querySelector('.academic-progress__fill');
+            const label = meter.querySelector('.academic-progress__percentage');
+
+            assert.equal(track.getAttribute('aria-valuenow'), String(percent));
+            assert.equal(fill.style.width, percent + '%');
+            assert.equal(fill.classList.contains('academic-progress__fill--complete'), percent === 100);
+            assert.equal(label.textContent.trim(), (percent === 99.8 ? 99 : percent) + '%');
+            assert.equal(element.querySelectorAll('.academic-progress__percentage').length, 1);
+            assert.match(element.textContent, /4 de 5 atividades concluídas/);
+        }
+        callbacks.at(-1)[3](model.unavailableProgress());
+        fixture.detectChanges();
+        assert.equal(element.querySelector('.academic-progress__meter'), null);
+        assert.equal(element.querySelector('.academic-progress__percentage'), null);
+        assert.match(element.textContent, /Progresso indisponível no momento./);
         fixture.destroy(); assert.equal(released.length, 2);
     } finally {
         TestBed?.resetTestEnvironment(); angular?.destroyPlatform();

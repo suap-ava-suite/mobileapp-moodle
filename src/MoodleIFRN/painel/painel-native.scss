@@ -20,5 +20,44 @@ ion-content { --background: var(--dsgov-bg-gray); }
 .profile-image img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 .sidebar-modal__panel { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
 
+.card-container {
+    max-width: 358px;
+    margin-inline: auto;
+    gap: 11px;
+}
+
+.painel-card {
+    --background: var(--dsgov-bg-white);
+    --color: var(--dsgov-text-dark);
+
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 358px;
+    min-height: 228px;
+    height: auto;
+    flex: 0 0 auto;
+    align-self: stretch;
+    isolation: isolate;
+    border: 1px solid var(--dsgov-border-outer, #ccc);
+    border-radius: 4px;
+    box-shadow: none;
+
+    // O conteúdo mantém o fluxo em coluna sem redimensionar a parte nativa do Ionic.
+    ion-card-content {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        width: 100%;
+        min-width: 0;
+        padding: 17px 22px;
+    }
+
+    ifrn-academic-progress,
+    .painel-card-details {
+        align-self: stretch;
+    }
+}
+
 // Buttons replace legacy anchors while keeping the original appearance and keyboard focus.
 :host(.highlight_links) .painel-card-link { text-decoration: underline; }

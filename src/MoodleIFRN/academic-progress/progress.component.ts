@@ -49,7 +49,12 @@ export class IfrnAcademicProgressComponent implements OnChanges, OnDestroy {
     }
 
     get percentage(): number | null {
-        return this.view.percent === null ? null : Math.round(this.view.percent);
+        const percent = this.view.percent;
+        if (percent === null) { return null; }
+
+        const rounded = Math.round(percent);
+
+        return this.compact && percent < 100 ? Math.min(99, rounded) : rounded;
     }
 
     ngOnChanges(changes: SimpleChanges): void {
