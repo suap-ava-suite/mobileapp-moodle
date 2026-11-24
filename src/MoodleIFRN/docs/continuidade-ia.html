@@ -15,6 +15,14 @@
   <div class="layout">
     <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav><a href="index.html">Manual principal</a><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a></nav><div class="sidebar-note">Leia o estado real antes de continuar.</div></aside>
     <main id="conteudo" class="content">
+      <section class="doc-section searchable" id="filtros-painel-nativo-20261124">
+        <p class="eyebrow">TRANSFERÊNCIA · 24/11/2026</p>
+        <h2>Manter os filtros do Painel nativo</h2>
+        <p>O menu continua em <code>painel/painel-native.html</code>, com estilos em <code>painel-native.scss</code> e estado no componente Angular. <code>painel-native-model.ts</code> associa metadados da resposta existente a cada cartão. <code>painel-filters.ts</code> concentra disponibilidade, reconciliação e interseção das escolhas.</p>
+        <p><code>PainelPage</code> entrega a identidade OAuth já validada para manter a edição entre revalidações da mesma conta e descartar o estado quando a conta muda. O rascunho e a seleção aplicada vivem em memória. A perda de dados fecha o filtro e libera o Painel. Os dados continuam vindo de <code>PainelAvaService.getDashboard()</code>.</p>
+        <p>A situação padrão vem da consulta <code>situacao=inprogress</code>, que é independente do progresso acadêmico. Período curricular depende do formato oficial do diário. Para Módulos, confirme catálogo e vínculo na API autorizada antes de ampliar o contrato. A validação local usou o checkout <code>test/remocao-vlibras</code> em <code>3d612baf3</code> com o trabalho existente preservado. <a href="progresso-projeto.html#filtros-painel-nativo-20261124">Mapa dos dados</a> · <a href="testes-e-validacao.html#filtros-painel-nativo-20261124">Testes e próxima validação no celular</a>.</p>
+        <p>O teste físico foi feito em um Moto G20 com Android 11 após atualização com o mesmo pacote e certificado. O usuário confirmou o funcionamento dos campos de filtro. Consulte o roteiro para os cenários sem validação física registrada.</p>
+      </section>
       <section class="doc-section searchable" id="nome-curto-primeiro-acesso-20261124">
         <p class="eyebrow">TRANSFERÊNCIA · 24/11/2026</p>
         <h2>Manutenção do nome no primeiro acesso</h2>

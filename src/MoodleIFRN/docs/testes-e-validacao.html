@@ -15,6 +15,33 @@
   <div class="layout">
     <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav><a href="index.html">Manual principal</a><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a></nav><div class="sidebar-note">Aprovação automatizada não prova autenticação real.</div></aside>
     <main id="conteudo" class="content">
+      <section class="doc-section searchable" id="filtros-painel-nativo-20261124">
+        <p class="eyebrow">VALIDAÇÃO LOCAL · 24/11/2026</p>
+        <h2>Validar os filtros do Painel AVA</h2>
+        <p>A regressão selecionada passou de <strong>143/143</strong> na base para <strong>158/158</strong>, com 15 testes novos. Os testes de interface executam o template Angular em JSDOM com dados fictícios. A cobertura inclui critérios, ausência de associação de módulo, consulta sem acentos, interseção, edição e aplicação separadas, limpeza, estado vazio, revalidação, troca de aba ou conta, foco, Voltar e destruição. Os testes também conferem a abertura de um cartão filtrado e a entrega do progresso ao componente acadêmico.</p>
+        <p>No Edge headless, o DOM renderizado pelo Angular com o SCSS compilado passou em 320, 360, 390 e 412 px de largura e em 568 × 320 px. O tema escuro com texto a 160% passou em 320 px. O navegador conferiu rolagem, alcance da última categoria, área segura simulada, rodapé sem sobreposição, contraste do botão Filtrar e hit-testing dos dois botões.</p>
+        <div class="command-card">
+          <div class="command-heading"><strong>Testes no checkout</strong><span>Na raiz do repositório</span></div>
+          <pre><code>node --test --experimental-test-isolation=none src/MoodleIFRN/tests/painel-filters.test.cjs
+node --test --experimental-test-isolation=none \
+  src/MoodleIFRN/tests/{painel-filters,painel-angular-native,painel-angular-theme,painel-native-course,painel-help-inappbrowser,academic-progress,academic-calendar,course-opening-recovery,course-handoff-visual,suap-account-switch}.test.cjs \
+  src/MoodleIFRN/tests/{painel-courses,painel-favourites-isolation,profile-display-name}.test.mjs
+./node_modules/.bin/tsc --noEmit --incremental false -p tsconfig.app.json
+./node_modules/.bin/ngc --noEmit --incremental false -p tsconfig.app.json
+./node_modules/.bin/sass --no-source-map src/MoodleIFRN/painel/painel-native.scss &gt;/dev/null
+git diff --check</code></pre>
+        </div>
+        <h3>Roteiro pendente em Android e iOS</h3>
+        <ol>
+          <li>Abra Filtros com uma build que inclua a alteração. Use uma conta de teste com diários em mais de um semestre ou ambiente. Compare valores e cartões com o AVA Web na mesma sessão.</li>
+          <li>Busque um nome acentuado sem acentos. Selecione um semestre e uma disciplina. Confirme que fechar descarta o rascunho, Filtrar aplica os critérios e Limpar filtros volta para Diários em andamento.</li>
+          <li>Troque de ambiente e de aba. Confira se as opções incompatíveis saíram, se as compatíveis ficaram e se o aviso de Módulos aparece quando a API não fornece dados.</li>
+          <li>Teste teclado, leitor de tela, rotação, tema escuro e texto ampliado. Role até Ambientes e alcance os dois botões acima da barra do sistema. Use X, Voltar e toque externo para fechar.</li>
+          <li>Abra um cartão filtrado, confira o progresso e o calendário e volte ao Painel. Em conta de teste, verifique se a edição anterior não aparece após trocar de conta.</li>
+        </ol>
+        <p>A confirmação física desta rodada cobre os campos do filtro no Moto G20. <a href="progresso-projeto.html#filtros-painel-nativo-20261124">Origem dos dados e comportamento</a>.</p>
+        <p><strong>Moto G20, Android 11/API 30 e WebView 157.0.8103.50.</strong> O Angular de produção e o Gradle <code>:app:assembleDebug</code> geraram a APK de teste em cópia isolada. Na compilação offline, a resolução temporária do AndroidX Core usou a mesma versão efetiva da APK anterior, 1.13.0. O modo de instalação convencional <code>adb install --no-streaming -r</code> foi aceito após a recusa do modo streaming. O SHA-256 conferido no telefone foi <code>ba1581fad93f0a659db234d3ecdb91e0b7a8c44e53a0cf3661b5f64e53727ba7</code>. O Painel reapareceu com a sessão existente. O usuário confirmou os campos de filtro no aparelho. A automação de toque encontrou o menu aberto e parou ao tentar acionar seu botão de abertura. Os casos de teclado, rotação, troca de conta e execução no iOS seguem com validação física pendente.</p>
+      </section>
       <section class="doc-section searchable" id="calendario-academico-20261124">
         <p class="eyebrow">VALIDAÇÃO LOCAL · 24/11/2026</p>
         <h2>Validar o calendário acadêmico</h2>

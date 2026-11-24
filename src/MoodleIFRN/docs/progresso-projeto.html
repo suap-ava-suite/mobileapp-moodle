@@ -30,6 +30,23 @@
       <div class="sidebar-note">Atualizado em 19/11/2026</div>
     </aside>
     <main id="conteudo" class="content">
+      <section class="doc-section searchable" id="filtros-painel-nativo-20261124">
+        <p class="eyebrow">PAINEL AVA · 24/11/2026</p>
+        <h2>Filtros do Painel com a organização do AVA Web</h2>
+        <p>O painel lateral de <code>PainelNativeComponent</code> passou de um seletor de situação para pesquisa, sete categorias expansíveis e rodapé fixo fora da área rolável. O componente mantém os tokens DS GOV.BR, a fonte Rawline, a paleta dos botões e o espaçamento de áreas seguras do Ionic. O foco volta ao botão que abriu o menu.</p>
+        <dl>
+          <dt>Diários em andamento</dt><dd>Usa a lista que o AVA entregou com <code>situacao=inprogress</code>. Um diário pode ter 100% de progresso acadêmico e continuar em andamento. Favoritos e Não publicados restringem os cartões já carregados.</dd>
+          <dt>Semestres</dt><dd>Oferta de ano e período em <code>turma_ano_periodo</code> ou no prefixo do código oficial do diário. As grafias como <code>2026/2</code> e <code>2026.2</code> são agrupadas.</dd>
+          <dt>Períodos</dt><dd>Etapa curricular identificada no código oficial completo do diário. A opção aparece para diários com código reconhecido e coerente com os metadados. <a href="https://ajuda.ead.ifrn.edu.br/como-e-a-formacao-do-codigo-do-diario-do-suap-no-moodle/">Formação do código do diário no IFRN</a>.</dd>
+          <dt>Módulos</dt><dd>Indisponível no contrato v1 público. O menu só exibe uma opção quando a resposta traz o catálogo <code>modulos</code> e um vínculo explícito do diário com esse ID.</dd>
+          <dt>Disciplinas</dt><dd>ID acadêmico em <code>disciplina_id</code> e rótulo do catálogo ou do diário.</dd>
+          <dt>Cursos</dt><dd>Código acadêmico em <code>curso_codigo</code> ou <code>curso.codigo</code>. O ID Moodle continua responsável apenas pela navegação e serviços do curso.</dd>
+          <dt>Ambientes</dt><dd>ID do <code>ambiente</code> no retorno do Painel. A seleção restringe as demais opções aos cartões daquele ambiente e conserva critérios que ainda existem ali.</dd>
+        </dl>
+        <p>O app filtra o resultado da consulta existente <code>GET /api/v1/diarios/</code>. A pesquisa local lê título, código curto e ambiente, ignorando acentos e caixa. Há uma opção por categoria e todos os critérios escolhidos precisam coincidir. Fechar descarta o rascunho. Limpar filtros restaura a pesquisa vazia e Diários em andamento com a mesma lista autenticada.</p>
+        <p>A revisão pública do AVA Web de 23/11/2026 declara Períodos e Módulos na interface e envia situação, semestre, disciplina, curso, ambiente e pesquisa à API. O aplicativo usa apenas a lista recebida, portanto diários futuros ou encerrados que ficaram fora de <code>inprogress</code> não entram nesta etapa. O comportamento da instalação autenticada ainda precisa ser verificado com uma conta de teste. <a href="https://github.com/suap-ava-suite/djangoapp-painel_ava/blob/49464ac6a974fd5899619d016f049c6d850ab777/src/theme_ifrn25/static/theme/ifrn25/js/app.js#L548-L561">Consulta usada pelo AVA Web</a> · <a href="https://github.com/suap-ava-suite/djangoapp-painel_ava/blob/49464ac6a974fd5899619d016f049c6d850ab777/src/painel/v1/api.py#L26-L57">Contrato v1</a> · <a href="testes-e-validacao.html#filtros-painel-nativo-20261124">Validação e roteiro móvel</a>.</p>
+        <p>A interação com os campos do menu foi confirmada pelo usuário no Moto G20, Android 11. A alteração de código foi integrada no commit <code>d4ae63463</code> da <code>release/2.0.1</code>.</p>
+      </section>
       <section class="doc-section searchable" id="nome-curto-primeiro-acesso-20261124">
         <p class="eyebrow">CORREÇÃO DO PAINEL · 24/11/2026</p>
         <h2>Nome curto no primeiro acesso ao Painel</h2>
