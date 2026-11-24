@@ -12,12 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, computed, ElementRef, inject, Injector,
+    input, linkedSignal, output, signal, ViewChild } from '@angular/core';
 import { CoreSharedModule } from '@/core/shared.module';
 import { createCourseFavourites } from '../mobilemoodle/core_mobile/course-favourites';
 import { PAINEL_HELP_LINKS, type PainelHelpLinkId } from '../services_mobile/painel-help-links';
 import { type NativePainelCourse, type NativePainelGroup, type NativePainelModel } from './painel-native-model';
 import { IfrnAcademicProgressComponent } from '../academic-progress/progress.component';
+import { DEFAULT_PAINEL_FILTERS, PAINEL_FACETS, PAINEL_SITUATIONS, countPainelFilters, filterPainelCourses,
+    listPainelFilterOptions, reconcilePainelFilters, type PainelFilterCategory, type PainelFilterOption,
+    type PainelFilters } from './painel-filters';
+
+interface PainelFilterState {
+    applied: PainelFilters;
+    draft: PainelFilters;
+}
+
+type PainelSection = 'courses' | 'profile' | 'help' | 'accessibility' | 'filter';
+
+interface PainelFilterCategoryView {
+    key: PainelFilterCategory;
+    title: string;
+    icon: string;
+    options: readonly PainelFilterOption[];
+    selected: string;
+    selectionLabel?: string;
+}
 
 @Component({
     selector: 'ifrn-painel-native',
@@ -42,16 +62,19 @@ export class PainelNativeComponent {
     readonly marketplace = output<void>();
     readonly logout = output<void>();
     readonly refresh = output<void>();
-    readonly section = signal<'courses' | 'profile' | 'help' | 'accessibility' | 'filter'>('courses');
+    readonly section = linkedSignal({
+        source: () => !!this.data(),
+        computation: (hasData, previous): PainelSection =>
+            !hasData && previous?.value === 'filter' ? 'courses' : previous?.value ?? 'courses',
+    });
+
     readonly group = signal<NativePainelGroup>('diarios');
-    readonly search = signal('');
-    readonly onlyFavourites = signal(false);
     readonly favouriteRevision = signal(0);
     readonly preferenceError = signal('');
     readonly highContrast = signal(false);
     readonly fontScale = signal(100);
     readonly photoFailed = signal(false);
-    readonly filter = signal<FilterSituacao>('allincludinghidden');
+    readonly expandedFilter = signal<PainelFilterCategory | null>(null);
     readonly accessibility = signal<Record<string, boolean>>({});
     readonly colorMode = signal('default');
     readonly colorModeLabel = computed(() => new Map([
@@ -70,13 +93,6 @@ export class PainelNativeComponent {
         { key: 'high_line_height', label: 'Linhas mais distantes', icon: 'menu-outline' },
     ];
 
-    readonly filterOptions = [
-        { id: 'inprogress' as const, label: 'Em andamento' },
-        { id: 'allincludinghidden' as const, label: 'Todos os diários' },
-        { id: 'favourites' as const, label: 'Favoritos' },
-        { id: 'hidden' as const, label: 'Ocultos' },
-    ];
-
     readonly panelTitle = computed(() => ({
         profile: 'Perfil', help: 'Ajuda', accessibility: 'Acessibilidade', filter: 'Filtros', courses: '',
     }[this.section()]));
@@ -86,9 +102,6 @@ export class PainelNativeComponent {
         coordenacoes: 'Salas de Coordena\u00e7\u00e3o',
         autoinscricoes: 'Cursos com Autoinscri\u00e7\u00e3o',
     }[this.group()]));
-
-    readonly filterLabel = computed(() =>
-        this.filterOptions.find(option => option.id === this.filter())?.label || 'Todos os di\u00e1rios');
 
     readonly initials = computed(() => (this.data()?.name || 'Estudante')
         .split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase());
@@ -109,16 +122,58 @@ export class PainelNativeComponent {
         return createCourseFavourites();
     });
 
-    readonly courses = computed(() => {
-        this.favouriteRevision();
-        const query = this.search().trim().toLocaleLowerCase('pt-BR');
+    private readonly injector = inject(Injector);
+    @ViewChild('sidebarClose') private filterClose?: ElementRef<HTMLButtonElement>;
+    private filterTrigger?: HTMLButtonElement;
+    private readonly groupCourses = computed(() => this.data()?.groups[this.group()] ?? []);
+    private readonly filterState = linkedSignal({
+        source: () => ({ model: this.data(), courses: this.groupCourses() }),
+        computation: ({ model, courses }, previous): PainelFilterState => {
+            const previousModel = previous?.source.model;
+            const sameOwner = model && (model === previousModel
+                || (model.accountIdentity && model.accountIdentity === previousModel?.accountIdentity));
+            const state = sameOwner ? previous?.value : undefined;
 
-        return (this.data()?.groups[this.group()] || []).filter(course =>
-            (!(this.onlyFavourites() || this.filter() === 'favourites') || this.favourites().isFavourite(course)) &&
-            (this.filter() !== 'inprogress' || course.progress !== 100) &&
-            (this.filter() !== 'hidden' || !course.published) &&
-            (!query || `${course.name} ${course.shortname} ${course.environment}`.toLocaleLowerCase('pt-BR').includes(query)));
+            return {
+                applied: reconcilePainelFilters(state?.applied ?? DEFAULT_PAINEL_FILTERS, courses),
+                draft: reconcilePainelFilters(state?.draft ?? DEFAULT_PAINEL_FILTERS, courses),
+            };
+        },
     });
+
+    readonly appliedFilters = computed(() => this.filterState().applied);
+    readonly draftFilters = computed(() => this.filterState().draft);
+    private readonly draftEnvironment = computed(() => this.draftFilters().selected.environment);
+    private readonly optionsByFacet = computed(() => listPainelFilterOptions(this.groupCourses(), this.draftEnvironment()));
+    readonly activeFilterCount = computed(() => countPainelFilters(this.appliedFilters()));
+    readonly filterLabel = computed(() => {
+        const count = this.activeFilterCount();
+
+        return count ? `${count} ${count === 1 ? 'filtro ativo' : 'filtros ativos'}` : PAINEL_SITUATIONS[0].label;
+    });
+
+    readonly filterCategories = computed<PainelFilterCategoryView[]>(() => {
+        const { situation, selected } = this.draftFilters();
+        const choices = this.optionsByFacet();
+
+        return [{
+            key: 'situation',
+            title: PAINEL_SITUATIONS.find(option => option.id === situation)?.label ?? PAINEL_SITUATIONS[0].label,
+            icon: 'book-outline',
+            options: PAINEL_SITUATIONS,
+            selected: situation,
+        }, ...PAINEL_FACETS.map(facet => ({
+            key: facet.key,
+            title: facet.title,
+            icon: facet.icon,
+            options: choices[facet.key].length ? [{ id: '', label: facet.all }, ...choices[facet.key]] : [],
+            selected: selected[facet.key] ?? '',
+            selectionLabel: choices[facet.key].find(option => option.id === selected[facet.key])?.label,
+        }))];
+    });
+
+    readonly courses = computed(() =>
+        filterPainelCourses(this.groupCourses(), this.appliedFilters(), course => this.isFavourite(course)));
 
     constructor() {
         try {
@@ -139,7 +194,56 @@ export class PainelNativeComponent {
         } catch { /* Corrupt preferences do not prevent rendering. */ }
     }
 
-    closePanel(): void { this.section.set('courses'); }
+    openFilters(trigger?: HTMLButtonElement): void {
+        if (!this.data() || this.section() === 'filter') {
+            return;
+        }
+        this.filterTrigger = trigger;
+        this.section.set('filter');
+        if (trigger) {
+            afterNextRender({
+                write: () => {
+                    if (this.section() === 'filter') {
+                        this.filterClose?.nativeElement.focus();
+                    }
+                },
+            }, { injector: this.injector });
+        }
+    }
+
+    closePanel(): void {
+        const trigger = this.filterTrigger;
+        this.filterTrigger = undefined;
+        if (this.section() === 'filter') {
+            this.expandedFilter.set(null);
+            this.filterState.update(state => ({ ...state, draft: state.applied }));
+        }
+        this.section.set('courses');
+        if (trigger) {
+            afterNextRender({
+                write: () => {
+                    if (this.section() === 'courses') {
+                        trigger.focus();
+                    }
+                },
+            }, { injector: this.injector });
+        }
+    }
+
+    onFilterKeyDown(event: KeyboardEvent): void {
+        if (this.section() !== 'filter' || event.key !== 'Tab') {
+            return;
+        }
+        const panel = event.currentTarget as HTMLElement;
+        const controls = panel.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled])');
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        const boundary = event.shiftKey ? first : last;
+        if (event.target === boundary) {
+            event.preventDefault();
+            (event.shiftKey ? last : first)?.focus();
+        }
+    }
 
     onHardwareBack(event: Event): void {
         if (this.section() !== 'courses') {
@@ -148,15 +252,55 @@ export class PainelNativeComponent {
         }
     }
 
-    setFilter(value: unknown): void {
-        if (this.filterOptions.some(option => option.id === value)) {this.filter.set(value as FilterSituacao);}
-        this.onlyFavourites.set(false);
+    toggleFilterCategory(key: PainelFilterCategory): void {
+        this.expandedFilter.update(expanded => expanded === key ? null : key);
     }
 
-    clearFilters(): void {
-        this.filter.set('allincludinghidden');
-        this.onlyFavourites.set(false);
-        this.search.set('');
+    editFilterQuery(query: string): void {
+        this.editFilters(draft => ({ ...draft, query }));
+    }
+
+    chooseFilter(key: PainelFilterCategory, id: string): void {
+        if (key === 'situation') {
+            const option = PAINEL_SITUATIONS.find(value => value.id === id);
+            if (option) {
+                this.editFilters(draft => ({ ...draft, situation: option.id }));
+            }
+
+            return;
+        }
+        if (id && !this.optionsByFacet()[key].some(option => option.id === id)) {
+            return;
+        }
+        this.editFilters(draft => {
+            const selected = { ...draft.selected };
+            if (id) {
+                selected[key] = id;
+            } else {
+                delete selected[key];
+            }
+
+            return reconcilePainelFilters({ ...draft, selected }, this.groupCourses());
+        });
+    }
+
+    private editFilters(update: (draft: PainelFilters) => PainelFilters): void {
+        if (this.section() === 'filter') {
+            this.filterState.update(state => ({ ...state, draft: update(state.draft) }));
+        }
+    }
+
+    applyFilters(): void {
+        if (this.section() !== 'filter') {
+            return;
+        }
+        this.filterState.update(({ draft }) => ({ applied: draft, draft }));
+        this.closePanel();
+    }
+
+    clearFilters(returnFocus?: HTMLButtonElement): void {
+        this.filterState.set({ applied: DEFAULT_PAINEL_FILTERS, draft: DEFAULT_PAINEL_FILTERS });
+        this.filterTrigger = returnFocus ?? this.filterTrigger;
         this.closePanel();
     }
 

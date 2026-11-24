@@ -428,10 +428,16 @@ test('template Angular mantém a barra do curso sem bloco extra e preserva o res
     }
 });
 test('normalização do Painel rejeita valores inválidos sem limitar silenciosamente para 0/100', () => {
+    const filters = {};
+    const compilerOptions = { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 };
+    vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/MoodleIFRN/painel/painel-filters.ts', 'utf8'), {
+        compilerOptions,
+    }).outputText, { exports: filters });
     const exports = {};
     vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/MoodleIFRN/painel/painel-native-model.ts', 'utf8'), {
-        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-    }).outputText, { exports, URL, require: () => ({ resolveCourseSite: () => 'https://example.test' }) });
+        compilerOptions,
+    }).outputText, { exports, URL,
+        require: id => id === './painel-filters' ? filters : { resolveCourseSite: () => 'https://example.test' } });
     for (const value of [-1, 101, Infinity, NaN, null, '50']) {
         const result = exports.buildNativePainelModel({ diarios: [{ id: 7, progress: value, hasprogress: true }] }, null);
         assert.equal(result.groups.diarios[0].progress, null);

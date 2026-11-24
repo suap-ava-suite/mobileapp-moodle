@@ -13,17 +13,20 @@
 // limitations under the License.
 
 import { resolveCourseSite } from '../mobilemoodle/core_mobile/course-target';
+import { normalizePainelSearch, type PainelFacet, type PainelFilterableCourse, type PainelFilterOption } from './painel-filters';
 
 export type NativePainelGroup = 'diarios' | 'coordenacoes' | 'autoinscricoes';
-export interface NativePainelCourse extends DashboardCourse {
+export interface NativePainelCourse extends DashboardCourse, PainelFilterableCourse {
     key: string;
-    published: boolean;
 }
 export interface NativePainelModel {
     name: string;
     photo?: string;
+    accountIdentity?: string;
     groups: Record<NativePainelGroup, NativePainelCourse[]>;
 }
+
+type FilterLabels = Partial<Record<PainelFacet, ReadonlyMap<string, string>>>;
 
 /**
  * Keeps only plain records from the API.
@@ -46,17 +49,129 @@ function text(...values: unknown[]): string {
 }
 
 /**
+ * Mantém zeros à esquerda de códigos textuais e aceita IDs numéricos da API.
+ *
+ * @param value Campo do catálogo ou de um curso.
+ * @returns ID comparável ou texto vazio quando ausente.
+ */
+function filterId(value: unknown): string {
+    return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? String(value) : text(value);
+}
+
+/**
+ * Ignora os placeholders de ID vazio usados pelo menu Web.
+ *
+ * @param raw Catálogo de opções informado pela API.
+ * @returns Rótulos indexados por ID.
+ */
+function filterLabels(raw: unknown): ReadonlyMap<string, string> {
+    const labels = new Map<string, string>();
+    for (const entry of Array.isArray(raw) ? raw : []) {
+        const option = object(entry);
+        const id = filterId(option['id']);
+        const label = text(option['label']);
+        if (id && label) {
+            labels.set(id, label);
+        }
+    }
+
+    return labels;
+}
+
+/**
+ * Unifica as grafias do mesmo semestre sem alterar o código de curso.
+ *
+ * @param value Chave do semestre informada pelo AVA.
+ * @returns Chave comparável entre ambientes, no formato ano.oferta quando conhecido.
+ */
+function semesterKey(value: string): string {
+    return value.replace(/^(\d{4})[./]?(\d)$/, '$1.$2');
+}
+
+/**
+ * Lê a etapa curricular apenas no código institucional completo e coerente com os metadados.
+ *
+ * @param shortname Código curto do diário no Moodle.
+ * @param semester Semestre de oferta, quando conhecido.
+ * @param academicCourse Código acadêmico, quando conhecido.
+ * @returns Dados do código ou null se ele estiver fora do formato ou divergir do cadastro.
+ */
+function readDiaryCode(shortname: string, semester: string, academicCourse: string): { semester: string; period: string } | null {
+    const code = /^(\d{4})(\d)\.(\d+)\.(\d+)\.[\p{L}\p{N}_-]+\.[\p{L}\p{N}_]+\.\d+(?:#\d+)?$/u.exec(shortname);
+    if (!code || (semester && semesterKey(semester) !== `${code[1]}.${code[2]}`)
+        || (academicCourse && academicCourse !== code[4])) {
+        return null;
+    }
+    const period = Number(code[3]);
+
+    return { semester: `${code[1]}.${code[2]}`, period: Number.isSafeInteger(period) && period > 0 ? String(period) : '' };
+}
+
+/**
+ * Mantém o identificador acadêmico separado do ID Moodle que abre o cartão.
+ *
+ * @param source Registro de curso retornado pela API.
+ * @param group Aba do Painel à qual o registro pertence.
+ * @param labels Rótulos do catálogo da sessão.
+ * @returns Valores que podem participar dos filtros locais.
+ */
+function readCourseFilterOptions(
+    source: Record<string, unknown>,
+    group: NativePainelGroup,
+    labels: FilterLabels,
+): NativePainelCourse['filterOptions'] {
+    const option = (key: PainelFacet, id: string, fallback = ''): PainelFilterOption | undefined =>
+        id ? { id, label: labels[key]?.get(id) || fallback || id } : undefined;
+    const academicCourse = object(source['curso']);
+    const courseId = filterId(source['curso_codigo']) || filterId(academicCourse['codigo']);
+    const discipline = object(source['disciplina']);
+    const disciplineId = filterId(source['disciplina_id']) || filterId(discipline['id']);
+    const environment = object(source['ambiente']);
+    const environmentId = Number(environment['id']);
+    const semester = filterId(source['turma_ano_periodo']);
+    const diaryCode = group === 'diarios' ? readDiaryCode(text(source['shortname']), semester, courseId) : null;
+    const term = semesterKey(semester || diaryCode?.semester || '');
+    const moduleId = filterId(source['modulo']);
+
+    return {
+        semester: term ? { id: term, label: semesterKey(labels.semester?.get(semester) || term) } : undefined,
+        period: diaryCode?.period ? { id: diaryCode.period, label: `${diaryCode.period}º período` } : undefined,
+        module: labels.module?.has(moduleId) ? option('module', moduleId) : undefined,
+        discipline: option(
+            'discipline',
+            disciplineId,
+            text(source['disciplina_descricao'], discipline['descricao'], source['disciplina_sigla'], source['fullname']),
+        ),
+        academicCourse: option('academicCourse', courseId, text(academicCourse['nome'], source['curso_descricao'])),
+        environment: Number.isSafeInteger(environmentId) && environmentId > 0
+            ? option('environment', String(environmentId), text(environment['titulo'], environment['label'])) : undefined,
+    };
+}
+
+/**
  * Maps the existing owner-validated dashboard; never reads credentials or creates a cache.
  *
  * @param raw Dashboard already checked by PainelAvaService for the current owner.
  * @param profile Current account profile, or null.
+ * @param accountIdentity Verified profile identity, used only to scope in-memory UI state.
  * @returns Native view model, or null when dashboard data is absent.
  */
-export function buildNativePainelModel(raw: unknown, profile: Record<string, unknown> | null): NativePainelModel | null {
+export function buildNativePainelModel(
+    raw: unknown,
+    profile: Record<string, unknown> | null,
+    accountIdentity?: string,
+): NativePainelModel | null {
     if (!raw || typeof raw !== 'object') {
         return null;
     }
     const envelope = object(raw);
+    const labels: FilterLabels = {
+        semester: filterLabels(envelope['semestres']),
+        module: filterLabels(envelope['modulos']),
+        discipline: filterLabels(envelope['disciplinas']),
+        academicCourse: filterLabels(envelope['cursos']),
+        environment: filterLabels(envelope['ambientes']),
+    };
     const groups = Object.fromEntries((['diarios', 'coordenacoes', 'autoinscricoes'] as const).map(group => {
         const rows: unknown = Array.isArray(raw) && group === 'diarios' ? raw : envelope[group];
         const courses = (Array.isArray(rows) ? rows : []).map((row, index): NativePainelCourse => {
@@ -67,6 +182,7 @@ export function buildNativePainelModel(raw: unknown, profile: Record<string, unk
             const id = Number(source['id']); // The API id is Moodle's id, never the SUAP diário id.
             const viewurl = text(source['viewurl'], source['url']);
             const name = text(source['fullname'], discipline['descricao'], source['shortname']) || 'Disciplina';
+            const shortname = text(source['shortname'], discipline['sigla']);
             const environmentName = text(environment['titulo'], environment['label']);
             const enrolled = source['is_enrolled'] ?? enrolment['is_enrolled'] ?? group !== 'autoinscricoes';
             const site = resolveCourseSite({ viewurl, environment: environmentName });
@@ -77,8 +193,10 @@ export function buildNativePainelModel(raw: unknown, profile: Record<string, unk
                 id: Number.isSafeInteger(id) && id > 0 ? id : 0,
                 key: `${group}:${site || 'unknown'}:${id}:${index}`,
                 name, fullname: name,
-                shortname: text(source['shortname'], discipline['sigla']),
+                shortname,
                 environment: environmentName || 'AVA',
+                filterOptions: readCourseFilterOptions(source, group, labels),
+                searchableText: normalizePainelSearch(`${name} ${shortname} ${environmentName || 'AVA'}`),
                 ambiente: { titulo: environmentName, ...(Number.isSafeInteger(environmentId) ? { id: environmentId } : {}) },
                 viewurl,
                 moodle_course_id: Number.isSafeInteger(id) && id > 0 ? id : undefined,
@@ -109,5 +227,5 @@ export function buildNativePainelModel(raw: unknown, profile: Record<string, unk
         }
     } catch { /* A missing photo never blocks the dashboard. */ }
 
-    return { name, photo, groups };
+    return { name, photo, accountIdentity, groups };
 }

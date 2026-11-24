@@ -13,7 +13,10 @@ function load(file, mocks = {}, globals = {}) {
     return context.exports;
 }
 const target = load('src/MoodleIFRN/mobilemoodle/core_mobile/course-target.ts');
-const modelModule = load('src/MoodleIFRN/painel/painel-native-model.ts', { '../mobilemoodle/core_mobile/course-target': target });
+const filters = load('src/MoodleIFRN/painel/painel-filters.ts');
+const modelModule = load('src/MoodleIFRN/painel/painel-native-model.ts', {
+    '../mobilemoodle/core_mobile/course-target': target, './painel-filters': filters,
+});
 const build = modelModule.buildNativePainelModel;
 const site = 'https://presencial.ava.ifrn.edu.br';
 const raw = { diarios: [{ id: 17, diario_id: 999, fullname: 'Disciplina fictícia', viewurl: `${site}/course/view.php?id=17`, ambiente: { id: 3, titulo: 'Presencial' } }] };
@@ -142,12 +145,14 @@ test('native Angular signals filter data and never emit a blocked/double in-prog
     const events = [];
     const { PainelNativeComponent } = load('src/MoodleIFRN/painel/painel-native.ts', {
         '@angular/core': { ...angular, Component: () => type => type, input: value => angular.signal(value),
+            inject: () => null, ViewChild: () => () => {},
             output: () => ({ emit: value => events.push(value) }) },
         '../mobilemoodle/core_mobile/course-favourites': favourites,
         '../services_mobile/painel-help-links': { PAINEL_HELP_LINKS: {} },
+        './painel-filters': filters,
     });
     const page = new PainelNativeComponent();
-    page.data.set(build(raw, null));
+    page.data.set(build(raw, null, 'conta-a-ficticia'));
     const course = page.courses()[0];
     page.busy.set(true);
     page.selectCourse(course);
@@ -157,14 +162,22 @@ test('native Angular signals filter data and never emit a blocked/double in-prog
     assert.equal(events.length, 0);
     page.selectCourse(course);
     assert.equal(events.length, 1);
-    page.search.set('NOT_FOUND');
+    page.openFilters();
+    page.editFilterQuery('NOT_FOUND');
+    page.applyFilters();
     assert.equal(page.courses().length, 0);
-    page.search.set('fictícia');
+    page.openFilters();
+    page.editFilterQuery('fictícia');
     page.toggleFavourite(course);
-    page.onlyFavourites.set(true);
+    page.chooseFilter('situation', 'favourites');
+    page.applyFilters();
     assert.equal(page.courses().length, 1);
     storage.set('ifrn_username', 'SYNTHETIC_B');
-    page.data.set(build(raw, null));
+    page.data.set(build(raw, null, 'conta-b-ficticia'));
+    assert.equal(page.activeFilterCount(), 0, 'filters reset for a different owner');
+    page.openFilters();
+    page.chooseFilter('situation', 'favourites');
+    page.applyFilters();
     assert.equal(page.courses().length, 0, 'new account cannot inherit account A favourites');
     page.data.set(null);
     assert.equal(page.courses().length, 0, 'missing/invalid owner data clears the rendered list');

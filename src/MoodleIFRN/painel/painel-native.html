@@ -1,4 +1,4 @@
-<div id="main-content" class="native-panel-frame">
+<div id="main-content" class="native-panel-frame" [attr.inert]="section() === 'filter' ? '' : null">
 <ion-header class="ava-header">
     <ion-toolbar class="ava-toolbar">
         <div class="ava-toolbar-inner">
@@ -33,8 +33,14 @@
                 }
             </div>
             <div class="painel-filters" aria-label="Filtros de cursos">
-                <button type="button" class="painel-filter-button" aria-haspopup="dialog" [attr.aria-expanded]="section() === 'filter'" (click)="section.set('filter')"><ion-icon name="options-outline" aria-hidden="true" />Filtros</button>
-                <button type="button" class="painel-filter-chip" aria-haspopup="dialog" (click)="section.set('filter')"><span>{{ filterLabel() }}</span><ion-icon name="chevron-down-outline" aria-hidden="true" /></button>
+                <button #filterTrigger type="button" class="painel-filter-button" aria-haspopup="dialog"
+                    [attr.aria-expanded]="section() === 'filter'" (click)="openFilters(filterTrigger)">
+                    <ion-icon name="options-outline" aria-hidden="true" />Filtros
+                </button>
+                <button #filterChip type="button" class="painel-filter-chip" aria-haspopup="dialog"
+                    [attr.aria-expanded]="section() === 'filter'" (click)="openFilters(filterChip)">
+                    <span aria-live="polite">{{ filterLabel() }}</span><ion-icon name="chevron-down-outline" aria-hidden="true" />
+                </button>
             </div>
             <section class="page-intro"><h2>{{ pageTitle() }}</h2></section>
             @if (busy()) { <p class="native-state" role="status" aria-live="polite">Preparando a disciplina…</p> }
@@ -63,7 +69,14 @@
                             }
                         </ion-card-content>
                     </ion-card>
-                } @empty { <p class="native-state">Nenhuma disciplina corresponde a esta seleção.</p> }
+                } @empty {
+                    <div class="native-state">
+                        <p role="status">Nenhuma disciplina corresponde a esta seleção.</p>
+                        @if (activeFilterCount()) {
+                            <button type="button" class="native-filter-reset" (click)="clearFilters(filterTrigger)">Limpar filtros</button>
+                        }
+                    </div>
+                }
             </div>
         }
     </div>
@@ -72,11 +85,14 @@
 @if (section() !== 'courses') {
     <div class="sidebar-modal">
         <div class="sidebar-modal__backdrop" (click)="closePanel()" aria-hidden="true"></div>
-        <section class="sidebar-modal__panel" role="dialog" aria-modal="true" aria-labelledby="native-sidebar-title">
+        <section class="sidebar-modal__panel" role="dialog" aria-modal="true" aria-labelledby="native-sidebar-title"
+            [class.native-filter-panel]="section() === 'filter'" [style.--native-filter-text-scale]="fontScale() / 100"
+            (keydown)="onFilterKeyDown($event)">
             <div class="sidebar-modal__header"><div class="sidebar-modal__header-title"><ion-icon [name]="section() === 'help' ? 'help-circle-outline' : section() === 'filter' ? 'filter-outline' : section() === 'profile' ? 'person-circle-outline' : 'accessibility-outline'" aria-hidden="true" /><span id="native-sidebar-title">{{ panelTitle() }}</span></div>
-                <button type="button" class="sidebar-modal__close" aria-label="Fechar" (click)="closePanel()"><ion-icon name="close-outline" aria-hidden="true" /></button>
+                <button #sidebarClose type="button" class="sidebar-modal__close" [attr.aria-label]="section() === 'filter' ? 'Fechar filtros' : 'Fechar'"
+                    (click)="closePanel()"><ion-icon name="close-outline" aria-hidden="true" /></button>
             </div>
-            <div class="sidebar-modal__body">
+            <div class="sidebar-modal__body" [class.native-filter-scroll]="section() === 'filter'">
                 @if (section() === 'profile') {
                     <div class="ava-modal-body"><p class="ava-modal-body__user">{{ data()?.name }}</p><div class="ava-button-options"><span class="modal-content-body-title">Links</span>
                         <button type="button" class="modal-button-option" (click)="openProfile.emit()">Perfil no SUAP</button></div>
@@ -88,11 +104,39 @@
                         <button type="button" class="modal-content-body-help-link" [disabled]="busy()" (click)="openHelp.emit(link.id)">{{ link.title }}</button>
                     }</div>
                 } @else if (section() === 'filter') {
-                    <div class="ava-modal-body">
-                        <ion-searchbar [value]="search()" (ionInput)="search.set($event.detail.value || '')" placeholder="Buscar disciplina" aria-label="Buscar disciplina" />
-                        <label class="filter-select-area"><ion-icon name="book-outline" aria-hidden="true" /><select [value]="filter()" (change)="setFilter(filterSelect.value)" #filterSelect aria-label="Situação dos cursos">@for (option of filterOptions; track option.id) { <option [value]="option.id">{{ option.label }}</option> }</select></label>
-                        <button type="button" class="modal-content-body-filter-button" (click)="closePanel()">Filtrar</button>
-                        <button type="button" class="modal-content-body-filter-clear" (click)="clearFilters()"><ion-icon name="trash-outline" aria-hidden="true" /><span>Limpar filtros</span></button>
+                    <label class="native-filter-search">
+                        <ion-icon name="search-outline" aria-hidden="true" />
+                        <input #filterSearch type="search" placeholder="Pesquisar..." aria-label="Pesquisar disciplinas"
+                            autocomplete="off" [value]="draftFilters().query" (input)="editFilterQuery(filterSearch.value)" />
+                    </label>
+                    <div class="native-filter-categories">
+                        @for (filter of filterCategories(); track filter.key) {
+                            <div class="native-filter-category">
+                                <button type="button" class="native-filter-category-trigger" [id]="'native-filter-trigger-' + filter.key"
+                                    [attr.aria-expanded]="expandedFilter() === filter.key" [attr.aria-controls]="'native-filter-options-' + filter.key"
+                                    (click)="toggleFilterCategory(filter.key)">
+                                    <ion-icon [name]="filter.icon" aria-hidden="true" />
+                                    <span>{{ filter.title }}
+                                        @if (filter.selectionLabel) { <small>{{ filter.selectionLabel }}</small> }
+                                    </span>
+                                    <ion-icon [name]="expandedFilter() === filter.key ? 'chevron-up-outline' : 'chevron-down-outline'" aria-hidden="true" />
+                                </button>
+                                <div class="native-filter-options" [id]="'native-filter-options-' + filter.key" role="group"
+                                    [attr.aria-labelledby]="'native-filter-trigger-' + filter.key" [hidden]="expandedFilter() !== filter.key">
+                                    @if (expandedFilter() === filter.key) {
+                                        @for (option of filter.options; track option.id) {
+                                            <label class="native-filter-option">
+                                                <input type="radio" [name]="'native-filter-' + filter.key" [checked]="filter.selected === option.id"
+                                                    [value]="option.id" (change)="chooseFilter(filter.key, option.id)" />
+                                                <span>{{ option.label }}</span>
+                                            </label>
+                                        } @empty {
+                                            <p>{{ filter.key === 'module' ? 'Nenhum módulo informado pelo AVA.' : 'Nenhuma opção disponível para esta seleção.' }}</p>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        }
                     </div>
                 } @else {
                     <div class="ava-modal-body accessiblity-options">
@@ -102,6 +146,14 @@
                     </div>
                 }
             </div>
+            @if (section() === 'filter') {
+                <footer class="native-filter-actions">
+                    <button type="button" class="modal-content-body-filter-button" (click)="applyFilters()">Filtrar</button>
+                    <button type="button" class="modal-content-body-filter-clear" (click)="clearFilters()">
+                        <ion-icon name="trash-outline" aria-hidden="true" /><span>Limpar filtros</span>
+                    </button>
+                </footer>
+            }
         </section>
     </div>
 }

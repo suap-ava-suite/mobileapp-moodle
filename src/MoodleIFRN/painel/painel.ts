@@ -126,7 +126,8 @@ export class PainelPage implements OnInit, OnDestroy {
     private loadNativeDashboard(): void {
         // getDashboard keeps the existing owner/expiry checks. No new authentication/cache path.
         const raw = this.painelAva.getDashboard();
-        const dashboard = buildNativePainelModel(raw, readOAuthProfile()?.profile || this.painelAva.getProfile());
+        const oauth = readOAuthProfile();
+        const dashboard = buildNativePainelModel(raw, oauth?.profile || this.painelAva.getProfile(), oauth?.identity);
         // Só o nome aguarda a primeira revalidação. A lista de disciplinas fica disponível.
         this.nativeDashboard = dashboard && this.initialProfilePending ? { ...dashboard, name: 'Estudante' } : dashboard;
     }
