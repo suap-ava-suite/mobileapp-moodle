@@ -18,6 +18,75 @@ Use o sumário para ir ao capítulo e clique na linha abaixo do título para abr
 - [8. Solução de problemas](#8-solução-de-problemas)
 - [9. Referências e escopo da verificação](#9-referências-e-escopo-da-verificação)
 
+## Roteiro rápido: executar o aplicativo
+
+Use esta sequência depois de instalar Node 22, Java/Android SDK (Android) ou Xcode (iOS). Todos os comandos abaixo já aparecem nos scripts ou procedimentos deste repositório. Rode-os na raiz do clone. Se já tiver o projeto, pule `git clone` e `cd`.
+
+### Android — compilar, instalar e abrir no celular USB
+
+```bash
+git clone --branch release/2.0.1 --single-branch https://github.com/suap-ava-suite/mobileapp-moodle.git
+cd mobileapp-moodle
+nvm install 22.17.0
+nvm use 22.17.0
+npm ci
+npx --no-install cordova platform ls
+# Execute somente se Android ainda não estiver preparado:
+npx --no-install cordova platform add android@15.1.0 --nosave
+adb devices -l
+npm run prod:android -- --device
+```
+
+Se `platform ls` mostrar Android `15.1.0`, pule `platform add`. Se mostrar outra versão, pare e siga a preparação isolada do capítulo 2.3. O ADB precisa mostrar o celular como `device`. `prod:android` compila o plugin Moodle e o app, instala a versão de produção web com assinatura Android debug e abre o app. Este comando altera a instalação do dispositivo. Se houver mais de um alvo, use o identificador listado pelo Ionic com `--target`; consulte o Método B antes de atualizar uma instalação importante.
+
+### Android — gerar APK sem instalar
+
+Use esta opção quando quiser conferir o arquivo antes de instalar. A plataforma Android precisa estar preparada, como na sequência anterior.
+
+```bash
+npm run prod --prefix cordova-plugin-moodleapp
+npx --no-install cross-env NODE_ENV=production ionic cordova build android --prod --debug
+```
+
+APK gerada em `platforms/android/app/build/outputs/apk/debug/app-debug.apk`. Para instalá-la depois, confira assinatura e versão e então use o Método C. Instalar uma APK antiga não inclui mudanças recentes do código.
+
+### iOS — compilar e executar no simulador ou iPhone (somente Mac)
+
+Tenha Xcode, runtime do simulador, CocoaPods e assinatura configurados. Esta é a sequência completa para preparar o workspace pela primeira vez e abri-lo no Xcode. Se já clonou o projeto e instalou dependências, pule essas linhas.
+
+```bash
+git clone --branch release/2.0.1 --single-branch https://github.com/suap-ava-suite/mobileapp-moodle.git
+cd mobileapp-moodle
+nvm install 22.17.0
+nvm use 22.17.0
+xcode-select -p
+xcodebuild -version
+xcrun simctl list devices available
+pod --version
+npm ci
+npm run prod --prefix cordova-plugin-moodleapp
+npx --no-install cordova platform ls
+# Execute somente se iOS ainda não estiver preparado:
+npx --no-install cordova platform add ios@7.1.1 --nosave
+npx --no-install cordova requirements ios
+npx --no-install cross-env NODE_ENV=production ionic cordova prepare ios --prod
+find platforms/ios -maxdepth 1 -name '*.xcworkspace'
+open platforms/ios/Moodle.xcworkspace
+```
+
+Se `platform ls` mostrar iOS `7.1.1`, pule `platform add`; se mostrar outra versão, pare e confira o capítulo 6. Se `find` mostrar outro nome de workspace, abra o caminho retornado. No Xcode, selecione scheme **Moodle** e um simulador iOS 16 ou superior; use **Product → Run**. Para um iPhone, conecte-o ao Mac, configure **Signing & Capabilities**, selecione o aparelho e use **Product → Run**. O app iOS ainda precisa de validação na versão de Xcode escolhida; Android funcionando não comprova compatibilidade iOS.
+
+Para executar pelo terminal depois de preparar a plataforma, escolha **um** destino:
+
+```bash
+# Compila, instala e abre no simulador:
+npm run prod:ios -- --emulator
+# iPhone conectado, depois de configurar a assinatura no Xcode:
+npx --no-install cordova run ios --device
+```
+
+**Ordem resumida:** ferramentas → clone/branch → `npm ci` → plataforma Cordova, se ausente → comando de execução. Se aparecer erro, pare na primeira falha e consulte a solução correspondente; não repita instalação ou limpeza indiscriminadamente.
+
 ## 1. Instalação de dependências
 
 <details>
@@ -279,11 +348,7 @@ O `package.json` contém exatamente este encadeamento:
 npm run prod --prefix cordova-plugin-moodleapp && cross-env NODE_ENV=production ionic cordova run android --prod
 ```
 
-1. O plugin Moodle compila primeiro. Se falhar, o `&&` impede a etapa do Ionic.
-2. A CLI Ionic 7.2.1 verifica `native-run`, plataforma e destinos. Sem seleção explícita, prioriza dispositivo físico detectado. Para emulador, solicite `--emulator` explicitamente.
-3. `NODE_ENV=production` ativa o ambiente dos hooks. Ionic roda Gulp/cópia de assets e o alvo Angular de produção. O `www/` incorpora a WebView e os recursos do checkout em execução.
-4. No fluxo padrão, Ionic chama `cordova build`; Cordova faz `prepare`, hooks IFRN `after_prepare` e compilação Gradle. `--prod` é o modo web. O comando não passa `--release`, portanto a variante Android usual é debug.
-5. Ionic resolve a APK da variante produzida em `platforms/android/app/build/outputs/apk/`. `native-run` instala e inicia o aplicativo no alvo. Com `--no-native-run`, a CLI delega a etapa nativa a `cordova run`.
+O script executa, nesta ordem: compila `cordova-plugin-moodleapp`; chama `ionic cordova run android --prod`; o Gulp/Angular gera os arquivos web; Cordova prepara e compila a plataforma; a CLI instala e abre no destino. Como não passa `--release`, a variante nativa padrão é debug. Para apenas compilar sem instalar, use o Método A.
 
 > **Operação no dispositivo.** `npm run prod:android` pode substituir e abrir o app instalado. Confira o destino, a assinatura e o estado da sessão antes de executar. Para apenas compilar, use o Método A.
 
@@ -404,11 +469,10 @@ npm run prod --prefix cordova-plugin-moodleapp
 npx --no-install cordova platform ls
 # Apenas se iOS ainda estiver ausente:
 npx --no-install cordova platform add ios@7.1.1 --nosave
-npx --no-install cordova prepare ios
 npx --no-install cordova requirements ios
 ```
 
-Gere os assets web e sincronize a plataforma para uso no Xcode. O `ionic cordova prepare ios` roda a etapa Angular/Gulp e chama Cordova `prepare`. Examine o primeiro erro de plugin/Pod, caso apareça. Use o `.xcworkspace` gerado, que inclui a integração do CocoaPods.
+Gere os assets web e sincronize a plataforma para uso no Xcode. O `ionic cordova prepare ios` roda a etapa Angular/Gulp e chama Cordova `prepare`; não é preciso executar outro `cordova prepare` antes dele. Examine a primeira falha de plugin/Pod, caso apareça. Use o `.xcworkspace` gerado, que inclui a integração do CocoaPods.
 
 ```bash
 npx --no-install cross-env NODE_ENV=production ionic cordova prepare ios --prod
@@ -432,7 +496,7 @@ npx --no-install cordova run ios --emulator
 
 3. Para inspecionar a parte web, habilite as ferramentas de desenvolvedor no Safari do Mac e use o menu **Develop** para selecionar a WebView, se a build a expuser. No iPhone, habilitar Web Inspector é uma configuração manual. Em um runtime recente, a WebView precisa estar configurada como inspecionável. Use a inspeção para Console, layout e rede da interface local, evitando exportar dados de sessão. O simulador permite revisar tela, tema, layout e parte das integrações. Registre hardware, push, biometria e autenticação real como pendentes até o teste físico. [Executar pelo Xcode](https://developer.apple.com/documentation/xcode/running-your-app-on-simulated-or-physical-devices) · [Web Inspector](https://developer.apple.com/documentation/safari-developer-tools/inspecting-ios)
 
-Os scripts `npm run dev:ios -- --emulator` e `npm run prod:ios -- --emulator` também estão disponíveis depois da preparação. Ambos chamam `ionic cordova run ios`, portanto instalam e abrem. O segundo define `NODE_ENV=production` e seleciona a configuração web de produção. Para escolher um iPhone conectado, use o Xcode ou um destino explícito em vez de depender da seleção automática.
+Após preparar a plataforma, `npm run prod:ios -- --emulator` compila, instala e abre no simulador. Para iPhone conectado, selecione o aparelho no Xcode, configure a assinatura e use **Product → Run**. O script `dev:ios` também executa via Cordova, mas não seleciona a configuração web de produção.
 
 ### 6.4 Executar num iPhone físico
 
