@@ -15,6 +15,12 @@
   <div class="layout">
     <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav><a href="index.html">Manual principal</a><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a></nav><div class="sidebar-note">Leia o estado real antes de continuar.</div></aside>
     <main id="conteudo" class="content">
+<section class="doc-section searchable" id="guia-build-mobile-20261124">
+  <p class="eyebrow">DOCUMENTAÇÃO · 24/11/2026</p>
+  <h2>Guia de instalação e execução para Android e iOS</h2>
+  <p>Para montar o ambiente, comece pelo <a href="markdown/GUIA-MOODLE-IFRN-ANDROID-IOS.md">guia principal em Markdown</a> ou pela <a href="como-executar-android-ios.html">versão HTML offline</a>. A referência é a release <code>127167c87</code>. O checkout consultado está em <code>b9097f633</code> e tem Android <code>14.0.1</code> gerado. O lockfile fixa Android <code>15.1.0</code>. Prepare a versão fixada num clone de build.</p>
+  <p>O roteiro separa <code>ionic cordova build android</code> para gerar a APK, <code>npm run prod:android</code> para compilar e instalar, e <code>adb install -r</code> para instalar um artefato existente. O iOS está declarado como Cordova <code>7.1.1</code>, com preparação e execução no Mac pendentes de validação. Atualize o Markdown e mantenha a renderização HTML sincronizada em revisões futuras. <a href="progresso-projeto.html#guia-build-mobile-20261124">Registro da revisão</a>.</p>
+</section>
 <section class="doc-section searchable" id="espacamento-cards-figma-20261121">
   <p class="eyebrow">TRANSFERÊNCIA DA RELEASE · 23/11/2026</p>
   <h2>Escopo da integração dos cards</h2>

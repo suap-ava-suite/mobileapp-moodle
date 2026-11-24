@@ -32,6 +32,7 @@
         <a href="#instalacao">Instalar dependências</a>
         <a href="#desenvolvimento">Desenvolver e executar</a>
         <a href="#scripts">Scripts IFRN</a>
+        <a href="como-executar-android-ios.html">Instalação e execução Android e iOS</a>
         <a href="#android">Android e APK</a>
         <a href="#ios">iOS pelo MacBook</a>
         <a href="#testes">Testes e diagnóstico</a>
@@ -96,15 +97,15 @@
         <p class="eyebrow">01 · AMBIENTE</p><h2>Requisitos verificados no repositório</h2>
         <div class="table-wrap"><table><thead><tr><th>Ferramenta</th><th>Versão / configuração</th><th>Observação</th></tr></thead><tbody>
           <tr><td>Node.js</td><td><code>22.17.0</code> compatível; engine <code>&gt;=22.17 &lt;23</code></td><td><code>.nvmrc</code> informa <code>lts/jod</code>; em Windows NVM, selecionar a versão numérica explícita.</td></tr>
-          <tr><td>npm</td><td><code>10.9.2</code> observado no ambiente de referência</td><td>Não há campo <code>packageManager</code> fixando a versão.</td></tr>
+          <tr><td>npm</td><td><code>10.9.8</code> observado na revisão do guia Android e iOS</td><td>Use o npm incluído no Node 22 escolhido. O repositório não fixa a versão de npm.</td></tr>
           <tr><td>Angular</td><td>Core <code>20.3.18</code>; CLI/build <code>20.3.22</code></td><td>Leia os valores do <code>package.json</code> antes de atualizar.</td></tr>
           <tr><td>Ionic</td><td>Ionic Angular <code>8.8.1</code>; CLI <code>7.2.1</code></td><td>Integração com Cordova.</td></tr>
           <tr><td>TypeScript</td><td><code>5.9.3</code></td><td>Dependência de desenvolvimento.</td></tr>
           <tr><td>Cordova</td><td>CLI <code>13.0.0</code>; Android <code>15.1.0</code>; iOS <code>7.1.1</code></td><td>Plataformas declaradas no repositório.</td></tr>
           <tr><td>Android</td><td>min SDK 24, target/compile SDK 36; Gradle 8.14.2, AGP 8.10.1, Kotlin 2.1.21</td><td>Confira os valores gerados no projeto nativo antes de publicar.</td></tr>
-          <tr><td>iOS</td><td>Deployment target <code>16.0</code>; WKWebView</td><td>Build nativa exige macOS e Xcode. Não validada neste ambiente Windows.</td></tr>
+          <tr><td>iOS</td><td>Deployment target <code>16.0</code> e WKWebView</td><td>Build nativa exige macOS e Xcode. A primeira validação do projeto iOS no Mac permanece pendente.</td></tr>
         </tbody></table></div>
-        <div class="callout info">As versões acima vêm de <code>package.json</code>, <code>.nvmrc</code>, <code>config.xml</code> e arquivos de build consultados em 11/11/2026. Apple e Google atualizam requisitos: confirme as regras vigentes antes da publicação.</div>
+        <div class="callout info">Consulte <a href="como-executar-android-ios.html#1-instalação-de-dependências">os requisitos de instalação</a> para distinguir versões fixadas e ferramentas instaladas. Confirme as regras das lojas antes de publicar.</div>
       </section>
 
       <section id="clone" class="doc-section searchable">
@@ -121,6 +122,7 @@ npm.cmd --version</code></pre><button class="copy-button" type="button">Copiar c
 
       <section id="instalacao" class="doc-section searchable">
         <p class="eyebrow">03 · DEPENDÊNCIAS</p><h2>Instalação inicial</h2>
+        <p>Para preparar Windows, Linux ou macOS do zero, consulte o <a href="como-executar-android-ios.html#1-instalação-de-dependências">capítulo de instalação do guia Android e iOS</a>. A <a href="markdown/GUIA-MOODLE-IFRN-ANDROID-IOS.md">versão Markdown</a> é a referência principal do guia.</p>
         <p>O script <code>postinstall</code> aplica <code>patch-package</code> e executa <code>npm install</code> dentro de <code>cordova-plugin-moodleapp</code>. Portanto, a instalação pode alterar arquivos gerados pelo patch-package e instalar dependências do plugin local.</p>
         <div class="command-card"><div class="command-heading"><strong>Instalar conforme o lockfile</strong><span>Raiz do repositório</span></div><pre><code>npm ci</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Resultado: dependências da raiz instaladas a partir do lockfile e execução dos hooks <code>postinstall</code>.</p><p class="caution">Não apague <code>node_modules</code>, plataformas Cordova ou locks como primeira medida de diagnóstico.</p></div>
       </section>
@@ -129,9 +131,7 @@ npm.cmd --version</code></pre><button class="copy-button" type="button">Copiar c
         <p class="eyebrow">04 · DESENVOLVIMENTO</p><h2>Build web e customizações IFRN</h2>
         <p>O painel leve em <code>src/MoodleIFRN/mobilemoodle/</code> tem build própria. A build nativa Angular/Cordova é outra etapa. Não confunda a geração de <code>mobilemoodle.js</code> com uma APK.</p>
         <div class="command-card"><div class="command-heading"><strong>Compilar o painel mobilemoodle (TypeScript + SCSS)</strong><span>Raiz do projeto</span></div><pre><code>npm run build:mobilemoodle</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Gera/atualiza bundle e CSS do painel e sincroniza Ionic/Ionicons locais; não compila o binário Android ou iOS.</p></div>
-        <div class="command-card"><div class="command-heading"><strong>Build web Cordova IFRN</strong><span>macOS / Linux / Windows com Node</span></div><pre><code>node src/MoodleIFRN/build-native.mjs --platform=android
-node_modules/.bin/cordova prepare android
-node_modules/.bin/cordova build android</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">O primeiro comando compila a aplicação web Cordova e gera o idioma pt-br. Os comandos seguintes preparam e compilam a plataforma.</p><p class="caution">No Windows PowerShell, execute os binários locais com <code>.\node_modules\.bin\cordova.cmd</code>. Para iOS, use <code>--platform=ios</code> e os comandos iOS descritos abaixo em um Mac.</p></div>
+        <p>Para gerar o build web com os hooks Ionic e empacotar a plataforma, siga o <a href="como-executar-android-ios.html#2-preparação-do-repositório">roteiro de preparação do repositório</a>. O builder de diagnóstico <code>build-native.mjs</code> pressupõe uma plataforma já preparada e assets disponíveis.</p>
         <div class="command-card"><div class="command-heading"><strong>Servir Ionic para desenvolvimento</strong><span>Script existente</span></div><pre><code>npm start</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Executa <code>ionic serve</code> com HTTPS e valor de <code>MOODLE_APP_BROWSER</code>. O hook do Ionic também executa Gulp.</p><p class="caution">O script do repositório chama <code>scripts/serve.sh</code> em outro hook, então o fluxo de desenvolvimento completo pressupõe shell Unix (macOS/Linux ou Git Bash/WSL no Windows). Se falhar no Windows, use Git Bash/WSL; não altere scripts sem revisar os hooks.</p></div>
       </section>
 
@@ -149,15 +149,9 @@ node_modules/.bin/cordova build android</code></pre><button class="copy-button" 
 
       <section id="android" class="doc-section searchable">
         <p class="eyebrow">06 · ANDROID</p><h2>Compilar e localizar APK</h2>
-        <p>Compile os assets IFRN, gere o app web Cordova e então prepare/compile a plataforma. O comando Gradle pode ser executado diretamente somente para depurar uma plataforma já preparada.</p>
-        <div class="command-card"><div class="command-heading"><strong>Build debug completa</strong><span>Raiz do projeto</span></div><pre><code>npm run build:mobilemoodle
-node src/MoodleIFRN/build-native.mjs --platform=android
-npx cordova prepare android
-npx cordova build android --debug</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">A APK debug fica normalmente em <code>platforms/android/app/build/outputs/apk/debug/app-debug.apk</code>. Confirme a saída da build, package ID e assinatura antes de instalar.</p></div>
-        <div class="command-card"><div class="command-heading"><strong>Windows PowerShell</strong><span>Use executáveis .cmd</span></div><pre><code>npm.cmd run build:mobilemoodle
-node src/MoodleIFRN/build-native.mjs --platform=android
-.\node_modules\.bin\cordova.cmd prepare android
-.\node_modules\.bin\cordova.cmd build android --debug</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Requer Android SDK e Java compatíveis com a configuração Gradle do projeto.</p></div>
+        <p>Confira a <a href="como-executar-android-ios.html#3-métodos-android">comparação dos três métodos Android</a>. Depois de preparar a plataforma, o comando abaixo recompila os assets IFRN e o app e gera a APK debug sem instalar. O Gradle direto usa apenas os recursos já preparados.</p>
+        <div class="command-card"><div class="command-heading"><strong>Gerar APK debug</strong><span>Raiz do projeto</span></div><pre><code>npm run prod --prefix cordova-plugin-moodleapp
+npx --no-install cross-env NODE_ENV=production ionic cordova build android --prod --debug</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Saída em <code>platforms/android/app/build/outputs/apk/debug/app-debug.apk</code>. Confira o package ID, o hash e a assinatura antes de instalar. No PowerShell, use <code>npm.cmd</code> e <code>npx.cmd</code> se necessário.</p></div>
         <div class="command-card"><div class="command-heading"><strong>Verificar APK e hash</strong><span>macOS/Linux</span></div><pre><code>shasum -a 256 platforms/android/app/build/outputs/apk/debug/app-debug.apk
 aapt dump badging platforms/android/app/build/outputs/apk/debug/app-debug.apk</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Exibe SHA-256 e metadados Android, incluindo o package name.</p></div>
         <div class="callout info"><strong>Debug, release e AAB:</strong> APK debug é para desenvolvimento e não publicação. APK release é um pacote instalável assinado conforme a chave definida. AAB é o formato de envio à Play Store; assinatura institucional e credenciais precisam ser fornecidas e protegidas pelo responsável. O repositório atual identifica o app como <code>com.moodle.moodlemobile</code> e nome nativo Moodle; isso não comprova titularidade ou aprovação institucional.</div>
@@ -166,6 +160,7 @@ aapt dump badging platforms/android/app/build/outputs/apk/debug/app-debug.apk</c
 
       <section id="ios" class="doc-section searchable">
         <p class="eyebrow">07 · iOS NO MACBOOK</p><h2>Executar e compilar no MacBook</h2>
+        <p>Use o <a href="como-executar-android-ios.html#6-ios-no-mac">passo a passo para Mac, simulador e iPhone</a>. A plataforma iOS é declarada. Sua compilação e compatibilidade precisam de validação com Xcode.</p>
         <p>O repositório declara <code>cordova-ios 7.1.1</code>, deployment target iOS 16.0 e WKWebView. A compilação nativa de iOS exige macOS e Xcode; Windows pode preparar código web, mas não compila ou assina o app iOS.</p>
         <div class="callout info">O config.xml referencia GoogleService-Info.plist para iOS. Confirme que o arquivo de configuração Firebase correto está disponível no checkout e corresponde ao app institucional autorizado antes de compilar. Não substitua a configuração nem publique chaves de assinatura ou arquivos de credencial sem aprovação.</div>
         <h3>1. Preparar o Mac</h3>
@@ -184,19 +179,16 @@ nvm install 22.17.0
 nvm use 22.17.0
 npm ci</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Instala as dependências fixadas pelo lockfile; o postinstall aplica patches e instala dependências do plugin Moodle local.</p></div>
         <h3>3. Preparar e compilar iOS</h3>
-        <div class="command-card"><div class="command-heading"><strong>Build de desenvolvimento para iOS</strong><span>macOS com Xcode e CocoaPods</span></div><pre><code>npm run build:mobilemoodle
-node src/MoodleIFRN/build-native.mjs --platform=ios
-npx cordova platform ls
-npx cordova prepare ios
-npx cordova build ios --debug</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Gera o bundle do painel, compila os assets web para iOS, prepara plugins e dependências CocoaPods e cria a build nativa debug.</p><p class="caution">Se a plataforma iOS não estiver instalada localmente, o comando de prepare/build pode informar isso. Confirme que <code>cordova-ios@7.1.1</code> consta no lockfile antes de adicioná-la; não altere a versão da plataforma silenciosamente.</p></div>
-        <p>Se <code>cordova platform ls</code> confirmar que a plataforma iOS não está instalada, o projeto declara a versão 7.1.1. Adicione-a explicitamente e revise qualquer alteração no lockfile:</p>
-        <div class="command-card"><div class="command-heading"><strong>Adicionar a plataforma declarada</strong><span>Somente quando ausente</span></div><pre><code>npx cordova platform add ios@7.1.1
-npx cordova prepare ios</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Baixa a versão específica declarada pelo projeto e prepara a pasta nativa gerada.</p><p class="caution">Plataformas Cordova são arquivos gerados. Edite o código-fonte em src/MoodleIFRN ou nos plugins versionados, não diretamente em platforms/ios.</p></div>
+        <p>Compile o plugin Moodle com <code>npm run prod --prefix cordova-plugin-moodleapp</code>. Se <code>npx --no-install cordova platform ls</code> indicar que iOS está ausente, adicione a versão 7.1.1 antes de compilar o app web.</p>
+        <div class="command-card"><div class="command-heading"><strong>Adicionar a plataforma declarada</strong><span>Somente quando ausente</span></div><pre><code>npx --no-install cordova platform add ios@7.1.1 --nosave</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Cria a pasta nativa com a versão fixada. Revise alterações de manifesto e lockfile, se houver.</p></div>
+        <div class="command-card"><div class="command-heading"><strong>Preparar e gerar build de simulador</strong><span>macOS com Xcode e CocoaPods</span></div><pre><code>npx --no-install cordova prepare ios
+npx --no-install cross-env NODE_ENV=production ionic cordova prepare ios --prod
+npx --no-install cordova build ios --debug --emulator</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Prepara plugins, recompila os assets IFRN e gera o <code>.app</code> de simulador.</p></div>
         <h3>4. Abrir no Xcode ou executar no simulador</h3>
         <div class="command-card"><div class="command-heading"><strong>Abrir workspace Cordova</strong><span>Terminal do macOS</span></div><pre><code>open platforms/ios/*.xcworkspace</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Abre o workspace gerado. No Xcode, escolha o scheme Moodle e um simulador; selecione uma equipe de assinatura apenas se for executar em aparelho ou arquivar.</p></div>
-        <div class="command-card"><div class="command-heading"><strong>Executar em simulador</strong><span>macOS</span></div><pre><code>npx cordova run ios --emulator</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Compila, instala e executa no simulador iOS escolhido pelo Cordova/Xcode.</p></div>
+        <div class="command-card"><div class="command-heading"><strong>Executar em simulador</strong><span>macOS</span></div><pre><code>npx --no-install cordova run ios --emulator</code></pre><button class="copy-button" type="button">Copiar comando</button><p class="expected">Compila, instala e executa no simulador iOS escolhido pelo Cordova/Xcode.</p></div>
         <p>O script existente <code>npm run dev:ios</code> também executa <code>ionic cordova run ios</code>. O script de produção <code>npm run prod:ios</code> prepara a build web de produção e inicia o app; não cria, por si só, um archive assinado para a loja.</p>
-        <p>Para testar em iPhone, conecte e confie no aparelho, configure assinatura e provisioning no Xcode e use <code>npx cordova run ios --device</code>. Isso instala no dispositivo escolhido; confirme o destino antes de executar.</p>
+        <p>Para testar em iPhone, conecte e confie no aparelho, configure assinatura e provisionamento no Xcode e selecione o iPhone para <strong>Product → Run</strong>. Confira o destino antes de instalar.</p>
         <h3>5. Assinar e distribuir</h3>
         <p>Para criar archive/TestFlight/App Store, é necessário Bundle Identifier aprovado, Apple Developer Team, certificado/provisioning ou assinatura automática configurada no Xcode, além dos dados institucionais do App Store Connect. Não versionar certificados, profiles, API keys ou senhas. O projeto atualmente usa um identificador herdado; a instituição deve aprovar qualquer mudança antes de distribuição.</p>
         <div class="callout warning"><strong>Requisitos Apple em 11/11/2026:</strong> desde 28/04/2026, uploads ao App Store Connect exigem Xcode 26 ou posterior com SDK iOS 26 ou posterior. A Apple informou em 30/10/2026 que builds com Xcode 27.2/SDK 27.2 também podem ser enviadas. Confirme as versões estáveis aceitas e os requisitos de macOS no momento do archive; não use beta para release sem aprovação. Este projeto não foi compilado ou validado em Xcode nesta máquina Windows.</div>
@@ -321,6 +313,7 @@ git push -u origin docs/minha-tarefa</code></pre><button class="copy-button" typ
         <p class="eyebrow">12 · DOCUMENTAÇÃO</p><h2>Documentos do repositório</h2>
         <p>O portal fica em <code>src/MoodleIFRN/docs/</code>. Consulte o <a href="html/INVENTARIO-DOCUMENTACAO.html">inventário da documentação</a> para ver as páginas convertidas, os Markdown preservados e os registros históricos.</p>
         <ul>
+          <li>Instalação, compilação e execução em Android e iOS. <a href="markdown/GUIA-MOODLE-IFRN-ANDROID-IOS.md">Guia principal em Markdown</a> · <a href="como-executar-android-ios.html">Versão HTML offline</a></li>
           <li><a href="html/README.html">Índice de documentos</a></li>
           <li><a href="html/PONTE-PAINEL-MOODLE.html">Ponte Painel AVA → Moodle</a></li>
           <li><a href="html/LOGIN-IFRN.html">Login IFRN</a></li>
