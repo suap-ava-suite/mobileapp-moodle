@@ -1,7 +1,39 @@
 /* eslint-disable header/header */
-import { OAUTH_PROFILE_KEY, readOAuthProfile } from './oauth-profile';
+import { OAUTH_PROFILE_KEY, profileIdentity, readOAuthProfile } from './oauth-profile';
 
-const NAME_KEYS = ['nome_exibicao', 'show_name', 'nome_usual', 'nome_social', 'nome_registro', 'nome_completo', 'nome'] as const;
+const DISPLAY_NAME_KEYS = ['nome_exibicao', 'show_name', 'nome_usual', 'nome_social'] as const;
+const NAME_KEYS = [...DISPLAY_NAME_KEYS, 'nome_registro', 'nome_completo', 'nome'] as const;
+const VERIFIED_SUAP_NAME_SOURCE = 'SUAP: perfil autenticado';
+const validName = (value: unknown): value is string => typeof value === 'string' && !!value.trim();
+
+function hasMatchingIdentity(profile: Record<string, unknown>, identity: string): boolean {
+    const identities = ['identificacao', 'matricula', 'username']
+        .map(key => profile[key]).filter(value => value !== undefined && value !== null && value !== '');
+
+    return !!identity && identities.length > 0 && identities.every(value => String(value).trim() === identity);
+}
+
+/** Usa apenas o nome curto de uma resposta SUAP autenticada da mesma conta do Painel. */
+export function preferVerifiedSuapDisplayName(
+    panel: Record<string, unknown> | null,
+    suap: Record<string, unknown> | null,
+): Record<string, unknown> | null {
+    if (!panel || !suap) {
+        return panel;
+    }
+    const identity = profileIdentity(panel);
+    if (!hasMatchingIdentity(panel, identity) || !hasMatchingIdentity(suap, identity)) {
+        return panel;
+    }
+    const name = DISPLAY_NAME_KEYS.map(key => suap[key]).find(validName);
+
+    return name ? { ...panel, nome_exibicao: name.replace(/\s+/g, ' ').trim(), _name_source: VERIFIED_SUAP_NAME_SOURCE } : panel;
+}
+
+/** Mantém o nome curto autenticado no SUAP até a próxima autenticação. */
+export function hasVerifiedSuapDisplayName(profile: Record<string, unknown>): boolean {
+    return profile['_name_source'] === VERIFIED_SUAP_NAME_SOURCE && validName(profile['nome_exibicao']);
+}
 
 /**
  * Atualiza nomes somente após resposta autenticada do ambiente solicitado.
@@ -22,13 +54,12 @@ export function refreshSavedProfileNames(
 ): boolean {
     const snapshot = readOAuthProfile();
     const url = new URL(responseUrl);
-    if (!snapshot || url.origin !== expectedOrigin || url.pathname !== '/api/v2/usuario/info/'
+    if (!snapshot || hasVerifiedSuapDisplayName(snapshot.profile)
+            || url.origin !== expectedOrigin || url.pathname !== '/api/v2/usuario/info/'
             || !Number.isSafeInteger(incoming['id']) || Number(incoming['id']) <= 0) {
         return false;
     }
-    const identities = ['identificacao', 'matricula', 'username']
-        .map(key => incoming[key]).filter(value => value !== undefined && value !== null && value !== '');
-    if (!identities.length || identities.some(value => String(value).trim() !== snapshot.identity)) {
+    if (!hasMatchingIdentity(incoming, snapshot.identity)) {
         return false;
     }
     const previousOrigin = snapshot.profile['_profile_origin'];
@@ -36,7 +67,6 @@ export function refreshSavedProfileNames(
         return false;
     }
     const profile = { ...snapshot.profile };
-    const validName = (value: unknown): value is string => typeof value === 'string' && !!value.trim();
     const getDisplayName = (value: Record<string, unknown>): string => {
         for (const key of NAME_KEYS) {
             if (validName(value[key])) {

@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
 const test = require('node:test');
+const rxjs = require('rxjs');
 
 const compile = file => ts.transpileModule(fs.readFileSync(file, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
@@ -13,9 +14,10 @@ const page = { title: 'AVA (Moodle)', url: 'https://suap.ifrn.edu.br/centralserv
     allowedHosts: ['suap.ifrn.edu.br'] };
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
-function setup() {
+function setup(preferVerifiedSuapDisplayName = () => {}) {
     const windows = [];
     const timers = new Set();
+    const scripts = [];
     const opener = { openInApp(url) {
         // The real Android plugin dismisses the preceding dialog without sending it an exit event.
         const previous = windows.at(-1);
@@ -30,24 +32,31 @@ function setup() {
             emit(name, event = {}) { for (const listener of [...listeners.get(name) || []]) listener(event); },
             show() { browser.visible = true; },
             close() { browser.closed++; browser.visible = false; browser.emit('exit'); },
+            async insertCSS() {},
+            async executeScript({ code }) { scripts.push(code); },
             _loadAfterBeforeload() {},
         };
         windows.push(browser);
         return browser;
-    } };
-    const common = { URL, console, setTimeout: callback => { timers.add(callback); return callback; },
+    }, closeInAppBrowser() { windows.at(-1)?.close(); } };
+    const common = { URL, console, performance, setTimeout: callback => { timers.add(callback); return callback; },
         clearTimeout: callback => timers.delete(callback) };
     const panelMocks = {
         '@angular/core': { Injectable: () => value => value },
         '@static/opener': { CoreOpener: opener },
-        './suap-login-telemetry': { consumeFreshPanelProfile: () => false },
-        './painel-ava.config': { PAINEL_AVA_CONFIG: { baseUrl: 'https://ava.ifrn.edu.br' } },
+        rxjs,
+        './suap-login-telemetry': { consumeFreshPanelProfile: () => false, reportSuapDuration() {} },
+        './painel-ava.config': { PAINEL_AVA_CONFIG: {
+            baseUrl: 'https://ava.ifrn.edu.br', usuarioInfoPath: '/api/v2/usuario/info/',
+        }, isGovBrAuthenticationUrl: () => false },
         '../mobilemoodle/core_mobile/oauth-profile': { readOAuthProfile: () => ({ identity: 'synthetic-owner' }) },
+        '../mobilemoodle/core_mobile/profile-refresh': { hasVerifiedSuapDisplayName: () => false, preferVerifiedSuapDisplayName },
     };
     const panelContext = { ...common, exports: {}, require: id => panelMocks[id] || {} };
     vm.runInNewContext(panelSource, panelContext);
     const panel = Object.create(panelContext.exports.PainelAvaService.prototype);
     panel.courseSsoBrowserLeaseCount = 0;
+    panel.govBrRedirectHandoff = { clear() {} };
     class NgZone {}
     const browserMocks = {
         '@angular/core': { Injectable: () => value => value, NgZone,
@@ -59,8 +68,43 @@ function setup() {
     const browserContext = { ...common, exports: {}, require: id => browserMocks[id] || {} };
     vm.runInNewContext(browserSource, browserContext);
     const service = new browserContext.exports.SuapProfileBrowserService();
-    return { panel, service, windows, timers, opener };
+    return { panel, service, windows, timers, opener, scripts };
 }
+
+test('primeiro login consulta o SUAP na janela autenticada mesmo quando o AVA já informou a identidade', async () => {
+    const old = { identificacao: 'conta-ficticia', nome_usual: 'Nom Antig' };
+    const official = { identificacao: 'conta-ficticia', nome_usual: 'Nome Usual' };
+    const s = setup((panel, suap) => {
+        assert.equal(panel, old);
+        assert.equal(suap, official);
+        return { ...panel, nome_exibicao: suap.nome_usual };
+    });
+    const response = rxjs.firstValueFrom(s.panel.authenticateWithBrowser({ readOnly: true, verifySuapDisplayName: true }));
+    const browser = s.windows[0];
+    browser.emit('message', { data: { type: 'ifrn-painel-diarios', ok: true, profile: old, payload: { diarios: [] } } });
+    assert.match(s.scripts[0], /https:\/\/suap\.ifrn\.edu\.br\//);
+    assert.equal(browser.closed, 0);
+    browser.emit('loadstop', { url: 'https://suap.ifrn.edu.br/' });
+    assert.match(s.scripts[1], /\/api\/rh\/eu\//);
+    browser.emit('message', { data: { type: 'ifrn-suap-identity', profile: official } });
+    const result = await response;
+    assert.equal(result.diagnosticProfile.nome_exibicao, 'Nome Usual');
+    assert.equal(result.diagnosticOwner, 'conta-ficticia');
+    assert.equal(s.windows.length, 1);
+    assert.equal(s.timers.size, 0);
+});
+
+test('erro na consulta complementar do SUAP mantém o perfil já autenticado do Painel', async () => {
+    const profile = { identificacao: 'conta-ficticia', nome_usual: 'Nome Usual' };
+    const s = setup();
+    const response = rxjs.firstValueFrom(s.panel.authenticateWithBrowser({ readOnly: true, verifySuapDisplayName: true }));
+    const browser = s.windows[0];
+    browser.emit('message', { data: { type: 'ifrn-painel-diarios', ok: true, profile, payload: { diarios: [] } } });
+    browser.emit('loaderror');
+    assert.equal((await response).diagnosticProfile, profile);
+    assert.equal(s.windows.length, 1);
+    assert.equal(s.timers.size, 0);
+});
 
 test('profile refresh cannot replace a visible Help browser and leave Angular waiting for its lost exit', async () => {
     const s = setup();

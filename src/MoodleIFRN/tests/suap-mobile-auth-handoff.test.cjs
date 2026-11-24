@@ -15,7 +15,8 @@ test('SUAP mobile entry opens only the system browser and preflights institution
     assert.match(method, /window\.open\(startUrl\.toString\(\), '_system'\)/);
     assert.doesNotMatch(method, /api\/v1\/authenticate/);
     assert.match(method, /if \(!capability\.ok\) \{\s*await this\.loginWithLegacySuap/);
-    assert.match(source, /private async loginWithLegacySuap\([\s\S]*?authenticateWithBrowser\(\{ readOnly: true, reuseSession: false \}\)/);
+    assert.match(source, /private async loginWithLegacySuap\([\s\S]*?authenticateWithBrowser\(\{\s*readOnly: true,\s*reuseSession: false,/);
+    assert.match(method, /verifySuapDisplayName: !readOAuthProfile\(\)/);
 });
 
 test('mobile callback is bound to current state, short-lived PKCE, returned username and dashboard owner', () => {

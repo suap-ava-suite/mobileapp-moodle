@@ -97,14 +97,14 @@ test('production and testing builds suppress timing messages', () => {
     assert.deepEqual(telemetry.defaultLogs, []);
 });
 
-test('profile refresh does not block navigation to the Panel after verified profile persistence', () => {
+test('first login revalidates the name before navigation and a reused profile refreshes in the background', () => {
     const painel = fs.readFileSync('src/MoodleIFRN/services_mobile/painel-ava.service.ts', 'utf8');
     const suap = fs.readFileSync('src/MoodleIFRN/services_mobile/suap-entry.service.ts', 'utf8');
 
-    assert.match(painel, /if \(consumeFreshPanelProfile\(savedProfile\.identity\)\) \{\s*return Promise\.resolve\(false\);/);
-    assert.doesNotMatch(suap, /markFreshPanelProfile\(ownerKey\)/);
+    assert.match(painel, /if \(consumeFreshPanelProfile\(savedProfile\.identity\) \|\| hasVerifiedSuapDisplayName\(savedProfile\.profile\)\) \{\s*return Promise\.resolve\(false\);/);
     assert.match(painel, /refreshSavedProfileNames\(data\.profile, data\.url, origin, true,[\s\S]*?markFreshPanelProfile\(savedProfile\.identity\)/);
-    assert.match(suap, /this\.authService\.openMobileMoodle\('\/painel'\);\s*void this\.painel\.refreshSavedProfile\(\)\.catch\(\(\) => undefined\);/);
+    assert.match(suap, /firstAccess && await this\.painel\.refreshSavedProfile\(\)[\s\S]*?this\.authService\.openMobileMoodle\('\/painel'\);/);
+    assert.match(suap, /if \(!firstAccess\) \{\s*void this\.painel\.refreshSavedProfile\(\)\.catch\(\(\) => undefined\);/);
     assert.match(suap, /profile: mergeVerifiedPanelProfile\(profile, panel\.diagnosticProfile, identity\),[\s\S]*?this\.authService\.openMobileMoodle\('\/painel'\);/);
     assert.match(suap, /cancel\(\): void \{[\s\S]*?mobileAuthAttempts\.invalidate\(\);[\s\S]*?clearFreshPanelProfile\(\);/);
 });
@@ -142,7 +142,7 @@ test('actual profile refresh method skips the redundant browser after successful
     assert.equal(browserOpens, 0);
 });
 
-test('actual SUAP commit starts profile refresh after navigating to the Panel', async () => {
+function commitHarness({ saved = false, refresh } = {}) {
     const suapSource = fs.readFileSync('src/MoodleIFRN/services_mobile/suap-entry.service.ts', 'utf8');
     const ast = ts.createSourceFile('suap-entry.service.ts', suapSource, ts.ScriptTarget.Latest, true);
     const methods = new Map();
@@ -160,33 +160,49 @@ test('actual SUAP commit starts profile refresh after navigating to the Panel', 
     const telemetry = load(session);
     telemetry.markFreshPanelProfile('old-owner', session, 10_000);
     const dashboard = { diarios: [{ id: 43 }] };
+    const identity = 'conta-ficticia';
+    const profileKey = 'oauth-profile';
+    const events = [];
+    const save = profile => {
+        const value = JSON.stringify({ identity, profile, expiresAt: Date.now() + 60_000 });
+        session.setItem(profileKey, value);
+        local.setItem(profileKey, value);
+    };
+    const read = () => JSON.parse(session.getItem(profileKey) || 'null');
+    if (saved) {
+        save({ identificacao: identity, nome_usual: 'Nome Usual' });
+    }
     const context = {
         CoreSites: { getCurrentSite: () => null },
         MOBILE_SUAP_PENDING_KEY: 'ifrn_mobile_suap_pkce_pending_v1',
-        OAUTH_PROFILE_KEY: 'oauth-profile',
+        OAUTH_PROFILE_KEY: profileKey,
         OAUTH_PROFILE_MAX_AGE_SECONDS: 60,
         FRESH_PROFILE_SKIP_KEY: telemetry.FRESH_PROFILE_SKIP_KEY,
         profileIdentity: profile => String(profile.identificacao || ''),
-        markFreshPanelProfile: (owner, storage) => telemetry.markFreshPanelProfile(owner, storage, 11_000),
-        clearFreshPanelProfile: storage => telemetry.clearFreshPanelProfile(storage),
+        readOAuthProfile: read,
+        markFreshPanelProfile: owner => telemetry.markFreshPanelProfile(owner, session, 11_000),
+        clearFreshPanelProfile: () => telemetry.clearFreshPanelProfile(session),
         endNativeSuapEntry() {},
-        refreshOrder: [],
+        profileIdentityValue: identity,
+        saveProfile: save,
+        refreshProfile: () => {
+            events.push('refresh');
+            return refresh?.(read, save) ?? Promise.resolve(false);
+        },
+        navigate: () => events.push(['navigate', read().profile.nome_usual]),
         sessionStorage: session,
         localStorage: local,
         Promise,
     };
     const runnable = ts.transpileModule(`class CommitHarness {
       constructor() {
-        this.staged = { profile: { identificacao: '20232014050033' }, dashboard: ${JSON.stringify(dashboard)}, until: Date.now() + 60_000 };
+        this.staged = { profile: { identificacao: profileIdentityValue, nome_usual: 'Nom Antig' },
+          dashboard: ${JSON.stringify(dashboard)}, until: Date.now() + 60_000 };
         this.authService = {
-          saveOAuthSession: profile => {
-            const value = JSON.stringify({ identity: profile.identificacao, profile, expiresAt: 30_000 });
-            sessionStorage.setItem(OAUTH_PROFILE_KEY, value);
-            localStorage.setItem(OAUTH_PROFILE_KEY, value);
-          },
-          openMobileMoodle: route => { refreshOrder.push('navigate'); this.route = route; },
+          saveOAuthSession: saveProfile,
+          openMobileMoodle: route => { navigate(); this.route = route; },
         };
-        this.painel = { refreshSavedProfile: async () => { refreshOrder.push('refresh'); } };
+        this.painel = { refreshSavedProfile: refreshProfile };
         this.biometricService = { disable() {} };
         this.mobileAuthAttempts = { invalidate() {} };
         this.mobileAuthAbortController = undefined;
@@ -200,12 +216,47 @@ test('actual SUAP commit starts profile refresh after navigating to the Panel', 
         compilerOptions: { target: ts.ScriptTarget.ES2022 },
     }).outputText;
     vm.runInNewContext(runnable, context);
-    const harness = new context.CommitHarness();
-    await harness.commit();
 
+    return { service: new context.CommitHarness(), session, telemetry, events, identity };
+}
+
+test('actual SUAP commit refreshes a reused profile in the background', async () => {
+    const { service, session, telemetry, events, identity } = commitHarness({ saved: true });
+    await service.commit();
     assert.equal(session.getItem(telemetry.FRESH_PROFILE_SKIP_KEY), null);
-    assert.equal(session.getItem('ifrn_painel_owner'), '20232014050033');
+    assert.equal(session.getItem('ifrn_painel_owner'), identity);
     assert.equal(JSON.parse(session.getItem('ifrn_painel_dashboard')).diarios[0].id, 43);
-    assert.equal(harness.route, '/painel');
-    assert.deepEqual(context.refreshOrder, ['navigate', 'refresh']);
+    assert.equal(service.route, '/painel');
+    assert.deepEqual(events, [['navigate', 'Nom Antig'], 'refresh']);
+});
+
+test('first SUAP login consumes the corrected official name before opening the Panel', async () => {
+    let complete;
+    const { service, session, telemetry, events, identity } = commitHarness({
+        refresh: (read, save) => new Promise(resolve => {
+            complete = () => {
+                save({ ...read().profile, nome_usual: 'Nome Usual' });
+                resolve(true);
+            };
+        }),
+    });
+    const opening = service.commit();
+    assert.equal(service.route, undefined);
+    assert.deepEqual(events, ['refresh']);
+    complete();
+    await opening;
+    assert.deepEqual(events, ['refresh', ['navigate', 'Nome Usual']]);
+    assert.equal(session.getItem('ifrn_painel_owner'), identity);
+    assert.equal(telemetry.consumeFreshPanelProfile(identity, session, 11_001), true);
+});
+
+test('cancelled first SUAP login cannot navigate after a late profile response', async () => {
+    let complete;
+    const { service, events } = commitHarness({ refresh: () => new Promise(resolve => { complete = resolve; }) });
+    const opening = service.commit();
+    service.cancel();
+    complete(false);
+    await opening;
+    assert.deepEqual(events, ['refresh']);
+    assert.equal(service.route, undefined);
 });

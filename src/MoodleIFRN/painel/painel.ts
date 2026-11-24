@@ -63,6 +63,7 @@ export class PainelPage implements OnInit, OnDestroy {
     private painelStartedAt = 0;
     private painelFrameLoadReported = false;
     private destroyed = false;
+    private initialProfilePending = true;
 
     @ViewChild('painelFrame') painelFrame?: ElementRef<HTMLIFrameElement>;
 
@@ -85,36 +86,37 @@ export class PainelPage implements OnInit, OnDestroy {
         void this.refreshProfileWhenPlatformIsReady();
     }
 
-    /**
-     * Permite ao iframe começar a carregar os assets locais imediatamente.
-     * A revalidação pode usar plugins Cordova, então continua após platform.ready.
-     */
+    /** A revalidação usa o Cordova. O idioma do curso é preparado em paralelo. */
     private async refreshProfileWhenPlatformIsReady(): Promise<void> {
         await CorePlatform.ready();
+        if (this.destroyed) {
+            return;
+        }
 
-        // Traduções e revalidação de perfil rodam em segundo plano enquanto o
-        // iframe do Painel carrega, retirando a preparação do idioma do clique
-        // na primeira disciplina. Uma falha de idioma continua sendo tentada
-        // pelo fluxo normal de abertura do curso.
-        const [updated] = await Promise.all([
-            this.painelAva.refreshSavedProfile(),
+        await Promise.all([
+            this.painelAva.refreshSavedProfile()
+                .catch(() => false)
+                .then(updated => this.applyProfileRefresh(updated)),
             this.moodleSite.prepareCourseLanguage().catch(() => undefined),
         ]);
-        if (updated) {
-            this.reloadPainelFrame();
-        }
     }
 
-    /** Revalida o perfil ao voltar do segundo plano e atualiza o iframe se mudou. */
+    /** Revalida o perfil ao voltar do segundo plano. */
     private onAppResume = (): void => {
         void this.painelAva.refreshSavedProfile()
-            .then(updated => {
-                if (updated) {
-                    this.reloadPainelFrame();
-                }
-            })
-            .catch(() => undefined);
+            .catch(() => false)
+            .then(updated => this.applyProfileRefresh(updated));
     };
+
+    private applyProfileRefresh(updated: boolean): void {
+        if (this.destroyed || (!this.initialProfilePending && !updated)) {
+            return;
+        }
+        this.ngZone.run(() => {
+            this.initialProfilePending = false;
+            this.reloadPainelFrame();
+        });
+    }
 
     private reloadPainelFrame(): void {
         // Compatibility name for existing resume/profile callbacks: the UI is now Angular.
@@ -124,7 +126,9 @@ export class PainelPage implements OnInit, OnDestroy {
     private loadNativeDashboard(): void {
         // getDashboard keeps the existing owner/expiry checks. No new authentication/cache path.
         const raw = this.painelAva.getDashboard();
-        this.nativeDashboard = buildNativePainelModel(raw, readOAuthProfile()?.profile || this.painelAva.getProfile());
+        const dashboard = buildNativePainelModel(raw, readOAuthProfile()?.profile || this.painelAva.getProfile());
+        // Só o nome aguarda a primeira revalidação. A lista de disciplinas fica disponível.
+        this.nativeDashboard = dashboard && this.initialProfilePending ? { ...dashboard, name: 'Estudante' } : dashboard;
     }
 
     get nativeCourseOpening(): boolean {

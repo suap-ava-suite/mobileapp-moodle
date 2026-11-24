@@ -39,6 +39,74 @@ test('invalid id never falls back to SUAP diário and credentials cannot become 
     assert.equal(result.photo, undefined);
 });
 
+function setupFirstProfile(savedName) {
+    const storage = new Map();
+    const sessionStorage = {
+        getItem: key => storage.get(key) ?? null,
+        setItem: (key, value) => storage.set(key, value),
+    };
+    const globals = { sessionStorage, localStorage: sessionStorage };
+    const oauth = load('src/MoodleIFRN/mobilemoodle/core_mobile/oauth-profile.ts', {}, globals);
+    const { refreshSavedProfileNames } = load('src/MoodleIFRN/mobilemoodle/core_mobile/profile-refresh.ts',
+        { './oauth-profile': oauth }, globals);
+    const owner = 'conta-ficticia';
+    const origin = 'https://ava.ifrn.edu.br';
+    oauth.saveOAuthProfile({ identificacao: owner, nome_exibicao: savedName, _profile_origin: origin }, 60);
+    storage.set('ifrn_painel_owner', owner);
+    storage.set('ifrn_painel_dashboard', JSON.stringify(raw));
+    let respond;
+    const response = new Promise(resolve => { respond = resolve; });
+    let finishLanguage;
+    const language = new Promise(resolve => { finishLanguage = resolve; });
+    const PanelService = {};
+    const MoodleService = {};
+    const NgZone = {};
+    const dependencies = new Map([
+        [PanelService, {
+            getDashboard: oauth.readOAuthDashboard,
+            refreshSavedProfile: () => response.then(profile =>
+                refreshSavedProfileNames(profile, origin + '/api/v2/usuario/info/', origin)),
+        }],
+        [MoodleService, { prepareCourseLanguage: () => language }],
+        [NgZone, { run: action => action() }],
+    ]);
+    const { PainelPage } = load('src/MoodleIFRN/painel/painel.ts', {
+        '@angular/core': { Component: () => type => type, ViewChild: () => () => {}, NgZone,
+            inject: token => dependencies.get(token) ?? {} },
+        '@services/platform': { CorePlatform: { ready: async () => undefined } },
+        '@/MoodleIFRN/services_mobile/painel-ava.service': { PainelAvaService: PanelService },
+        '@/MoodleIFRN/services_mobile/moodle-site.service': { MoodleSiteService: MoodleService },
+        '../mobilemoodle/core_mobile/oauth-profile': oauth,
+        './painel-native-model': modelModule,
+    }, { window: { addEventListener() {} }, document: { addEventListener() {} }, performance });
+
+    return { page: new PainelPage(), finishLanguage,
+        respond: names => respond({ id: 11, identificacao: owner, ...names }) };
+}
+
+test('primeiro acesso mostra os cursos sem exibir o nome antigo e usa o nome curto verificado sem esperar pelo idioma', async () => {
+    const { page, respond, finishLanguage } = setupFirstProfile('Luca Oliveir');
+    page.ngOnInit();
+    assert.equal(page.nativeDashboard.groups.diarios[0].moodle_course_id, 17);
+    assert.equal(page.nativeDashboard.name, 'Estudante');
+    respond({ nome_usual: 'Lucas Oliveira', nome_registro: 'Lucas Henrique Oliveira' });
+    try {
+        await new Promise(resolve => setImmediate(resolve));
+        assert.equal(page.nativeDashboard.name, 'Lucas Oliveira');
+    } finally {
+        finishLanguage();
+    }
+});
+
+test('a primeira revalidação também revela o nome curto quando o servidor confirma o mesmo nome do cache', async () => {
+    const { page, respond, finishLanguage } = setupFirstProfile('Lucas Oliveira');
+    page.ngOnInit();
+    respond({ nome_exibicao: 'Lucas Oliveira' });
+    finishLanguage();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(page.nativeDashboard.name, 'Lucas Oliveira');
+});
+
 test('legacy direct bridge reenters real Angular NgZone and preserves its async result/error', async () => {
     const { NgZone } = await import('@angular/core');
     const angularZone = new NgZone({});

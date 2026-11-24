@@ -24,7 +24,8 @@ import {
 import { GovBrRedirectHandoff } from './govbr-redirect-handoff';
 import { PAINEL_COURSES_SCRIPT } from './painel-courses';
 import { hasOAuthProfileMode, readOAuthDashboard, readOAuthProfile } from '../mobilemoodle/core_mobile/oauth-profile';
-import { refreshSavedProfileNames } from '../mobilemoodle/core_mobile/profile-refresh';
+import { hasVerifiedSuapDisplayName, preferVerifiedSuapDisplayName, refreshSavedProfileNames }
+    from '../mobilemoodle/core_mobile/profile-refresh';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 /** Resposta mobile de POST /api/v1/authenticate/. */
@@ -76,6 +77,7 @@ export interface PainelAvaV1Result {
 /* eslint-enable @typescript-eslint/naming-convention */
 
 const REQUEST_TIMEOUT_MS = 20000;
+const SUAP_DISPLAY_NAME_TIMEOUT_MS = 8000;
 const PAINEL_TOKEN_KEY = 'ifrn_painel_token';
 const PAINEL_PROFILE_KEY = 'ifrn_painel_profile';
 const JWT_SHAPE = /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/;
@@ -479,13 +481,25 @@ export class PainelAvaService {
             return Promise.resolve(false);
         }
 
-        if (consumeFreshPanelProfile(savedProfile.identity)) {
+        if (consumeFreshPanelProfile(savedProfile.identity) || hasVerifiedSuapDisplayName(savedProfile.profile)) {
             return Promise.resolve(false);
         }
 
         this.profileRefresh ??= new Promise<boolean>(resolve => {
             const origin = PAINEL_AVA_CONFIG.baseUrl;
-            const endpoint = `${origin}/api/v2/usuario/info/`;
+            const profilePath = PAINEL_AVA_CONFIG.usuarioInfoPath;
+            const endpoint = `${origin}${profilePath}`;
+            const isProfilePage = (candidate: string): boolean => {
+                try {
+                    const url = new URL(candidate);
+                    const params = [...url.searchParams.keys()];
+
+                    return url.origin === origin && url.pathname === profilePath && !url.username && !url.password && !url.hash
+                        && (params.length === 0 || (params.length === 1 && params[0] === 'lang'));
+                } catch {
+                    return false;
+                }
+            };
             const browser = CoreOpener.openInApp(endpoint, {
                 ...PAINEL_IAB_CHROME, clearcache: 'no', clearsessioncache: 'no',
             });
@@ -508,17 +522,20 @@ export class PainelAvaService {
             const timer = setTimeout(() => finish(false), REQUEST_TIMEOUT_MS);
             this.cancelProfileRefresh = () => finish(false);
             subscriptions.push(browser.on('loadstart').subscribe(event => {
-                if (event.url !== endpoint) {
+                // CoreOpener can append the current Moodle language to this URL.
+                if (!isProfilePage(event.url)) {
                     finish(false);
                 }
             }));
             subscriptions.push(browser.on('loadstop').subscribe(event => {
-                if (event.url !== endpoint) {
+                if (!isProfilePage(event.url)) {
                     finish(false);
                     return;
                 }
                 browser.executeScript({ code: `(function () {
-                    fetch('/api/v2/usuario/info/', {credentials:'same-origin', cache:'no-store', redirect:'error'})
+                    fetch(${JSON.stringify(profilePath)}, {
+                      credentials:'same-origin', cache:'no-store', redirect:'error', headers:{Accept:'application/json'}
+                    })
                       .then(function (response) {
                         if (!response.ok) throw new Error('profile');
                         return response.json().then(function (profile) {
@@ -560,6 +577,7 @@ export class PainelAvaService {
     authenticateWithBrowser(options: {
         reuseSession?: boolean;
         readOnly?: boolean;
+        verifySuapDisplayName?: boolean;
     } = {}): Observable<PainelAvaV1Result> {
         return new Observable<PainelAvaV1Result>((subscriber) => {
             this.govBrRedirectHandoff.clear();
@@ -575,6 +593,8 @@ export class PainelAvaService {
             let hasEnteredSuapAuthentication = false;
             /** Após diários OK sem matrícula: consulta identidade no SUAP com a mesma sessão do IAB. */
             let awaitingSuapIdentity = false;
+            let probingSuapIdentity = false;
+            let displayNameTimeout: ReturnType<typeof setTimeout> | undefined;
             let pendingRaw: unknown = null;
             let pendingProfile: Record<string, unknown> | null = null;
             let pendingProbeLog: unknown[] = [];
@@ -668,12 +688,18 @@ export class PainelAvaService {
                 }
                 finished = true;
                 awaitingSuapIdentity = false;
+                clearTimeout(displayNameTimeout);
                 subscriber.error(new Error(message));
             };
 
             const beforeLoadSubscription = browser.on('beforeload').subscribe((event) => {
                 const url = event.url || '';
                 if (!url || finished) {
+                    return;
+                }
+                if (displayNameTimeout && !url.startsWith(`${suapOrigin}/`)) {
+                    finishWithDashboard(pendingRaw, pendingProfile, pendingProbeLog);
+
                     return;
                 }
 
@@ -742,6 +768,7 @@ export class PainelAvaService {
 
                 finished = true;
                 awaitingSuapIdentity = false;
+                clearTimeout(displayNameTimeout);
                 // eslint-disable-next-line no-console
                 console.log('[IFRN-PANEL]', JSON.stringify({
                     diariosCount: result.diariosCount,
@@ -771,6 +798,11 @@ export class PainelAvaService {
             const beginSuapIdentityProbe = (): void => {
                 awaitingSuapIdentity = true;
                 probing = true;
+                if (options.verifySuapDisplayName && profileUsernameHint(pendingProfile, '')) {
+                    displayNameTimeout = setTimeout(() => {
+                        finishWithDashboard(pendingRaw, pendingProfile, pendingProbeLog);
+                    }, SUAP_DISPLAY_NAME_TIMEOUT_MS);
+                }
                 hideBrowser();
                 // Mesma sessão SUAP do OAuth do painel; em suap.ifrn.edu.br o fetch é same-origin.
                 browser.executeScript({
@@ -819,6 +851,10 @@ export class PainelAvaService {
 
                 // Coleta de identidade após diários: permanece oculta; não reabre o login.
                 if (!finished && awaitingSuapIdentity && url.startsWith(`${suapOrigin}/`)) {
+                    if (probingSuapIdentity) {
+                        return;
+                    }
+                    probingSuapIdentity = true;
                     hideBrowser();
                     maskIntermediateWebPage(browser, url);
                     const identityScript = `
@@ -872,13 +908,15 @@ export class PainelAvaService {
                                     method: 'GET',
                                     headers: { 'Accept': 'application/json' },
                                     credentials: 'same-origin',
+                                    cache: 'no-store',
                                     redirect: 'follow'
                                 }).then(function (response) {
                                     var contentType = response.headers.get('content-type') || '';
                                     probeLog.push({ path: 'suap:' + path, status: response.status,
                                         json: contentType.indexOf('application/json') !== -1,
                                         elapsedMs: Math.round(performance.now() - startedAt), ttfbMs: ttfb(response) });
-                                    if (!response.ok || contentType.indexOf('application/json') === -1) return null;
+                                    if (!response.ok || new URL(response.url).origin !== location.origin
+                                            || contentType.indexOf('application/json') === -1) return null;
                                     return response.json();
                                 }).catch(function () {
                                     probeLog.push({ path: 'suap:' + path, status: 0, json: false,
@@ -1204,17 +1242,20 @@ export class PainelAvaService {
                 }
 
                 if (data['type'] === 'ifrn-suap-identity') {
+                    if (!awaitingSuapIdentity || !probingSuapIdentity) {
+                        return;
+                    }
                     probing = false;
                     const suapProfile = isPlainObject(data['profile']) ? data['profile'] : null;
                     const probeLog = Array.isArray(data['profileProbeLog']) ? data['profileProbeLog'] : pendingProbeLog;
-                    const merged = suapProfile
-                        ? { ...(pendingProfile || {}), ...suapProfile }
-                        : pendingProfile;
+                    const merged = profileUsernameHint(pendingProfile, '')
+                        ? preferVerifiedSuapDisplayName(pendingProfile, suapProfile)
+                        : suapProfile ? { ...(pendingProfile || {}), ...suapProfile } : pendingProfile;
                     finishWithDashboard(pendingRaw, merged, probeLog);
                     return;
                 }
 
-                if (data['type'] !== 'ifrn-painel-diarios' || data['ok'] !== true) {
+                if (awaitingSuapIdentity || data['type'] !== 'ifrn-painel-diarios' || data['ok'] !== true) {
                     return;
                 }
 
@@ -1224,8 +1265,8 @@ export class PainelAvaService {
                 const probeLog = Array.isArray(data['profileProbeLog']) ? data['profileProbeLog'] : [];
                 probing = false;
 
-                // API v2 do painel ainda pode estar ausente no host; usa sessão SUAP do IAB.
-                if (!ownerUsername) {
+                // No primeiro acesso, confirme também o nome curto com a sessão SUAP do mesmo navegador.
+                if (!ownerUsername || options.verifySuapDisplayName) {
                     pendingRaw = raw;
                     pendingProfile = profile;
                     pendingProbeLog = probeLog;
@@ -1243,11 +1284,16 @@ export class PainelAvaService {
             });
 
             const loadErrorSubscription = browser.on('loaderror').subscribe(() => {
-                finishWithError('Não foi possível carregar o login SUAP. Verifique sua conexão e tente novamente.');
+                if (displayNameTimeout) {
+                    finishWithDashboard(pendingRaw, pendingProfile, pendingProbeLog);
+                } else {
+                    finishWithError('Não foi possível carregar o login SUAP. Verifique sua conexão e tente novamente.');
+                }
             });
 
             return () => {
                 finished = true;
+                clearTimeout(displayNameTimeout);
                 beforeLoadSubscription.unsubscribe();
                 loadStartSubscription.unsubscribe();
                 loadStopSubscription.unsubscribe();

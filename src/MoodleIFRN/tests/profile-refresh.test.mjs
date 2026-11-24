@@ -25,7 +25,8 @@ function setup(profileOrigin = origin) {
     }
     const context={module:{exports:{}},URL,sessionStorage,localStorage};
     vm.runInNewContext(code,context);
-    return {update:context.module.exports.refreshSavedProfileNames,sessionStorage,localStorage,old};
+    const {refreshSavedProfileNames: update, preferVerifiedSuapDisplayName} = context.module.exports;
+    return {update,preferVerifiedSuapDisplayName,sessionStorage,localStorage,old};
 }
 test('resposta válida atualiza ambos os snapshots, preservando foto, perfil, listas e prazo',()=>{
     const {update,sessionStorage,localStorage,old}=setup();
@@ -113,4 +114,34 @@ test('nome_completo autenticado funciona como fallback quando os aliases estao a
     assert.equal(update({id:7,matricula:'123',nome_completo:'Nome completo registrado'},
         origin+'/api/v2/usuario/info/',origin,false),true);
     assert.equal(JSON.parse(localStorage.getItem(key)).profile.nome_completo,'Nome completo registrado');
+});
+
+test('no primeiro login, usa o nome curto do SUAP da mesma identidade e conserva o restante do perfil do AVA', () => {
+    const { preferVerifiedSuapDisplayName, old } = setup();
+    const merged = preferVerifiedSuapDisplayName(old.profile, {
+        identificacao: '123', nome_usual: 'Nome Usual', nome_registro: 'Nome Registrado Completo',
+    });
+    assert.equal(merged.nome_exibicao, 'Nome Usual');
+    assert.equal(merged.nome_registro, undefined);
+    assert.equal(merged.foto, old.profile.foto);
+    assert.equal(merged.identificacao, old.profile.identificacao);
+});
+
+test('nome do SUAP de outra conta, com identidade conflitante ou sem nome curto não substitui o AVA', () => {
+    const { preferVerifiedSuapDisplayName, old } = setup();
+    for (const reply of [
+        { identificacao: '456', nome_usual: 'Outra Conta' },
+        { identificacao: '123', username: '456', nome_usual: 'Identidade Conflitante' },
+        { identificacao: '123', nome_registro: 'Nome Registrado Completo' },
+        { nome_usual: 'Sem Identificação' },
+    ]) assert.equal(preferVerifiedSuapDisplayName(old.profile, reply), old.profile);
+});
+
+test('a revalidação do AVA não sobrescreve o nome curto já confirmado pelo SUAP', () => {
+    const { update, preferVerifiedSuapDisplayName, sessionStorage, localStorage, old } = setup();
+    const profile = preferVerifiedSuapDisplayName(old.profile, { identificacao: '123', nome_usual: 'Nome Usual' });
+    const verified = JSON.stringify({ ...old, profile });
+    for (const store of [sessionStorage, localStorage]) store.setItem(key, verified);
+    assert.equal(update({ id: 7, matricula: '123', nome_usual: 'Nom Antig' }, origin + '/api/v2/usuario/info/', origin), false);
+    for (const store of [sessionStorage, localStorage]) assert.equal(store.getItem(key), verified);
 });

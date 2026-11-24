@@ -12,10 +12,11 @@ import { BiometricService } from '@/MoodleIFRN/services_mobile/biometric.service
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
 import { SuapBrowserService } from './suap-browser.service';
 import { CoreOpener } from '@static/opener';
-import { OAUTH_PROFILE_KEY, OAUTH_PROFILE_MAX_AGE_SECONDS, profileIdentity } from '../mobilemoodle/core_mobile/oauth-profile';
+import { OAUTH_PROFILE_KEY, OAUTH_PROFILE_MAX_AGE_SECONDS, profileIdentity, readOAuthProfile }
+    from '../mobilemoodle/core_mobile/oauth-profile';
 import { beginNativeSuapEntry, readNativeSuapEntry, endNativeSuapEntry, markNativeSuapEntryAuthenticated } from '../navigation/suap-entry-state';
 import { MobileAuthAttemptCoordinator } from '../navigation/mobile-auth-attempt';
-import { clearFreshPanelProfile, FRESH_PROFILE_SKIP_KEY, reportSuapDuration }
+import { clearFreshPanelProfile, FRESH_PROFILE_SKIP_KEY, markFreshPanelProfile, reportSuapDuration }
     from './suap-login-telemetry';
 import { PAINEL_AVA_CONFIG } from './painel-ava.config';
 
@@ -307,7 +308,11 @@ export class SuapEntryService {
         attemptId: number,
     ): Promise<void> {
         onStatus('Carregando cursos e confirmando seu perfil…');
-        const panel = await firstValueFrom(this.painel.authenticateWithBrowser({ readOnly: true, reuseSession: false }));
+        const panel = await firstValueFrom(this.painel.authenticateWithBrowser({
+            readOnly: true,
+            reuseSession: false,
+            verifySuapDisplayName: !readOAuthProfile(),
+        }));
         if (!this.mobileAuthAttempts.isCurrent(attemptId)) {
             return;
         }
@@ -501,10 +506,12 @@ export class SuapEntryService {
         const backup = [sessionStorage, localStorage].map(storage => ({
             storage, values: keys.map(key => ({ key, value: storage.getItem(key) })),
         }));
+        const identity = profileIdentity(value.profile);
+        const firstAccess = readOAuthProfile()?.identity !== identity;
         try {
             this.authService.saveOAuthSession(value.profile, OAUTH_PROFILE_MAX_AGE_SECONDS);
             const serializedDashboard = JSON.stringify(value.dashboard);
-            const ownerKey = profileIdentity(value.profile).toLowerCase();
+            const ownerKey = identity.toLowerCase();
             sessionStorage.setItem('ifrn_painel_dashboard', serializedDashboard);
             localStorage.setItem('ifrn_painel_dashboard', serializedDashboard);
             sessionStorage.setItem('ifrn_painel_owner', ownerKey);
@@ -512,12 +519,20 @@ export class SuapEntryService {
             sessionStorage.removeItem('ifrn_painel_token');
             localStorage.removeItem('ifrn_painel_token');
             this.biometricService.disable();
-            // O perfil e o nome de exibição já foram validados junto com a
-            // identidade e persistidos acima. Não aguarde outra ida ao navegador
-            // antes de abrir o Painel; a tela revalida o perfil em segundo plano.
-            this.authService.openMobileMoodle('/painel');
-            void this.painel.refreshSavedProfile().catch(() => undefined);
+            // A primeira sessão ainda pode trazer um nome antigo do bootstrap.
+            // A consulta autenticada pode corrigir o snapshot antes de exibi-lo.
+            const updated = firstAccess && await this.painel.refreshSavedProfile().catch(() => false);
+            if (this.staged !== value || readOAuthProfile()?.identity !== identity) {
+                return;
+            }
             this.cancel();
+            if (updated) {
+                markFreshPanelProfile(identity);
+            }
+            this.authService.openMobileMoodle('/painel');
+            if (!firstAccess) {
+                void this.painel.refreshSavedProfile().catch(() => undefined);
+            }
         } catch (error) {
             for (const { storage, values } of backup) {
                 for (const { key, value: old } of values) {
