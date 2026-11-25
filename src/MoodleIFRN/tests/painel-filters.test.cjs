@@ -183,9 +183,11 @@ async function mountPanel(t) {
         input.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
         fixture.detectChanges();
     };
-    const key = (key, target = document.activeElement, shiftKey = false) => {
-        target.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, shiftKey }));
+    const key = (key, target = document.activeElement) => {
+        const allowed = target.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
         fixture.detectChanges();
+
+        return allowed;
     };
     const cards = () => Array.from(element.querySelectorAll('.painel-card-title'), card => card.textContent.trim());
     update(model);
@@ -193,24 +195,33 @@ async function mountPanel(t) {
     return { fixture, element, update, click, open, expand, choose, search, key, cards };
 }
 
-test('menu Angular reusa o painel lateral, expande, conserva o rascunho até Filtrar e restaura o foco', async t => {
+test('filtros ocupam uma seção antes dos cards, conservam o rascunho até aplicar e devolvem o foco', async t => {
     const { fixture, element, click, open, expand, choose, search, key, cards } = await mountPanel(t);
+    const trigger = element.querySelector('.painel-filter-button');
+    const panel = element.querySelector('#native-course-filters');
+    const list = element.querySelector('.card-container');
+    assert.equal(panel.closest('ion-content'), list.closest('ion-content'));
+    assert.equal(panel.previousElementSibling, trigger.parentElement);
+    assert.equal(Boolean(panel.compareDocumentPosition(list) & window.Node.DOCUMENT_POSITION_FOLLOWING), true);
+    assert.equal(panel.hasAttribute('inert'), true);
+    assert.equal(trigger.getAttribute('aria-expanded'), 'false');
+    assert.deepEqual(cards(), names(courses));
+    trigger.focus();
     open();
-    const dialog = element.querySelector('[role="dialog"]');
-    assert.ok(dialog);
-    assert.equal(dialog.isConnected, true);
-    await fixture.whenStable();
-    assert.equal(element.querySelector('.native-panel-frame').hasAttribute('inert'), true);
-    assert.equal(document.activeElement.getAttribute('aria-label'), 'Fechar filtros');
-    assert.deepEqual(Array.from(dialog.querySelectorAll('.native-filter-category-trigger > span'), span => span.textContent.trim()), [
+    assert.equal(trigger.getAttribute('aria-controls'), panel.id);
+    assert.equal(trigger.getAttribute('aria-expanded'), 'true');
+    assert.equal(panel.getAttribute('aria-hidden'), 'false');
+    assert.equal(panel.hasAttribute('inert'), false);
+    assert.equal(element.querySelector('[role="dialog"]'), null);
+    assert.equal(list.closest('[inert]'), null);
+    assert.equal(document.activeElement, trigger);
+    assert.deepEqual(Array.from(panel.querySelectorAll('.native-filter-category-trigger > span'), span => span.textContent.trim()), [
         'Diários em andamento', 'Semestres...', 'Períodos...', 'Módulos...', 'Disciplinas...', 'Cursos...', 'Ambientes...',
     ]);
-    const close = dialog.querySelector('.sidebar-modal__close');
-    const clear = dialog.querySelector('.modal-content-body-filter-clear');
-    key('Tab', close, true);
+    const clear = panel.querySelector('.modal-content-body-filter-clear');
+    clear.focus();
+    assert.equal(key('Tab', clear), true);
     assert.equal(document.activeElement, clear);
-    key('Tab', clear);
-    assert.equal(document.activeElement, close);
     expand('module');
     assert.match(element.querySelector('#native-filter-options-module').textContent, /Nenhum módulo/);
     expand('module');
@@ -218,10 +229,11 @@ test('menu Angular reusa o painel lateral, expande, conserva o rascunho até Fil
     choose('semester', '2026.1');
     search('algebra');
     assert.deepEqual(cards(), names(courses));
+    panel.querySelector('input[type="search"]').focus();
     key('Escape');
-    await fixture.whenStable();
-    assert.equal(element.querySelector('[role="dialog"]'), null);
-    assert.equal(document.activeElement, element.querySelector('.painel-filter-button'));
+    assert.equal(panel.hasAttribute('inert'), true);
+    assert.equal(panel.getAttribute('aria-hidden'), 'true');
+    assert.equal(document.activeElement, trigger);
 
     open();
     assert.equal(element.querySelector('.native-filter-search input').value, '');
@@ -266,9 +278,8 @@ test('edição rápida, revalidação da mesma conta, troca de aba e troca de co
     update(buildNativePainelModel(raw, { nome: 'Nome revalidado' }, 'conta-a-ficticia'));
     assert.deepEqual(cards(), ['Oficina de arte']);
     assert.equal(element.querySelector('.native-filter-search input').value, 'algebra');
-    click('.sidebar-modal__backdrop');
-    assert.equal(element.querySelector('.sidebar-modal'), null);
-    assert.equal(element.querySelector('.native-panel-frame').hasAttribute('inert'), false);
+    click('.painel-filter-chip');
+    assert.equal(element.querySelector('#native-course-filters').hasAttribute('inert'), true);
     click('[role="tab"]:nth-child(2)');
     assert.deepEqual(cards(), []);
     click('.native-filter-reset');
@@ -315,7 +326,7 @@ test('Voltar e Fechar descartam rascunhos repetidamente e a destruição desliga
         assert.equal(typeof back, 'function');
         back();
         fixture.detectChanges();
-        assert.equal(element.querySelector('.sidebar-modal'), null);
+        assert.equal(element.querySelector('#native-course-filters').hasAttribute('inert'), true);
         assert.deepEqual(cards(), names(courses));
     }
     open();
@@ -326,13 +337,53 @@ test('Voltar e Fechar descartam rascunhos repetidamente e a destruição desliga
     assert.equal(backHandler(), undefined);
 });
 
-test('SCSS do filtro preserva tokens, áreas seguras e uma rolagem independente do rodapé', () => {
+test('alternar os dois gatilhos mantém o foco correto e deixa os cards disponíveis para abrir o curso', async t => {
+    const { fixture, element, click, open, expand, search, cards } = await mountPanel(t);
+    const trigger = element.querySelector('.painel-filter-button');
+    const chip = element.querySelector('.painel-filter-chip');
+    const panel = element.querySelector('#native-course-filters');
+    const close = panel.querySelector('[aria-label="Fechar filtros"]');
+    for (let cycle = 0; cycle < 3; cycle++) {
+        open();
+        assert.equal(chip.getAttribute('aria-expanded'), 'true');
+        expand('semester');
+        click('.painel-filter-chip');
+        assert.equal(trigger.getAttribute('aria-expanded'), 'false');
+        assert.equal(panel.hasAttribute('inert'), true);
+        assert.equal(panel.querySelector('#native-filter-options-semester').hidden, false, 'preserva a altura ao recolher');
+        click('.painel-filter-chip');
+        assert.equal(panel.hasAttribute('inert'), false);
+        assert.equal(panel.querySelector('#native-filter-options-semester').hidden, true, 'reabre sem a expansão anterior');
+        close.focus();
+        click('[aria-label="Fechar filtros"]');
+        assert.equal(document.activeElement, chip);
+    }
+
+    open();
+    search('oficina');
+    click('.modal-content-body-filter-button');
+    assert.deepEqual(cards(), ['Oficina de arte']);
+    open();
+    click('.modal-content-body-filter-clear');
+    assert.deepEqual(cards(), names(courses));
+    open();
+    assert.equal(panel.querySelector('input[type="search"]').value, '');
+    const opened = [];
+    fixture.componentInstance.openCourse.subscribe(course => opened.push(course));
+    const course = element.querySelector('.course-open');
+    course.focus();
+    click('.course-open');
+    assert.deepEqual(opened.map(value => value.moodle_course_id), [17]);
+    assert.equal(panel.hasAttribute('inert'), true);
+    assert.equal(document.activeElement, course);
+});
+
+test('SCSS do filtro recolhe a altura no fluxo e respeita movimento reduzido', () => {
     const css = require('sass').compile(path.join(root, 'painel/painel-native.scss')).css;
-    assert.match(css, /\.native-filter-panel\s*\{[^}]*max-block-size: 100dvh/);
-    assert.match(css, /\.native-filter-scroll\s*\{[^}]*flex: 1 1 0[^}]*min-block-size: 0/);
-    assert.match(css, /\.native-filter-actions\s*\{[^}]*flex: 0 0 auto[^}]*minmax\(min\(100%, 8rem\), 1fr\)/);
-    assert.match(css, /--ion-safe-area-bottom/);
-    assert.match(css, /--ion-safe-area-left/);
+    assert.match(css, /\.native-filter-panel\s*\{[^}]*grid-template-rows: 0fr[^}]*pointer-events: none/);
+    assert.match(css, /\.native-filter-panel\.is-open\s*\{[^}]*grid-template-rows: 1fr/);
+    assert.match(css, /\.native-filter-panel__clip\s*\{[^}]*min-block-size: 0[^}]*overflow: clip/);
+    assert.match(css, /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.native-filter-panel\s*\{\s*transition: none/);
     assert.match(css, /--dsgov-blue-70/);
     assert.match(css, /min-block-size: 44px/);
     assert.match(css, /:focus-visible/);

@@ -15,6 +15,14 @@
   <div class="layout">
     <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav><a href="index.html">Manual principal</a><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a></nav><div class="sidebar-note">Leia o estado real antes de continuar.</div></aside>
     <main id="conteudo" class="content">
+      <section class="doc-section searchable" id="filtros-expansiveis-20261124">
+        <p class="eyebrow">TRANSFERÊNCIA · 24/11/2026</p>
+        <h2>Fechamento, rolagem e foco dos filtros</h2>
+        <p>Veja <code>painel/painel-native.html</code>, <code>painel-native.scss</code> e <code>painel-native.ts</code>. A seção <code>#native-course-filters</code> é irmã da lista dentro de <code>ion-content</code>. Ela permanece montada. A grade passa de <code>0fr</code> para <code>1fr</code> e o recorte interno mantém os campos dentro da altura animada. Fechado, o formulário tem <code>inert</code> e <code>aria-hidden</code> e deixa de receber toques.</p>
+        <p>Os dois gatilhos usam <code>aria-expanded</code> e <code>aria-controls</code>. O foco segue a ordem da página. Ao fechar com o foco dentro, ele volta ao gatilho sem alterar a rolagem. A categoria e o rascunho são reiniciados ao reabrir para manter a geometria durante o fechamento. O estado aplicado continua vinculado à conta.</p>
+        <p>Os critérios continuam em <code>painel-filters.ts</code>. O componente recolhe os filtros antes de emitir a abertura pelo cartão para que Voltar siga o fluxo do curso. <a href="testes-e-validacao.html#filtros-expansiveis-20261124">Validação em navegador e roteiro físico</a>.</p>
+        <p>A APK debug foi gerada em <code>ifrn-filtros-apk-008424/p/platforms/android/app/build/outputs/apk/debug/app-debug.apk</code> na pasta temporária do Windows. Para compilar o código desta entrega, use a release com os ajustes do Painel. No checkout <code>test/ifrn-unit-regression</code>, uma aspa simples local antes do comentário inicial de <code>src/core/services/sites.ts</code> causa <code>TS1002</code>. O arquivo contém outras alterações locais que devem ser preservadas.</p>
+      </section>
       <section class="doc-section searchable" id="filtros-painel-nativo-20261124">
         <p class="eyebrow">TRANSFERÊNCIA · 24/11/2026</p>
         <h2>Manter os filtros do Painel nativo</h2>

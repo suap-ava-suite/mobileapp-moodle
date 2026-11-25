@@ -15,6 +15,21 @@
   <div class="layout">
     <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav><a href="index.html">Manual principal</a><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a></nav><div class="sidebar-note">Aprovação automatizada não prova autenticação real.</div></aside>
     <main id="conteudo" class="content">
+      <section class="doc-section searchable" id="filtros-expansiveis-20261124">
+        <p class="eyebrow">VALIDAÇÃO LOCAL · 24/11/2026</p>
+        <h2>Validação dos filtros no fluxo do Painel</h2>
+        <p><strong>16/16 testes focados</strong> e <strong>159 testes de regressão aprovados</strong> na seleção do Painel, incluindo os focados. A execução isolada dos dois testes de favoritos passou após liberar a leitura do checkout para o esbuild. TypeScript, compilador de templates Angular, Sass e <code>git diff --check</code> passaram.</p>
+        <p>A comparação usou Chrome headless, o template e os estilos do Painel Angular, <code>ion-content</code> real e disciplinas fictícias. Em 390 × 844 px, o menu antigo cobria o primeiro card na posição de 271 px. Na versão expansível, o card foi de 271 a 873 px e voltou a 271 px. Os frames intermediários confirmaram o movimento junto à altura da seção.</p>
+        <p>O navegador conferiu abertura, recolhimento, largura, rolagem e toques em 320, 360, 390 e 412 px, tablet 768 × 1024 px e duas janelas horizontais de 844 × 390 e 568 × 320 px. Passaram também alternância rápida, expansão de categoria, pesquisa, aplicação, limpeza, foco por Tab até o card, movimento reduzido e tema escuro com zoom de 160%. O cenário de teclado usou uma janela reduzida com foco na pesquisa.</p>
+        <p><strong>Moto G20, Android 11/API 30.</strong> No Chrome do aparelho, a prévia Angular com disciplinas fictícias mediu o card de 267,7 a 862,0 px CSS e de volta a 267,7 px em 411 px de largura. Pesquisa, expansão de categoria, aplicar, limpar e rolagem passaram. O campo recebeu foco. A abertura do teclado virtual ficou sem confirmação nesse ensaio.</p>
+        <p><strong>APK instalada.</strong> O pacote <code>com.moodle.moodlemobile</code> 5.2.1/52100 declara mínimo 24 e target 36. A cópia isolada usou AndroidX Core 1.13.0, a mesma versão efetiva da APK anterior, para resolver a dependência no cache Gradle. A assinatura debug e o SHA-256 instalado foram conferidos. O Marketplace abriu na WebView 157.0.8103.50. A verificação da geometria no Painel autenticado depende de login manual.</p>
+        <h3>Validação pendente no Android</h3>
+        <ol>
+          <li>Em uma APK com a correção, abra e feche Filtros pelo gatilho, pelo botão Fechar e por Voltar. Observe o movimento dos cards durante a rolagem.</li>
+          <li>Abra o teclado na pesquisa em retrato e paisagem. Role até Aplicar filtros e Limpar filtros. Confira o foco após fechar, a barra de navegação e o TalkBack.</li>
+          <li>Abra uma disciplina filtrada, volte ao Painel e confirme os critérios aplicados e a rolagem.</li>
+        </ol>
+      </section>
       <section class="doc-section searchable" id="filtros-painel-nativo-20261124">
         <p class="eyebrow">VALIDAÇÃO LOCAL · 24/11/2026</p>
         <h2>Validar os filtros do Painel AVA</h2>

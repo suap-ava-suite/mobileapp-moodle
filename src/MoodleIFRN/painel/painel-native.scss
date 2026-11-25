@@ -21,31 +21,38 @@ ion-content { --background: var(--dsgov-bg-gray); }
 .sidebar-modal__panel { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
 
 .native-filter-panel {
-    max-block-size: 100dvh;
-    min-block-size: 0;
-    padding: 0;
-    font-size: calc(var(--dsgov-font-size-md) * var(--native-filter-text-scale, 1));
+    display: grid;
+    grid-template-rows: 0fr;
+    max-inline-size: 358px;
+    margin-inline: auto;
+    font-size: var(--dsgov-font-size-md);
+    opacity: 0;
+    pointer-events: none;
+    transition: grid-template-rows 260ms ease, opacity 220ms ease;
 
-    &.sidebar-modal__panel {
-        animation: native-filter-panel-in 180ms cubic-bezier(0.2, 0, 0, 1) both;
-        will-change: transform;
+    &.is-open {
+        grid-template-rows: 1fr;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    &__clip {
+        min-block-size: 0;
+        min-inline-size: 0;
+        overflow: hidden;
+        overflow: clip;
+        background: var(--dsgov-bg-white);
     }
 
     .sidebar-modal__header,
-    .native-filter-scroll,
+    .native-filter-body,
     .native-filter-actions {
-        padding-inline-start: max(var(--dsgov-spacing-md), var(--ion-safe-area-left, 0px), env(safe-area-inset-left, 0px));
-        padding-inline-end: max(var(--dsgov-spacing-md), var(--ion-safe-area-right, 0px), env(safe-area-inset-right, 0px));
+        padding-inline: var(--dsgov-spacing-md);
     }
 
+    .sidebar-modal__header { padding-block: var(--dsgov-spacing-md); }
     .sidebar-modal__header-title { font-size: 1.2em; }
-
-    .native-filter-scroll {
-        flex: 1 1 0;
-        min-block-size: 0;
-        padding-block: var(--dsgov-spacing-md);
-        overscroll-behavior: contain;
-    }
+    .native-filter-body { padding-block: var(--dsgov-spacing-md); }
 
     .native-filter-search {
         display: flex;
@@ -130,12 +137,10 @@ ion-content { --background: var(--dsgov-bg-gray); }
     }
 
     .native-filter-actions {
-        flex: 0 0 auto;
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
         gap: var(--dsgov-spacing-sm);
-        padding-block: var(--dsgov-spacing-sm)
-            calc(var(--dsgov-spacing-sm) + max(var(--ion-safe-area-bottom, 0px), env(safe-area-inset-bottom, 0px)));
+        padding-block: var(--dsgov-spacing-sm);
         border-block-start: 1px solid var(--dsgov-border-default);
         background: var(--dsgov-bg-white);
 
@@ -158,16 +163,8 @@ ion-content { --background: var(--dsgov-bg-gray); }
     button:focus-visible { outline: 2px solid var(--dsgov-blue-70); outline-offset: 2px; }
 }
 
-@keyframes native-filter-panel-in {
-    from { transform: translate3d(16px, 0, 0); }
-    to { transform: translate3d(0, 0, 0); }
-}
-
 @media (prefers-reduced-motion: reduce) {
-    .native-filter-panel.sidebar-modal__panel {
-        animation: none;
-        will-change: auto;
-    }
+    .native-filter-panel { transition: none; }
 }
 
 :host-context(.dark) .native-filter-panel .modal-content-body-filter-clear {

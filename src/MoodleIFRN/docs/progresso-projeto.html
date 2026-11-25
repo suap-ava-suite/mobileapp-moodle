@@ -30,6 +30,15 @@
       <div class="sidebar-note">Atualizado em 19/11/2026</div>
     </aside>
     <main id="conteudo" class="content">
+      <section class="doc-section searchable" id="filtros-expansiveis-20261124">
+        <p class="eyebrow">CORREÇÃO DE INTERFACE · 24/11/2026</p>
+        <h2>Filtros expansíveis no Painel AVA</h2>
+        <p>Na base <code>907455447</code> da release, Filtros abria em <code>.sidebar-modal</code>, com posição fixa, fundo sobre a lista e rolagem própria. A comparação em 390 × 844 px confirmou que o primeiro card permanecia na coordenada vertical de 271 px durante a abertura.</p>
+        <p>O formulário passou para uma seção entre os gatilhos e a lista, no mesmo <code>ion-content</code>. A altura anima em 260 ms, a opacidade em 220 ms e os cards acompanham o espaço ocupado. A lista fica a 873 px com o filtro aberto e retorna a 271 px ao recolher na mesma janela de teste.</p>
+        <p>Os estilos DS GOV.BR, a pesquisa e as sete categorias continuam usando os componentes e critérios do Painel. Fechar descarta o rascunho ao reabrir. Aplicar e Limpar atualizam os cards, e a página mantém uma única área de rolagem dentro do Ionic. <a href="testes-e-validacao.html#filtros-expansiveis-20261124">Evidências e roteiro no Android</a> · <a href="continuidade-ia.html#filtros-expansiveis-20261124">Transferência técnica</a>.</p>
+        <p><strong>APK debug 5.2.1/52100.</strong> Build isolado sobre a release <code>907455447</code> com os ajustes dos filtros. Gradle 8.14.2 concluiu <code>:app:assembleDebug</code>. O artefato inclui o bundle Angular dos filtros e a ponte Cordova. SHA-256 <code>CC4A2DDADAD41CA22652763C36851D3EF1E446FE84C03212C0CC5F63A2B7B6E6</code>.</p>
+        <p>O hash da APK instalada no Moto G20 coincide com o do artefato. A troca de certificado debug exigiu reinstalação autorizada. O Marketplace abriu com Android 11 e WebView 157. A verificação do Painel autenticado exige login manual. <a href="testes-e-validacao.html#filtros-expansiveis-20261124">Resultados no aparelho</a>.</p>
+      </section>
       <section class="doc-section searchable" id="filtros-painel-nativo-20261124">
         <p class="eyebrow">PAINEL AVA · 24/11/2026</p>
         <h2>Filtros do Painel com a organização do AVA Web</h2>

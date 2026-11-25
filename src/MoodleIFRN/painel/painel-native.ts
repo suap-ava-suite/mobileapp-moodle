@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { afterNextRender, ChangeDetectionStrategy, Component, computed, ElementRef, inject, Injector,
+import { ChangeDetectionStrategy, Component, computed, ElementRef,
     input, linkedSignal, output, signal, ViewChild } from '@angular/core';
 import { CoreSharedModule } from '@/core/shared.module';
 import { createCourseFavourites } from '../mobilemoodle/core_mobile/course-favourites';
@@ -122,8 +122,7 @@ export class PainelNativeComponent {
         return createCourseFavourites();
     });
 
-    private readonly injector = inject(Injector);
-    @ViewChild('sidebarClose') private filterClose?: ElementRef<HTMLButtonElement>;
+    @ViewChild('filterPanel') private filterPanel?: ElementRef<HTMLElement>;
     private filterTrigger?: HTMLButtonElement;
     private readonly groupCourses = computed(() => this.data()?.groups[this.group()] ?? []);
     private readonly filterState = linkedSignal({
@@ -194,55 +193,33 @@ export class PainelNativeComponent {
         } catch { /* Corrupt preferences do not prevent rendering. */ }
     }
 
+    toggleFilters(trigger: HTMLButtonElement): void {
+        if (this.section() === 'filter') {
+            this.closePanel();
+        } else {
+            this.openFilters(trigger);
+        }
+    }
+
     openFilters(trigger?: HTMLButtonElement): void {
         if (!this.data() || this.section() === 'filter') {
             return;
         }
+        // Keep the rendered options in place while the filter is collapsing.
+        this.expandedFilter.set(null);
+        this.filterState.update(({ applied }) => ({ applied, draft: applied }));
         this.filterTrigger = trigger;
         this.section.set('filter');
-        if (trigger) {
-            afterNextRender({
-                write: () => {
-                    if (this.section() === 'filter') {
-                        this.filterClose?.nativeElement.focus();
-                    }
-                },
-            }, { injector: this.injector });
-        }
     }
 
-    closePanel(): void {
-        const trigger = this.filterTrigger;
+    closePanel(returnFocus?: HTMLButtonElement): void {
+        const panel = this.filterPanel?.nativeElement;
+        if (this.section() === 'filter' && panel?.contains(panel.ownerDocument.activeElement)) {
+            returnFocus ??= this.filterTrigger;
+        }
+        returnFocus?.focus({ preventScroll: true });
         this.filterTrigger = undefined;
-        if (this.section() === 'filter') {
-            this.expandedFilter.set(null);
-            this.filterState.update(state => ({ ...state, draft: state.applied }));
-        }
         this.section.set('courses');
-        if (trigger) {
-            afterNextRender({
-                write: () => {
-                    if (this.section() === 'courses') {
-                        trigger.focus();
-                    }
-                },
-            }, { injector: this.injector });
-        }
-    }
-
-    onFilterKeyDown(event: KeyboardEvent): void {
-        if (this.section() !== 'filter' || event.key !== 'Tab') {
-            return;
-        }
-        const panel = event.currentTarget as HTMLElement;
-        const controls = panel.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled])');
-        const first = controls[0];
-        const last = controls[controls.length - 1];
-        const boundary = event.shiftKey ? first : last;
-        if (event.target === boundary) {
-            event.preventDefault();
-            (event.shiftKey ? last : first)?.focus();
-        }
     }
 
     onHardwareBack(event: Event): void {
@@ -300,8 +277,7 @@ export class PainelNativeComponent {
 
     clearFilters(returnFocus?: HTMLButtonElement): void {
         this.filterState.set({ applied: DEFAULT_PAINEL_FILTERS, draft: DEFAULT_PAINEL_FILTERS });
-        this.filterTrigger = returnFocus ?? this.filterTrigger;
-        this.closePanel();
+        this.closePanel(returnFocus);
     }
 
     async toggleAccessibility(key: string): Promise<void> {
@@ -349,6 +325,9 @@ export class PainelNativeComponent {
 
     selectCourse(course: NativePainelCourse): void {
         if (this.canOpen(course)) {
+            if (this.section() === 'filter') {
+                this.closePanel();
+            }
             this.openCourse.emit(course);
         }
     }
