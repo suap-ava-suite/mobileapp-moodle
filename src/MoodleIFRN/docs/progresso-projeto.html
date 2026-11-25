@@ -30,6 +30,12 @@
       <div class="sidebar-note">Atualizado em 19/11/2026</div>
     </aside>
     <main id="conteudo" class="content">
+      <section class="doc-section searchable" id="preparacao-linux-android-20261125">
+        <h2>Preparação Android no Linux</h2>
+        <p>Na cópia isolada da <code>release/2.0.1</code> em <code>593ccd05f</code>, foram verificados Node 22.17.0, npm 10.9.2, JDK 17, Gradle 8.14.2, SDK API 36, Build Tools 36.0.0, Platform Tools 37.0.3 e Cordova CLI 13.0.0. O <code>npm ci</code> e o build do plugin Moodle concluíram com os lockfiles preservados. Dois testes locais de acessibilidade e progresso acadêmico passaram.</p>
+        <p>O script passou a criar <code>www/</code>, conferir a restauração do SQLite 7.0.0 e usar 8192 MiB de heap no Angular. No terminal Linux, o Gradle concluiu em 1 min 34 s. A APK debug de <code>com.moodle.moodlemobile</code> (5.2.1/52100) contém os assets web de produção do commit <code>593ccd05f</code>, Cordova e SQLite. SHA-256 da APK <code>abf03662a48ba8f70eeab49b3e697a426ca246a9a374f2381efe271d12d71aa2</code>. O build regenerou apenas a formatação de <code>mobilemoodle.js</code> na cópia isolada.</p>
+        <p>O Moto G20 com Android 11/API 30 tem o mesmo pacote e código de versão. O certificado instalado tem SHA-256 <code>ec5af1754b0f490cfe6a77d57d7dc6edcd31dadb9ae978703a86b2dc69c0c72e</code>, enquanto a candidata usa <code>bd390ec254a416f28b67f6edc52e840f76450217e59a9ea6feefe351ecefad2d</code>. A atualização que preserva os dados depende da chave privada correspondente ao certificado instalado. A instalação e a validação funcional continuam pendentes. <a href="como-executar-android-ios.html#script-linux-android">Escopo e uso do script</a></p>
+      </section>
       <section class="doc-section searchable" id="release-painel-20261125">
         <p class="eyebrow">PAINEL AVA · 25/11/2026</p>
         <h2>Cabeçalho, cards e docentes na release</h2>
