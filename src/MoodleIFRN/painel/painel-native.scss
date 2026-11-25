@@ -12,6 +12,178 @@
 
 .native-panel-frame { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 ion-content { --background: var(--dsgov-bg-gray); }
+// Cabeçalho do Painel AVA baseado no Figma. Mantém a altura no fluxo Ionic
+// para que o conteúdo abaixo comece depois da toolbar e herde a safe area nativa.
+.ifrn-panel-header {
+    z-index: 2;
+    background: var(--dsgov-bg-white, #fff);
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+
+    .ifrn-panel-header__toolbar {
+        --background: var(--dsgov-bg-white, #fff);
+        --color: var(--dsgov-text-darkest, #000);
+        --border-width: 0;
+        --min-height: 94px;
+        --padding-top: 0;
+        --padding-bottom: 0;
+        --padding-start: 0;
+        --padding-end: 0;
+    }
+
+    &__inner {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        width: 100%;
+        min-height: 94px;
+        max-width: 1200px;
+        margin-inline: auto;
+        padding: 5px 10px;
+    }
+
+    &__brand {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+        min-height: 29px;
+    }
+
+    &__logo {
+        display: block;
+        flex: 0 0 25px;
+        width: 25px;
+        height: 29px;
+        object-fit: contain;
+    }
+
+    &__title {
+        overflow: hidden;
+        color: var(--dsgov-text-darkest, #000);
+        font-family: 'Open Sans', var(--dsgov-font-family), sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.2;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__toolbar-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        width: 100%;
+        min-width: 0;
+        min-height: 50px;
+    }
+
+    &__actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+    }
+
+    &__action,
+    &__user {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0;
+        border: 0;
+        border-radius: var(--dsgov-radius-circle, 50%);
+        background: transparent;
+        color: var(--dsgov-blue-70, #1351b4);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+
+        &:hover,
+        &[aria-expanded='true'] {
+            background: var(--dsgov-bg-blue-light, #f0f5ff);
+        }
+
+        &:focus-visible {
+            outline: 3px solid var(--dsgov-blue-70, #1351b4);
+            outline-offset: 2px;
+        }
+
+        ion-icon { flex: 0 0 auto; }
+    }
+
+    &__action ion-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 24px;
+    }
+
+    &__divider {
+        flex: 0 0 1px;
+        width: 1px;
+        height: 27px;
+        margin-inline: 3px;
+        background: rgba(0, 0, 0, 0.08);
+    }
+
+    &__user {
+        gap: 2px;
+        min-width: 77px;
+        border-radius: 28px;
+    }
+
+    &__avatar {
+        display: grid;
+        flex: 0 0 50px;
+        place-items: center;
+        width: 50px;
+        height: 50px;
+        overflow: hidden;
+        border: 1px solid var(--dsgov-border-default, #ccc);
+        border-radius: 50%;
+        background: var(--dsgov-bg-blue-light, #f0f5ff);
+        color: var(--dsgov-blue-70, #1351b4);
+        font-size: 14px;
+        font-weight: 700;
+
+        img {
+            width: 100%;
+            height: 100%;
+            border-radius: inherit;
+            object-fit: cover;
+        }
+    }
+
+    &__expand {
+        flex: 0 0 25px;
+        width: 25px;
+        height: 25px;
+        font-size: 25px;
+    }
+}
+
+:host(.color_mode_high_contrast) .ifrn-panel-header {
+    background: #111;
+
+    .ifrn-panel-header__toolbar { --background: #111; --color: #fff; }
+    .ifrn-panel-header__title,
+    .ifrn-panel-header__action,
+    .ifrn-panel-header__user { color: #fff; }
+    .ifrn-panel-header__divider { background: rgba(255, 255, 255, 0.45); }
+    .ifrn-panel-header__avatar { border-color: #fff; background: #111; color: #fff; }
+}
+
+@media (max-width: 359px) {
+    .ifrn-panel-header {
+        &__inner { padding-inline: 8px; }
+        &__actions { gap: 1px; }
+        &__divider { margin-inline: 1px; }
+        &__action { min-width: 42px; }
+    }
+}
+
 .painel-card-link { display: block; width: 100%; padding: 0; border: 0; background: none; text-align: start; color: inherit; cursor: pointer; }
 .painel-card-link:disabled { opacity: .65; cursor: default; }
 .painel-card-link:focus-visible { outline: 3px solid var(--dsgov-blue-70); outline-offset: 4px; }

@@ -1,18 +1,41 @@
 <div id="main-content" class="native-panel-frame">
-<ion-header class="ava-header">
-    <ion-toolbar class="ava-toolbar">
-        <div class="ava-toolbar-inner">
-            <img class="ava-header-logo" src="mobilemoodle/static/theme/ifrn/img/ifrn-logo.png" alt="IFRN" />
-            <div class="ava-header-brand"><span class="ava-header-title">Painel AVA</span><span class="ava-header-subtitle">Ambiente Virtual de Aprendizagem</span></div>
-            <nav class="ava-header-actions" aria-label="Opções do painel">
-                <button type="button" class="ava-header-action" aria-label="Acessibilidade" (click)="section.set('accessibility')"><ion-icon name="accessibility-outline" aria-hidden="true" /></button>
-                <button type="button" class="ava-header-action" aria-label="Ajuda" (click)="section.set('help')"><ion-icon name="help-circle-outline" aria-hidden="true" /></button>
-                <button type="button" class="ava-header-action ava-header-profile" aria-label="Abrir perfil" (click)="section.set('profile')">
-                    <div class="profile-image profile-image--initials" aria-hidden="true">
-                        @if (data()?.photo && !photoFailed()) { <img [src]="data()?.photo" alt="" (error)="photoFailed.set(true)" /> } @else { {{ initials() }} }
-                    </div><span>{{ data()?.name || 'Estudante' }}</span>
+<ion-header class="ava-header ifrn-panel-header">
+    <ion-toolbar class="ava-toolbar ifrn-panel-header__toolbar">
+        <div class="ifrn-panel-header__inner">
+            <div class="ifrn-panel-header__brand">
+                <img class="ifrn-panel-header__logo" src="mobilemoodle/static/theme/ifrn/img/ifrn-logo.png" alt="IFRN" />
+                <span class="ava-header-title ifrn-panel-header__title">Painel AVA</span>
+            </div>
+            <div class="ifrn-panel-header__toolbar-row">
+                <nav class="ifrn-panel-header__actions" aria-label="Ações do Painel AVA">
+                    <button type="button" class="ava-header-action ifrn-panel-header__action" aria-label="Acessibilidade"
+                        (click)="section.set('accessibility')">
+                        <ion-icon name="accessibility-outline" aria-hidden="true" />
+                    </button>
+                    <span class="ifrn-panel-header__divider" aria-hidden="true"></span>
+                    <button type="button" class="ava-header-action ifrn-panel-header__action" aria-label="Ajuda"
+                        (click)="section.set('help')">
+                        <ion-icon name="help-circle-outline" aria-hidden="true" />
+                    </button>
+                    <button type="button" class="ava-header-action ifrn-panel-header__action" aria-label="Mensagens"
+                        (click)="openMessages.emit()">
+                        <ion-icon name="chatbubble-ellipses-outline" aria-hidden="true" />
+                    </button>
+                </nav>
+                <button type="button" class="ava-header-profile ifrn-panel-header__user" aria-haspopup="dialog"
+                    [attr.aria-expanded]="section() === 'profile'"
+                    [attr.aria-label]="'Abrir perfil de ' + (data()?.name || 'Estudante')"
+                    (click)="section.set('profile')">
+                    <div class="ifrn-panel-header__avatar" aria-hidden="true">
+                        @if (data()?.photo && !photoFailed()) {
+                            <img [src]="data()?.photo" alt="" (error)="photoFailed.set(true)" />
+                        } @else {
+                            {{ initials() }}
+                        }
+                    </div>
+                    <ion-icon class="ifrn-panel-header__expand" name="chevron-down-outline" aria-hidden="true" />
                 </button>
-            </nav>
+            </div>
         </div>
     </ion-toolbar>
 </ion-header>

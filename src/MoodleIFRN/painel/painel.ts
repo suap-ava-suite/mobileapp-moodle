@@ -16,6 +16,7 @@ import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef, NgZone } f
 import { Router } from '@angular/router';
 import { CoreSharedModule } from '@/core/shared.module';
 import { CoreNavigator } from '@services/navigator';
+import { ADDON_MESSAGES_PAGE_NAME } from '@addons/messages/constants';
 import { CorePlatform } from '@services/platform';
 import { AuthService } from '@/MoodleIFRN/services_mobile/auth.service';
 import { PainelAvaService } from '@/MoodleIFRN/services_mobile/painel-ava.service';
@@ -216,6 +217,17 @@ export class PainelPage implements OnInit, OnDestroy {
     }
 
     onNativeHelp(id: string): void { this.openHelpLink(id); }
+
+    async onNativeMessages(): Promise<void> {
+        if (!this.moodleSite.isCurrentSiteIfrn() || !this.moodleSite.matchCurrentMoodleIdentity().matches) {
+            await CoreAlerts.showError('Abra uma disciplina para conectar a sua conta ao Moodle e acessar as mensagens.');
+
+            return;
+        }
+
+        await CoreNavigator.navigateToSitePath(ADDON_MESSAGES_PAGE_NAME, { preferCurrentTab: false });
+    }
+
     async onNativeEnrolment(course: NativePainelCourse): Promise<void> {
         if (!course.moodle_course_id || !course.moodle_site_url || this.openingCourse) {
             return;

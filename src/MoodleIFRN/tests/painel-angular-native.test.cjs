@@ -42,6 +42,52 @@ test('invalid id never falls back to SUAP diário and credentials cannot become 
     assert.equal(result.photo, undefined);
 });
 
+test('Painel header exposes the IFRN brand, accessible actions, existing avatar fallback and no notification bell', () => {
+    const template = fs.readFileSync('src/MoodleIFRN/painel/painel-native.html', 'utf8');
+    assert.match(template, /ifrn-panel-header__logo[\s\S]*?alt="IFRN"/);
+    assert.match(template, /ifrn-panel-header__title">Painel AVA/);
+    assert.match(template, /aria-label="Acessibilidade"[\s\S]*?section\.set\('accessibility'\)/);
+    assert.match(template, /aria-label="Ajuda"[\s\S]*?section\.set\('help'\)/);
+    assert.match(template, /aria-label="Mensagens"[\s\S]*?openMessages\.emit\(\)/);
+    assert.match(template, /data\(\)\?\.photo && !photoFailed\(\)/);
+    assert.match(template, /\{\{ initials\(\) \}\}/);
+    assert.match(template, /chevron-down-outline/);
+    assert.doesNotMatch(template, /name="bell(?:-outline)?"/);
+});
+
+test('mensagens usa a rota nativa só quando a sessão IFRN corresponde à conta do Painel', async () => {
+    const navigations = [];
+    const alerts = [];
+    let ifrnSite = false;
+    let identityMatches = false;
+    const MoodleSiteService = {};
+    const service = {
+        isCurrentSiteIfrn: () => ifrnSite,
+        matchCurrentMoodleIdentity: () => ({ matches: identityMatches }),
+    };
+    const { PainelPage } = load('src/MoodleIFRN/painel/painel.ts', {
+        '@angular/core': { Component: () => type => type, ViewChild: () => () => {}, NgZone: class {},
+            inject: token => token === MoodleSiteService ? service : {} },
+        '@services/navigator': { CoreNavigator: { navigateToSitePath: async (...args) => navigations.push(args) } },
+        '@services/overlays/alerts': { CoreAlerts: { showError: async message => alerts.push(message) } },
+        '@addons/messages/constants': { ADDON_MESSAGES_PAGE_NAME: 'messages' },
+        '@/MoodleIFRN/services_mobile/moodle-site.service': { MoodleSiteService },
+    }, { window: { addEventListener() {} }, document: { addEventListener() {} } });
+    const page = new PainelPage();
+
+    await page.onNativeMessages();
+    ifrnSite = true;
+    await page.onNativeMessages();
+    assert.equal(alerts.length, 2);
+    assert.equal(navigations.length, 0);
+
+    identityMatches = true;
+    await page.onNativeMessages();
+    assert.equal(navigations.length, 1);
+    assert.equal(navigations[0][0], 'messages');
+    assert.equal(navigations[0][1].preferCurrentTab, false);
+});
+
 function setupFirstProfile(savedName, loadMoodleTeacherNames = async () => new Map()) {
     const storage = new Map();
     const sessionStorage = {
