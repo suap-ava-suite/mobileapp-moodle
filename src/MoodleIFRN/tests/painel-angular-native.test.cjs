@@ -42,7 +42,7 @@ test('invalid id never falls back to SUAP diário and credentials cannot become 
     assert.equal(result.photo, undefined);
 });
 
-function setupFirstProfile(savedName) {
+function setupFirstProfile(savedName, loadMoodleTeacherNames = async () => new Map()) {
     const storage = new Map();
     const sessionStorage = {
         getItem: key => storage.get(key) ?? null,
@@ -80,8 +80,10 @@ function setupFirstProfile(savedName) {
         '@/MoodleIFRN/services_mobile/painel-ava.service': { PainelAvaService: PanelService },
         '@/MoodleIFRN/services_mobile/moodle-site.service': { MoodleSiteService: MoodleService },
         '../mobilemoodle/core_mobile/oauth-profile': oauth,
+        './painel-course-teachers': { loadMoodleTeacherNames },
         './painel-native-model': modelModule,
-    }, { window: { addEventListener() {} }, document: { addEventListener() {} }, performance });
+    }, { window: { addEventListener() {} },
+        document: { addEventListener() {}, documentElement: { classList: { remove() {} } } }, performance });
 
     return { page: new PainelPage(), finishLanguage,
         respond: names => respond({ id: 11, identificacao: owner, ...names }) };
@@ -108,6 +110,89 @@ test('a primeira revalidação também revela o nome curto quando o servidor con
     finishLanguage();
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(page.nativeDashboard.name, 'Lucas Oliveira');
+});
+
+test('docentes carregam em segundo plano sem trocar o contexto do progresso e somem ao sair do Painel', async () => {
+    const requests = [];
+    const { page, respond, finishLanguage } = setupFirstProfile('Estudante fictício',
+        (courses, owner, isCurrent) => new Promise(resolve => requests.push({ courses, owner, isCurrent, resolve })));
+    const nextTick = () => new Promise(resolve => setImmediate(resolve));
+    try {
+        page.ngOnInit();
+        page.ionViewDidEnter();
+        page.onNativeRefresh();
+        await nextTick();
+        assert.equal(requests.length, 1);
+        assert.equal(requests[0].owner, 'conta-ficticia');
+        assert.equal(page.moodleTeacherNames, null);
+        const dashboard = page.nativeDashboard;
+        const courseKey = dashboard.groups.diarios[0].key;
+        requests[0].resolve(new Map([[courseKey, 'Docente fictício']]));
+        await nextTick();
+        assert.equal(page.nativeDashboard, dashboard, 'the role lookup must not restart the account-scoped progress');
+        assert.equal(page.moodleTeacherNames.get(courseKey), 'Docente fictício');
+
+        page.onNativeRefresh();
+        await nextTick();
+        assert.equal(requests.length, 2);
+        page.ionViewWillLeave();
+        assert.equal(requests[1].isCurrent(), false);
+        requests[1].resolve(new Map([[courseKey, 'Docente atrasado']]));
+        await nextTick();
+        assert.equal(page.moodleTeacherNames, null);
+    } finally {
+        respond({ nome_exibicao: 'Estudante fictício' });
+        finishLanguage();
+    }
+});
+
+test('Painel mostra o diário sem sessão Moodle e preenche o docente ao voltar do primeiro curso', async () => {
+    const info = { username: 'conta-ficticia' };
+    let courseSessionAvailable = false;
+    const sessionsRead = [];
+    const requests = [];
+    const { loadMoodleTeacherNames } = load('src/MoodleIFRN/painel/painel-course-teachers.ts', {
+        '../mobilemoodle/core_mobile/course-target': target,
+        '@services/sites': { CoreSites: {
+            getSites: async () => courseSessionAvailable ? [{ id: 'site-da-conta', siteUrl: site, info }] : [],
+            getSite: async id => {
+                sessionsRead.push(id);
+
+                return {
+                    getURL: () => site, getInfo: () => info, getUserId: () => 42, getToken: () => 'simulated-session',
+                    isLoggedOut: () => false, wsAvailable: () => true,
+                };
+            },
+        } },
+        '@services/ws': { CoreWS: { call: async (functionName, params) => {
+            requests.push([functionName, params.courseid]);
+
+            return [{ fullname: 'Docente da turma', roles: [{ shortname: 'editingteacher' }] }];
+        } } },
+    });
+    const { page, respond, finishLanguage } = setupFirstProfile('Estudante fictício', loadMoodleTeacherNames);
+    const nextTick = () => new Promise(resolve => setImmediate(resolve));
+    try {
+        page.ngOnInit();
+        page.ionViewDidEnter();
+        await nextTick();
+        assert.equal(page.nativeDashboard.groups.diarios[0].moodle_course_id, 17);
+        assert.equal(page.moodleTeacherNames, null);
+        assert.equal(sessionsRead.length, 0);
+        assert.equal(requests.length, 0);
+
+        page.ionViewWillLeave();
+        courseSessionAvailable = true;
+        page.ionViewDidEnter();
+        await nextTick();
+
+        assert.deepEqual(sessionsRead, ['site-da-conta']);
+        assert.deepEqual(requests, [['core_enrol_get_enrolled_users', 17]]);
+        assert.equal(page.moodleTeacherNames.get(page.nativeDashboard.groups.diarios[0].key), 'Docente da turma');
+    } finally {
+        respond({ nome_exibicao: 'Estudante fictício' });
+        finishLanguage();
+    }
 });
 
 test('legacy direct bridge reenters real Angular NgZone and preserves its async result/error', async () => {
@@ -149,11 +234,14 @@ test('native Angular signals filter data and never emit a blocked/double in-prog
             output: () => ({ emit: value => events.push(value) }) },
         '../mobilemoodle/core_mobile/course-favourites': favourites,
         '../services_mobile/painel-help-links': { PAINEL_HELP_LINKS: {} },
+        './painel-native-model': modelModule,
         './painel-filters': filters,
     });
     const page = new PainelNativeComponent();
     page.data.set(build(raw, null, 'conta-a-ficticia'));
+    page.moodleTeacherNames.set(new Map([[page.courses()[0].key, 'Docente fictício']]));
     const course = page.courses()[0];
+    assert.equal(course.teacherNames, 'Docente fictício');
     page.busy.set(true);
     page.selectCourse(course);
     assert.equal(events.length, 0);

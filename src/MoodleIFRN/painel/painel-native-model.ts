@@ -18,6 +18,12 @@ import { normalizePainelSearch, type PainelFacet, type PainelFilterableCourse, t
 export type NativePainelGroup = 'diarios' | 'coordenacoes' | 'autoinscricoes';
 export interface NativePainelCourse extends DashboardCourse, PainelFilterableCourse {
     key: string;
+    academicProgram?: string;
+    academicCode?: string;
+    /** Undefined means missing metadata. An empty string means the supplied assignments are inactive. */
+    teacherNames?: string;
+    isAcademicEnvironment: boolean;
+    publicationStatus?: 'published' | 'unpublished';
 }
 export interface NativePainelModel {
     name: string;
@@ -46,6 +52,79 @@ function object(value: unknown): Record<string, unknown> {
  */
 function text(...values: unknown[]): string {
     return values.find((value): value is string => typeof value === 'string' && !!value.trim())?.trim() || '';
+}
+
+/**
+ * Ignores the placeholders sent when an academic program has no registered name.
+ *
+ * @param code Academic program code.
+ * @param values Candidate labels from the dashboard.
+ * @returns The first program name available.
+ */
+function readAcademicProgramName(code: string | undefined, ...values: unknown[]): string {
+    const unregisteredProgram = /^Curso\s+(?:desconhecido|\d+|\[\d+\], favor solicitar o cadastro)$/i;
+
+    return values.map(value => text(value))
+        .find(label => label && label !== code && !unregisteredProgram.test(label)) || '';
+}
+
+/**
+ * Keeps publication indicators limited to explicit visibility values from the dashboard API.
+ *
+ * @param value Raw course visibility field.
+ * @returns Known publication state, or undefined when the API did not provide one.
+ */
+function readPublicationStatus(value: unknown): NativePainelCourse['publicationStatus'] {
+    if (value === true || value === 1 || value === '1') {
+        return 'published';
+    }
+    if (value === false || value === 0 || value === '0') {
+        return 'unpublished';
+    }
+
+    return undefined;
+}
+
+/**
+ * Reads docent names only from fields already present in the authenticated dashboard payload.
+ *
+ * @param source Raw course row.
+ * @returns Unique lecturer names, an empty string for inactive assignments, or undefined when missing.
+ */
+function readTeacherNames(source: Record<string, unknown>): string | undefined {
+    const turma = object(source['turma']);
+    const values = [source['professores'], source['docentes'], turma['professores'], turma['docentes']];
+    const names: string[] = [];
+    let hasInactiveAssignment = false;
+    const add = (value: unknown): void => {
+        const record = object(value);
+        const status = text(record['situacao_diario'], record['status']).toLowerCase();
+        if (status === 'inativo' || status === 'suspenso') {
+            hasInactiveAssignment = true;
+
+            return;
+        }
+        const name = typeof value === 'string' ? text(value)
+            : text(record['nome_usual'], record['nome'], record['fullname'], record['name']);
+        if (name && !names.includes(name)) {
+            names.push(name);
+        }
+    };
+
+    for (const value of values) {
+        if (Array.isArray(value)) {
+            value.forEach(add);
+        } else if (typeof value === 'string') {
+            add(value);
+        }
+    }
+    for (const value of [source['professor'], source['teacher'], turma['professor'], turma['teacher']]) {
+        if (value) {
+            add(value);
+        }
+    }
+
+    return names.length || hasInactiveAssignment ? names.join(', ') : undefined;
 }
 
 /**
@@ -178,15 +257,29 @@ export function buildNativePainelModel(
             const source = object(row);
             const environment = object(source['ambiente']);
             const discipline = object(source['disciplina']);
+            const academicCourse = object(source['curso']);
             const enrolment = object(source['autoinscricao']);
             const id = Number(source['id']); // The API id is Moodle's id, never the SUAP diário id.
             const viewurl = text(source['viewurl'], source['url']);
-            const name = text(source['fullname'], discipline['descricao'], source['shortname']) || 'Disciplina';
+            const name = text(discipline['descricao'], source['disciplina_descricao'], source['componente_curricular'],
+                source['fullname'], source['name'], source['shortname']) || 'Disciplina';
             const shortname = text(source['shortname'], discipline['sigla']);
+            const academicCode = text(source['shortname'], source['idnumber'], discipline['sigla']);
             const environmentName = text(environment['titulo'], environment['label']);
             const enrolled = source['is_enrolled'] ?? enrolment['is_enrolled'] ?? group !== 'autoinscricoes';
             const site = resolveCourseSite({ viewurl, environment: environmentName });
             const environmentId = Number(environment['id']);
+            const publicationStatus = readPublicationStatus(source['visible']);
+            const filterOptions = readCourseFilterOptions(source, group, labels);
+            const courseOption = filterOptions.academicCourse;
+            const academicProgram = readAcademicProgramName(
+                courseOption?.id,
+                academicCourse['nome'],
+                courseOption && labels.academicCourse?.get(courseOption.id),
+                source['curso_nome'],
+                source['curso_descricao'],
+            );
+            const teacherNames = readTeacherNames(source);
 
             /* eslint-disable @typescript-eslint/naming-convention -- Preserve the existing dashboard API field names. */
             return {
@@ -194,9 +287,16 @@ export function buildNativePainelModel(
                 key: `${group}:${site || 'unknown'}:${id}:${index}`,
                 name, fullname: name,
                 shortname,
+                academicProgram: academicProgram || undefined,
+                academicCode: academicCode || undefined,
+                teacherNames,
                 environment: environmentName || 'AVA',
-                filterOptions: readCourseFilterOptions(source, group, labels),
-                searchableText: normalizePainelSearch(`${name} ${shortname} ${environmentName || 'AVA'}`),
+                isAcademicEnvironment: site === 'https://academico.ava.ifrn.edu.br',
+                publicationStatus,
+                filterOptions,
+                searchableText: normalizePainelSearch(
+                    `${academicProgram} ${name} ${academicCode} ${teacherNames ?? ''} ${environmentName || 'AVA'}`,
+                ),
                 ambiente: { titulo: environmentName, ...(Number.isSafeInteger(environmentId) ? { id: environmentId } : {}) },
                 viewurl,
                 moodle_course_id: Number.isSafeInteger(id) && id > 0 ? id : undefined,
@@ -228,4 +328,25 @@ export function buildNativePainelModel(
     } catch { /* A missing photo never blocks the dashboard. */ }
 
     return { name, photo, accountIdentity, groups };
+}
+
+/**
+ * Applies only the names that were missing from the authenticated dashboard.
+ *
+ * @param courses Current cards.
+ * @param names Names found in the Moodle participants list, by card key.
+ * @returns Cards with teacher names added to the display and search.
+ */
+export function withMoodleTeacherNames(
+    courses: readonly NativePainelCourse[],
+    names: ReadonlyMap<string, string>,
+): NativePainelCourse[] {
+    return courses.map(course => {
+        const teacherNames = names.get(course.key);
+        if (!teacherNames || course.teacherNames !== undefined) {
+            return course;
+        }
+
+        return { ...course, teacherNames, searchableText: `${course.searchableText} ${normalizePainelSearch(teacherNames)}` };
+    });
 }

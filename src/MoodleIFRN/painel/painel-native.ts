@@ -17,7 +17,7 @@ import { ChangeDetectionStrategy, Component, computed, ElementRef,
 import { CoreSharedModule } from '@/core/shared.module';
 import { createCourseFavourites } from '../mobilemoodle/core_mobile/course-favourites';
 import { PAINEL_HELP_LINKS, type PainelHelpLinkId } from '../services_mobile/painel-help-links';
-import { type NativePainelCourse, type NativePainelGroup, type NativePainelModel } from './painel-native-model';
+import { withMoodleTeacherNames, type NativePainelCourse, type NativePainelGroup, type NativePainelModel } from './painel-native-model';
 import { IfrnAcademicProgressComponent } from '../academic-progress/progress.component';
 import { DEFAULT_PAINEL_FILTERS, PAINEL_FACETS, PAINEL_SITUATIONS, countPainelFilters, filterPainelCourses,
     listPainelFilterOptions, reconcilePainelFilters, type PainelFilterCategory, type PainelFilterOption,
@@ -54,6 +54,7 @@ interface PainelFilterCategoryView {
 export class PainelNativeComponent {
 
     readonly data = input<NativePainelModel | null>(null);
+    readonly moodleTeacherNames = input<ReadonlyMap<string, string> | null>(null);
     readonly busy = input(false);
     readonly openCourse = output<NativePainelCourse>();
     readonly manageEnrolment = output<NativePainelCourse>();
@@ -124,7 +125,12 @@ export class PainelNativeComponent {
 
     @ViewChild('filterPanel') private filterPanel?: ElementRef<HTMLElement>;
     private filterTrigger?: HTMLButtonElement;
-    private readonly groupCourses = computed(() => this.data()?.groups[this.group()] ?? []);
+    private readonly groupCourses = computed(() => {
+        const courses = this.data()?.groups[this.group()] ?? [];
+        const teachers = this.moodleTeacherNames();
+
+        return teachers?.size ? withMoodleTeacherNames(courses, teachers) : courses;
+    });
     private readonly filterState = linkedSignal({
         source: () => ({ model: this.data(), courses: this.groupCourses() }),
         computation: ({ model, courses }, previous): PainelFilterState => {

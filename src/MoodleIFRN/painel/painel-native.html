@@ -103,20 +103,38 @@
             <div class="card-container" [attr.aria-busy]="busy()">
                 @for (course of courses(); track course.key) {
                     <ion-card class="painel-card" [class.painel-card--autoinscricao]="group() === 'autoinscricoes'">
-                        <ion-card-content>
-                            <button type="button" class="painel-card-link course-open" [disabled]="!canOpen(course)" (click)="selectCourse(course)">
-                                <h2 class="painel-card-title">{{ course.name }}</h2><span class="painel-card-header-shortname">{{ course.shortname }}</span>
+                        <ion-card-content class="painel-card-content">
+                            <div class="painel-card-topline">
+                                @if (course.academicProgram) { <span class="painel-card-program">{{ course.academicProgram }}</span> }
+                                <button type="button" class="painel-card-details-info-favourite painel-card-favourite"
+                                    [attr.aria-label]="isFavourite(course) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
+                                    [attr.aria-pressed]="isFavourite(course)" (click)="toggleFavourite(course)">
+                                    <ion-icon [name]="isFavourite(course) ? 'star' : 'star-outline'" aria-hidden="true" />
+                                </button>
+                            </div>
+                            <button type="button" class="painel-card-link course-open painel-card-open"
+                                [disabled]="!canOpen(course)" (click)="selectCourse(course)">
+                                <span class="painel-card-title" role="heading" aria-level="3">{{ course.name }}</span>
+                                @if (course.academicCode) { <span class="painel-card-code">{{ course.academicCode }}</span> }
+                                <span class="painel-card-teacher">Professor(a): {{ course.teacherNames || 'não informado' }}</span>
                             </button>
                             @if (course.is_enrolled && course.moodle_course_id && course.moodle_site_url) {
                                 <ifrn-academic-progress [courseId]="course.moodle_course_id" [siteUrl]="course.moodle_site_url"
                                     [compact]="true" [accountScope]="data()"
                                     [serverProgress]="course.progress === undefined ? null : course.progress"
-                                    [hasServerProgress]="course.hasprogress === true" />
+                                    [hasServerProgress]="course.hasprogress === true" [showHeading]="false" [showSummary]="false" />
                             }
                             <div class="painel-card-details"><div class="painel-card-details-info">
-                                <div class="painel-card-info-icon"><ion-icon name="school-outline" aria-hidden="true" /><span>{{ course.environment }}</span></div>
-                                <div class="painel-card-details-info-published"><ion-icon name="checkmark-circle-outline" aria-hidden="true" /><span>{{ course.published ? 'Publicado' : 'Não publicado' }}</span></div>
-                                <button type="button" class="painel-card-details-info-favourite" [attr.aria-label]="isFavourite(course) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'" [attr.aria-pressed]="isFavourite(course)" (click)="toggleFavourite(course)"><ion-icon [name]="isFavourite(course) ? 'star' : 'star-outline'" aria-hidden="true" /></button>
+                                @if (course.isAcademicEnvironment) {
+                                    <div class="painel-card-info-icon painel-card-info-icon--academic"><ion-icon name="school-outline" aria-hidden="true" /><span>Acadêmico</span></div>
+                                } @else if (course.environment && course.environment !== 'AVA') {
+                                    <div class="painel-card-info-icon painel-card-info-icon--environment"><ion-icon name="school-outline" aria-hidden="true" /><span>{{ course.environment }}</span></div>
+                                }
+                                @if (course.publicationStatus === 'published') {
+                                    <div class="painel-card-details-info-published"><ion-icon name="checkmark-circle-outline" aria-hidden="true" /><span>Publicado</span></div>
+                                } @else if (course.publicationStatus === 'unpublished') {
+                                    <div class="painel-card-details-info-unpublished"><ion-icon name="eye-off-outline" aria-hidden="true" /><span>Não publicado</span></div>
+                                }
                             </div></div>
                             @if (!course.moodle_site_url) { <p role="status">Ambiente não identificado. Atualize o Painel.</p> }
                             @if (group() === 'autoinscricoes') {

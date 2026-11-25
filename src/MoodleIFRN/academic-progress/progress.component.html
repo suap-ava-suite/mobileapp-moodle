@@ -1,10 +1,12 @@
 <section class="academic-progress" [class.academic-progress--compact]="compact" aria-label="Progresso acadêmico">
-    <div class="academic-progress__heading">
-        <strong>{{ view.source === 'activities' ? 'Progresso das atividades' : 'Progresso da disciplina' }}</strong>
-        @if (!compact && percentage !== null) {
-            <span class="academic-progress__percentage">{{ percentage }}%</span>
-        }
-    </div>
+    @if (showHeading) {
+        <div class="academic-progress__heading">
+            <strong>{{ view.source === 'activities' ? 'Progresso das atividades' : 'Progresso da disciplina' }}</strong>
+            @if (!compact && percentage !== null) {
+                <span class="academic-progress__percentage">{{ percentage }}%</span>
+            }
+        </div>
+    }
     @if (view.percent !== null) {
         <div class="academic-progress__meter">
             <div class="academic-progress__track" role="progressbar" aria-label="Progresso acadêmico confirmado"
@@ -28,7 +30,7 @@
         } @else if (view.percent === null) {
             <span>Progresso indisponível no momento.</span>
         } @else {
-            @if (compact && view.total !== null && view.total > 0) {
+            @if (compact && showSummary && view.total !== null && view.total > 0) {
                 <span>{{ view.completed }} de {{ view.total }} atividades concluídas ·
                     {{ view.total - (view.completed || 0) }} pendentes</span>
             }

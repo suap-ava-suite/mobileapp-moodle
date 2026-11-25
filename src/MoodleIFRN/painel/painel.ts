@@ -33,13 +33,20 @@ import {
 import { getPainelHelpLink } from '../services_mobile/painel-help-links';
 import { PainelNativeComponent } from './painel-native';
 import { buildNativePainelModel, type NativePainelCourse, type NativePainelModel } from './painel-native-model';
-import { readOAuthProfile } from '../mobilemoodle/core_mobile/oauth-profile';
+import { readOAuthProfile, type OAuthProfileSnapshot } from '../mobilemoodle/core_mobile/oauth-profile';
+import { loadMoodleTeacherNames } from './painel-course-teachers';
 
 export interface MoodleIfrnBridgeApi {
     openCourse: (courseId: number | string, courseName?: string, siteUrl?: string) => Promise<void>;
     openEnrol: (courseId: number | string, ambienteId?: number | string) => Promise<void>;
     goToMarketplace: () => Promise<void>;
     logout: () => Promise<void>;
+}
+
+interface MoodleTeacherRequest {
+    key: string;
+    pending: boolean;
+    result: Promise<ReadonlyMap<string, string>>;
 }
 
 @Component({
@@ -64,10 +71,13 @@ export class PainelPage implements OnInit, OnDestroy {
     private painelFrameLoadReported = false;
     private destroyed = false;
     private initialProfilePending = true;
+    private painelVisible = false;
+    private teacherRequest?: MoodleTeacherRequest;
 
     @ViewChild('painelFrame') painelFrame?: ElementRef<HTMLIFrameElement>;
 
     nativeDashboard: NativePainelModel | null = null;
+    moodleTeacherNames: ReadonlyMap<string, string> | null = null;
     private hostAppearanceObserver?: MutationObserver;
     internalPageTitle = '';
     internalPageScreenOpen = false;
@@ -130,6 +140,58 @@ export class PainelPage implements OnInit, OnDestroy {
         const dashboard = buildNativePainelModel(raw, oauth?.profile || this.painelAva.getProfile(), oauth?.identity);
         // Só o nome aguarda a primeira revalidação. A lista de disciplinas fica disponível.
         this.nativeDashboard = dashboard && this.initialProfilePending ? { ...dashboard, name: 'Estudante' } : dashboard;
+        if (this.painelVisible && this.nativeDashboard && oauth) {
+            this.fillMoodleTeacherNames(this.nativeDashboard, oauth);
+        } else {
+            this.clearMoodleTeacherNames();
+        }
+    }
+
+    private clearMoodleTeacherNames(): void {
+        this.teacherRequest = undefined;
+        this.moodleTeacherNames = null;
+    }
+
+    /** Completa os nomes em segundo plano usando apenas a sessão Moodle da conta atual. */
+    private fillMoodleTeacherNames(dashboard: NativePainelModel, oauth: OAuthProfileSnapshot): void {
+        const courses = dashboard.groups.diarios.filter(course => course.teacherNames === undefined && course.is_enrolled
+            && course.moodle_course_id && course.moodle_site_url);
+        if (!courses.length) {
+            this.clearMoodleTeacherNames();
+
+            return;
+        }
+        const key = JSON.stringify([oauth.identity, oauth.expiresAt, courses.map(course => course.key)]);
+        const sameAccount = (): boolean => {
+            if (!this.painelVisible || this.destroyed || this.logoutInProgress) {
+                return false;
+            }
+            const current = readOAuthProfile();
+
+            return current?.identity === oauth.identity && current.expiresAt === oauth.expiresAt;
+        };
+        const previousRequest = this.teacherRequest;
+        let request: MoodleTeacherRequest;
+        if (previousRequest && previousRequest.key === key) {
+            request = previousRequest;
+        } else {
+            this.clearMoodleTeacherNames();
+            const next: MoodleTeacherRequest = {
+                key,
+                pending: true,
+                result: Promise.resolve().then(() => loadMoodleTeacherNames(
+                    courses, oauth.identity, () => this.teacherRequest === next && sameAccount(),
+                )).catch(() => new Map<string, string>()),
+            };
+            this.teacherRequest = next;
+            request = next;
+            void next.result.then(() => { next.pending = false; });
+        }
+        void request.result.then(names => {
+            if (names.size && this.teacherRequest === request && this.nativeDashboard === dashboard && sameAccount()) {
+                this.ngZone.run(() => { this.moodleTeacherNames = names; });
+            }
+        });
     }
 
     get nativeCourseOpening(): boolean {
@@ -169,6 +231,9 @@ export class PainelPage implements OnInit, OnDestroy {
     onNativeMarketplace(): void { void this.handleGoToMarketplace(); }
     onNativeLogout(): void { void this.handleLogout(); }
     onNativeRefresh(): void {
+        if (!this.teacherRequest?.pending) {
+            this.clearMoodleTeacherNames();
+        }
         this.loadNativeDashboard();
         void this.refreshProfileWhenPlatformIsReady();
     }
@@ -184,6 +249,7 @@ export class PainelPage implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.destroyed = true;
+        this.clearMoodleTeacherNames();
         this.courseOpeningOrigin?.abort();
         document.removeEventListener('resume', this.onAppResume);
         this.painelAva.stopProfileRefresh();
@@ -193,10 +259,13 @@ export class PainelPage implements OnInit, OnDestroy {
     }
 
     ionViewWillLeave(): void {
+        this.painelVisible = false;
+        this.clearMoodleTeacherNames();
         this.courseOpeningOrigin?.abort();
     }
 
     ionViewDidEnter(): void {
+        this.painelVisible = true;
         this.registerBridge();
         this.loadNativeDashboard();
         // O menu nativo só perde o contexto azul quando a entrada do painel terminou.
@@ -436,6 +505,7 @@ export class PainelPage implements OnInit, OnDestroy {
         }
 
         this.logoutInProgress = true;
+        this.clearMoodleTeacherNames();
         let loading: Awaited<ReturnType<typeof CoreLoadings.show>> | undefined;
 
         try {

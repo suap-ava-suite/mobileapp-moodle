@@ -34,6 +34,8 @@ export class IfrnAcademicProgressComponent implements OnChanges, OnDestroy {
     @Input() courseId = 0;
     @Input() siteUrl = '';
     @Input() compact = false;
+    @Input() showHeading = true;
+    @Input() showSummary = true;
     @Input() serverProgress: number | null = null;
     @Input() hasServerProgress = false;
     @Input() sections: CoreCourseSection[] = [];

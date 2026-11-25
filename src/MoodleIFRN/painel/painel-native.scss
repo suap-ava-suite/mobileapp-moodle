@@ -223,5 +223,203 @@ ion-content { --background: var(--dsgov-bg-gray); }
     }
 }
 
+.painel-card .painel-card-content {
+    align-items: stretch;
+    gap: 0;
+    padding: 16px 18px;
+}
+
+.painel-card-topline {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+}
+
+.painel-card-program {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-block: 7px;
+    color: var(--dsgov-text-secondary, var(--dsgov-text-muted, #555));
+    font-size: 0.8rem;
+    font-weight: 400;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.painel-card-topline .painel-card-favourite {
+    flex: 0 0 44px;
+    margin: 0;
+}
+
+.painel-card-open {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    color: var(--dsgov-text-darkest, #161616);
+    text-align: start;
+    white-space: normal;
+    overflow-wrap: anywhere;
+
+    &:focus-visible {
+        outline: 3px solid var(--dsgov-blue-70, #1351b4);
+        outline-offset: 3px;
+        border-radius: 2px;
+    }
+}
+
+.painel-card-open .painel-card-title {
+    display: block;
+    width: 100%;
+    margin: 0;
+    color: var(--dsgov-text-darkest, #161616);
+    font-family: var(--dsgov-font-family, inherit);
+    font-size: 1.08rem;
+    font-weight: 700;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+.painel-card-code,
+.painel-card-teacher {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    color: var(--dsgov-text-secondary, #555);
+    font-size: 0.78rem;
+    font-weight: 400;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.painel-card .painel-card-open + ifrn-academic-progress {
+    align-self: stretch;
+    min-width: 0;
+    margin-block-start: 14px;
+}
+
+.painel-card-details {
+    align-self: stretch;
+    min-width: 0;
+    margin-block-start: 12px;
+}
+
+.painel-card-details-info {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+}
+
+.painel-card-info-icon,
+.painel-card-details-info-published,
+.painel-card-details-info-unpublished {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    min-height: 30px;
+    padding: 5px 9px;
+    border: 1px solid transparent;
+    border-radius: var(--dsgov-radius-pill, 999px);
+    font-size: 0.76rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.painel-card-info-icon {
+    background: var(--dsgov-bg-green-light, #e9f5f1);
+    color: var(--dsgov-green-cool-50, var(--success-dark, #135d1f));
+}
+
+.painel-card-info-icon--academic {
+    width: auto;
+    min-width: 111px;
+    max-width: 100%;
+    height: 24px;
+    min-height: 24px;
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background: #d4e5ff;
+    color: #155bcb;
+    font-family: var(--dsgov-font-family, 'Rawline'), sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 16px;
+    white-space: nowrap;
+
+    ion-icon { flex: 0 0 16px; font-size: 16px; }
+
+    span {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        overflow-wrap: normal;
+    }
+}
+
+.painel-card-info-icon--environment {
+    background: #d4e5ff;
+    color: #155bcb;
+}
+
+.painel-card-details-info-published {
+    width: 102px;
+    height: 24px;
+    min-height: 24px;
+    box-sizing: border-box;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background: #e3f5e1;
+    color: var(--success-dark, #1b5e20);
+}
+
+.painel-card-details-info-unpublished {
+    background: var(--dsgov-bg-gray, #f0f0f0);
+    color: var(--dsgov-text-secondary, #555);
+}
+
+.painel-card-info-icon:not(.painel-card-info-icon--academic) span,
+.painel-card-details-info-published span,
+.painel-card-details-info-unpublished span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.painel-card-info-icon ion-icon,
+.painel-card-details-info-published ion-icon,
+.painel-card-details-info-unpublished ion-icon {
+    flex: 0 0 auto;
+    font-size: 16px;
+}
+
+// O tema compartilhado posiciona os detalhes antes do progresso nos cartões legados.
+// No cartão Angular, a informação acadêmica deve vir depois da barra, conforme o DOM.
+.painel-card:not(.painel-card--autoinscricao) .painel-card-details {
+    order: 0;
+    min-width: 0;
+}
+
+@media (max-width: 359px) {
+    .painel-card .painel-card-content { padding: 14px; }
+    .painel-card-details-info { gap: 6px; }
+    .painel-card-info-icon:not(.painel-card-info-icon--academic) { padding-inline: 7px; }
+}
+
 // Buttons replace legacy anchors while keeping the original appearance and keyboard focus.
 :host(.highlight_links) .painel-card-link { text-decoration: underline; }
