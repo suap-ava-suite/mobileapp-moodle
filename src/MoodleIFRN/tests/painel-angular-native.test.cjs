@@ -52,7 +52,7 @@ test('Painel header exposes the IFRN brand, accessible actions, existing avatar 
     assert.match(template, /ifrn-panel-header__icon--help/);
     assert.match(template, /data\(\)\?\.photo && !photoFailed\(\)/);
     assert.match(template, /\{\{ initials\(\) \}\}/);
-    assert.match(template, /chevron-down-outline/);
+    assert.match(template, /chevron-back-outline/);
     assert.doesNotMatch(template, /name="bell(?:-outline)?"/);
 });
 
@@ -69,6 +69,8 @@ test('header usa dimensões e ícones do Figma sem divisor entre acessibilidade 
     assert.match(headerStyles, /&__action \{[\s\S]*?width: 40px;[\s\S]*?height: 40px;/);
     assert.match(headerStyles, /&__icon--accessibility \{[\s\S]*?width: 35px;[\s\S]*?height: 35px;/);
     assert.match(headerStyles, /&__icon--help \{[\s\S]*?width: 19px;[\s\S]*?height: 30px;/);
+    assert.match(headerStyles, /&__user \{[\s\S]*?gap: 2px;[\s\S]*?min-width: 76px;[\s\S]*?padding-inline: 0;/);
+    assert.match(headerStyles, /&__expand \{[\s\S]*?width: 24px;[\s\S]*?height: 24px;[\s\S]*?font-size: 24px;/);
 });
 
 test('Painel header omits the messages shortcut', () => {

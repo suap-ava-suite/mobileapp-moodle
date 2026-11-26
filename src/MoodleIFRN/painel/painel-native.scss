@@ -143,9 +143,9 @@ ion-content { --background: var(--dsgov-bg-gray); }
     }
 
     &__user {
-        gap: 8px;
-        min-width: 77px;
-        padding-inline: 6px;
+        gap: 2px;
+        min-width: 76px;
+        padding-inline: 0;
         border-radius: 28px;
     }
 
@@ -174,10 +174,10 @@ ion-content { --background: var(--dsgov-bg-gray); }
     }
 
     &__expand {
-        flex: 0 0 25px;
-        width: 25px;
-        height: 25px;
-        font-size: 25px;
+        flex: 0 0 24px;
+        width: 24px;
+        height: 24px;
+        font-size: 24px;
     }
 }
 
