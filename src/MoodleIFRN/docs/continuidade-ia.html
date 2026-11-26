@@ -20,7 +20,7 @@
         <h2>Evitar ficar na landing do Moodle após toque no Painel</h2>
         <p>O relato foi de uma ocorrência em que o primeiro toque abriu a página inicial do Moodle em vez do curso. Não há confirmação do caminho por logs: o telefone estava desconectado durante a investigação.</p>
         <p>O código agora detecta quando a navegação associada ao toque atual termina numa landing do menu Moodle, rejeita a abertura e retorna ao Painel IFRN. A identidade, o site, o curso exato e o handoff existente permanecem sob as verificações atuais. Uma regressão cobre o retorno de <code>/main/home</code>. Cinco suítes focadas, Angular <code>ngc --noEmit</code> e diff-check passaram. A implementação está no commit <code>b375f6c5a</code>.</p>
-        <p>Sem APK nova ou validação no telefone. ADB não encontrou dispositivo. Próximo passo: compilar em cópia isolada, atualizar via <code>adb install -r</code> após autorização e reconectar o Moto G20. Em caso de repetição, anotar horário e conferir apenas os eventos sanitizados <code>[IFRN-COURSE-OPEN]</code>.</p>
+        <p>A APK gerada da HEAD <code>006303bfad0ebb78d8a4c1f783972bb7eac41cbc</code> foi instalada no Moto G20 via <code>adb install -r</code>. SHA-256 candidata/instalada <code>94f77cf1517b417f45709e49d1288d7d63887bd76d5484852f13ead1b3e6c86c</code>, pacote <code>com.moodle.moodlemobile</code> versão <code>5.2.1/52100</code>, assinatura compatível e <code>firstInstallTime</code> preservado. A MainActivity abriu. Login, Logcat do evento original e reprodução do fallback no aparelho continuam pendentes. Em caso de repetição, anotar horário e conferir apenas os eventos sanitizados <code>[IFRN-COURSE-OPEN]</code>.</p>
       </section>
       <section class="doc-section searchable" id="diarios-figma-20261126">
         <h2>Conferir a camada Diários</h2>
@@ -35,7 +35,7 @@
         <p class="eyebrow">TRANSFERÊNCIA · PAINEL · 26/11/2026</p>
         <h2>Layout mobile de Coordenação e afastamento do favorito</h2>
         <p>Foi consultada no Figma a camada <code>17133:315</code> (375 × 812 px). Seus metadados mostram a mesma barra de navegação e o componente de filtros de Diários; os cards medem 359 × 192 px. O limite de consultas do plano Starter impediu obter screenshot e camadas internas. Por orientação do usuário, Coordenação compartilha o layout de Diários e os valores Acadêmico/Publicado continuam usando os campos do modelo provenientes do AVA.</p>
-        <p>O template aplica o modo mobile aos grupos <code>diarios</code> e <code>coordenacoes</code>. O título do card reserva 44 px para não aproximar texto e botão de favorito. Três suítes focadas, Sass e diff-check passaram. Código em <code>223fd3654</code>. APK e validação física pendentes; não afirmar fidelidade visual integral da camada Coordenação até reabrir o Figma após a renovação do limite.</p>
+        <p>O template aplica o modo mobile aos grupos <code>diarios</code> e <code>coordenacoes</code>. O título do card reserva 44 px para não aproximar texto e botão de favorito. Três suítes focadas e Sass passaram. Código em <code>223fd3654</code>. A APK da revisão <code>006303bfa</code> foi instalada; MainActivity abriu e os dados do app foram preservados. A camada Coordenação ainda precisa de conferência visual autenticada; o MCP Figma estava limitado ao Starter durante a implementação.</p>
       </section>
       <section class="doc-section searchable" id="preparacao-linux-android-20261125">
         <h2>Retomar o build Android no Linux</h2>
