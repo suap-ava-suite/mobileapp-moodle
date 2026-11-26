@@ -22,6 +22,7 @@ function setup(navigate) {
     let disposed = 0;
     let readinessCalls = 0;
     let clearedOrigins = 0;
+    let panelRedirects = 0;
     const handoffMessages = [];
     const nativeNavigation = { id: 1, extras: {}, abort() {} };
     class NavigationEnd {
@@ -80,9 +81,11 @@ function setup(navigate) {
     return {
         service,
         emitEnd: id => listener?.(new NavigationEnd(`/main/home/course/${id}`, id === courseId ? nativeNavigation.id : 2)),
+        emitEndPath: path => listener?.(new NavigationEnd(path, nativeNavigation.id)),
         emitError: error => listener?.(new NavigationError(`/main/home/course/${courseId}`, error)),
         expireRoute: () => [...timers.values()].forEach(callback => callback()),
-        state: () => ({ timers: timers.size, disposed, readinessCalls, clearedOrigins, handoffMessages }),
+        redirectToPanel: () => { panelRedirects++; },
+        state: () => ({ timers: timers.size, disposed, readinessCalls, clearedOrigins, panelRedirects, handoffMessages }),
     };
 }
 
@@ -144,6 +147,21 @@ test('successful navigation still waits for the selected course route before tes
     assert.deepEqual(s.state().handoffMessages, ['Carregando conteúdo…']);
     assert.equal(s.state().disposed, 1);
     assert.equal(s.state().timers, 0);
+});
+
+test('a course route falling back to Moodle home returns to the IFRN panel', async () => {
+    const s = setup(async () => {});
+    s.service.redirectToPainelAva = s.redirectToPanel;
+    const opening = s.service.performOpenCourseById(courseId, new CourseOpeningAttempt());
+    await tick();
+
+    s.emitEndPath('/main/home');
+    await assert.rejects(opening, /não chegou à disciplina solicitada/);
+
+    assert.equal(s.state().panelRedirects, 1);
+    assert.equal(s.state().readinessCalls, 0);
+    assert.equal(s.state().timers, 0);
+    assert.equal(s.state().disposed, 1);
 });
 
 test('user cancellation keeps the native operation locked and cannot report a late route as success', async () => {

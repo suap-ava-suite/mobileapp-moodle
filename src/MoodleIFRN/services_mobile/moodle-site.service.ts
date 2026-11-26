@@ -2418,7 +2418,14 @@ export class MoodleSiteService {
                     attempt.record?.('course-route-active', 'ok');
                     resolve();
                 } else {
-                    fail(new Error('A navegação Moodle não chegou à disciplina solicitada. Tente novamente.'));
+                    fail(new Error('A navegação Moodle não chegou à disciplina solicitada. Tente novamente pelo Painel.'));
+                    if (isMainMenuLandingPath(path)) {
+                        // O Router pode concluir a rota pedida no Dashboard/Home do Moodle
+                        // quando o núcleo não ativa o curso. Não deixar essa página tomar
+                        // o lugar do Painel IFRN após um toque iniciado nele.
+                        attempt.record?.('course-route-fallback', 'error');
+                        this.redirectToPainelAva();
+                    }
                 }
             });
 
