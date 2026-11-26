@@ -81,14 +81,15 @@ test('Painel header omits the messages shortcut', () => {
     assert.doesNotMatch(host, /openMessages|onNativeMessages/);
 });
 
-test('Diários and Sala de Coordenação share the Figma mobile layout and data-backed badges', () => {
+test('Diários, Coordenação and Autoinscrições share the Figma mobile layout and data-backed badges', () => {
     const template = fs.readFileSync('src/MoodleIFRN/painel/painel-native.html', 'utf8');
     const styles = fs.readFileSync('src/MoodleIFRN/painel/painel-native.scss', 'utf8');
 
-    assert.match(template, /@let showingFigmaMobilePanel = group\(\) === 'diarios' \|\| group\(\) === 'coordenacoes';/);
+    assert.match(template, /@let showingFigmaMobilePanel = group\(\) === 'diarios' \|\| group\(\) === 'coordenacoes' \|\| group\(\) === 'autoinscricoes';/);
     assert.match(template, /\[class\.diarios-page\]="showingFigmaMobilePanel"/);
     assert.match(template, /course\.isAcademicEnvironment/);
     assert.match(template, /course\.publicationStatus === 'published'/);
+    assert.match(template, /@if \(group\(\) === 'autoinscricoes'\)[\s\S]*?\(click\)="selectCourse\(course\)"[\s\S]*?\(click\)="manageEnrolment\.emit\(course\)"/);
     assert.match(styles, /padding-inline-end: 44px;/);
 });
 
