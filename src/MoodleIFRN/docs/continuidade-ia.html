@@ -15,6 +15,13 @@
   <div class="layout">
     <aside id="sidebar" class="sidebar" aria-label="Navegação da documentação"><nav><a href="index.html">Manual principal</a><a href="arquitetura-e-arquivos-criticos.html">Arquitetura e arquivos críticos</a><a href="android-celular-fisico.html">Android físico</a><a href="testes-e-validacao.html">Testes e fixtures</a><a href="problemas-conhecidos.html">Problemas conhecidos</a><a href="progresso-projeto.html">Progresso</a><a href="continuidade-ia.html">Continuidade entre IAs</a></nav><div class="sidebar-note">Leia o estado real antes de continuar.</div></aside>
     <main id="conteudo" class="content">
+      <section class="doc-section searchable" id="course-route-dashboard-fallback-20261126">
+        <p class="eyebrow">TRANSFERÊNCIA · ABERTURA DE CURSO · 26/11/2026</p>
+        <h2>Evitar ficar na landing do Moodle após toque no Painel</h2>
+        <p>O relato foi de uma ocorrência em que o primeiro toque abriu a página inicial do Moodle em vez do curso. Não há confirmação do caminho por logs: o telefone estava desconectado durante a investigação.</p>
+        <p>O código agora detecta quando a navegação associada ao toque atual termina numa landing do menu Moodle, rejeita a abertura e retorna ao Painel IFRN. A identidade, o site, o curso exato e o handoff existente permanecem sob as verificações atuais. Uma regressão cobre o retorno de <code>/main/home</code>. Cinco suítes focadas, Angular <code>ngc --noEmit</code> e diff-check passaram. A implementação está no commit <code>b375f6c5a</code>.</p>
+        <p>Sem APK nova ou validação no telefone. ADB não encontrou dispositivo. Próximo passo: compilar em cópia isolada, atualizar via <code>adb install -r</code> após autorização e reconectar o Moto G20. Em caso de repetição, anotar horário e conferir apenas os eventos sanitizados <code>[IFRN-COURSE-OPEN]</code>.</p>
+      </section>
       <section class="doc-section searchable" id="diarios-figma-20261126">
         <h2>Conferir a camada Diários</h2>
         <p>O Figma confirma avatar de 50 × 50 px na camada <code>17089:16194</code> do header. O código do Painel usa 50 px e conserva o afastamento de 8 px até a seta. A APK de SHA-256 <code>3219fc05e41ab6049ec2337627abefdb14b82666305a5906212daf1c9bb9ba2b</code> foi instalada com <code>adb install -r</code>; assinatura e hash coincidem, a data de primeira instalação foi preservada e a MainActivity abriu. A conferência visual do cabeçalho autenticado continua pendente, sem login automático.</p>

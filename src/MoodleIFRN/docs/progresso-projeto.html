@@ -30,6 +30,14 @@
       <div class="sidebar-note">Atualizado em 19/11/2026</div>
     </aside>
     <main id="conteudo" class="content">
+      <section class="doc-section searchable" id="course-route-dashboard-fallback-20261126">
+        <p class="eyebrow">ABERTURA DE CURSOS · 26/11/2026</p>
+        <h2>Retorno ao Painel se o curso cair na página inicial Moodle</h2>
+        <p>O usuário relatou uma ocorrência ao primeiro toque em uma disciplina: em vez do curso, apareceu a página inicial do Moodle. Não foi possível confirmar a rota real pelo Logcat porque o Android estava desconectado durante a investigação; a causa específica do episódio permanece não confirmada.</p>
+        <p>A revisão do fluxo encontrou um caminho compatível: o observador rejeita uma navegação que termina fora do curso selecionado, mas não devolvia o usuário ao Painel quando o Router concluía essa navegação na landing do menu Moodle. <code>MoodleSiteService.waitForCourseNavigation()</code> agora redireciona ao Painel IFRN nesse caso, somente para a navegação transitória criada pelo toque atual. A verificação do <code>courseId</code>, da identidade e do ambiente permanece intacta; não limpa a sessão, não inicia login e mantém a cobertura unificada até o retorno.</p>
+        <p>Uma regressão sintética de rota encerrada em <code>/main/home</code> verifica o retorno ao Painel. Cinco suítes focadas de navegação/abertura passaram, assim como Angular <code>ngc --noEmit</code> e <code>git diff --check</code>. A regressão não reproduz o evento físico original. Implementação e regressão registradas no commit <code>b375f6c5a</code>.</p>
+        <p>O Moto G20 estava desconectado; não foi possível obter Logcat nem instalar uma APK desta correção. O teste físico, incluindo conferir que o Painel IFRN reaparece após um fallback real, aguarda reconexão USB e autorização para compilar/instalar a nova APK.</p>
+      </section>
       <section class="doc-section searchable" id="diarios-figma-20261126">
         <h2>Camada Diários do Painel AVA</h2>
         <p>A camada <code>avatar</code> no header do Figma (<code>17089:16194</code>) mede 50 × 50 px. A versão anterior do Painel havia reduzido a foto para 32 px; o SCSS agora usa 50 px e mantém 8 px de espaço até a seta e 6 px de recuo lateral no botão. O atalho Mensagens foi removido do cabeçalho do Painel AVA. A APK com avatar de 50 px foi instalada no Moto G20 por <code>adb install -r</code>. A assinatura coincidiu, a data de primeira instalação permaneceu <code>2026-11-26 13:57:43</code> e a MainActivity abriu. O hash instalado coincide com o artefato compilado (<code>3219fc05e41ab6049ec2337627abefdb14b82666305a5906212daf1c9bb9ba2b</code>). Não foi realizado login; a conferência visual do cabeçalho autenticado continua pendente.</p>
