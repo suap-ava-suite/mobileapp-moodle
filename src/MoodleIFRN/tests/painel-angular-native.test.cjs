@@ -48,10 +48,27 @@ test('Painel header exposes the IFRN brand, accessible actions, existing avatar 
     assert.match(template, /ifrn-panel-header__title">Painel AVA/);
     assert.match(template, /aria-label="Acessibilidade"[\s\S]*?section\.set\('accessibility'\)/);
     assert.match(template, /aria-label="Ajuda"[\s\S]*?section\.set\('help'\)/);
+    assert.match(template, /ifrn-panel-header__icon--accessibility/);
+    assert.match(template, /ifrn-panel-header__icon--help/);
     assert.match(template, /data\(\)\?\.photo && !photoFailed\(\)/);
     assert.match(template, /\{\{ initials\(\) \}\}/);
     assert.match(template, /chevron-down-outline/);
     assert.doesNotMatch(template, /name="bell(?:-outline)?"/);
+});
+
+test('header usa dimensões e ícones do Figma sem divisor entre acessibilidade e ajuda', () => {
+    const template = fs.readFileSync('src/MoodleIFRN/painel/painel-native.html', 'utf8');
+    const styles = fs.readFileSync('src/MoodleIFRN/painel/painel-native.scss', 'utf8');
+    const header = template.slice(0, template.indexOf('<ion-content'));
+    const headerStyles = styles.slice(0, styles.indexOf('.painel-card-link'));
+
+    assert.doesNotMatch(header, /ifrn-panel-header__divider|accessibility-outline|help-circle-outline/);
+    assert.match(headerStyles, /&__brand \{[\s\S]*?min-height: 28px;/);
+    assert.match(headerStyles, /flex: 0 0 24px;[\s\S]*?width: 24px;[\s\S]*?height: 28px;/);
+    assert.match(headerStyles, /font-size: 14px;[\s\S]*?font-weight: 700;[\s\S]*?line-height: 13px;/);
+    assert.match(headerStyles, /&__action \{[\s\S]*?width: 40px;[\s\S]*?height: 40px;/);
+    assert.match(headerStyles, /&__icon--accessibility \{[\s\S]*?width: 35px;[\s\S]*?height: 35px;/);
+    assert.match(headerStyles, /&__icon--help \{[\s\S]*?width: 19px;[\s\S]*?height: 30px;/);
 });
 
 test('Painel header omits the messages shortcut', () => {

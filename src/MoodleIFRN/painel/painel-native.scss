@@ -46,14 +46,14 @@ ion-content { --background: var(--dsgov-bg-gray); }
         align-items: center;
         gap: 5px;
         min-width: 0;
-        min-height: 29px;
+        min-height: 28px;
     }
 
     &__logo {
         display: block;
-        flex: 0 0 25px;
-        width: 25px;
-        height: 29px;
+        flex: 0 0 24px;
+        width: 24px;
+        height: 28px;
         object-fit: contain;
     }
 
@@ -61,9 +61,9 @@ ion-content { --background: var(--dsgov-bg-gray); }
         overflow: hidden;
         color: var(--dsgov-text-darkest, #000);
         font-family: 'Open Sans', var(--dsgov-font-family), sans-serif;
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 700;
-        line-height: 1.2;
+        line-height: 13px;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
@@ -81,8 +81,15 @@ ion-content { --background: var(--dsgov-bg-gray); }
     &__actions {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 5px;
         min-width: 0;
+    }
+
+    &__action {
+        width: 40px;
+        min-width: 40px;
+        height: 40px;
+        min-height: 40px;
     }
 
     &__action,
@@ -114,18 +121,25 @@ ion-content { --background: var(--dsgov-bg-gray); }
         ion-icon { flex: 0 0 auto; }
     }
 
-    &__action ion-icon {
-        width: 24px;
-        height: 24px;
-        font-size: 24px;
+    &__icon {
+        display: block;
+        flex: 0 0 auto;
+        background-color: currentColor;
+        mask-position: center;
+        mask-repeat: no-repeat;
+        mask-size: contain;
     }
 
-    &__divider {
-        flex: 0 0 1px;
-        width: 1px;
-        height: 27px;
-        margin-inline: 3px;
-        background: rgba(0, 0, 0, 0.08);
+    &__icon--accessibility {
+        width: 35px;
+        height: 35px;
+        mask-image: url('../../assets/fonts/font-awesome/solid/universal-access.svg');
+    }
+
+    &__icon--help {
+        width: 19px;
+        height: 30px;
+        mask-image: url('../../assets/fonts/font-awesome/solid/question.svg');
     }
 
     &__user {
@@ -174,16 +188,13 @@ ion-content { --background: var(--dsgov-bg-gray); }
     .ifrn-panel-header__title,
     .ifrn-panel-header__action,
     .ifrn-panel-header__user { color: #fff; }
-    .ifrn-panel-header__divider { background: rgba(255, 255, 255, 0.45); }
     .ifrn-panel-header__avatar { border-color: #fff; background: #111; color: #fff; }
 }
 
 @media (max-width: 359px) {
     .ifrn-panel-header {
         &__inner { padding-inline: 8px; }
-        &__actions { gap: 1px; }
-        &__divider { margin-inline: 1px; }
-        &__action { min-width: 42px; }
+        &__actions { gap: 5px; }
     }
 }
 
