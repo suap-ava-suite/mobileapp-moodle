@@ -20,8 +20,8 @@
     overflow-wrap: anywhere;
 }
 .academic-progress--compact {
-    --academic-fill: #ffa8005e;
-    --academic-fill-complete: #0dc0015e;
+    --academic-fill: var(--academic-compact-fill, #ffa8005e);
+    --academic-fill-complete: var(--academic-compact-fill-complete, #0dc0015e);
 
     padding: 0;
     margin: 0;
@@ -36,16 +36,16 @@
         inline-size: 100%;
         max-inline-size: 312px;
         min-inline-size: 0;
-        margin-block: 0.25rem;
+        margin-block: var(--academic-compact-meter-margin, 0.25rem);
     }
 
     .academic-progress__track {
         flex: 1 1 0;
         min-inline-size: 0;
-        height: 12px;
+        height: var(--academic-compact-track-height, 12px);
         margin: 0;
-        border-radius: var(--ifrn-radius-pill, 1.5rem);
-        background: #ccc;
+        border-radius: var(--academic-compact-track-radius, var(--ifrn-radius-pill, 1.5rem));
+        background: var(--academic-compact-track-color, #ccc);
     }
 
     .academic-progress__fill {
@@ -55,7 +55,11 @@
 
     .academic-progress__percentage {
         flex: 0 0 auto;
-        color: var(--academic-blue);
+        min-inline-size: var(--academic-compact-percentage-width, 0);
+        color: var(--academic-compact-percentage-color, var(--academic-blue));
+        font-size: var(--academic-compact-percentage-size, inherit);
+        font-weight: var(--academic-compact-percentage-weight, 700);
+        text-align: end;
     }
 }
 .academic-progress__heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }

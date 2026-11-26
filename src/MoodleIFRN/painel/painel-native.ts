@@ -59,7 +59,6 @@ export class PainelNativeComponent {
     readonly openCourse = output<NativePainelCourse>();
     readonly manageEnrolment = output<NativePainelCourse>();
     readonly openHelp = output<PainelHelpLinkId>();
-    readonly openMessages = output<void>();
     readonly openProfile = output<void>();
     readonly marketplace = output<void>();
     readonly logout = output<void>();

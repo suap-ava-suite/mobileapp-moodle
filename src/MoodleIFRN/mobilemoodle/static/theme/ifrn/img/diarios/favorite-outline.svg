@@ -1,0 +1,16 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="21.559" height="20.8959" viewBox="0 0 21.559 20.8959" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="toggle/star_24px">
+<rect width="20" height="20" transform="translate(0.7795 0.895932)" fill="white"/>
+<g id=" &#226;&#134;&#179;Color">
+<use xlink:href="#stroke0_0_240" fill="white"/>
+<mask id="stroke1_0_240" maskUnits="userSpaceOnUse" x="-0.553833" y="-0.437401" width="23" height="21" fill="black">
+<rect fill="white" x="-0.553833" y="-0.437401" width="23" height="21"/>
+<use xlink:href="#stroke0_0_240"/>
+</mask>
+<path d="M10.7795 15.2876L15.9295 18.3959L14.5628 12.5376L19.1128 8.59593L13.1212 8.0876L10.7795 2.5626L8.43783 8.0876L2.44617 8.59593L6.99617 12.5376L5.6295 18.3959L10.7795 15.2876Z" stroke-width="2" stroke="black" mask="url(#stroke1_0_240)"/>
+</g>
+</g>
+<defs>
+<path id="stroke0_0_240" d="M10.7795 15.2876L15.9295 18.3959L14.5628 12.5376L19.1128 8.59593L13.1212 8.0876L10.7795 2.5626L8.43783 8.0876L2.44617 8.59593L6.99617 12.5376L5.6295 18.3959L10.7795 15.2876Z" fill-rule="evenodd" clip-rule="evenodd"/>
+</defs>
+</svg>

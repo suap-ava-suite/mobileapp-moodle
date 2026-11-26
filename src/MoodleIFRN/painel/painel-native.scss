@@ -129,14 +129,16 @@ ion-content { --background: var(--dsgov-bg-gray); }
     }
 
     &__user {
-        gap: 2px;
+        gap: 8px;
         min-width: 77px;
+        padding-inline: 6px;
         border-radius: 28px;
     }
 
     &__avatar {
         display: grid;
         flex: 0 0 50px;
+        grid-template: minmax(0, 1fr) / minmax(0, 1fr);
         place-items: center;
         width: 50px;
         height: 50px;
@@ -149,6 +151,7 @@ ion-content { --background: var(--dsgov-bg-gray); }
         font-weight: 700;
 
         img {
+            display: block;
             width: 100%;
             height: 100%;
             border-radius: inherit;
@@ -595,3 +598,202 @@ ion-content { --background: var(--dsgov-bg-gray); }
 
 // Buttons replace legacy anchors while keeping the original appearance and keyboard focus.
 :host(.highlight_links) .painel-card-link { text-decoration: underline; }
+
+ion-content.diarios-content {
+    --background: var(--dsgov-bg-white);
+}
+
+.painel-page.diarios-page {
+    --diarios-text: var(--dsgov-text-darkest, #000);
+
+    padding: 10px 8px 32px;
+
+    .ava-topbar {
+        margin: 0 0 10px;
+        border-bottom: 0;
+    }
+
+    .ava-topbar .ava-tab {
+        gap: 8px;
+        min-height: 33px;
+        padding: 0 7px;
+        border-bottom-color: var(--dsgov-border-outer, #ccc);
+        color: var(--dsgov-blue-70, #1351b4);
+        font: 400 1rem/1.1 var(--dsgov-font-family);
+        letter-spacing: 0.15px;
+
+        &.is-active { border-bottom-color: currentColor; }
+    }
+
+    .diarios-tab-icon,
+    .diarios-filter-icon,
+    .diarios-filter-chevron {
+        flex: 0 0 auto;
+        inline-size: 16px;
+        block-size: 16px;
+        background-color: currentColor;
+        mask: var(--diarios-icon) center / contain no-repeat;
+    }
+
+    .diarios-tab-icon[data-tab='diarios'] { --diarios-icon: url('../../assets/fonts/font-awesome/solid/book.svg'); }
+    .diarios-tab-icon[data-tab='coordenacoes'] { --diarios-icon: url('../../assets/fonts/font-awesome/solid/users.svg'); }
+    .diarios-tab-icon[data-tab='autoinscricoes'] { --diarios-icon: url('../../assets/fonts/font-awesome/solid/book-open-reader.svg'); }
+    .diarios-filter-icon { --diarios-icon: url('../../assets/fonts/font-awesome/solid/filter.svg'); }
+
+    .diarios-filter-chevron {
+        --diarios-icon: url('../../assets/fonts/font-awesome/solid/chevron-down.svg');
+
+        inline-size: 12px;
+        block-size: 12px;
+    }
+
+    .painel-filters { margin-bottom: 10px; }
+
+    .painel-filter-button {
+        min-height: 40px;
+        padding: 0 8px;
+        border: 0;
+        border-radius: 4px;
+        font: 400 1rem/1 var(--dsgov-font-family);
+
+        &[aria-expanded='true'] .diarios-filter-chevron { transform: rotate(180deg); }
+    }
+
+    .painel-filter-chip[hidden] { display: none; }
+
+    // A aba ativa identifica a seção visualmente. O título permanece na árvore de acessibilidade.
+    .page-intro {
+        position: absolute;
+        inline-size: 1px;
+        block-size: 1px;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .card-container {
+        max-width: 359px;
+        gap: 10px;
+    }
+
+    .painel-card {
+        max-width: 359px;
+        color: var(--diarios-text);
+        border-color: var(--dsgov-border-outer, #ccc);
+    }
+
+    .painel-card .painel-card-content {
+        position: relative;
+        padding: 17px 22px;
+    }
+
+    .painel-card-topline { min-height: 22px; }
+
+    .painel-card-program {
+        padding: 0;
+        padding-inline-end: 34px;
+        color: var(--diarios-text);
+        font-size: 0.75rem;
+        line-height: 1;
+        letter-spacing: 0.15px;
+    }
+
+    .painel-card-topline .painel-card-favourite {
+        position: absolute;
+        z-index: 1;
+        inset-block-start: 10px;
+        inset-inline-end: 10px;
+        display: grid;
+        place-items: center;
+        inline-size: 44px;
+        block-size: 44px;
+        padding: 0;
+    }
+
+    .diarios-favourite-icon,
+    .diarios-badge-icon {
+        display: block;
+        flex: 0 0 auto;
+    }
+
+    .painel-card-open {
+        gap: 10px;
+        letter-spacing: 0.15px;
+    }
+
+    .painel-card-open .painel-card-title {
+        padding-inline-end: 24px;
+        color: var(--diarios-text);
+        font-size: 1.3125rem;
+        line-height: 1.095;
+    }
+
+    .painel-card-code,
+    .painel-card-teacher {
+        color: var(--diarios-text);
+        font-size: 0.75rem;
+        line-height: 1;
+    }
+
+    .painel-card .painel-card-open + ifrn-academic-progress {
+        --academic-compact-fill: linear-gradient(to right, #fef0c8, #ffcd07);
+        --academic-compact-fill-complete: var(--academic-compact-fill);
+        --academic-compact-track-height: 4px;
+        --academic-compact-track-radius: 0;
+        --academic-compact-track-color: var(--dsgov-border-outer, #ccc);
+        --academic-compact-meter-margin: 0;
+        --academic-compact-percentage-width: 32px;
+        --academic-compact-percentage-color: var(--diarios-text);
+        --academic-compact-percentage-size: 0.75rem;
+        --academic-compact-percentage-weight: 400;
+
+        margin-block-start: 21px;
+    }
+
+    .painel-card-details { margin-block-start: 21px; }
+    .painel-card-details-info { gap: 5px; }
+
+    .painel-card-info-icon,
+    .painel-card-details-info-published,
+    .painel-card-details-info-unpublished {
+        inline-size: auto;
+        min-inline-size: 72px;
+        block-size: auto;
+        min-block-size: 18px;
+        justify-content: center;
+        gap: 4px;
+        padding: 2px;
+        border: 0;
+        border-radius: 2px;
+        font-size: 0.625rem;
+        font-weight: 400;
+        line-height: 1;
+
+        ion-icon { font-size: 10px; }
+    }
+
+    .painel-card-info-icon--academic { background: #d4e5ff; color: #155bcb; }
+    .painel-card-details-info-published { background: #e3f5e1; color: #168821; }
+
+    .diarios-badge-icon--academic {
+        inline-size: 10px;
+        block-size: 7.2px;
+        background-color: currentColor;
+        mask: url('../mobilemoodle/static/theme/ifrn/img/diarios/academic.svg') center / contain no-repeat;
+    }
+}
+
+:host(.color_mode_high_contrast) .diarios-page {
+    --diarios-text: #fff;
+
+    .ava-topbar .ava-tab,
+    .painel-filter-button { color: #fff; }
+}
+
+:host(.color_mode_high_contrast) .diarios-page .diarios-favourite-icon,
+:host-context(.dark) .diarios-page .diarios-favourite-icon { filter: invert(1); }
+
+@media (max-width: 359px) {
+    .painel-page.diarios-page .painel-card .painel-card-content { padding-inline: 14px; }
+}
