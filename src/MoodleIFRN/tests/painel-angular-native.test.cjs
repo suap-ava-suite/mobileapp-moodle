@@ -81,6 +81,17 @@ test('Painel header omits the messages shortcut', () => {
     assert.doesNotMatch(host, /openMessages|onNativeMessages/);
 });
 
+test('Diários and Sala de Coordenação share the Figma mobile layout and data-backed badges', () => {
+    const template = fs.readFileSync('src/MoodleIFRN/painel/painel-native.html', 'utf8');
+    const styles = fs.readFileSync('src/MoodleIFRN/painel/painel-native.scss', 'utf8');
+
+    assert.match(template, /@let showingFigmaMobilePanel = group\(\) === 'diarios' \|\| group\(\) === 'coordenacoes';/);
+    assert.match(template, /\[class\.diarios-page\]="showingFigmaMobilePanel"/);
+    assert.match(template, /course\.isAcademicEnvironment/);
+    assert.match(template, /course\.publicationStatus === 'published'/);
+    assert.match(styles, /padding-inline-end: 44px;/);
+});
+
 function setupFirstProfile(savedName, loadMoodleTeacherNames = async () => new Map()) {
     const storage = new Map();
     const sessionStorage = {

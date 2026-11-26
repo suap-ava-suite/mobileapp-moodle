@@ -1,4 +1,4 @@
-@let showingDiarios = group() === 'diarios';
+@let showingFigmaMobilePanel = group() === 'diarios' || group() === 'coordenacoes';
 <div id="main-content" class="native-panel-frame">
 <ion-header class="ava-header ifrn-panel-header">
     <ion-toolbar class="ava-toolbar ifrn-panel-header__toolbar">
@@ -35,8 +35,8 @@
         </div>
     </ion-toolbar>
 </ion-header>
-<ion-content class="painel-page-content" [class.diarios-content]="showingDiarios">
-    <div class="painel-page" [class.diarios-page]="showingDiarios" [style.zoom]="fontScale() / 100">
+<ion-content class="painel-page-content" [class.diarios-content]="showingFigmaMobilePanel">
+    <div class="painel-page" [class.diarios-page]="showingFigmaMobilePanel" [style.zoom]="fontScale() / 100">
         @if (preferenceError()) { <p class="native-state" role="alert">{{ preferenceError() }}</p> }
         @if (!data()) {
             <div class="native-state" role="alert"><p>Os dados do Painel não estão disponíveis para a conta atual.</p>
@@ -46,7 +46,7 @@
             <div class="ava-topbar" role="tablist" aria-label="Abas do painel">
                 @for (tab of tabs; track tab.id) {
                     <button type="button" class="ava-tab" [class.is-active]="group() === tab.id" role="tab" [attr.aria-selected]="group() === tab.id" (click)="setGroup(tab.id)">
-                        @if (showingDiarios) {
+                        @if (showingFigmaMobilePanel) {
                             <span class="diarios-tab-icon" [attr.data-tab]="tab.id" aria-hidden="true"></span>
                             <span>{{ tab.id === 'coordenacoes' ? 'Salas de coordenação' : tab.id === 'autoinscricoes' ? 'Cursos com autoinscrição' : tab.label }}</span>
                         } @else {
@@ -59,17 +59,17 @@
             <div class="painel-filters" aria-label="Filtros de cursos">
                 <button #filterTrigger type="button" class="painel-filter-button" aria-controls="native-course-filters"
                     [attr.aria-expanded]="section() === 'filter'" (click)="toggleFilters(filterTrigger)">
-                    @if (showingDiarios) {
+                    @if (showingFigmaMobilePanel) {
                         <span class="diarios-filter-icon" aria-hidden="true"></span>
                     } @else {
                         <ion-icon name="options-outline" aria-hidden="true" />
                     }
                     Filtros
-                    @if (showingDiarios) {
+                    @if (showingFigmaMobilePanel) {
                         <span class="diarios-filter-chevron" aria-hidden="true"></span>
                     }
                 </button>
-                <button #filterChip type="button" class="painel-filter-chip" [hidden]="showingDiarios && !activeFilterCount()"
+                <button #filterChip type="button" class="painel-filter-chip" [hidden]="showingFigmaMobilePanel && !activeFilterCount()"
                     aria-controls="native-course-filters"
                     [attr.aria-expanded]="section() === 'filter'" (click)="toggleFilters(filterChip)">
                     <span aria-live="polite">{{ filterLabel() }}</span><ion-icon [name]="section() === 'filter' ? 'chevron-up-outline' : 'chevron-down-outline'" aria-hidden="true" />
@@ -142,7 +142,7 @@
                                 <button type="button" class="painel-card-details-info-favourite painel-card-favourite"
                                     [attr.aria-label]="isFavourite(course) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
                                     [attr.aria-pressed]="isFavourite(course)" (click)="toggleFavourite(course)">
-                                    @if (showingDiarios && !isFavourite(course)) {
+                                    @if (showingFigmaMobilePanel && !isFavourite(course)) {
                                         <img class="diarios-favourite-icon" src="mobilemoodle/static/theme/ifrn/img/diarios/favorite-outline.svg" alt="" />
                                     } @else {
                                         <ion-icon [name]="isFavourite(course) ? 'star' : 'star-outline'" aria-hidden="true" />
@@ -164,7 +164,7 @@
                             <div class="painel-card-details"><div class="painel-card-details-info">
                                 @if (course.isAcademicEnvironment) {
                                     <div class="painel-card-info-icon painel-card-info-icon--academic">
-                                        @if (showingDiarios) {
+                                        @if (showingFigmaMobilePanel) {
                                             <span class="diarios-badge-icon diarios-badge-icon--academic" aria-hidden="true"></span>
                                         } @else {
                                             <ion-icon name="school-outline" aria-hidden="true" />
@@ -176,7 +176,7 @@
                                 }
                                 @if (course.publicationStatus === 'published') {
                                     <div class="painel-card-details-info-published">
-                                        @if (showingDiarios) {
+                                        @if (showingFigmaMobilePanel) {
                                             <img class="diarios-badge-icon" src="mobilemoodle/static/theme/ifrn/img/diarios/published.svg" alt="" />
                                         } @else {
                                             <ion-icon name="checkmark-circle-outline" aria-hidden="true" />

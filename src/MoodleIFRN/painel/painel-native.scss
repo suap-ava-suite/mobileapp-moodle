@@ -734,7 +734,8 @@ ion-content.diarios-content {
     }
 
     .painel-card-open .painel-card-title {
-        padding-inline-end: 24px;
+        // Keep the title clear of the 44px favorite tap target and its 20px star.
+        padding-inline-end: 44px;
         color: var(--diarios-text);
         font-size: 1.3125rem;
         line-height: 1.095;
