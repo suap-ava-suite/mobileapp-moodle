@@ -36,6 +36,10 @@ const AVA = 'https://academico.ava.ifrn.edu.br';
 const MOBILE_SUAP_PENDING_KEY = 'ifrn_mobile_suap_pkce_pending_v1';
 const MOBILE_CALLBACK_HOST = 'ifrn-auth';
 const MOBILE_CALLBACK_PATH = '/callback';
+const MOBILE_CAPABILITY_TIMEOUT_MS = 12000;
+const SUAP_OFFLINE_MESSAGE = 'Você está sem conexão com a internet. Verifique a rede e tente novamente.';
+const isSuapOffline = (): boolean => window.navigator?.onLine === false;
+const SUAP_UNREACHABLE_MESSAGE = 'Não foi possível conectar ao SUAP agora. Verifique sua conexão e tente novamente.';
 type Profile = Record<string, unknown>;
 type LaunchMyAppPlugin = { getLastIntent?: (success: (url: string) => void) => void };
 const present = (value: unknown): boolean => value !== undefined && value !== null && String(value).trim() !== '';
@@ -244,6 +248,9 @@ export class SuapEntryService {
         this.mobileAuthLoadingAttempt = attemptId;
         onStatus('Acessando o SUAP…');
         try {
+            if (isSuapOffline()) {
+                throw new Error(SUAP_OFFLINE_MESSAGE);
+            }
             const pkce = await createMobilePkce();
             if (!this.mobileAuthAttempts.isCurrent(attemptId)) {
                 return;
@@ -252,20 +259,38 @@ export class SuapEntryService {
             const capabilityHeaders = new Headers();
             capabilityHeaders.set('Accept', 'application/json');
             let capability: Response;
+            let capabilityTimer: ReturnType<typeof setTimeout> | undefined;
+            const capabilityTimeout = new Error(SUAP_UNREACHABLE_MESSAGE);
             try {
-                capability = await fetch(new URL('/auth/mobile/capability/', PAINEL_AVA_CONFIG.baseUrl), {
+                const request = fetch(new URL('/auth/mobile/capability/', PAINEL_AVA_CONFIG.baseUrl), {
                     method: 'GET', credentials: 'omit', cache: 'no-store', redirect: 'error',
                     headers: capabilityHeaders,
                     ...(controller ? { signal: controller.signal } : {}),
                 });
-            } catch {
+                capability = await Promise.race([request, new Promise<never>((_resolve, reject) => {
+                    capabilityTimer = setTimeout(() => {
+                        reject(capabilityTimeout);
+                        controller?.abort();
+                    }, MOBILE_CAPABILITY_TIMEOUT_MS);
+                })]).finally(() => clearTimeout(capabilityTimer));
+            } catch (error) {
                 if (this.mobileAuthAttempts.isCurrent(attemptId)) {
+                    if (isSuapOffline()) {
+                        throw new Error(SUAP_OFFLINE_MESSAGE);
+                    }
+                    if (error === capabilityTimeout) {
+                        throw error;
+                    }
                     await this.loginWithLegacySuap(expectedIdentity, onStatus, attemptId);
                 }
+
                 return;
             }
             if (!this.mobileAuthAttempts.isCurrent(attemptId)) {
                 return;
+            }
+            if (capability.status >= 500) {
+                throw new Error(SUAP_UNREACHABLE_MESSAGE);
             }
             if (!capability.ok) {
                 await this.loginWithLegacySuap(expectedIdentity, onStatus, attemptId);
@@ -410,6 +435,8 @@ export class SuapEntryService {
         }
         clearFreshPanelProfile();
         this.loading = true;
+        const attemptId = this.mobileAuthAttempts.begin();
+        this.mobileAuthLoadingAttempt = attemptId;
         endNativeSuapEntry(); // Consome uma única vez, evitando ciclos e callbacks duplicados.
         try {
             const site = CoreSites.getCurrentSite();
@@ -427,6 +454,9 @@ export class SuapEntryService {
             const profiles = await site.read<Profile[]>('core_user_get_users_by_field', {
                 field: 'id', values: [String(info.userid)],
             }, { getFromCache: false, saveToCache: false });
+            if (!this.mobileAuthAttempts.isCurrent(attemptId)) {
+                return;
+            }
             const raw = profiles.find(item => Number(item.id) === info.userid);
             const identity = String(raw?.username || info.username || '').trim();
             if (!raw || !identity) {
@@ -456,6 +486,9 @@ export class SuapEntryService {
             const panel = await firstValueFrom(this.painel.authenticateWithBrowser({
                 readOnly: true, reuseSession: previousIdentity === identity && !entry.expectedIdentity,
             }));
+            if (!this.mobileAuthAttempts.isCurrent(attemptId)) {
+                return;
+            }
             onStatus('Organizando seus cursos…');
             const dashboard = panel.diagnosticDashboard;
             if (!dashboard || typeof dashboard !== 'object' || Array.isArray(dashboard)
@@ -485,8 +518,11 @@ export class SuapEntryService {
             };
             await this.commit();
         } finally {
-            this.loading = false;
-            onStatus('');
+            if (this.mobileAuthLoadingAttempt === attemptId) {
+                this.mobileAuthLoadingAttempt = undefined;
+                this.loading = false;
+                onStatus('');
+            }
         }
     }
 

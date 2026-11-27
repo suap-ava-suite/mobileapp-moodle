@@ -24,6 +24,7 @@ import {
 import { GovBrRedirectHandoff } from './govbr-redirect-handoff';
 import { PAINEL_COURSES_SCRIPT } from './painel-courses';
 import { hasOAuthProfileMode, readOAuthDashboard, readOAuthProfile } from '../mobilemoodle/core_mobile/oauth-profile';
+import { COURSE_SESSION_EPOCH_KEY } from '../mobilemoodle/core_mobile/course-session-flags';
 import { hasVerifiedSuapDisplayName, preferVerifiedSuapDisplayName, refreshSavedProfileNames }
     from '../mobilemoodle/core_mobile/profile-refresh';
 
@@ -421,6 +422,8 @@ export class PainelAvaService {
     private profileRefresh?: Promise<boolean>;
     private cancelProfileRefresh?: () => void;
     private courseSsoBrowserLeaseCount = 0;
+    private enrolmentSequence = 0;
+    private enrolmentController?: AbortController;
     private readonly govBrRedirectHandoff = new GovBrRedirectHandoff();
 
     /** Consome uma vez o redirect HTTPS recebido do SUAP, sem persistir parâmetros OAuth. */
@@ -1309,11 +1312,76 @@ export class PainelAvaService {
      * Realiza a autoinscrição dentro da própria origem do Painel AVA.
      * Cookies e CSRF nunca saem do InAppBrowser; o app recebe somente o JSON
      * funcional (status/courseid/viewurl) e o dashboard atualizado.
+     *
+     * @param courseId Curso solicitado.
+     * @param ambienteId Ambiente do curso no Painel.
+     * @returns Operação local de uso único, vinculada à sessão que a iniciou.
      */
-    enrolCourse(courseId: number, ambienteId = 2): Observable<Record<string, unknown>> {
+    prepareCourseEnrolment(courseId: number, ambienteId: number): {
+        result: Observable<Record<string, unknown>>;
+        isCurrent: () => boolean;
+        cancel: () => void;
+    } {
+        if (!Number.isSafeInteger(courseId) || courseId <= 0 || !Number.isSafeInteger(ambienteId) || ambienteId <= 0) {
+            throw new Error('Curso ou ambiente inválido para autoinscrição.');
+        }
+        const identity = this.getEnrolmentIdentity();
+        if (!identity) {
+            throw new Error('Não foi possível confirmar sua sessão do Painel. Entre novamente e tente outra vez.');
+        }
+        const epoch = sessionStorage.getItem(COURSE_SESSION_EPOCH_KEY);
+        const controller = new AbortController();
+        const previous = this.enrolmentController;
+        const attempt = ++this.enrolmentSequence;
+        this.enrolmentController = controller;
+        previous?.abort();
+        const isCurrent = (): boolean => {
+            if (this.enrolmentController !== controller || controller.signal.aborted
+                || sessionStorage.getItem(COURSE_SESSION_EPOCH_KEY) !== epoch) {
+                return false;
+            }
+            const current = this.getEnrolmentIdentity();
+
+            return current?.owner === identity.owner && current.expiresAt === identity.expiresAt;
+        };
+        let subscribed = false;
+        const result = this.enrolCourse(courseId, ambienteId, {
+            attempt, owner: identity.owner, signal: controller.signal,
+            start: () => {
+                if (subscribed || !isCurrent()) {
+                    return false;
+                }
+                subscribed = true;
+
+                return true;
+            },
+            isCurrent,
+        });
+
+        return { result, isCurrent, cancel: () => controller.abort() };
+    }
+
+    private getEnrolmentIdentity(): { owner: string; expiresAt?: number } | undefined {
+        const read = (key: string): string => (sessionStorage.getItem(key) || localStorage.getItem(key) || '').trim().toLowerCase();
+        const owner = read(PainelAvaService.OWNER_KEY);
+        const oauthMode = hasOAuthProfileMode();
+        const oauth = oauthMode ? readOAuthProfile() : undefined;
+        const identity = oauthMode ? oauth?.identity.trim().toLowerCase() : read('ifrn_username');
+
+        return identity && identity === owner ? { owner, expiresAt: oauth?.expiresAt } : undefined;
+    }
+
+    private enrolCourse(courseId: number, ambienteId: number, scope: {
+        attempt: number;
+        owner: string;
+        signal: AbortSignal;
+        start: () => boolean;
+        isCurrent: () => boolean;
+    }): Observable<Record<string, unknown>> {
         return new Observable<Record<string, unknown>>((subscriber) => {
-            if (!Number.isFinite(courseId) || courseId <= 0) {
-                subscriber.error(new Error('Identificador Moodle inválido para autoinscrição.'));
+            if (!scope.start()) {
+                subscriber.complete();
+
                 return;
             }
 
@@ -1323,6 +1391,8 @@ export class PainelAvaService {
             const enrolEndpoint = `/curso/${encodeURIComponent(String(ambienteId))}/${encodeURIComponent(String(courseId))}/enrol/`;
             let finished = false;
             let started = false;
+            let trustedPage = false;
+            let browserExited = false;
 
             // Não limpa cache/sessão: precisamos reutilizar exatamente a sessão
             // web criada no login do Painel. hidden evita uma tela intermediária.
@@ -1331,13 +1401,19 @@ export class PainelAvaService {
             } as Parameters<typeof CoreOpener.openInApp>[1]);
 
             const fail = (message: string): void => {
-                if (finished) {
+                if (finished || subscriber.closed) {
                     return;
                 }
                 finished = true;
-                CoreOpener.closeInAppBrowser();
+                if (!scope.isCurrent()) {
+                    subscriber.complete();
+
+                    return;
+                }
                 subscriber.error(new Error(message));
             };
+            const cancel = (): void => subscriber.complete();
+            scope.signal.addEventListener('abort', cancel, { once: true });
 
             const timeout = window.setTimeout(() => {
                 fail('A autoinscrição demorou demais. Entre novamente no Painel AVA e tente de novo.');
@@ -1345,6 +1421,7 @@ export class PainelAvaService {
 
             const loadStartSubscription = browser.on('loadstart').subscribe((event) => {
                 const url = event.url || '';
+                trustedPage = false;
                 try {
                     browser.hide();
                 } catch {
@@ -1355,6 +1432,7 @@ export class PainelAvaService {
 
             const loadStopSubscription = browser.on('loadstop').subscribe((event) => {
                 const url = event.url || '';
+                trustedPage = isPainelAvaBrowserUrl(url);
                 try {
                     browser.hide();
                 } catch {
@@ -1362,7 +1440,12 @@ export class PainelAvaService {
                 }
                 maskIntermediateWebPage(browser, url);
 
-                if (finished || started || !isPainelAvaBrowserUrl(url)) {
+                if (!scope.isCurrent() || CoreOpener.getInAppBrowserInstance() !== browser) {
+                    cancel();
+
+                    return;
+                }
+                if (finished || started || !trustedPage) {
                     return;
                 }
                 started = true;
@@ -1383,7 +1466,8 @@ export class PainelAvaService {
                         var csrf = cookie('csrftoken');
                         if (!csrf) {
                             window.webkit.messageHandlers.cordova_iab.postMessage(JSON.stringify({
-                                type: 'ifrn-painel-enrol', ok: false, error: 'Sessão do Painel expirada (CSRF ausente).'
+                                type: 'ifrn-painel-enrol', attempt: ${scope.attempt}, ok: false,
+                                error: 'Sessão do Painel expirada (CSRF ausente).'
                             }));
                             return;
                         }
@@ -1417,13 +1501,15 @@ export class PainelAvaService {
                                 return response.json();
                             }).then(function (dashboard) {
                                 window.webkit.messageHandlers.cordova_iab.postMessage(JSON.stringify({
-                                    type: 'ifrn-painel-enrol', ok: true, result: result, dashboard: dashboard
+                                    type: 'ifrn-painel-enrol', attempt: ${scope.attempt}, ok: true,
+                                    result: result, dashboard: dashboard
                                 }));
                             });
                         })
                         .catch(function (error) {
                             window.webkit.messageHandlers.cordova_iab.postMessage(JSON.stringify({
-                                type: 'ifrn-painel-enrol', ok: false, error: error && error.message ? error.message : 'Falha na autoinscrição.'
+                                type: 'ifrn-painel-enrol', attempt: ${scope.attempt}, ok: false,
+                                error: error && error.message ? error.message : 'Falha na autoinscrição.'
                             }));
                         });
                     })();
@@ -1435,7 +1521,12 @@ export class PainelAvaService {
             });
 
             const messageSubscription = browser.on('message').subscribe((event) => {
-                if (finished) {
+                if (!scope.isCurrent() || CoreOpener.getInAppBrowserInstance() !== browser) {
+                    cancel();
+
+                    return;
+                }
+                if (finished || !started || !trustedPage) {
                     return;
                 }
 
@@ -1443,37 +1534,55 @@ export class PainelAvaService {
                 if (typeof data === 'string') {
                     try { data = JSON.parse(data); } catch { return; }
                 }
-                if (!isPlainObject(data) || data['type'] !== 'ifrn-painel-enrol') {
+                if (!isPlainObject(data) || data['type'] !== 'ifrn-painel-enrol' || data['attempt'] !== scope.attempt) {
                     return;
                 }
                 if (data['ok'] !== true) {
                     fail(typeof data['error'] === 'string' ? data['error'] : 'Falha na autoinscrição.');
+
+                    return;
+                }
+                const result = data['result'];
+                if (!isPlainObject(result) || (result['status'] !== 'enrolled' && result['status'] !== 'reactivated')
+                    || (result['courseid'] !== undefined && result['courseid'] !== null && Number(result['courseid']) !== courseId)) {
+                    fail('O Painel não confirmou a inscrição no curso solicitado.');
+
                     return;
                 }
 
                 if (data['dashboard'] !== undefined) {
-                    this.saveDashboard(data['dashboard']);
+                    this.saveDashboard(data['dashboard'], scope.owner);
                 }
 
                 finished = true;
-                window.clearTimeout(timeout);
-                CoreOpener.closeInAppBrowser();
-                subscriber.next(isPlainObject(data['result']) ? data['result'] : {});
+                subscriber.next(result);
                 subscriber.complete();
             });
 
             const exitSubscription = browser.on('exit').subscribe(() => {
+                browserExited = true;
                 if (!finished) {
                     fail('Autoinscrição cancelada.');
                 }
             });
+            const errorSubscription = browser.on('loaderror').subscribe(() => fail('Não foi possível conectar ao Painel AVA.'));
 
             return () => {
+                finished = true;
+                scope.signal.removeEventListener('abort', cancel);
                 window.clearTimeout(timeout);
                 loadStartSubscription.unsubscribe();
                 loadStopSubscription.unsubscribe();
                 messageSubscription.unsubscribe();
                 exitSubscription.unsubscribe();
+                errorSubscription.unsubscribe();
+                if (!browserExited && CoreOpener.getInAppBrowserInstance() === browser) {
+                    try {
+                        browser.close();
+                    } catch {
+                        // A janela nativa pode já ter fechado.
+                    }
+                }
             };
         });
     }
@@ -1636,6 +1745,8 @@ export class PainelAvaService {
     }
 
     clearSession(): void {
+        this.enrolmentController?.abort();
+        this.enrolmentController = undefined;
         sessionStorage.removeItem(PainelAvaService.DASHBOARD_KEY);
         localStorage.removeItem(PainelAvaService.DASHBOARD_KEY);
         sessionStorage.removeItem(PainelAvaService.OWNER_KEY);

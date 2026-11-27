@@ -55,7 +55,7 @@ function deferred() {
     return { promise, resolve };
 }
 
-function makeSuapEntryHarness(fetchImpl) {
+function makeSuapEntryHarness(fetchImpl, globals = {}, overrides = {}) {
     const sessionStorage = makeStorage();
     const localStorage = makeStorage();
     const events = [];
@@ -109,11 +109,13 @@ function makeSuapEntryHarness(fetchImpl) {
             clearFreshPanelProfile() {}, FRESH_PROFILE_SKIP_KEY: 'fresh-profile-skip', reportSuapDuration() {},
         },
         './painel-ava.config': { PAINEL_AVA_CONFIG: { baseUrl: 'https://panel.example.test' } },
+        ...overrides,
     };
     const exports = loadTypeScript('src/MoodleIFRN/services_mobile/suap-entry.service.ts', moduleMocks, {
         sessionStorage,
         localStorage,
         fetch: fetchImpl,
+        ...globals,
     });
     const service = new exports.SuapEntryService();
 
@@ -222,6 +224,100 @@ test('callback antigo atrasado não grava a Conta A nem remove o login B pendent
     assert.equal(h.commits.length, 0);
     assert.equal(JSON.parse(h.sessionStorage.getItem(pendingKey)).state, pendingB.state);
     assert.equal(h.events.some(event => event.event === 'IFRN_SUAP_MOBILE_AUTH_FAILED'), false);
+});
+
+test('sem internet avisa antes da consulta e permite nova tentativa', async () => {
+    const navigator = { onLine: false };
+    let requests = 0;
+    const h = makeSuapEntryHarness(async () => {
+        requests++;
+        return okJson({});
+    }, { window: { navigator, crypto: webcrypto, open: () => ({}) } });
+
+    await assert.rejects(h.service.loginWithSuap(), /sem conexão com a internet/);
+    assert.equal(requests, 0);
+    assert.equal(h.sessionStorage.getItem(pendingKey), null);
+    navigator.onLine = true;
+    await h.service.loginWithSuap();
+    assert.equal(requests, 1);
+    assert.ok(h.sessionStorage.getItem(pendingKey));
+});
+
+test('consulta inicial que não responde é abortada e o login pode ser tentado novamente', async () => {
+    const probeStarted = deferred();
+    let timer;
+    let requests = 0;
+    const h = makeSuapEntryHarness((url, options) => {
+        if (++requests === 1) {
+            probeStarted.resolve(options.signal);
+
+            return new Promise(() => {});
+        }
+
+        return Promise.resolve(okJson({}));
+    }, { setTimeout: (callback, delay) => {
+        if (delay === 12000) {
+            timer = callback;
+        }
+
+        return 1;
+    } });
+
+    const login = h.service.loginWithSuap();
+    const signal = await probeStarted.promise;
+    timer();
+    await assert.rejects(login, /Não foi possível conectar ao SUAP/);
+    assert.equal(signal.aborted, true);
+    assert.equal(h.sessionStorage.getItem(pendingKey), null);
+    await h.service.loginWithSuap();
+    assert.ok(h.sessionStorage.getItem(pendingKey));
+});
+
+test('perda da internet durante a consulta inicial exibe o aviso offline', async () => {
+    const navigator = { onLine: true };
+    const h = makeSuapEntryHarness(async () => {
+        navigator.onLine = false;
+        throw new Error('Falha simulada de rede');
+    }, { window: { navigator, crypto: webcrypto, open: () => ({}) } });
+
+    await assert.rejects(h.service.loginWithSuap(), /sem conexão com a internet/);
+    assert.equal(h.sessionStorage.getItem(pendingKey), null);
+});
+
+test('conclusão antiga do Moodle não abre o navegador do Painel após cancelar e reiniciar o login', async () => {
+    const profile = deferred();
+    const site = {
+        getURL: () => 'https://academico.ava.ifrn.edu.br',
+        getId: () => 'site-a',
+        getInfo: () => ({ userid: 42, username: 'conta-a' }),
+        isLoggedOut: () => false,
+        read: () => profile.promise,
+    };
+    let entry = { expectedIdentity: 'conta-a', authenticatedSiteId: 'site-a' };
+    const h = makeSuapEntryHarness(async () => okJson({}), {}, {
+        '@services/sites': { CoreSites: { getCurrentSite: () => site, isLoggedIn: () => true } },
+        '../navigation/suap-entry-state': {
+            beginNativeSuapEntry() {}, readNativeSuapEntry: () => entry,
+            endNativeSuapEntry: () => { entry = null; }, markNativeSuapEntryAuthenticated() {},
+        },
+    });
+    h.panel.authenticateWithBrowser = () => assert.fail('Uma tentativa obsoleta não deve abrir o navegador.');
+    const old = h.service.complete();
+    h.service.cancel();
+    await h.service.loginWithSuap();
+    const pending = h.sessionStorage.getItem(pendingKey);
+    assert.ok(pending);
+    profile.resolve([{ id: 42, username: 'conta-a' }]);
+    await old;
+    assert.equal(h.sessionStorage.getItem(pendingKey), pending);
+    assert.equal(h.commits.length, 0);
+});
+
+test('indisponibilidade do servidor mostra aviso e não cria uma tentativa no navegador', async () => {
+    const h = makeSuapEntryHarness(async () => ({ ok: false, status: 503 }));
+
+    await assert.rejects(h.service.loginWithSuap(), /Não foi possível conectar ao SUAP/);
+    assert.equal(h.sessionStorage.getItem(pendingKey), null);
 });
 
 test('callback duplicado não inicia uma segunda troca de código', async () => {

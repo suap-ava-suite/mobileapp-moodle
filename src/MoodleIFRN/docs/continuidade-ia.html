@@ -322,10 +322,18 @@ Commit(s):</code></pre><p>Acrescente um registro cronológico conciso nesta pág
         <p>A implementação para publicação está na revisão desta seção e contempla Diários, Coordenação e Autoinscrições. Os nomes de docente são consultados somente com sessão Moodle salva, mesma identidade/site e oferta inscrita, usando serviços efetivamente anunciados. O nome acadêmico é compartilhado entre abas somente para o mesmo site e ID de curso sem conflito. Nenhuma credencial ou dado de nome é persistido.</p>
         <p>87 testes focados e Sass passaram. O typecheck Angular não completou no worktree restaurado por falta dos arquivos de build <code>src/assets/fonts/icons.json</code> e <code>src/assets/env.json</code>. Não foi gerada APK com esta mudança. Após a publicação, gerar nova APK e confirmar nomes em uma conta com docentes disponíveis; ausência de dados deve continuar como “não informado”.</p>
       </section>
+      <section class="doc-section searchable" id="suap-aviso-conexao">
+        <h2>Conferir o aviso de conexão do SUAP</h2>
+        <p>O limite de 12 segundos em <code>loginWithSuap()</code> vale para a consulta inicial de capacidade. Os testes de <code>suap-account-switch.test.cjs</code> cobrem o aviso offline, HTTP 503, expiração da consulta e retomada após recuperar a conexão. No próximo teste físico, abra o Marketplace sem internet, toque em Entrar no AVA, confira o aviso e tente novamente após reconectar. <a href="progresso-projeto.html#suap-aviso-conexao">Registro da alteração</a>.</p>
+      </section>
       <section class="doc-section searchable" id="curso-retomada-landing">
         <h2>Validar a retomada de curso após SSO no Android</h2>
         <p>A guarda em <code>navigation/navigation.guard.ts</code> usa a fase da retomada em <code>services_mobile/moodle-site.service.ts</code>. Preserve o sinal de cancelamento da ponte, o consumo único do marcador OAuth e a verificação exata da matrícula. Os testes em <code>course-opening-recovery.test.cjs</code> cobrem landing tardia, matrícula pendente e negada, cancelamento, identidade divergente e retomadas consecutivas.</p>
         <p>A APK compatível foi instalada por atualização no Moto G20 e os dados locais foram limpos com autorização. Duas tentativas no aparelho bloquearam a landing durante a consulta de matrícula e concluíram a abertura com uma ativação da rota por tentativa. Para ampliar a validação, confira o retorno ao Painel AVA ao sair do curso. <a href="progresso-projeto.html#curso-retomada-landing">Evidências e validação</a>.</p>
+      </section>
+      <section class="doc-section searchable" id="auditoria-angular-d01-d03">
+        <h2>Validar D01, D02 e D03 no dispositivo</h2>
+        <p>Após gerar uma APK e obter autorização para atualizar, simule perda e retorno da internet no Marketplace. Exercite cancelar e tentar de novo, o retorno oficial do SUAP e Gov.br e a abertura de curso. Para validar a autoinscrição física, use um curso e uma conta autorizados. Confirme o retorno ao Painel após aceite e o descarte local da conclusão ao sair antes da resposta. Os testes automatizados usam apenas mocks para os efeitos da inscrição. <a href="progresso-projeto.html#auditoria-angular-d01-d03">Registro das correções</a>.</p>
       </section>
       <footer class="footer">Moodle IFRN Mobile · Continuidade entre IAs · 27/11/2026</footer>
     </main>

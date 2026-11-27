@@ -72,8 +72,17 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     set statusMessage(value: string) { this.statusMessageState.set(value); }
     private nativeReturnQueued = false;
     private expectedIdentity = '';
+    private attempt = 0;
+    private destroyed = false;
+    private visible = true;
+    private initialized = false;
+
+    private isCurrent(attempt: number): boolean {
+        return !this.destroyed && this.visible && this.attempt === attempt;
+    }
+
     private readonly onResume = (): void => {
-        if (!this.govBrBrowserOpened && !this.govBrBrowserOpening) {
+        if (!this.isCurrent(this.attempt) || (!this.govBrBrowserOpened && !this.govBrBrowserOpening)) {
             return;
         }
 
@@ -148,8 +157,20 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
      */
     async ngOnInit(): Promise<void> {
         await CorePlatform.ready();
+        if (this.destroyed) {
+            return;
+        }
+        this.initialized = true;
+        if (this.visible) {
+            this.readPendingAuthError();
+        }
         document.addEventListener('resume', this.onResume);
         this.mobileAuthFailureObserver = CoreEvents.on('IFRN_SUAP_MOBILE_AUTH_FAILED', event => {
+            if (!this.isCurrent(this.attempt)) {
+                return;
+            }
+            ++this.attempt;
+            this.nativeReturnQueued = false;
             const message = (event as unknown as { message?: unknown })?.message;
             this.formError = typeof message === 'string'
                 ? message : 'Não foi possível concluir o login SUAP. Tente novamente.';
@@ -158,26 +179,22 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
             this.openingPainel = false;
             this.statusMessage = '';
         });
-        const pendingAuthError = sessionStorage.getItem('ifrn_mobile_suap_error_v1');
-        if (pendingAuthError) {
-            this.formError = pendingAuthError;
-            sessionStorage.removeItem('ifrn_mobile_suap_error_v1');
-        }
         const forceLogin = CoreNavigator.getRouteBooleanParam('forceLogin');
         this.expectedIdentity = forceLogin ? CoreNavigator.getRouteParam<string>('username') || '' : '';
         this.canContinue = !forceLogin && this.authService.isAuthenticated() && this.painelAvaService.hasDashboard();
         // Angular pode reutilizar o marketplace ao mudar apenas a query do retorno.
         // Não depender exclusivamente de ngOnInit para concluir o OAuth.
         this.returnSubscription = this.route.queryParamMap.subscribe(params => {
-            if (params.get('nativeSuapReturn') === 'true') {
+            if (this.isCurrent(this.attempt) && params.get('nativeSuapReturn') === 'true') {
                 this.nativeReturnQueued = true;
                 void this.completeNativeReturn();
             }
         });
-        if (CoreNavigator.getRouteBooleanParam('nativeSuapReturn')) {
-            this.nativeReturnQueued = true;
-            await this.completeNativeReturn();
+        if (!this.visible) {
             return;
+        }
+        if (CoreNavigator.getRouteBooleanParam('nativeSuapReturn')) {
+            return; // queryParamMap entrega o valor inicial e as mudanças da rota cacheada.
         }
         if (CoreNavigator.getRouteBooleanParam('directSuap')) {
             await this.enterAva();
@@ -186,6 +203,14 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
 
     /** Ionic mantém telas em cache; este retorno nem sempre dispara ngOnInit. */
     ionViewWillEnter(): void {
+        if (this.destroyed) {
+            return;
+        }
+        this.visible = true;
+        if (!this.initialized) {
+            return;
+        }
+        this.readPendingAuthError();
         this.canContinue = !this.expectedIdentity && this.authService.isAuthenticated()
             && this.painelAvaService.hasDashboard();
 
@@ -202,11 +227,33 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         }
     }
 
+    private readPendingAuthError(): void {
+        const pendingAuthError = sessionStorage.getItem('ifrn_mobile_suap_error_v1');
+        if (pendingAuthError) {
+            this.formError = pendingAuthError;
+            sessionStorage.removeItem('ifrn_mobile_suap_error_v1');
+        }
+    }
+
+    ionViewWillLeave(): void {
+        this.visible = false;
+        ++this.attempt;
+        this.nativeReturnQueued = false;
+        this.loading = false;
+        this.waitingBrowser = false;
+        this.openingPainel = false;
+        this.govBrBrowserOpening = false;
+        this.govBrBrowserOpened = false;
+        this.govBrUnavailable = false;
+        this.statusMessage = '';
+    }
+
     ngOnDestroy(): void {
+        this.destroyed = true;
+        this.ionViewWillLeave();
         this.returnSubscription?.unsubscribe();
         this.mobileAuthFailureObserver?.off();
         document.removeEventListener('resume', this.onResume);
-        this.painelAvaService.clearGovBrRedirectUrl();
     }
 
     ionViewDidEnter(): void {
@@ -214,29 +261,48 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     }
 
     private async completeNativeReturn(): Promise<void> {
+        if (!this.isCurrent(this.attempt)) {
+            return;
+        }
         if (this.loading && !this.waitingBrowser) {
             this.nativeReturnQueued = true;
             return;
         }
         if (!readNativeSuapEntry()) {
-            this.waitingBrowser = false;
+            this.nativeReturnQueued = false;
+            if (this.waitingBrowser) {
+                this.waitingBrowser = false;
+                this.loading = false;
+                this.statusMessage = '';
+            }
             return;
         }
+        const attempt = ++this.attempt;
         this.nativeReturnQueued = false;
         this.waitingBrowser = false;
         this.loading = true;
         this.canContinue = false;
         this.formError = '';
         try {
-            await this.suapEntry.complete(message => this.statusMessage = message);
+            await this.suapEntry.complete(message => {
+                if (this.isCurrent(attempt)) {
+                    this.statusMessage = message;
+                }
+            });
         } catch (error) {
+            if (!this.isCurrent(attempt)) {
+                return;
+            }
             this.accountIssue = error instanceof SuapEntryAccountError ? error : null;
             this.accountSwitchStarted = false;
             this.formError = error instanceof Error ? error.message : 'Não foi possível concluir a entrada no AVA.';
         } finally {
-            this.loading = false;
-            this.waitingBrowser = false;
-            this.statusMessage = '';
+            if (this.isCurrent(attempt)) {
+                this.nativeReturnQueued = false;
+                this.loading = false;
+                this.waitingBrowser = false;
+                this.statusMessage = '';
+            }
         }
     }
 
@@ -257,9 +323,10 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
 
     /** Inicia o SUAP diretamente a partir do gesto no marketplace. */
     async enterAva(): Promise<void> {
-        if (this.loading || this.waitingBrowser || this.openingPainel) {
+        if (!this.isCurrent(this.attempt) || this.loading || this.waitingBrowser || this.openingPainel) {
             return;
         }
+        const attempt = ++this.attempt;
         const entryStartedAt = performance.now();
         this.accountIssue = null;
         this.accountSwitchStarted = false;
@@ -280,15 +347,27 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
                     queryParams: { nativeSuapReturn: null }, queryParamsHandling: 'merge' });
             }
             await this.waitForTransitionPaint();
+            if (!this.isCurrent(attempt)) {
+                return;
+            }
             reportSuapDuration('marketplace-preflight', performance.now() - entryStartedAt);
-            await this.suapEntry.loginWithSuap(this.expectedIdentity, message => this.statusMessage = message);
+            await this.suapEntry.loginWithSuap(this.expectedIdentity, message => {
+                if (this.isCurrent(attempt)) {
+                    this.statusMessage = message;
+                }
+            });
+            if (!this.isCurrent(attempt)) {
+                return;
+            }
             // OAuth fica no navegador do sistema; mantém o splash até o callback.
             if (readNativeSuapEntry()) {
                 this.waitingBrowser = true;
                 this.statusMessage = 'Conclua o login no navegador';
-                return;
             }
         } catch (error) {
+            if (!this.isCurrent(attempt)) {
+                return;
+            }
             this.accountIssue = error instanceof SuapEntryAccountError ? error : null;
             this.govBrUnavailable = error instanceof Error && error.message === GOVBR_MOBILE_UNAVAILABLE_MESSAGE;
             openGovBrImmediately = this.govBrUnavailable;
@@ -296,13 +375,16 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
             this.formError = this.govBrUnavailable ? ''
                 : error instanceof Error ? error.message : 'Não foi possível entrar. Tente novamente.';
         } finally {
-            if (!this.waitingBrowser) {
+            if (this.isCurrent(attempt) && !this.waitingBrowser) {
                 this.loading = false;
                 this.openingPainel = false;
                 this.statusMessage = '';
                 this.canContinue = !this.expectedIdentity && this.authService.isAuthenticated()
                     && this.painelAvaService.hasDashboard();
             }
+        }
+        if (!this.isCurrent(attempt)) {
+            return;
         }
         if (openGovBrImmediately) {
             await this.continueGovBrInBrowser();
@@ -330,7 +412,8 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
      * @returns Conclui quando o navegador confirma que foi aberto.
      */
     async continueGovBrInBrowser(): Promise<void> {
-        if (!this.govBrUnavailable || this.showTransition || this.govBrBrowserOpened || this.govBrBrowserOpening) {
+        if (!this.isCurrent(this.attempt) || !this.govBrUnavailable || this.showTransition
+            || this.govBrBrowserOpened || this.govBrBrowserOpening) {
             return;
         }
 
@@ -342,18 +425,28 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
         }
 
         this.govBrBrowserOpening = true;
+        const attempt = this.attempt;
         this.formError = '';
         try {
             await this.govBrBrowser.open(redirectUrl, () => {
                 this.zone.run(() => {
+                    if (!this.isCurrent(attempt)) {
+                        return;
+                    }
                     this.govBrBrowserOpening = false;
                     this.govBrBrowserOpened = false;
                     this.govBrUnavailable = false;
                 });
             });
+            if (!this.isCurrent(attempt) || !this.govBrBrowserOpening) {
+                return;
+            }
             this.govBrBrowserOpening = false;
             this.govBrBrowserOpened = true;
         } catch {
+            if (!this.isCurrent(attempt)) {
+                return;
+            }
             this.govBrBrowserOpening = false;
             this.govBrUnavailable = false;
             this.formError = 'Não foi possível abrir o navegador seguro. Tente novamente pelo login SUAP.';
@@ -404,11 +497,14 @@ export class MarketplaceIfrnPage implements OnInit, OnDestroy {
     }
 
     cancelConnection(): void {
+        ++this.attempt;
+        this.nativeReturnQueued = false;
         this.suapEntry.cancelConnection();
         this.suapEntry.cancel();
         this.painelAvaService.clearGovBrRedirectUrl();
         this.govBrUnavailable = false;
         this.govBrBrowserOpened = false;
+        this.govBrBrowserOpening = false;
         this.waitingBrowser = false;
         this.loading = false;
         this.openingPainel = false;
