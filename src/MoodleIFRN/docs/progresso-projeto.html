@@ -395,6 +395,11 @@
         <p>D03. O Marketplace registra listeners apenas se ainda existir e verifica a geração antes de aplicar respostas. Sair da página Ionic invalida a apresentação antiga. Cancelar também invalida a conclusão pendente no serviço, inclusive entre a leitura do perfil Moodle e a consulta do Painel.</p>
         <p>TypeScript e Angular sem emissão e <code>git diff --check</code> passaram. Nas 20 suítes, passaram 236 de 241 testes. As cinco falhas restantes são os contratos históricos P0.4, que continuam parando na asserção do fixture. O ESLint direcionado ainda aponta violações de estilo, documentação e convenções. Não houve build de APK nem validação física. Ver <a href="continuidade-ia.html#auditoria-angular-d01-d03">roteiro de validação</a>.</p>
       </section>
+      <section class="doc-section searchable" id="script-avd-android-studio-20261127">
+        <p class="eyebrow">FERRAMENTA DE TESTE · 27/11/2026</p><h2>Executar builds nos emuladores Android Studio</h2>
+        <p>Criado <code>src/MoodleIFRN/scripts/run-android-studio-emulator.sh</code> para recompilar a APK debug com assets web de produção e oferecer instalação/abertura em um AVD escolhido, em todos os AVDs ou por serial específico. O script filtra <code>emulator-*</code>, valida plataforma Cordova Android 15.1.0, JDK 17, API mínima, package ID, versionCode e certificado. Pede confirmação individual; atualizações usam <code>adb install -r</code>. Não executa uninstall, limpeza de dados, login ou teste funcional.</p>
+        <p>A documentação foi adicionada ao guia Android/iOS e ao índice. <code>bash -n</code>, <code>--help</code> e <code>git diff --check</code> passaram. Não houve build nem instalação nesta tarefa; validar o script após instalar Android Studio e iniciar um AVD. As alterações locais anteriores foram preservadas e nada foi commitado ou enviado.</p>
+      </section>
       <footer class="footer">Moodle IFRN Mobile · Progresso · 27/11/2026</footer>
     </main>
   </div>
