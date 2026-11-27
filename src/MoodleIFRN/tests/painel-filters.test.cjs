@@ -306,6 +306,55 @@ test('edição rápida, revalidação da mesma conta, troca de aba e troca de co
     assert.equal(element.querySelector('.sidebar-modal'), null);
 });
 
+test('Coordenação e Autoinscrição exibem os estados do Figma e preservam as ações dos cursos', async t => {
+    const { fixture, element, update, click } = await mountPanel(t);
+    const opened = [];
+    const managed = [];
+    fixture.componentInstance.openCourse.subscribe(course => opened.push(course.moodle_course_id));
+    fixture.componentInstance.manageEnrolment.subscribe(course => managed.push(course.moodle_course_id));
+    update(buildNativePainelModel({
+        ...raw,
+        coordenacoes: [row(21, 'Sala de coordenação', {
+            ambiente: academico, shortname: 'AA.00000', professores: ['Docente de teste'],
+            curso_nome: 'Programa de teste', visible: true, progress: 100, hasprogress: true,
+        })],
+        autoinscricoes: [
+            row(27, 'Oferta inscrita', { is_enrolled: true, visible: true, progress: 100, hasprogress: true,
+                curso: { nome: 'Curso de formação' }, professores: ['Professor de teste'] }),
+            row(28, 'Oferta disponível', { is_enrolled: false, visible: true }),
+        ],
+    }, null, 'conta-a-ficticia'));
+
+    click('[role="tab"]:nth-child(2)');
+    const coordination = element.querySelector('.painel-card--coordenacao');
+    assert.match(coordination.textContent, /Sala de coordenação.*AA\.00000/s);
+    assert.match(coordination.textContent, /Coordenador\(a\): Docente de teste/);
+    assert.match(coordination.textContent, /Acadêmico.*Publicado/s);
+    assert.equal(coordination.querySelector('.painel-card-program').textContent.trim(), 'Programa de teste');
+    assert.ok(coordination.querySelector('.painel-card-favourite'));
+    assert.equal(coordination.querySelector('ifrn-academic-progress'), null);
+
+    click('[role="tab"]:nth-child(3)');
+    const [enrolled, available] = element.querySelectorAll('.painel-card--autoinscricao');
+    assert.match(enrolled.textContent, /Aberto.*Inscrito/s);
+    assert.match(available.textContent, /Aberto.*Inscreva-se/s);
+    assert.equal(enrolled.querySelector('.painel-card-program').textContent.trim(), 'Curso de formação');
+    assert.match(enrolled.textContent, /Professor\(a\): Professor de teste/);
+    assert.match(available.textContent, /Professor\(a\): não informado/);
+    assert.equal(available.querySelector('.painel-card-program'), null);
+    assert.equal(enrolled.querySelector('ifrn-academic-progress').serverProgress, 100);
+    assert.equal(available.querySelector('ifrn-academic-progress'), null);
+    for (const card of [enrolled, available]) {
+        assert.doesNotMatch(card.textContent, /Publicado/);
+        assert.equal(card.querySelector('.painel-card-favourite'), null);
+    }
+    click('.painel-card--autoinscricao .painel-card-open');
+    click('.painel-card-enrolment-status');
+    click('.painel-card-enrolment-cta');
+    assert.deepEqual(opened, [27, 28]);
+    assert.deepEqual(managed, [27]);
+});
+
 test('Voltar e Fechar descartam rascunhos repetidamente e a destruição desliga o handler do painel', async t => {
     const { fixture, element, click, open, search, cards } = await mountPanel(t);
     const backHandler = () => {

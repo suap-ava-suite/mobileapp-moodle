@@ -2,6 +2,7 @@
     [data]="nativeDashboard"
     [moodleTeacherNames]="moodleTeacherNames"
     [busy]="nativeCourseOpening"
+    (groupChange)="onNativeGroupChange($event)"
     (openCourse)="onNativeCourse($event)"
     (manageEnrolment)="onNativeEnrolment($event)"
     (openHelp)="onNativeHelp($event)"

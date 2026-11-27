@@ -22,6 +22,8 @@ export interface NativePainelCourse extends DashboardCourse, PainelFilterableCou
     academicCode?: string;
     /** Undefined means missing metadata. An empty string means the supplied assignments are inactive. */
     teacherNames?: string;
+    /** Card label for the course category; distinct from the Moodle site used to open it. */
+    environmentLabel?: string;
     isAcademicEnvironment: boolean;
     publicationStatus?: 'published' | 'unpublished';
 }
@@ -251,6 +253,19 @@ export function buildNativePainelModel(
         academicCourse: filterLabels(envelope['cursos']),
         environment: filterLabels(envelope['ambientes']),
     };
+    const openCourseKeys = new Set<string>();
+    for (const row of Array.isArray(envelope['autoinscricoes']) ? envelope['autoinscricoes'] : []) {
+        const source = object(row);
+        const environment = object(source['ambiente']);
+        const id = Number(source['id']);
+        const site = resolveCourseSite({
+            viewurl: text(source['viewurl'], source['url']),
+            environment: text(environment['titulo'], environment['label']),
+        });
+        if (site && Number.isSafeInteger(id) && id > 0) {
+            openCourseKeys.add(`${site}:${id}`);
+        }
+    }
     const groups = Object.fromEntries((['diarios', 'coordenacoes', 'autoinscricoes'] as const).map(group => {
         const rows: unknown = Array.isArray(raw) && group === 'diarios' ? raw : envelope[group];
         const courses = (Array.isArray(rows) ? rows : []).map((row, index): NativePainelCourse => {
@@ -261,13 +276,22 @@ export function buildNativePainelModel(
             const enrolment = object(source['autoinscricao']);
             const id = Number(source['id']); // The API id is Moodle's id, never the SUAP diário id.
             const viewurl = text(source['viewurl'], source['url']);
-            const name = text(discipline['descricao'], source['disciplina_descricao'], source['componente_curricular'],
-                source['fullname'], source['name'], source['shortname']) || 'Disciplina';
+            const moodleTitle = text(source['fullname'], source['name']);
+            const disciplineName = text(discipline['descricao'], source['disciplina_descricao'], source['componente_curricular']);
+            const name = (group === 'diarios' ? text(disciplineName, moodleTitle) : text(moodleTitle, disciplineName))
+                || text(source['shortname']) || 'Disciplina';
             const shortname = text(source['shortname'], discipline['sigla']);
             const academicCode = text(source['shortname'], source['idnumber'], discipline['sigla']);
             const environmentName = text(environment['titulo'], environment['label']);
             const enrolled = source['is_enrolled'] ?? enrolment['is_enrolled'] ?? group !== 'autoinscricoes';
             const site = resolveCourseSite({ viewurl, environment: environmentName });
+            const isOpenCourse = group === 'autoinscricoes'
+                || (!!site && openCourseKeys.has(`${site}:${id}`))
+                || /^(?:ava\s+)?abert[oa]s?$/.test(normalizePainelSearch(environmentName));
+            const isAcademicEnvironment = site === 'https://academico.ava.ifrn.edu.br';
+            const environmentLabel = isOpenCourse ? 'Aberto'
+                : isAcademicEnvironment ? 'Acadêmico'
+                    : environmentName && environmentName !== 'AVA' ? environmentName : undefined;
             const environmentId = Number(environment['id']);
             const publicationStatus = readPublicationStatus(source['visible']);
             const filterOptions = readCourseFilterOptions(source, group, labels);
@@ -291,11 +315,12 @@ export function buildNativePainelModel(
                 academicCode: academicCode || undefined,
                 teacherNames,
                 environment: environmentName || 'AVA',
-                isAcademicEnvironment: site === 'https://academico.ava.ifrn.edu.br',
+                environmentLabel,
+                isAcademicEnvironment,
                 publicationStatus,
                 filterOptions,
                 searchableText: normalizePainelSearch(
-                    `${academicProgram} ${name} ${academicCode} ${teacherNames ?? ''} ${environmentName || 'AVA'}`,
+                    `${academicProgram} ${name} ${academicCode} ${teacherNames ?? ''} ${environmentName || ''} ${environmentLabel || 'AVA'}`,
                 ),
                 ambiente: { titulo: environmentName, ...(Number.isSafeInteger(environmentId) ? { id: environmentId } : {}) },
                 viewurl,
@@ -316,6 +341,30 @@ export function buildNativePainelModel(
 
         return [group, courses];
     })) as NativePainelModel['groups'];
+    const courses = Object.values(groups).flat();
+    const programsByCourse = new Map<string, string | null>();
+    for (const course of courses) {
+        if (!course.academicProgram || !course.moodle_site_url || !course.moodle_course_id) {
+            continue;
+        }
+        const key = `${course.moodle_site_url}:${course.moodle_course_id}`;
+        const saved = programsByCourse.get(key);
+        programsByCourse.set(key, saved === undefined || saved === course.academicProgram ? course.academicProgram : null);
+    }
+    for (const group of ['diarios', 'coordenacoes', 'autoinscricoes'] as const) {
+        groups[group] = groups[group].map(course => {
+            if (course.academicProgram || !course.moodle_site_url || !course.moodle_course_id) {
+                return course;
+            }
+            const program = programsByCourse.get(`${course.moodle_site_url}:${course.moodle_course_id}`);
+
+            return program ? {
+                ...course,
+                academicProgram: program,
+                searchableText: `${course.searchableText} ${normalizePainelSearch(program)}`,
+            } : course;
+        });
+    }
     const name = text(...['nome_exibicao', 'show_name', 'nome_usual', 'nome_social', 'nome_registro', 'nome_completo',
         'nome', 'name', 'display_name'].map(key => profile?.[key])) || 'Estudante';
     const photoValue = text(profile?.['url_foto_150x200'], profile?.['url_foto_75x100'], profile?.['foto']);

@@ -32,7 +32,7 @@ import {
 } from '../services_mobile/suap-profile-browser.service';
 import { getPainelHelpLink } from '../services_mobile/painel-help-links';
 import { PainelNativeComponent } from './painel-native';
-import { buildNativePainelModel, type NativePainelCourse, type NativePainelModel } from './painel-native-model';
+import { buildNativePainelModel, type NativePainelCourse, type NativePainelGroup, type NativePainelModel } from './painel-native-model';
 import { readOAuthProfile, type OAuthProfileSnapshot } from '../mobilemoodle/core_mobile/oauth-profile';
 import { loadMoodleTeacherNames } from './painel-course-teachers';
 
@@ -72,6 +72,7 @@ export class PainelPage implements OnInit, OnDestroy {
     private destroyed = false;
     private initialProfilePending = true;
     private painelVisible = false;
+    private nativeGroup: NativePainelGroup = 'diarios';
     private teacherRequest?: MoodleTeacherRequest;
 
     @ViewChild('painelFrame') painelFrame?: ElementRef<HTMLIFrameElement>;
@@ -154,7 +155,7 @@ export class PainelPage implements OnInit, OnDestroy {
 
     /** Completa os nomes em segundo plano usando apenas a sessão Moodle da conta atual. */
     private fillMoodleTeacherNames(dashboard: NativePainelModel, oauth: OAuthProfileSnapshot): void {
-        const courses = dashboard.groups.diarios.filter(course => course.teacherNames === undefined && course.is_enrolled
+        const courses = dashboard.groups[this.nativeGroup].filter(course => course.teacherNames === undefined && course.is_enrolled
             && course.moodle_course_id && course.moodle_site_url);
         if (!courses.length) {
             this.clearMoodleTeacherNames();
@@ -196,6 +197,17 @@ export class PainelPage implements OnInit, OnDestroy {
 
     get nativeCourseOpening(): boolean {
         return this.openingCourse;
+    }
+
+    onNativeGroupChange(group: NativePainelGroup): void {
+        this.nativeGroup = group;
+        const dashboard = this.nativeDashboard;
+        const oauth = readOAuthProfile();
+        if (this.painelVisible && dashboard && oauth && dashboard.accountIdentity === oauth.identity) {
+            this.fillMoodleTeacherNames(dashboard, oauth);
+        } else {
+            this.clearMoodleTeacherNames();
+        }
     }
 
     async onNativeCourse(course: NativePainelCourse): Promise<void> {

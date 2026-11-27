@@ -1,5 +1,7 @@
 @let showingFigmaMobilePanel = group() === 'diarios' || group() === 'coordenacoes' || group() === 'autoinscricoes';
-<div id="main-content" class="native-panel-frame">
+@let isCoordination = group() === 'coordenacoes';
+@let isSelfEnrolment = group() === 'autoinscricoes';
+<div id="main-content" class="native-panel-frame" [class.native-panel-frame--diarios]="group() === 'diarios'">
 <ion-header class="ava-header ifrn-panel-header">
     <ion-toolbar class="ava-toolbar ifrn-panel-header__toolbar">
         <div class="ifrn-panel-header__inner">
@@ -135,34 +137,57 @@
             @if (busy()) { <p class="native-state" role="status" aria-live="polite">Preparando a disciplina…</p> }
             <div class="card-container" [attr.aria-busy]="busy()">
                 @for (course of courses(); track course.key) {
-                    <ion-card class="painel-card" [class.painel-card--autoinscricao]="group() === 'autoinscricoes'">
+                    <ion-card class="painel-card" [class.painel-card--coordenacao]="isCoordination"
+                        [class.painel-card--autoinscricao]="isSelfEnrolment"
+                        [class.painel-card--inscricao-disponivel]="isSelfEnrolment && !course.is_enrolled">
                         <ion-card-content class="painel-card-content">
-                            <div class="painel-card-topline">
-                                @if (course.academicProgram) { <span class="painel-card-program">{{ course.academicProgram }}</span> }
-                                <button type="button" class="painel-card-details-info-favourite painel-card-favourite"
-                                    [attr.aria-label]="isFavourite(course) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
-                                    [attr.aria-pressed]="isFavourite(course)" (click)="toggleFavourite(course)">
-                                    @if (showingFigmaMobilePanel && !isFavourite(course)) {
-                                        <img class="diarios-favourite-icon" src="mobilemoodle/static/theme/ifrn/img/diarios/favorite-outline.svg" alt="" />
-                                    } @else {
-                                        <ion-icon [name]="isFavourite(course) ? 'star' : 'star-outline'" aria-hidden="true" />
+                            @if (!isSelfEnrolment || course.academicProgram) {
+                                <div class="painel-card-topline">
+                                    @if (course.academicProgram) {
+                                        <span class="painel-card-program">{{ course.academicProgram }}</span>
                                     }
-                                </button>
-                            </div>
+                                    @if (!isSelfEnrolment) {
+                                        <button type="button" class="painel-card-details-info-favourite painel-card-favourite"
+                                            [attr.aria-label]="isFavourite(course) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
+                                            [attr.aria-pressed]="isFavourite(course)" (click)="toggleFavourite(course)">
+                                            @if (showingFigmaMobilePanel && !isFavourite(course)) {
+                                                <img class="diarios-favourite-icon" src="mobilemoodle/static/theme/ifrn/img/diarios/favorite-outline.svg" alt="" />
+                                            } @else {
+                                                <ion-icon [name]="isFavourite(course) ? 'star' : 'star-outline'" aria-hidden="true" />
+                                            }
+                                        </button>
+                                    }
+                                </div>
+                            }
                             <button type="button" class="painel-card-link course-open painel-card-open"
                                 [disabled]="!canOpen(course)" (click)="selectCourse(course)">
                                 <span class="painel-card-title" role="heading" aria-level="3">{{ course.name }}</span>
                                 @if (course.academicCode) { <span class="painel-card-code">{{ course.academicCode }}</span> }
-                                <span class="painel-card-teacher">Professor(a): {{ course.teacherNames || 'não informado' }}</span>
+                                @if (isCoordination) {
+                                    <span class="painel-card-teacher">Coordenador(a): {{ course.teacherNames || 'não informado' }}</span>
+                                } @else {
+                                    <span class="painel-card-teacher">
+                                        Professor(a): <span class="painel-card-teacher-name">{{ course.teacherNames || 'não informado' }}</span>
+                                    </span>
+                                }
                             </button>
-                            @if (course.is_enrolled && course.moodle_course_id && course.moodle_site_url) {
+                            @if (!isCoordination && course.is_enrolled && course.moodle_course_id && course.moodle_site_url) {
                                 <ifrn-academic-progress [courseId]="course.moodle_course_id" [siteUrl]="course.moodle_site_url"
                                     [compact]="true" [accountScope]="data()"
                                     [serverProgress]="course.progress === undefined ? null : course.progress"
                                     [hasServerProgress]="course.hasprogress === true" [showHeading]="false" [showSummary]="false" />
                             }
                             <div class="painel-card-details"><div class="painel-card-details-info">
-                                @if (course.isAcademicEnvironment) {
+                                @if (course.environmentLabel === 'Aberto') {
+                                    <div class="painel-card-info-icon painel-card-info-icon--environment painel-card-info-icon--open">
+                                        @if (showingFigmaMobilePanel) {
+                                            <span class="diarios-badge-icon diarios-badge-icon--academic" aria-hidden="true"></span>
+                                        } @else {
+                                            <ion-icon name="school-outline" aria-hidden="true" />
+                                        }
+                                        <span>Aberto</span>
+                                    </div>
+                                } @else if (course.isAcademicEnvironment) {
                                     <div class="painel-card-info-icon painel-card-info-icon--academic">
                                         @if (showingFigmaMobilePanel) {
                                             <span class="diarios-badge-icon diarios-badge-icon--academic" aria-hidden="true"></span>
@@ -174,7 +199,22 @@
                                 } @else if (course.environment && course.environment !== 'AVA') {
                                     <div class="painel-card-info-icon painel-card-info-icon--environment"><ion-icon name="school-outline" aria-hidden="true" /><span>{{ course.environment }}</span></div>
                                 }
-                                @if (course.publicationStatus === 'published') {
+                                @if (isSelfEnrolment) {
+                                    @if (course.is_enrolled) {
+                                        <button type="button" class="painel-card-details-info-published painel-card-enrolment-status"
+                                            aria-label="Inscrito. Gerenciar inscrição" [disabled]="!canOpen(course)"
+                                            (click)="manageEnrolment.emit(course)">
+                                            <img class="diarios-badge-icon" src="mobilemoodle/static/theme/ifrn/img/diarios/published.svg" alt="" />
+                                            <span>Inscrito</span>
+                                        </button>
+                                    } @else {
+                                        <button type="button" class="painel-card-enrolment-cta"
+                                            [disabled]="!canOpen(course)" (click)="selectCourse(course)">
+                                            <span class="painel-card-enrolment-cta-icon" aria-hidden="true"></span>
+                                            <span>Inscreva-se</span>
+                                        </button>
+                                    }
+                                } @else if (course.publicationStatus === 'published') {
                                     <div class="painel-card-details-info-published">
                                         @if (showingFigmaMobilePanel) {
                                             <img class="diarios-badge-icon" src="mobilemoodle/static/theme/ifrn/img/diarios/published.svg" alt="" />
@@ -188,10 +228,6 @@
                                 }
                             </div></div>
                             @if (!course.moodle_site_url) { <p role="status">Ambiente não identificado. Atualize o Painel.</p> }
-                            @if (group() === 'autoinscricoes') {
-                                <div class="painel-card-actions"><ion-button size="small" [disabled]="!canOpen(course)" (click)="selectCourse(course)">{{ course.is_enrolled ? 'Acessar curso' : 'Inscreva-se' }}</ion-button>
-                                @if (course.is_enrolled) { <ion-button size="small" fill="outline" (click)="manageEnrolment.emit(course)">Gerenciar inscrição</ion-button> }</div>
-                            }
                         </ion-card-content>
                     </ion-card>
                 } @empty {

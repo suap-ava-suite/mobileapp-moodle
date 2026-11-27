@@ -58,6 +58,7 @@ export class PainelNativeComponent {
     readonly busy = input(false);
     readonly openCourse = output<NativePainelCourse>();
     readonly manageEnrolment = output<NativePainelCourse>();
+    readonly groupChange = output<NativePainelGroup>();
     readonly openHelp = output<PainelHelpLinkId>();
     readonly openProfile = output<void>();
     readonly marketplace = output<void>();
@@ -320,8 +321,10 @@ export class PainelNativeComponent {
     }
 
     setGroup(value: unknown): void {
-        if (this.tabs.some(tab => tab.id === value)) {
-            this.group.set(value as NativePainelGroup);
+        const tab = this.tabs.find(option => option.id === value);
+        if (tab && tab.id !== this.group()) {
+            this.group.set(tab.id);
+            this.groupChange.emit(tab.id);
         }
     }
 

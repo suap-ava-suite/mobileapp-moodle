@@ -32,7 +32,7 @@
     .academic-progress__meter {
         display: flex;
         align-items: center;
-        gap: 13px;
+        gap: var(--academic-compact-meter-gap, 13px);
         inline-size: 100%;
         max-inline-size: 312px;
         min-inline-size: 0;

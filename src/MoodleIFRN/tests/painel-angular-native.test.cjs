@@ -89,11 +89,11 @@ test('Diários, Coordenação and Autoinscrições share the Figma mobile layout
     assert.match(template, /\[class\.diarios-page\]="showingFigmaMobilePanel"/);
     assert.match(template, /course\.isAcademicEnvironment/);
     assert.match(template, /course\.publicationStatus === 'published'/);
-    assert.match(template, /@if \(group\(\) === 'autoinscricoes'\)[\s\S]*?\(click\)="selectCourse\(course\)"[\s\S]*?\(click\)="manageEnrolment\.emit\(course\)"/);
+    assert.match(template, /@if \(isSelfEnrolment\) \{\s*@if \(course\.is_enrolled\)[\s\S]*?\(click\)="manageEnrolment\.emit\(course\)"[\s\S]*?\(click\)="selectCourse\(course\)"/);
     assert.match(styles, /padding-inline-end: 44px;/);
 });
 
-function setupFirstProfile(savedName, loadMoodleTeacherNames = async () => new Map()) {
+function setupFirstProfile(savedName, loadMoodleTeacherNames = async () => new Map(), dashboard = raw) {
     const storage = new Map();
     const sessionStorage = {
         getItem: key => storage.get(key) ?? null,
@@ -107,7 +107,7 @@ function setupFirstProfile(savedName, loadMoodleTeacherNames = async () => new M
     const origin = 'https://ava.ifrn.edu.br';
     oauth.saveOAuthProfile({ identificacao: owner, nome_exibicao: savedName, _profile_origin: origin }, 60);
     storage.set('ifrn_painel_owner', owner);
-    storage.set('ifrn_painel_dashboard', JSON.stringify(raw));
+    storage.set('ifrn_painel_dashboard', JSON.stringify(dashboard));
     let respond;
     const response = new Promise(resolve => { respond = resolve; });
     let finishLanguage;
@@ -197,6 +197,38 @@ test('docentes carregam em segundo plano sem trocar o contexto do progresso e so
     }
 });
 
+test('trocar de aba pesquisa só as ofertas matriculadas e ignora a resposta tardia da aba anterior', async () => {
+    const requests = [];
+    const { page, respond, finishLanguage } = setupFirstProfile('Estudante fictício',
+        (courses, owner, isCurrent) => new Promise(resolve => requests.push({ courses, owner, isCurrent, resolve })), {
+            ...raw,
+            autoinscricoes: [
+                { id: 19, viewurl: site + '/course/view.php?id=19', is_enrolled: true },
+                { id: 20, viewurl: site + '/course/view.php?id=20', is_enrolled: false },
+            ],
+        });
+    const nextTick = () => new Promise(resolve => setImmediate(resolve));
+    try {
+        page.ngOnInit();
+        page.ionViewDidEnter();
+        await nextTick();
+        page.onNativeGroupChange('autoinscricoes');
+        await nextTick();
+        assert.equal(requests.length, 2);
+        assert.equal(requests[0].isCurrent(), false);
+        assert.deepEqual(Array.from(requests[1].courses, course => course.moodle_course_id), [19]);
+        const [old, current] = requests.map(request => request.courses[0].key);
+        requests[0].resolve(new Map([[old, 'Docente atrasado']]));
+        requests[1].resolve(new Map([[current, 'Docente da oferta']]));
+        await nextTick();
+        assert.equal(page.moodleTeacherNames.has(old), false);
+        assert.equal(page.moodleTeacherNames.get(current), 'Docente da oferta');
+    } finally {
+        respond({ nome_exibicao: 'Estudante fictício' });
+        finishLanguage();
+    }
+});
+
 test('Painel mostra o diário sem sessão Moodle e preenche o docente ao voltar do primeiro curso', async () => {
     const info = { username: 'conta-ficticia' };
     let courseSessionAvailable = false;
@@ -211,7 +243,7 @@ test('Painel mostra o diário sem sessão Moodle e preenche o docente ao voltar 
 
                 return {
                     getURL: () => site, getInfo: () => info, getUserId: () => 42, getToken: () => 'simulated-session',
-                    isLoggedOut: () => false, wsAvailable: () => true,
+                    isLoggedOut: () => false, wsAvailable: method => method === 'core_enrol_get_enrolled_users',
                 };
             },
         } },

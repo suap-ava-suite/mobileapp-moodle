@@ -89,6 +89,30 @@ test('prefers the registered academic program and skips AVA labels made from cod
     assert.equal(unavailable.academicProgram, undefined);
 });
 
+test('Autoinscrição uses the Moodle title and shares a real program only for the exact same course and site', () => {
+    const academic = 'https://academico.ava.ifrn.edu.br';
+    const presencial = 'https://presencial.ava.ifrn.edu.br';
+    const course = (id, site) => ({ id, viewurl: site + '/course/view.php?id=' + id, fullname: 'Nome Moodle por extenso' });
+    const model = buildNativePainelModel({
+        diarios: [
+            { ...course(21, academic), curso: { nome: 'Formação institucional' } },
+            { ...course(22, academic), curso: { nome: 'Programa A' } },
+        ],
+        coordenacoes: [{ ...course(22, academic), curso: { nome: 'Programa B' } }],
+        autoinscricoes: [
+            { ...course(21, academic), disciplina_descricao: 'Descrição diferente' },
+            course(21, presencial),
+            course(22, academic),
+        ],
+    }, null);
+    const [sameCourse, anotherSite, conflicting] = model.groups.autoinscricoes;
+    assert.equal(sameCourse.name, 'Nome Moodle por extenso');
+    assert.equal(sameCourse.academicProgram, 'Formação institucional');
+    assert.match(sameCourse.searchableText, /formacao institucional/);
+    assert.equal(anotherSite.academicProgram, undefined);
+    assert.equal(conflicting.academicProgram, undefined);
+});
+
 test('only shows teachers with an available name and no inactive assignment in the initial dashboard', () => {
     const model = buildNativePainelModel({ diarios: [
         { id: 31, professores: [
@@ -173,6 +197,50 @@ test('reads Moodle teachers for the same account and exact course without replac
     assert.equal(updated[5].teacherNames, '');
 });
 
+test('consults advertised theme, core contacts and teacher roles in order, for authorized enrolled IDs only', async () => {
+    const url = 'https://academico.ava.ifrn.edu.br';
+    const info = { username: 'aluno-ficticio' };
+    const requests = [];
+    const site = {
+        getURL: () => url, getInfo: () => info, getUserId: () => 42, getToken: () => 'simulated-session',
+        isLoggedOut: () => false, wsAvailable: () => true,
+    };
+    const { loadMoodleTeacherNames } = load('painel/painel-course-teachers.ts', {
+        '../mobilemoodle/core_mobile/course-target': target,
+        '@services/sites': { CoreSites: {
+            getSites: async () => [{ id: 'saved-site', siteUrl: url, info }],
+            getSite: async () => site,
+        } },
+        '@services/ws': { CoreWS: { call: async (method, params) => {
+            requests.push([method, params]);
+            if (method === 'theme_ifrn_dsgov_get_teacher_data') {
+                return { courses: [
+                    { id: 21, has_teachers: true, teacherfullname: ' Docente do tema ' },
+                    { id: 24, has_teachers: true, teacherfullname: 'Oferta sem inscrição' },
+                ] };
+            }
+            if (method === 'core_course_get_courses_by_field') {
+                return { courses: [{ id: 22, contacts: [{ fullname: 'Docente de contato' }, { fullname: 'Docente de contato' }] }] };
+            }
+            return [{ fullname: 'Docente de papel', roles: [{ shortname: 'teacher' }] }];
+        } } },
+    });
+    const model = buildNativePainelModel({ autoinscricoes: [21, 22, 23, 24].map(id => ({
+        id, viewurl: url + '/course/view.php?id=' + id, is_enrolled: id !== 24,
+    })) }, null);
+    const courses = model.groups.autoinscricoes;
+    const updated = withMoodleTeacherNames(courses, await loadMoodleTeacherNames(courses, info.username, () => true));
+
+    assert.deepEqual(requests.map(([method]) => method),
+        ['theme_ifrn_dsgov_get_teacher_data', 'core_course_get_courses_by_field', 'core_enrol_get_enrolled_users']);
+    assert.deepEqual(Array.from(requests[0][1].courseids), [21, 22, 23]);
+    assert.equal(requests[0][1].courseid, 0);
+    assert.equal(requests[1][1].value, '22,23');
+    assert.equal(requests[2][1].courseid, 23);
+    assert.deepEqual(Array.from(updated, course => course.teacherNames),
+        ['Docente do tema', 'Docente de contato', 'Docente de papel', undefined]);
+});
+
 test('discards the Moodle response when the Panel session changes during the request', async () => {
     const url = 'https://academico.ava.ifrn.edu.br';
     const info = { username: 'aluno-ficticio' };
@@ -223,7 +291,7 @@ test('card displays fields in reference order and badges immediately after the p
     assert.ok(titlePosition > favouritePosition && codePosition > titlePosition && teacherPosition > codePosition);
     assert.ok(progressPosition > teacherPosition && metadataPosition > progressPosition);
     assert.ok(favouriteClosePosition < courseOpenPosition, 'favorite must be a separate button and not open the course');
-    assert.match(template, /Professor\(a\): \{\{ course\.teacherNames \|\| 'não informado' \}\}/);
+    assert.match(template, /Professor\(a\): <span class="painel-card-teacher-name">\{\{ course\.teacherNames \|\| 'não informado' \}\}<\/span>/);
     assert.match(template, /course\.isAcademicEnvironment[\s\S]*?<span>Acadêmico<\/span>/);
     assert.match(template, /painel-card-info-icon--academic/);
     assert.match(template, /painel-card-info-icon--environment[\s\S]*?course\.environment/);
@@ -245,4 +313,17 @@ test('card displays fields in reference order and badges immediately after the p
     assert.match(styles, /\.painel-card-info-icon--environment\s*\{[^}]*background:\s*#d4e5ff;[^}]*color:\s*#155bcb;/s);
     assert.match(styles, /\.painel-card-details-info-published\s*\{[^}]*background:\s*#e3f5e1;/s);
     assert.doesNotMatch(styles, /\.painel-card\s*\{[^}]*?(?<!min-)height:\s*\d+px/s);
+});
+
+test('Diários uses the exported Figma badge colors and its own compact meter spacing', () => {
+    const template = read('painel/painel-native.html');
+    const styles = read('painel/painel-native.scss');
+    const progressStyles = read('academic-progress/progress.component.scss');
+    const diariosStyles = styles.slice(styles.indexOf('.native-panel-frame--diarios .diarios-page {'));
+
+    assert.match(template, /\[class\.native-panel-frame--diarios\]="group\(\) === 'diarios'"/);
+    assert.match(styles, /\.painel-card-info-icon--academic \{ background: #daf8f8; color: #000; \}/);
+    assert.match(styles, /\.painel-card-details-info-published \{ background: #e3f5e1; color: #000; \}/);
+    assert.match(diariosStyles, /--academic-compact-meter-gap: 15px;/);
+    assert.match(progressStyles, /gap: var\(--academic-compact-meter-gap, 13px\);/);
 });

@@ -13,16 +13,86 @@
 // limitations under the License.
 
 import type { CoreSite } from '@classes/sites/site';
+import type { CoreCourseGetCoursesByFieldWSResponse } from '@features/courses/services/courses';
 import type { CoreUserParticipant } from '@features/user/services/user';
 import { CoreSites } from '@services/sites';
 import { CoreWS } from '@services/ws';
 import { resolveCourseSite } from '../mobilemoodle/core_mobile/course-target';
 import type { NativePainelCourse } from './painel-native-model';
 
+const THEME_TEACHERS_WS = 'theme_ifrn_dsgov_get_teacher_data';
+const COURSE_CONTACTS_WS = 'core_course_get_courses_by_field';
+const COURSES_PER_CONTACT_REQUEST = 30;
 const PARTICIPANTS_WS = 'core_enrol_get_enrolled_users';
 const PARTICIPANTS_PER_PAGE = 100;
 const MAX_PARTICIPANT_PAGES = 5;
 const MOODLE_TEACHER_ROLES = new Set(['editingteacher', 'teacher']);
+
+type ThemeTeacherResponse = {
+    courses?: { id: number; has_teachers: boolean; teacherfullname?: string }[];
+};
+
+/**
+ * Reads the course contacts in batches, following the IFRN web theme's preferred source.
+ *
+ * @param site Authorized Moodle site for these courses.
+ * @param courseIds Exact Moodle IDs already authorized in the Panel.
+ * @param isCurrent Whether the session and Panel still accept results.
+ * @returns Names by course ID.
+ */
+async function readCourseContacts(site: CoreSite, courseIds: number[], isCurrent: () => boolean): Promise<Map<number, string>> {
+    const names = new Map<number, string>();
+    const themeAvailable = site.wsAvailable(THEME_TEACHERS_WS);
+    const contactsAvailable = site.wsAvailable(COURSE_CONTACTS_WS);
+    if (!themeAvailable && !contactsAvailable) {
+        return names;
+    }
+
+    const siteUrl = site.getURL().replace(/\/$/, '');
+    for (let offset = 0; offset < courseIds.length && isCurrent(); offset += COURSES_PER_CONTACT_REQUEST) {
+        const batch = courseIds.slice(offset, offset + COURSES_PER_CONTACT_REQUEST);
+        if (themeAvailable) {
+            // The web theme declares an AJAX function. Use it only if the Moodle mobile service also advertises it.
+            const theme = await CoreWS.call<ThemeTeacherResponse>(THEME_TEACHERS_WS, { courseids: batch, courseid: 0 },
+                { siteUrl, wsToken: site.getToken() }).catch(() => undefined);
+            if (!isCurrent()) {
+                break;
+            }
+            for (const course of Array.isArray(theme?.courses) ? theme.courses : []) {
+                if (batch.includes(course?.id) && course.has_teachers === true && typeof course.teacherfullname === 'string') {
+                    const name = course.teacherfullname.trim();
+                    if (name) {
+                        names.set(course.id, name);
+                    }
+                }
+            }
+        }
+
+        const missing = batch.filter(id => !names.has(id));
+        if (!contactsAvailable || !missing.length || !isCurrent()) {
+            continue;
+        }
+
+        const response = await CoreWS.call<CoreCourseGetCoursesByFieldWSResponse>(
+            COURSE_CONTACTS_WS, { field: 'ids', value: missing.join(',') }, { siteUrl, wsToken: site.getToken() },
+        ).catch(() => undefined);
+        if (!isCurrent()) {
+            break;
+        }
+        for (const course of Array.isArray(response?.courses) ? response.courses : []) {
+            if (!missing.includes(course?.id) || !Array.isArray(course.contacts)) {
+                continue;
+            }
+            const contacts = new Set(course.contacts.map(contact =>
+                typeof contact?.fullname === 'string' ? contact.fullname.trim() : '').filter(Boolean));
+            if (contacts.size) {
+                names.set(course.id, [...contacts].join(', '));
+            }
+        }
+    }
+
+    return names;
+}
 
 /**
  * Looks up the teaching roles in the participants list of a single Moodle course.
@@ -68,7 +138,7 @@ async function readCourseTeachers(site: CoreSite, courseId: number, isCurrent: (
 /**
  * Resolves missing teachers through existing Moodle sessions of the same Panel account.
  *
- * @param courses Diários already authorized by the Panel.
+ * @param courses Courses already authorized by the Panel for the active tab.
  * @param panelIdentity Identity of the current Panel account.
  * @param isCurrent Whether the Panel is still showing that account and set of courses.
  * @returns Teacher names by card key.
@@ -108,18 +178,23 @@ export async function loadMoodleTeacherNames(
         }
         // getSite retrieves the saved session without activating it.
         const site = await CoreSites.getSite(saved.id).catch(() => undefined);
-        if (!site || !site.wsAvailable(PARTICIPANTS_WS)) {
+        if (!site) {
             return;
         }
         const userId = site.getUserId();
         const canRead = (): boolean => isCurrent() && !site.isLoggedOut() && !!site.getToken()
             && Number.isSafeInteger(userId) && userId > 0 && site.getUserId() === userId
             && site.getURL().replace(/\/$/, '') === siteUrl && site.getInfo()?.username?.trim().toLowerCase() === owner;
+        const contacts = await readCourseContacts(site, [...byId.keys()], canRead);
+        const canListParticipants = site.wsAvailable(PARTICIPANTS_WS);
         for (const [courseId, keys] of byId) {
             if (!canRead()) {
                 return;
             }
-            const teachers = await readCourseTeachers(site, courseId, canRead).catch(() => '');
+            let teachers = contacts.get(courseId);
+            if (!teachers && canListParticipants) {
+                teachers = await readCourseTeachers(site, courseId, canRead).catch(() => '');
+            }
             if (teachers && canRead()) {
                 keys.forEach(key => names.set(key, teachers));
             }

@@ -1,3 +1,11 @@
+@font-face {
+    font-family: 'IFRN Open Sans';
+    src: url('../../core/features/h5p/assets/fonts/open-sans/open-sans-v40-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_math_symbols_vietnamese-700.woff2') format('woff2');
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+}
+
 :host {
 
     display: flex; flex-direction: column; height: 100%; min-height: 0;
@@ -60,7 +68,7 @@ ion-content { --background: var(--dsgov-bg-gray); }
     &__title {
         overflow: hidden;
         color: var(--dsgov-text-darkest, #000);
-        font-family: 'Open Sans', var(--dsgov-font-family), sans-serif;
+        font-family: 'IFRN Open Sans', var(--dsgov-font-family), sans-serif;
         font-size: 14px;
         font-weight: 700;
         line-height: 13px;
@@ -98,8 +106,6 @@ ion-content { --background: var(--dsgov-bg-gray); }
         flex: 0 0 auto;
         align-items: center;
         justify-content: center;
-        min-width: 44px;
-        min-height: 44px;
         padding: 0;
         border: 0;
         border-radius: var(--dsgov-radius-circle, 50%);
@@ -145,6 +151,7 @@ ion-content { --background: var(--dsgov-bg-gray); }
     &__user {
         gap: 2px;
         min-width: 76px;
+        min-height: 44px;
         padding-inline: 0;
         border-radius: 28px;
     }
@@ -627,14 +634,18 @@ ion-content.diarios-content {
     .ava-topbar .ava-tab {
         gap: 8px;
         min-height: 33px;
-        padding: 0 7px;
-        border-bottom-color: var(--dsgov-border-outer, #ccc);
+        padding: 0 15px;
+        border-bottom-color: var(--diarios-inactive-underline, #d6d6d6);
         color: var(--dsgov-blue-70, #1351b4);
         font: 400 1rem/1.1 var(--dsgov-font-family);
         letter-spacing: 0.15px;
 
         &.is-active { border-bottom-color: currentColor; }
     }
+
+    .ava-topbar .ava-tab:first-child { min-inline-size: 104px; }
+
+    .ava-topbar .ava-tab:nth-child(2) { gap: 6px; }
 
     .diarios-tab-icon,
     .diarios-filter-icon,
@@ -647,9 +658,17 @@ ion-content.diarios-content {
     }
 
     .diarios-tab-icon[data-tab='diarios'] { --diarios-icon: url('../../assets/fonts/font-awesome/solid/book.svg'); }
-    .diarios-tab-icon[data-tab='coordenacoes'] { --diarios-icon: url('../../assets/fonts/font-awesome/solid/users.svg'); }
+    .diarios-tab-icon[data-tab='coordenacoes'] {
+        --diarios-icon: url('../../assets/fonts/font-awesome/solid/users.svg');
+
+        inline-size: 20px;
+    }
     .diarios-tab-icon[data-tab='autoinscricoes'] { --diarios-icon: url('../../assets/fonts/font-awesome/solid/book-open-reader.svg'); }
-    .diarios-filter-icon { --diarios-icon: url('../../assets/fonts/font-awesome/solid/filter.svg'); }
+    .diarios-filter-icon {
+        --diarios-icon: url('../../assets/fonts/font-awesome/solid/filter.svg');
+
+        margin-inline-end: 2px;
+    }
 
     .diarios-filter-chevron {
         --diarios-icon: url('../../assets/fonts/font-awesome/solid/chevron-down.svg');
@@ -785,8 +804,8 @@ ion-content.diarios-content {
         ion-icon { font-size: 10px; }
     }
 
-    .painel-card-info-icon--academic { background: #d4e5ff; color: #155bcb; }
-    .painel-card-details-info-published { background: #e3f5e1; color: #168821; }
+    .painel-card-info-icon--academic { background: #daf8f8; color: #000; }
+    .painel-card-details-info-published { background: #e3f5e1; color: #000; }
 
     .diarios-badge-icon--academic {
         inline-size: 10px;
@@ -794,6 +813,106 @@ ion-content.diarios-content {
         background-color: currentColor;
         mask: url('../mobilemoodle/static/theme/ifrn/img/diarios/academic.svg') center / contain no-repeat;
     }
+}
+
+.native-panel-frame .ifrn-panel-header__icon--help {
+    width: 21px;
+    height: 31px;
+}
+
+.native-panel-frame--diarios .diarios-page {
+    .painel-card-teacher-name { font-weight: 600; }
+
+    .painel-card .painel-card-open + ifrn-academic-progress {
+        --academic-compact-meter-gap: 15px;
+
+        margin-block-start: 24px;
+    }
+}
+
+.painel-page.diarios-page {
+    .painel-card--coordenacao,
+    .painel-card--autoinscricao {
+        .painel-card-program { padding-inline-end: 0; }
+
+        min-height: 0;
+    }
+
+    .painel-card--coordenacao {
+        .painel-card-topline { min-height: 0; }
+        .painel-card-program { padding-block-end: 8px; }
+        .painel-card-open .painel-card-title { max-inline-size: 270px; }
+        .painel-card-details { margin-block-start: 24px; }
+    }
+
+    .painel-card--autoinscricao {
+        .painel-card-open .painel-card-title {
+            max-inline-size: 269px;
+            padding-inline-end: 0;
+        }
+
+        .painel-card-open + ifrn-academic-progress {
+            --academic-compact-fill-complete: linear-gradient(to right, #dde9cb, #168821);
+            --academic-compact-meter-gap: 15px;
+
+            margin-block-start: 22px;
+        }
+
+        .painel-card-info-icon--open {
+            min-inline-size: 51px;
+            background: #daf8f8;
+            color: #000;
+        }
+
+        .painel-card-enrolment-status {
+            position: relative;
+            min-inline-size: 53px;
+            cursor: pointer;
+
+            // Amplia a área de toque sem alterar o tamanho visível do selo.
+            &::after { position: absolute; inset: -10px 0; content: ''; }
+        }
+    }
+
+    .painel-card--inscricao-disponivel .painel-card-details { margin-block-start: 27px; }
+
+    .painel-card-enrolment-cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-block-size: 39px;
+        min-inline-size: min(148px, 100%);
+        max-inline-size: 100%;
+        margin-inline-start: auto;
+        padding: 6px 12px;
+        border: 0;
+        border-radius: var(--dsgov-radius-pill, 24px);
+        background: var(--ion-color-primary, #1351b4);
+        color: var(--ion-color-primary-contrast, #fff);
+        font: 600 1.0625rem/1.15 var(--dsgov-font-family);
+        cursor: pointer;
+    }
+
+    .painel-card-enrolment-cta-icon {
+        flex: 0 0 16px;
+        inline-size: 16px;
+        block-size: 16px;
+        background: currentColor;
+        mask: url('../../assets/fonts/font-awesome/solid/right-to-bracket.svg') center / contain no-repeat;
+    }
+
+    .painel-card-enrolment-cta,
+    .painel-card-enrolment-status {
+        &:focus-visible { outline: 3px solid var(--dsgov-blue-70); outline-offset: 3px; }
+        &:disabled { opacity: 0.65; cursor: default; }
+    }
+}
+
+// No tema escuro, a linha inativa deve continuar discreta em relação ao indicador ativo.
+:host-context(.dark) .native-panel-frame,
+:host-context(.ion-palette-dark) .native-panel-frame {
+    --diarios-inactive-underline: var(--dsgov-border-outer, #495057);
 }
 
 :host(.color_mode_high_contrast) .diarios-page {
