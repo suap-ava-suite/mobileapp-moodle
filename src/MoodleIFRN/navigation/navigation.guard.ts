@@ -28,6 +28,10 @@ export const ifrnMainMenuGuard: CanActivateFn & CanActivateChildFn = (_route, st
         });
     }
 
+    if (service.blockLandingDuringCourseResume()) {
+        return false;
+    }
+
     if (service.isNativeCourseHandoffActive()) {
         // O núcleo precisa passar pela landing para tratar course/{id}/OAuth.
         // Ela fica invisível e sem interação durante essa passagem interna.

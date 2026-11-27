@@ -20,6 +20,8 @@ function compile(file) {
 const scripts = Object.fromEntries([
     'navigation/course-opening-attempt',
     'navigation/native-course-login-queue',
+    'navigation/navigation.guard',
+    'navigation/navigation-policy',
     'navigation/open-native-course',
     'services_mobile/moodle-site.service',
     'moodle-open-course/moodle-open-course',
@@ -81,6 +83,7 @@ function setup({ saved = true, navigationShell = false } = {}) {
 
     const emit = event => [...routeListeners].forEach(listener => listener(event));
     const router = {
+        createUrlTree: ([url]) => url,
         events: {
             subscribe(callback) {
                 routeListeners.add(callback);
@@ -262,6 +265,12 @@ function setup({ saved = true, navigationShell = false } = {}) {
         '../mobilemoodle/core_mobile/course-target': load('mobilemoodle/core_mobile/course-target'),
     });
     const panel = new PainelPage();
+    const { ifrnMainMenuGuard } = load('navigation/navigation.guard', {
+        '@angular/core': { inject: type => type === routerToken ? router : service },
+        '@angular/router': { Router: routerToken },
+        './suap-entry-state': { readNativeSuapEntry: () => null },
+        './navigation-policy': load('navigation/navigation-policy'),
+    });
     if (navigationShell) {
         delete service.markCourseOriginFromPainel;
         service.initializeIfrnNavigationShell();
@@ -269,6 +278,7 @@ function setup({ saved = true, navigationShell = false } = {}) {
 
     return {
         service, page, panel, sites, courses, values, routes, loads, overlay, classes, routeListeners, timers, navigator,
+        landingGuard: (url = '/main/home') => ifrnMainMenuGuard({}, { url }),
         open: (id = courseId, environment = siteUrl) => service.ensureSessionAndOpenCourse(id, environment),
         async advance(ms) {
             now += ms;
@@ -525,6 +535,80 @@ test('an account change invalidates a pending read even if both accounts select 
     await tick();
     assert.equal(second.value, 'opened');
     assert.equal(s.sites.getCurrentSiteId(), 'student-b');
+});
+
+function resumeCourse(s, origin) {
+    s.service.setPendingOpenCourse({ courseId, siteUrl });
+    s.values.set('ifrn_moodle_oauth_pending', '1');
+
+    return s.service.resumePendingOAuthCourse(origin);
+}
+
+test('the OAuth bridge blocks a late Moodle landing during enrolment and opens the exact course once', async () => {
+    const s = setup();
+    const enrolments = deferred();
+    const origin = new AbortController();
+    s.courses.getUserCourses = () => enrolments.promise;
+    s.service.oauthReturnNavigating = { phase: 'landing' };
+    assert.equal(s.landingGuard(), true, 'the first OAuth landing may deliver the bridge redirect');
+    await s.navigator.navigate(bridge);
+    const resumed = resumeCourse(s, origin.signal);
+    await tick();
+
+    // Model the Router: only leaving the bridge would abort the page's signal.
+    if (s.landingGuard() === true) {
+        await s.navigator.navigate('/main/home');
+        origin.abort();
+    }
+    assert.equal(s.navigator.getCurrentPath(), bridge);
+    assert.equal(s.landingGuard('/main/home/dashboard'), false);
+    assert.equal(await s.service.resumePendingOAuthCourse(origin.signal), false);
+    assert.deepEqual({ ...s.service.getPendingOpenCourse() }, { courseId, siteUrl });
+    assert.equal(s.routes.length, 0);
+
+    enrolments.resolve([{ id: otherCourseId }, { id: courseId }]);
+    await tick();
+    assert.equal(s.routes.length, 1);
+    assert.equal(s.landingGuard(), true, 'the existing owned-route fallback remains available');
+    s.routes[0].finish();
+    assert.equal(await resumed, true);
+    assert.equal(s.navigator.getCurrentPath(), `/main/home/course/${courseId}`);
+    assert.equal(s.service.blockLandingDuringCourseResume(), false);
+});
+
+test('a denied enrolment reports the failure and releases landing protection without opening a course', async () => {
+    const s = setup();
+    s.courses.getUserCourses = async () => [{ id: otherCourseId }];
+    await s.navigator.navigate(bridge);
+    assert.equal(await resumeCourse(s), true);
+    assert.equal(s.routes.length, 0);
+    assert.equal(s.service.lastCourseAccessIssue?.kind, 'not-enrolled');
+    assert.ok(s.service.lastError);
+    assert.equal(s.service.blockLandingDuringCourseResume(), false);
+});
+
+test('explicit cancellation prevents a late enrolment response from resuming the cancelled course', async () => {
+    const s = setup();
+    const enrolments = deferred();
+    s.courses.getUserCourses = () => enrolments.promise;
+    const resumed = resumeCourse(s);
+    await tick();
+    assert.equal(s.landingGuard(), false);
+    s.service.dismissCourseRecovery();
+    await resumed;
+    enrolments.resolve([{ id: courseId }]);
+    await tick();
+    assert.equal(s.routes.length, 0);
+    assert.equal(s.service.getPendingOpenCourse(), null);
+    assert.equal(s.service.blockLandingDuringCourseResume(), false);
+});
+
+test('the OAuth return cannot protect or open a course for a different Moodle account', async () => {
+    const s = setup();
+    await s.sites.loadSite('student-b');
+    assert.equal(await resumeCourse(s), false);
+    assert.equal(s.service.blockLandingDuringCourseResume(), false);
+    assert.equal(s.routes.length, 0);
 });
 
 test('a previous OAuth bridge finishing cannot mark a newer return as idle', async () => {

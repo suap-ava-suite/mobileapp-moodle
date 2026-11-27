@@ -718,7 +718,12 @@ export class MoodleSiteService {
     private disposeCourseProgression?: () => void;
 
     private navigationShellInitialized = false;
-    private oauthReturnNavigating?: symbol;
+    private oauthReturnNavigating?: { phase: 'landing' } | {
+        phase: 'resuming';
+        origin?: AbortSignal;
+        isOwnerCurrent: () => boolean;
+        nativeNavigationStarted: boolean;
+    };
     private oauthCallbackReceived = false;
 
     /** Cobre a transição visual até o curso nativo estar pronto para aparecer. */
@@ -753,6 +758,19 @@ export class MoodleSiteService {
         // Não amarrar a pending_open_course / oauthFlowActive: isso reexibia o
         // overlay após o curso abrir (ou no OAuth) e o usuário ficava em loading eterno.
         return !!this.courseOpening || !!this.sessionOpening || !!this.oauthPreparation || !!this.oauthReturnNavigating;
+    }
+
+    /** Impede que uma seleção tardia da aba padrão desative a ponte durante a retomada. */
+    blockLandingDuringCourseResume(): boolean {
+        const resume = this.oauthReturnNavigating;
+        if (resume?.phase !== 'resuming' || resume.origin?.aborted
+            || !resume.isOwnerCurrent() || resume.nativeNavigationStarted) {
+            return false;
+        }
+
+        this.sessionOpening?.attempt.record('competing-landing-blocked', 'ok');
+
+        return true;
     }
 
     ensurePainelRouteRegistered(): void {
@@ -1155,7 +1173,7 @@ export class MoodleSiteService {
             // LOGIN ocorre antes de urlschemes concluir navigateToSiteHome.
             // O redirectPath oficial retorna à ponte IFRN; somente ela retoma
             // o curso. Um timer aqui concorria com ngOnInit da ponte e com /main.
-            this.oauthReturnNavigating = this.oauthCallbackReceived || this.oauthFlowActive ? Symbol() : undefined;
+            this.oauthReturnNavigating = this.oauthCallbackReceived || this.oauthFlowActive ? { phase: 'landing' } : undefined;
             this.oauthCallbackReceived = false;
             this.oauthFlowActive = false;
             if (this.oauthReturnNavigating) {
@@ -1176,7 +1194,12 @@ export class MoodleSiteService {
         }
 
         sessionStorage.removeItem(OAUTH_PENDING_KEY);
-        const resume = Symbol();
+        const resume = {
+            phase: 'resuming' as const,
+            origin,
+            isOwnerCurrent: this.captureCourseOpeningOwner(),
+            nativeNavigationStarted: false,
+        };
         this.oauthReturnNavigating = resume;
         this.showNativeCourseHandoff(pending.courseName, 'Retomando disciplina…');
         this.oauthCallbackReceived = false;
@@ -2149,6 +2172,10 @@ export class MoodleSiteService {
                     // owns cancellation from dispatch until the course is ready.
                     if (this.sessionOpening?.attempt === attempt) {
                         this.sessionOpening.detachOrigin?.();
+                        const resume = this.oauthReturnNavigating;
+                        if (resume?.phase === 'resuming') {
+                            resume.nativeNavigationStarted = true;
+                        }
                     }
                     await openNativeCourse(courseId, navigationOwner);
                 } catch (error) {

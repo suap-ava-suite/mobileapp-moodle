@@ -35,6 +35,7 @@ function guardSetup() {
     const state = { nativeEntry: null };
     const service = {
         getCourseRecoveryTarget: () => null, isIdentityMismatchPending: () => false,
+        blockLandingDuringCourseResume: () => false,
         isNativeCourseHandoffActive: () => false, returnToPainelOnCourseExit: () => false,
         isCurrentSiteIfrn: () => true,
         hasAuthenticatedPainel: () => true, showNativeCourseHandoff() {}, hideNativeCourseHandoff() {},
